@@ -26,6 +26,9 @@ npm start
 ## 当前已实现
 
 - 本地 CSV 导入和演示样本加载
+- 企业资料结构适配：车辆 `FC_*` CSV、中文电堆 CSV、GB18030 制表符 TXT；原始企业数据不进入仓库
+- 车辆运行态/上电态统计、目标电流段平均值、10 分钟绝缘最小值和 350/250 kΩ 趋势预警摘要
+- 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 数据完整率、功率、稳态电压稳定性、温度、压力、泄漏监测、压力漂移
 - `idle / ramp / steady / cooldown` 等工况自动分段
 - 高优先级风险、证据、建议动作三元绑定
@@ -53,6 +56,8 @@ npm start
 ## 重要边界
 
 这是比赛原型，不把演示阈值当作企业安全标准，也不替代工程师签核。内置设备 profile 是演示模板，正式版必须替换为企业审批后的设备标准。本地历史只保存摘要，不保存原始测试行。没有配置模型服务时，报告初稿仍由本地结构化证据生成；配置远程模型时，建议使用企业内网或已审批的模型网关。
+
+企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。当前页面可以处理真实 CSV/TXT 结构，但尚未完成 XLSX 读取、多文件增量任务、飞书告警和企业批准的完整 Excel 报告链路。
 
 AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION.md)。
 企业应用边界和逐项标准审计见 [`docs/ENTERPRISE_READINESS.md`](docs/ENTERPRISE_READINESS.md)。

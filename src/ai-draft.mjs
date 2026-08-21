@@ -38,6 +38,8 @@ export function evidenceBundle(result, comparison = null) {
     generatedAt: result.generatedAt,
     narrative: result.narrative,
     source: result.source,
+    datasetType: result.datasetType || null,
+    dataset: result.dataset || null,
     quality: result.quality,
     schema: result.schema,
     metrics: result.metrics,
@@ -54,6 +56,40 @@ export function localEvidenceDraft(result) {
   const evidence = evidenceBundle(result);
   const status = evidence.verdict === 'PASS' ? '通过' : evidence.verdict === 'WARN' ? '需复核' : '未通过';
   const priority = evidence.issues.filter((item) => item.severity === 'critical' || item.severity === 'warn');
+  if (result.datasetType === 'vehicle') {
+    const dataset = evidence.dataset;
+    return [
+      '# 自动报告初稿（结构化证据）', '',
+      '## 结论',
+      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      '', '## 关键证据',
+      `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
+      `- 性能统计：${dataset.performancePoints.length} 个目标电流段；目标电流 ${dataset.targetCurrents.length ? dataset.targetCurrents.join('、') + ' A' : '未配置'}。`,
+      `- 绝缘统计：${dataset.insulation.validCount} 条有效记录，${dataset.insulation.points.length} 个 10 分钟窗口；过滤 ${dataset.insulation.invalidCount} 条无效码。`,
+      `- 数据边界：${evidence.compliance.status}；${evidence.workflow.nextAction}`,
+      '', '## 优先动作',
+      ...(priority.length ? priority.map((item, index) => `${index + 1}. **${item.title}**：${item.evidence}；${item.recommendation}`) : ['1. 进入企业规则确认和工程师签核。']),
+      '', '## 数据边界',
+      '- 本草稿只引用结构化证据，不生成未提供的故障原因、阈值或符合性结论。'
+    ].join('\n');
+  }
+  if (result.datasetType === 'stack') {
+    const dataset = evidence.dataset;
+    return [
+      '# 自动报告初稿（结构化证据）', '',
+      '## 结论',
+      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      '', '## 关键证据',
+      `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
+      `- 单片通道：导出 ${dataset.cellChannelCount} 个，片数参数最大值 ${dataset.configuredCellCount || '未提供'}。`,
+      `- 一致性摘要：平均单片电压 ${dataset.metrics.averageCellVoltageV?.toFixed(3) ?? '—'} V，最大极差 ${dataset.metrics.cellSpreadMaxV?.toFixed(3) ?? '—'} V。`,
+      `- 数据边界：${evidence.compliance.status}；${evidence.workflow.nextAction}`,
+      '', '## 优先动作',
+      ...(priority.length ? priority.map((item, index) => `${index + 1}. **${item.title}**：${item.evidence}；${item.recommendation}`) : ['1. 补充目标工况设定表并进入工程师签核。']),
+      '', '## 数据边界',
+      '- 本草稿只引用结构化证据，不生成未提供的故障原因、阈值或符合性结论。'
+    ].join('\n');
+  }
   const mappingNote = evidence.schema ? `${evidence.schema.mappedCount}/${evidence.schema.fieldCount} 个字段已映射；${Object.values(evidence.schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` : '字段映射信息不可用';
   return [
     '# 自动报告初稿（结构化证据）',

@@ -1,4 +1,5 @@
 import { comparisonMarkdown } from './compare.mjs';
+import { analyzeEnterpriseRows } from './enterprise-adapters.mjs';
 
 export const DEFAULT_CONFIG = Object.freeze({
   maxTemperatureC: 80,
@@ -44,7 +45,7 @@ const std = (values) => {
   return Math.sqrt(mean(values.map((value) => (value - average) ** 2)));
 };
 
-const parseCSVLine = (line) => {
+const parseCSVLine = (line, delimiter = ',') => {
   const values = [];
   let value = '';
   let quoted = false;
@@ -52,7 +53,7 @@ const parseCSVLine = (line) => {
     const char = line[index];
     if (char === '"' && line[index + 1] === '"' && quoted) { value += '"'; index += 1; }
     else if (char === '"') quoted = !quoted;
-    else if (char === ',' && !quoted) { values.push(value); value = ''; }
+    else if (char === delimiter && !quoted) { values.push(value); value = ''; }
     else value += char;
   }
   values.push(value);
@@ -62,9 +63,10 @@ const parseCSVLine = (line) => {
 export function parseCSV(text) {
   const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return [];
-  const headers = parseCSVLine(lines[0]).map((header) => header.trim());
+  const delimiter = (lines[0].match(/\t/g) || []).length > (lines[0].match(/,/g) || []).length ? '\t' : ',';
+  const headers = parseCSVLine(lines[0], delimiter).map((header) => header.trim());
   return lines.slice(1).map((line) => {
-    const values = parseCSVLine(line);
+    const values = parseCSVLine(line, delimiter);
     return headers.reduce((row, header, index) => {
       row[header] = (values[index] ?? '').trim();
       return row;
@@ -341,6 +343,8 @@ function workflowReadiness(config, quality, schema, compliance, verdict, uncerta
 
 export function analyzeRows(inputRows, suppliedConfig = {}) {
   const safeInput = Array.isArray(inputRows) ? inputRows : [];
+  const enterpriseResult = analyzeEnterpriseRows(safeInput, suppliedConfig);
+  if (enterpriseResult) return enterpriseResult;
   const { fieldMapping = {}, ...thresholdConfig } = suppliedConfig;
   const config = { ...DEFAULT_CONFIG, ...thresholdConfig };
   const schema = resolveSchema(safeInput, fieldMapping);
@@ -469,7 +473,20 @@ export function publicAnalysis(result) {
   return safeResult;
 }
 
+function enterpriseReportMarkdown(result, fileName, options = {}) {
+  const status = result.verdict === 'PASS' ? '通过' : result.verdict === 'WARN' ? '需复核' : '未通过';
+  const dataset = result.dataset;
+  const common = `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 数据集：${dataset.label}\n- 自动判定：**${status}（${result.verdict}）**\n- 生成时间：${result.generatedAt}\n- 结论边界：这是企业资料结构适配与工程复核前处理，不是安全认证或企业正式符合性结论。\n\n## 结论\n\n${result.narrative}\n\n## 数据质量与字段追溯\n\n- 记录数：${result.quality.rowCount}\n- 关键字段完整率：${result.quality.completenessPct.toFixed(1)}%\n- 重复时间戳：${result.quality.duplicateTimestampCount} 条；逆序：${result.quality.nonMonotonicCount} 次\n- 字段映射：${Object.entries(result.schema.mapping).filter(([, source]) => source).map(([field, source]) => `${field}←${source}`).join('；')}\n\n## 异常与动作\n\n${result.issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n`;
+  if (result.datasetType === 'vehicle') {
+    const points = dataset.performancePoints.length ? dataset.performancePoints.map((point) => `| ${point.targetCurrentA} | ${point.startS.toFixed(0)} | ${point.endS.toFixed(0)} | ${point.durationS.toFixed(0)} | ${point.averageCellVoltageV?.toFixed(3) ?? '—'} | ${point.averageNetPowerKw?.toFixed(3) ?? '—'} |`).join('\n') : '| — | — | — | — | — | 未配置目标电流 |';
+    const forecast = Object.values(dataset.insulation.forecast).map((item) => `- ${item.threshold} kΩ：趋势 ${item.trend.slopePerDay === null ? '不足以拟合' : `${item.trend.slopePerDay.toFixed(3)} kΩ/日`}；${item.forecast?.status === 'forecast' ? `预计 ${item.forecast.days.toFixed(1)} 日触及` : item.forecast?.status === 'already_below' ? '当前已有点低于该线' : '未形成下降预测'}`).join('\n');
+    return `${common}\n## 车辆目标电流段统计\n\n- 目标电流：${dataset.targetCurrents.length ? dataset.targetCurrents.join('、') + ' A' : '未配置'}\n- 允许波动：±${dataset.targetToleranceA} A；最短持续时间：${dataset.minimumDurationS} s\n\n| 目标电流 A | 起点 s | 终点 s | 持续 s | 平均单体电压 V | 平均净功率 kW |\n|---:|---:|---:|---:|---:|---:|\n${points}\n\n## 绝缘阻值统计\n\n- 有效记录：${dataset.insulation.validCount}；过滤记录：${dataset.insulation.invalidCount}\n- 10 分钟窗口：${dataset.insulation.points.length} 个\n${forecast}\n\n## 测试流程门控\n\n- 状态：${result.workflow.status}\n- 下一步：${result.workflow.nextAction}\n${result.workflow.steps.map((step) => `- ${step.status.toUpperCase()}｜${step.label}：${step.evidence}`).join('\n')}\n${options.aiDraft?.draft ? `\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n` : ''}`;
+  }
+  return `${common}\n## 电堆一致性摘要\n\n- 导出单片通道：${dataset.cellChannelCount}\n- 片数参数最大值：${dataset.configuredCellCount || '未提供'}\n- 平均电流：${dataset.metrics.averageCurrentA?.toFixed(3) ?? '—'} A\n- 平均电压：${dataset.metrics.averageVoltageV?.toFixed(3) ?? '—'} V\n- 峰值功率：${dataset.metrics.peakPowerKw?.toFixed(3) ?? '—'} kW\n- 平均单片电压：${dataset.metrics.averageCellVoltageV?.toFixed(3) ?? '—'} V\n- 最大单片电压极差：${dataset.metrics.cellSpreadMaxV?.toFixed(3) ?? '—'} V\n- 单片电压总体标准差：${dataset.metrics.cellValueStdV?.toFixed(4) ?? '—'} V\n\n## 测试流程门控\n\n- 状态：${result.workflow.status}\n- 下一步：${result.workflow.nextAction}\n${result.workflow.steps.map((step) => `- ${step.status.toUpperCase()}｜${step.label}：${step.evidence}`).join('\n')}\n${options.aiDraft?.draft ? `\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n` : ''}`;
+}
+
 export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) {
+  if (result.datasetType) return enterpriseReportMarkdown(result, fileName, options);
   const { metrics, quality, schema, issues, phases, verdict, config, narrative } = result;
   const status = verdict === 'PASS' ? '通过' : verdict === 'WARN' ? '需复核' : '未通过';
   const mappings = Object.entries(schema.mapping).map(([field, source]) => `${field}←${source}`).join('；');

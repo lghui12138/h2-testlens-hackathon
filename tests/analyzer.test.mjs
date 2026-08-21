@@ -319,3 +319,37 @@ test('uncertainty model is required only when the approved profile declares it',
   assert.ok(ready.uncertainty.metrics.energyConsumedWh > 0);
   assert.ok(ready.workflow.steps.some((step) => step.id === 'uncertainty' && step.status === 'ready'));
 });
+
+test('recognizes the enterprise vehicle contract and computes target-current and insulation summaries', () => {
+  const rows = parseCSV([
+    'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours',
+    '2026-07-07 18:20:52,8,95,320,30,0.61,3,0.68,8,12,480,1',
+    '2026-07-07 18:23:52,4,95,320,31,0.60,3,0.67,9,13,340,1',
+    '2026-07-07 18:24:52,4,95,320,31,0.60,3,0.67,9,13,240,1',
+    '2026-07-07 18:25:52,8,0,0,0,0,0,0,0,0,65535,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, { vehicleTargets: [95], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 180 });
+  assert.equal(result.datasetType, 'vehicle');
+  assert.equal(result.schema.mapping.isolation_kohm, 'FC_VehicleIsolationR');
+  assert.equal(result.dataset.performancePoints.length, 1);
+  assert.equal(result.dataset.insulation.points.length, 2);
+  assert.ok(result.dataset.insulation.invalidCount >= 1);
+  assert.equal('rows' in publicAnalysis(result), false);
+  assert.match(reportMarkdown(result, 'vehicle.csv'), /目标电流段统计/);
+});
+
+test('recognizes the enterprise stack contract, supports tab-delimited Chinese headers, and fails closed on timestamp resolution', () => {
+  const rows = parseCSV([
+    '时间\t电堆电压\t电堆电流\t电堆功率\t平均电压\tCELL1\tCELL2',
+    '23:59:58\t1.40\t10\t0.014\t0.70\t0.69\t0.71',
+    '23:59:59\t1.39\t10\t0.014\t0.695\t0.68\t0.71',
+    '00:00:01\t1.38\t10\t0.014\t0.69\t0.67\t0.71'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.dataset.cellChannelCount, 2);
+  assert.equal(result.schema.mapping.current_a, '电堆电流');
+  assert.equal(result.metrics.durationS, 3);
+  assert.equal(result.quality.duplicateTimestampCount, 0);
+  assert.match(result.narrative, /单片电压一致性/);
+});

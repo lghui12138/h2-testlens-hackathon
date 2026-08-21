@@ -2,13 +2,13 @@
 
 ## Delivered
 
-H₂ TestLens v3.1.0 is a runnable T02 prototype at the project root. It contains a local static server, public Sites production surface, browser UI, fail-closed analyzer, automatic enterprise-style field mapping and unit conversion, browser-computed CSV SHA-256 provenance, validated current-session enterprise profile/field-mapping JSON import, a profile audit CLI, visible canonical/raw mapping evidence table, official standards alignment ledger and compliance gate, test-plan/acquisition/pre-check/environment/uncertainty/raw-reference/instrument-accuracy metadata, required test-phase coverage, configurable performance metrics and required measurement gates, optional enterprise-provided first-order RSS uncertainty propagation, device profiles with session custom mode, local summary history, current-vs-baseline batch comparison, timestamped peak evidence, structured evidence-based report drafts, guarded adapter with metadata minimization, offline grounding evaluation, package-aware local analyze/compare APIs, explicit mapping-miss warnings, invalid-package HTTP 422 boundary, report/JSON exports, submission brief/readiness check, reproducible integrity-checked submission zip/checksum, three sample CSVs, automated tests, requirement spec, implementation plan, test plan, manifest, roadmap, and demo script.
+H₂ TestLens v3.2.0 is a runnable T02 prototype at the project root. It contains a local static server, public GitHub Pages surface, browser UI, fail-closed analyzer, enterprise adapters for vehicle `FC_*` CSV, Chinese stack CSV and GB18030 tab-delimited TXT, configurable vehicle target-current/insulation analysis, stack cell-channel consistency checks, browser-computed SHA-256 provenance, validated current-session enterprise profile/field-mapping JSON import, a profile audit CLI, visible canonical/raw mapping evidence table, official standards alignment ledger and compliance gate, test-plan/acquisition/pre-check/environment/uncertainty/raw-reference/instrument-accuracy metadata, required test-phase coverage, configurable performance metrics and required measurement gates, optional enterprise-provided first-order RSS uncertainty propagation, device profiles with session custom mode, local summary history, current-vs-baseline batch comparison, timestamped peak evidence, structured evidence-based report drafts, guarded adapter with metadata minimization, offline grounding evaluation, package-aware local analyze/compare APIs, explicit mapping-miss warnings, invalid-package HTTP 422 boundary, report/JSON exports, submission brief/readiness check, reproducible integrity-checked submission zip/checksum, three sample CSVs, automated tests, requirement spec, implementation plan, test plan, manifest, roadmap, and demo script.
 
 The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pages publishes `https://lghui.top/h2-testlens-hackathon/` through a green Actions workflow. The Pages surface is public and does not require ChatGPT, but it deliberately does not claim to provide ordinary user registration until an external identity provider is configured and tested.
 
 ## Verification evidence
 
-- `npm test`: 23 passed, 0 failed.
+- `npm test`: 25 passed, 0 failed.
 - `npm run smoke:api`: loopback `/api/analyze` returned `FAIL` with report and no rows; `/api/compare` returned `PASS → FAIL`, report present, and no rows in either public analysis.
 - `npm run eval:ai`: 4/4 grounding fixtures passed.
 - `npm run check:submission`: 41 checks passed, 0 failed.
@@ -21,11 +21,11 @@ The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pag
 
 ## What works now
 
-The demo sample is parsed into 25 records and analyzed into a `FAIL` verdict because pressure and leak-monitoring values exceed the default demo thresholds. Raising thresholds and re-running produces a `WARN` verdict. The report button generates a structured evidence draft without raw rows; a configured enterprise model endpoint can replace only the drafting step.
+The demo sample is parsed into 25 records and analyzed into a `FAIL` verdict because pressure and leak-monitoring values exceed the default demo thresholds. Raising thresholds and re-running produces a `WARN` verdict. The downloaded T02 materials were independently replayed from the local Downloads directory: vehicle CSVs are recognized as the 46-field vehicle contract; the 127-column stack sample is recognized and its repeated minute-level timestamps are blocked from formal time-series conclusions; the 422-column GB18030 TXT is recognized as a stack time series. The report button generates a structured evidence draft without raw rows; a configured enterprise model endpoint can replace only the drafting step.
 
 ## Residual risks
 
-The input schema and thresholds are illustrative; no enterprise dataset or formal safety standard was supplied in this turn. The default draft is deterministic; the remote model adapter is implemented but not evaluated against an enterprise gateway. The Sites production URL is public, but public availability is not enterprise profile approval. Before submission, replace the sample schema with the enterprise data package, confirm units, and run a human acceptance pass on the target machine.
+The enterprise structures are connected, but the approved thresholds, instrument precision, uncertainty budgets, XLSX ingestion, multi-file incrementals, Feishu alerts, full Excel output, and enterprise identity/audit services are not complete. The default draft is deterministic; the remote model adapter is implemented but not evaluated against an enterprise gateway. The GitHub Pages URL is public, but public availability is not enterprise profile approval. Before submission, confirm units and rules with the enterprise, then run a human acceptance pass on the target machine.
 
 ## Next safe continuation
 

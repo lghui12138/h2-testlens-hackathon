@@ -18,7 +18,9 @@ const mime = {
   '.json': 'application/json; charset=utf-8'
 };
 
-const readBody = async (req, limit = 1_500_000) => {
+// Enterprise CSV/stack samples are several MB; keep a bounded request size while
+// allowing the vehicle and 127-column sample contracts through the local API.
+const readBody = async (req, limit = 64_000_000) => {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
