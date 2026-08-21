@@ -1,0 +1,34 @@
+{
+  "name": "h2-testlens",
+  "version": "2.3.0",
+  "private": true,
+  "type": "module",
+  "description": "氢能设备测试数据分析与自动报告演示作品",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "start:site": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "test": "node --test",
+    "eval:ai": "node scripts/ai-eval.mjs",
+    "check:submission": "node scripts/submission-check.mjs",
+    "package:submission": "node scripts/package-submission.mjs",
+    "smoke:api": "node scripts/api-smoke.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@openai/sites-vite-plugin": "0.1.0",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "typescript": "5.9.3",
+    "vinext": "1.0.0-beta.2",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  }
+}

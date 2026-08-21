@@ -1,0 +1,29 @@
+change:
+  id: h2-testlens-v2-3
+  mode: full
+  intent: "Create a local-first hydrogen equipment test-data analysis and auto-report prototype for hackathon track T02."
+surfaces:
+  user: [csv_upload, dashboard, trend_chart, issue_list, compliance_metadata, batch_comparison, local_history, ai_report_draft, report_download]
+  system_interface: [local_static_server, analysis_api, ai_draft_endpoint, browser_blob_download]
+  information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, threshold_config, verdict_enum, comparison_evidence, history_summary]
+  operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc]
+source_of_truth:
+  analyzer: src/analyzer.mjs
+  ai_adapter: src/ai-draft.mjs
+  input_schema: README.md
+constraints:
+  - "Demo thresholds are configurable and must not be presented as enterprise safety standards."
+  - "Human engineering sign-off remains required."
+  - "No external service or credential is required for the prototype."
+  - "Remote AI is optional; only structured evidence is sent and API keys remain server-side."
+  - "Local history stores summaries only; raw test rows are excluded and a clear action is provided."
+  - "Remote AI output is fail-closed on verdict conflict, missing evidence, or oversized output."
+  - "Profile package input is fail-closed on invalid IDs, thresholds, unknown fields, or malformed mappings."
+  - "An explicit mapping miss is surfaced as MAPPING_OVERRIDE_MISSING even when a generic alias fallback succeeds."
+evidence:
+  automated: [tests/analyzer.test.mjs, scripts/ai-eval.mjs, scripts/submission-check.mjs]
+  api_smoke: [/api/ai-draft]
+  manual: [docs/TEST_PLAN.md]
+residual_risks:
+  - "Generic aliases, common conversions, and demo profiles are present, but the organizer's approved field dictionary and device standards are not yet connected."
+  - "The default mode is deterministic local evidence synthesis; a real model gateway still needs enterprise approval and evaluation."

@@ -1,0 +1,9 @@
+{
+  "query": "Confirm official competition workflow and standards relevant to T02 hydrogen equipment test-data analysis and automatic reporting",
+  "mode": "standard",
+  "retrieved_at": "2026-08-21",
+  "scope": ["public competition information", "electrolyzer safety/performance testing", "fuel-cell safety/performance testing", "laboratory/report traceability", "AI governance"],
+  "out_of_scope": ["purchasing full copyrighted standards", "declaring enterprise compliance without an approved profile", "using synthetic thresholds as safety limits"],
+  "source_policy": "Prefer official ISO, IEC, and China National Standards Public Service Platform pages; user announcement is retained as an input but not treated as an official rules page.",
+  "search_notes": "Exact official event data package was not located in public search results; the supplied announcement remains the competition input until organizer materials are provided."
+}

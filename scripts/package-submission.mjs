@@ -1,0 +1,22 @@
+import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const exec = promisify(execFile);
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+await exec('npm', ['run', 'check:submission'], { cwd: root, maxBuffer: 3_000_000 });
+const dist = join(root, 'dist');
+await mkdir(dist, { recursive: true });
+const archive = join(dist, 'h2-testlens-submission-v2.3.zip');
+await exec('zip', ['-qr', archive, 'README.md', 'ROADMAP.md', 'package.json', 'src', 'scripts', 'docs', 'sample-data', 'config', '.research'], { cwd: root, maxBuffer: 3_000_000 });
+await exec('unzip', ['-t', archive], { cwd: root, maxBuffer: 3_000_000 });
+const listing = (await exec('unzip', ['-l', archive], { cwd: root, maxBuffer: 3_000_000 })).stdout;
+const requiredEntries = ['README.md', 'docs/SUBMISSION_BRIEF.md', 'docs/STANDARDS_ALIGNMENT.md', 'docs/API.md', 'docs/AI_EVAL.md', 'config/enterprise-profile.example.json', 'src/analyzer.mjs', 'scripts/ai-eval.mjs', 'scripts/api-smoke.mjs', '.research/ignite_t02_standards_20260821/claims.jsonl'];
+const missingEntries = requiredEntries.filter((entry) => !listing.includes(entry));
+if (missingEntries.length) throw new Error(`submission archive missing: ${missingEntries.join(', ')}`);
+const archiveStat = await stat(archive);
+const checksum = (await exec('shasum', ['-a', '256', archive], { cwd: root })).stdout.trim();
+await writeFile(`${archive}.sha256`, `${checksum}\n`, 'utf8');
+console.log(JSON.stringify({ archive, checksumFile: `${archive}.sha256`, sha256: checksum.split(' ')[0], bytes: archiveStat.size, archiveIntegrity: 'passed', requiredEntries: requiredEntries.length, readiness: 'passed-before-packaging' }, null, 2));

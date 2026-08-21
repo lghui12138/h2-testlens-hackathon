@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "h2-testlens.profile.v1",
+  "organization": "示例企业（请替换）",
+  "fieldMapping": {
+    "timestamp_s": "时间(ms)",
+    "phase": "工况",
+    "current_a": "电流(mA)",
+    "voltage_v": "电压(mV)",
+    "temperature_c": "温度(°C)",
+    "pressure_bar": "压力(kPa)",
+    "flow_slpm": "流量",
+    "leak_ppm": "泄漏(ppb)"
+  },
+  "profiles": [
+    {
+      "id": "enterprise-electrolyzer-example",
+      "name": "企业电解槽 · 示例配置",
+      "source": "示例企业当前会话配置（未审批）",
+      "description": "用于验证企业字段映射和阈值导入；不代表正式安全标准。",
+      "approvalStatus": "example_unapproved",
+      "applicationScope": "PEM 水电解制氢设备示例",
+      "intendedUse": "验证字段映射和报告链路，不作符合性判定",
+      "methodId": "GB/T 45541-2025",
+      "revision": "2025",
+      "standardRefs": [
+        { "id": "GB/T 45541-2025", "title": "PEM电解槽性能测试方法", "uri": "https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB", "status": "current" },
+        { "id": "GB/T 29729-2022", "title": "氢系统安全的基本要求", "uri": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9", "status": "current" },
+        { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published" }
+      ],
+      "requiredMetadata": ["testPurpose", "instrumentIds", "calibrationRefs", "operator", "formulaRefs", "signoff"],
+      "thresholds": {
+        "maxTemperatureC": 80,
+        "maxPressureBar": 30,
+        "maxLeakPpm": 10,
+        "maxVoltageStdV": 0.12,
+        "maxPressureDriftBarPerMin": 1.2
+      }
+    }
+  ]
+}
