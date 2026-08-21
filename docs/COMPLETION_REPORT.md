@@ -2,7 +2,7 @@
 
 ## Delivered
 
-H₂ TestLens v2.6.0 is a runnable T02 prototype at the project root. It contains a local static server, public Sites production surface, browser UI, fail-closed analyzer, automatic enterprise-style field mapping and unit conversion, validated current-session enterprise profile/field-mapping JSON import, visible canonical/raw mapping evidence table, official standards alignment ledger and compliance gate, seven-step test workflow readiness checklist, test-plan/acquisition/pre-check/environment/uncertainty/raw-reference metadata, configurable performance metrics and required measurement gates, device profiles with session custom mode, local summary history, current-vs-baseline batch comparison, timestamped peak evidence, guarded evidence-grounded AI draft adapter with metadata minimization, offline AI grounding evaluation, package-aware local analyze/compare APIs, explicit mapping-miss warnings, invalid-package HTTP 422 boundary, AI-inclusive Markdown/JSON exports, submission brief/readiness check, reproducible integrity-checked submission zip/checksum, three sample CSVs, automated tests, requirement spec, implementation plan, test plan, manifest, roadmap, and 3-minute demo script.
+H₂ TestLens v2.6.1 is a runnable T02 prototype at the project root. It contains a local static server, public Sites production surface, browser UI, fail-closed analyzer, automatic enterprise-style field mapping and unit conversion, validated current-session enterprise profile/field-mapping JSON import, visible canonical/raw mapping evidence table, official standards alignment ledger and compliance gate, seven-step test workflow readiness checklist, test-plan/acquisition/pre-check/environment/uncertainty/raw-reference metadata, configurable performance metrics and required measurement gates, device profiles with session custom mode, local summary history, current-vs-baseline batch comparison, timestamped peak evidence, guarded evidence-grounded AI draft adapter with metadata minimization, offline AI grounding evaluation, package-aware local analyze/compare APIs, explicit mapping-miss warnings, invalid-package HTTP 422 boundary, AI-inclusive Markdown/JSON exports, submission brief/readiness check, reproducible integrity-checked submission zip/checksum, three sample CSVs, automated tests, requirement spec, implementation plan, test plan, manifest, roadmap, and 3-minute demo script.
 
 ## Verification evidence
 
@@ -10,7 +10,7 @@ H₂ TestLens v2.6.0 is a runnable T02 prototype at the project root. It contain
 - `npm run smoke:api`: loopback `/api/analyze` returned `FAIL` with report and no rows; `/api/compare` returned `PASS → FAIL`, report present, and no rows in either public analysis.
 - `npm run eval:ai`: 4/4 grounding fixtures passed.
 - `npm run check:submission`: submission readiness suite passed.
-- `npm run package:submission`: derives the archive name from `package.json`, then generates a non-empty `dist/h2-testlens-submission-v2.6.0.zip` and matching `.sha256` after readiness and zip integrity/entry checks pass.
+- `npm run package:submission`: derives the archive name from `package.json`, then generates a non-empty `dist/h2-testlens-submission-v2.6.1.zip` and matching `.sha256` after readiness and zip integrity/entry checks pass.
 - `node --check server.mjs && node --check src/app.mjs && node --check src/analyzer.mjs`: passed.
 - `curl http://127.0.0.1:4173/`: returned the product HTML and expected controls.
 - `curl http://127.0.0.1:4173/sample-data/test_run_001.csv`: returned the sample CSV.
