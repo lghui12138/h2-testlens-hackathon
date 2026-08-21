@@ -28,6 +28,8 @@
         { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published" }
       ],
       "requiredMetadata": ["testPurpose", "testPlanRef", "acquisitionPlan", "preCheckRecord", "instrumentIds", "calibrationRefs", "environment", "operator", "formulaRefs", "uncertaintyPolicy", "rawDataRef", "signoff"],
+      "requiredMeasurements": ["flow_slpm", "hydrogen_purity_pct"],
+      "acceptanceCriteria": {},
       "thresholds": {
         "maxTemperatureC": 80,
         "maxPressureBar": 30,

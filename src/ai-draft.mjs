@@ -67,6 +67,7 @@ export function localEvidenceDraft(result) {
     ...(evidence.comparison ? [`- 批次变化：${evidence.comparison.verdictTransition}；${evidence.comparison.summary}`] : []),
     `- 稳态窗口：${evidence.metrics.steadyWindow}，${evidence.metrics.steadySampleCount} 条记录；稳态电压标准差 ${evidence.metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V。`,
     `- 峰值指标：温度 ${evidence.metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C（t=${evidence.metrics.peakTemperatureAtS?.join('、') || '—'} s），压力 ${evidence.metrics.peakPressureBar?.toFixed(1) ?? '—'} bar（t=${evidence.metrics.peakPressureAtS?.join('、') || '—'} s），泄漏监测 ${evidence.metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm（t=${evidence.metrics.peakLeakAtS?.join('、') || '—'} s）。`,
+    `- 性能指标：产氢量 ${evidence.metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL，电能 ${evidence.metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh，单位制氢电耗 ${evidence.metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³，最低纯度 ${evidence.metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%。`,
     '',
     '## 优先动作',
     ...(priority.length ? priority.map((item, index) => `${index + 1}. **${item.title}**：${item.evidence}；${item.recommendation}`) : ['1. 未发现当前规则下的高优先级异常，进入人工签核。']),

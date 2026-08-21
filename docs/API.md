@@ -15,7 +15,7 @@ Request JSON:
 }
 ```
 
-The response contains structured `quality`, `schema`, `metrics`, `issues`, `verdict`, and optional `reportMarkdown`. Peak temperature/pressure/leak metrics include `*AtS` timestamp arrays, and threshold issues include time references when available. Raw `rows` are deliberately removed from the API response. The endpoint is for local/approved internal integration only; it is not an authenticated public service.
+The response contains structured `quality`, `schema`, `metrics`, `compliance`, `workflow`, `issues`, `verdict`, and optional `reportMarkdown`. Peak temperature/pressure/leak metrics include `*AtS` timestamp arrays; performance metrics include `hydrogenVolumeNl`, `energyConsumedWh`, `specificEnergyKWhPerNm3`, and `minimumHydrogenPurityPct`. Profile `requiredMeasurements` can fail closed when a required measurement is absent, and threshold/acceptance issues include time references when available. Raw `rows` are deliberately removed from the API response. The endpoint is for local/approved internal integration only; it is not an authenticated public service.
 
 If an imported enterprise field mapping does not match the uploaded headers, the analyzer may use a generic alias fallback but emits `MAPPING_OVERRIDE_MISSING` as a warning; the mismatch is never silent.
 

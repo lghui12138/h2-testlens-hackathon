@@ -1,6 +1,6 @@
 {
   "name": "h2-testlens",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "private": true,
   "type": "module",
   "description": "氢能设备测试数据分析与自动报告演示作品",

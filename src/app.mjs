@@ -36,6 +36,8 @@ function configFromUI() {
     revision: profile?.revision ?? null,
     standardRefs: profile?.standardRefs ?? [],
     requiredMetadata: profile?.requiredMetadata ?? [],
+    requiredMeasurements: profile?.requiredMeasurements ?? [],
+    acceptanceCriteria: profile?.acceptanceCriteria ?? {},
     fieldMapping: state.fieldMapping,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
@@ -94,6 +96,9 @@ function renderMetrics(result) {
     ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '当前规则下的首轮分流'],
     ['数据完整率', `${fmt(metrics.completenessPct)}%`, metrics.completenessPct >= 98 ? 'good' : 'warn', `${metrics.sampleCount} 条记录`],
     ['峰值功率', `${fmt(metrics.peakPowerW)} W`, 'neutral', '电流 × 电压'],
+    ['产氢量', `${fmt(metrics.hydrogenVolumeNl, 3)} NL`, 'neutral', '流量梯形积分'],
+    ['单位制氢电耗', `${fmt(metrics.specificEnergyKWhPerNm3, 3)} kWh/Nm³`, 'neutral', '电能 ÷ 产氢量'],
+    ['最低氢气纯度', `${fmt(metrics.minimumHydrogenPurityPct, 3)}%`, metrics.minimumHydrogenPurityPct === null ? 'warn' : 'neutral', metrics.minimumHydrogenPurityPct === null ? '未提供纯度字段' : '纯度最低值'],
     ['稳态电压波动', `${fmt(metrics.steadyVoltageStdV, 3)} V`, metrics.steadyVoltageStdV <= result.config.maxVoltageStdV ? 'good' : 'warn', '标准差'],
     ['峰值温度', `${fmt(metrics.peakTemperatureC)} °C`, metrics.peakTemperatureC <= result.config.maxTemperatureC ? 'good' : 'danger', `阈值 ${result.config.maxTemperatureC} °C`],
     ['峰值压力', `${fmt(metrics.peakPressureBar)} bar`, metrics.peakPressureBar <= result.config.maxPressureBar ? 'good' : 'danger', `阈值 ${result.config.maxPressureBar} bar`],
@@ -194,7 +199,8 @@ function render(result) {
   $('#source-count').textContent = `${result.metrics.sampleCount} 条记录 · ${fmt(result.metrics.durationS, 0)} 秒`;
   const convertedUnits = Object.values(result.schema.conversions).filter((item) => item.mode !== 'identity').length;
   const phaseFallback = result.schema.missingOptionalHeaders.includes('phase') ? ' · 工况字段缺失，使用活动窗口' : '';
-  $('#schema-notice').textContent = `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}`;
+  const purityNotice = result.schema.missingOptionalHeaders.includes('hydrogen_purity_pct') ? ' · 纯度字段未提供' : '';
+  $('#schema-notice').textContent = `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}`;
   $('#verdict-chip').textContent = verdictLabel(result.verdict);
   $('#verdict-chip').className = `verdict-chip ${result.verdict.toLowerCase()}`;
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');

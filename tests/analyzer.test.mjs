@@ -20,6 +20,14 @@ test('parses the demo CSV into records', () => {
   assert.equal(rows.at(-1).timestamp_s, '120');
 });
 
+test('integrates hydrogen volume and electrical energy from timestamped flow data', () => {
+  const result = analyzeRows(parseCSV(baselineCsv));
+  assert.ok(result.metrics.hydrogenVolumeNl > 0);
+  assert.ok(result.metrics.energyConsumedWh > 0);
+  assert.ok(result.metrics.specificEnergyKWhPerNm3 > 0);
+  assert.equal(result.metrics.minimumHydrogenPurityPct, null);
+});
+
 test('detects pressure and leak risks and preserves traceable evidence', () => {
   const result = analyzeRows(parseCSV(csv));
   assert.equal(result.verdict, 'FAIL');
@@ -47,6 +55,7 @@ test('report contains verdict, metrics, and recommendations', () => {
   assert.match(reportMarkdown(analyzeRows(parseCSV(csv)), 'ai-demo.csv', { aiDraft: { mode: 'local-evidence', fallbackReason: 'no_endpoint_configured', draft: 'AI 草稿内容' } }), /AI 草稿内容/);
   assert.match(markdown, /测试流程完成度/);
   assert.match(markdown, /导入企业批准的 profile/);
+  assert.match(markdown, /性能测量摘要/);
 });
 
 test('fails closed on missing schema instead of returning a false pass', () => {
@@ -135,7 +144,7 @@ test('phase is optional and uses an explicit fallback window', () => {
   ].join('\n'));
   const result = analyzeRows(rows);
   assert.deepEqual(result.schema.missingHeaders, []);
-  assert.deepEqual(result.schema.missingOptionalHeaders, ['phase']);
+  assert.deepEqual(result.schema.missingOptionalHeaders, ['phase', 'hydrogen_purity_pct']);
   assert.match(result.metrics.steadyWindow, /活动窗口/);
   assert.ok(result.issues.some((item) => item.code === 'PHASE_OPTIONAL'));
 });
@@ -188,6 +197,8 @@ test('enterprise profile package validates, imports thresholds, and supplies fie
   assert.equal(imported.organization, '示例企业（请替换）');
   assert.equal(imported.profiles[0].thresholds.maxPressureBar, 30);
   assert.equal(imported.fieldMapping.pressure_bar, '压力(kPa)');
+  assert.deepEqual(imported.profiles[0].requiredMeasurements, ['flow_slpm', 'hydrogen_purity_pct']);
+  assert.deepEqual(imported.profiles[0].acceptanceCriteria, {});
   const legacy = analyzeRows(parseCSV([
     '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量,泄漏(ppb)',
     '0,稳态,1000,1800,30,100,3,1000',
@@ -259,4 +270,19 @@ test('approved profile plus complete provenance can reach human review readiness
   assert.equal(result.compliance.status, 'READY_FOR_HUMAN_REVIEW');
   assert.equal(result.workflow.status, 'READY_FOR_HUMAN_REVIEW');
   assert.equal(result.workflow.steps.every((step) => step.status === 'ready'), true);
+});
+
+test('required performance measurements fail closed when purity is absent', () => {
+  const result = analyzeRows(parseCSV(baselineCsv), {
+    profileId: 'approved-example',
+    profileName: 'Approved example',
+    approvalStatus: 'approved',
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/example' }],
+    methodId: 'GB/T 45541-2025',
+    revision: '2025',
+    requiredMeasurements: ['flow_slpm', 'hydrogen_purity_pct']
+  });
+  assert.equal(result.compliance.status, 'NOT_READY');
+  assert.deepEqual(result.compliance.missingMeasurements, ['hydrogen_purity_pct']);
+  assert.ok(result.issues.some((item) => item.code === 'PERFORMANCE_FIELD_MISSING'));
 });
