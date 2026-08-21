@@ -6,6 +6,7 @@ import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Hex } from './provenance.mjs';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
 import { parseDurabilityDocx } from './docx-workflow.mjs';
+import { durabilityAlertPayload, sendFeishuAlert } from './feishu-alerts.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null, durabilityReports: [] };
@@ -352,7 +353,16 @@ function renderEnterprisePanel(result) {
   if (result.datasetType === 'durability') {
     const points = dataset.points.map((point) => `<tr><td>${fmt(point.targetPowerKw, 1)}</td><td>${fmt(point.netPowerKw, 1)}</td><td>${fmt(point.averageCellVoltageMv, 0)}</td><td>${fmt(point.averageDeviationMv, 0)}</td><td>${fmt(point.voltageVariance, 0)}</td></tr>`).join('');
     const reports = dataset.reports.map((report) => `<span><b>${escapeHtml(report.metadata?.测试方案 || '耐久报告')}</b> ${escapeHtml(report.metadata?.测试结果 || '未标注')} · ${report.points.length} 个功率点</span>`).join('');
-    $('#enterprise-controls').innerHTML = `<label>离均差预警 mV（可选）<input id="durability-max-deviation" type="number" value="${dataset.rules.maxDeviationMv ?? ''}" placeholder="企业填写" step="1"></label><label>平均单体电压下限 mV（可选）<input id="durability-min-cell-voltage" type="number" value="${dataset.rules.minAverageCellVoltageMv ?? ''}" placeholder="企业填写" step="1"></label><span class="enterprise-note">未填写阈值时只保留原始报告结果，不新增判定。</span>`;
+    $('#enterprise-controls').innerHTML = `<label>离均差预警 mV（可选）<input id="durability-max-deviation" type="number" value="${dataset.rules.maxDeviationMv ?? ''}" placeholder="企业填写" step="1"></label><label>平均单体电压下限 mV（可选）<input id="durability-min-cell-voltage" type="number" value="${dataset.rules.minAverageCellVoltageMv ?? ''}" placeholder="企业填写" step="1"></label><label>飞书机器人 Webhook（可选）<input id="feishu-webhook" type="url" placeholder="企业批准后填写"></label><label>签名密钥（可选）<input id="feishu-secret" type="password" placeholder="仅当前会话"></label><button id="preview-feishu" class="quiet-button" type="button">预览飞书告警 JSON</button><button id="send-feishu" class="outline-button" type="button">确认发送飞书</button><span id="feishu-alert-status" class="enterprise-note">未发送；默认只生成预览。</span>`;
+    $('#preview-feishu').onclick = async () => {
+      const payload = durabilityAlertPayload(result, state.fileName);
+      try { await navigator.clipboard?.writeText(JSON.stringify(payload, null, 2)); $('#feishu-alert-status').textContent = '告警 JSON 已复制；尚未发送。'; } catch { $('#feishu-alert-status').textContent = '告警 JSON 已生成，但浏览器不允许自动复制。'; }
+    };
+    $('#send-feishu').onclick = async () => {
+      $('#feishu-alert-status').textContent = '发送中…';
+      const response = await sendFeishuAlert(result, { webhookUrl: $('#feishu-webhook').value, secret: $('#feishu-secret').value, fileName: state.fileName });
+      $('#feishu-alert-status').textContent = response.ok ? `已发送（HTTP ${response.status}）；仍需核对飞书群消息。` : response.mode === 'dry-run' ? '未填写 Webhook，保持 dry-run。' : `未发送：${response.reason || '飞书返回失败'}。`;
+    };
     $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.points.length}</b> 个功率点</span><span><b>${dataset.targetPowers.length}</b> 个目标功率</span><span><b>${dataset.rules.maxDeviationMv ?? '—'}</b> mV 离均差规则</span><span><b>${dataset.rules.minAverageCellVoltageMv ?? '—'}</b> mV 电压规则</span></div><div class="enterprise-forecast">${reports}</div>`;
     $('#enterprise-table').innerHTML = `<h3>耐久功率点统计</h3><table><thead><tr><th>目标功率 kW</th><th>净输出 kW</th><th>平均单体 mV</th><th>离均差 mV</th><th>电压方差</th></tr></thead><tbody>${points}</tbody></table>`;
     return;

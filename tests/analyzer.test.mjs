@@ -11,6 +11,7 @@ import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
 import { sha256Hex } from '../src/provenance.mjs';
 import * as SheetJS from 'xlsx';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
+import { durabilityAlertPayload, sendFeishuAlert } from '../src/feishu-alerts.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const csv = await readFile(join(here, '../sample-data/test_run_001.csv'), 'utf8');
@@ -486,4 +487,20 @@ test('analyzes durability power points and preserves the original report failure
   assert.ok(result.issues.some((item) => item.code === 'DURABILITY_DEVIATION_HIGH'));
   assert.ok(result.issues.some((item) => item.code === 'DURABILITY_CELL_VOLTAGE_LOW'));
   assert.match(reportMarkdown(result, 'durability.docx'), /耐久功率点统计/);
+});
+
+test('Feishu durability alert stays dry-run by default and sends only an approved webhook payload', async () => {
+  const result = { verdict: 'FAIL', dataset: { points: [{ targetPowerKw: 195 }], targetPowers: [195] }, issues: [{ severity: 'critical', title: '耐久异常', evidence: '离均差 55 mV' }], rows: [{ secret: 'raw-row-must-not-enter-alert' }] };
+  const payload = durabilityAlertPayload(result, 'durability.docx');
+  assert.equal(payload.msg_type, 'text');
+  assert.match(payload.content.text, /离均差 55 mV/);
+  assert.equal(payload.content.text.includes('raw-row-must-not-enter-alert'), false);
+  const dryRun = await sendFeishuAlert(result, {});
+  assert.equal(dryRun.mode, 'dry-run');
+  let request;
+  const sent = await sendFeishuAlert(result, { webhookUrl: 'https://open.feishu.cn/open-apis/bot/v2/hook/test', fetchImpl: async (_url, options) => { request = JSON.parse(options.body); return { ok: true, status: 200, text: async () => '{"code":0}' }; } });
+  assert.equal(sent.ok, true);
+  assert.equal(request.msg_type, 'text');
+  const rejected = await sendFeishuAlert(result, { webhookUrl: 'https://example.com/hook' });
+  assert.equal(rejected.reason, 'webhook_host_not_allowed');
 });

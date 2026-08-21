@@ -25,6 +25,7 @@ const requiredFiles = [
   'src/enterprise-adapters.mjs',
   'src/excel-workflow.mjs',
   'src/docx-workflow.mjs',
+  'src/feishu-alerts.mjs',
   'src/vendor/xlsx.full.min.js',
   'src/vendor/xlsx.LICENSE.txt',
   'src/vendor/mammoth.browser.min.js',

@@ -12,6 +12,7 @@ source_of_truth:
   enterprise_adapters: src/enterprise-adapters.mjs
   excel_workflow: src/excel-workflow.mjs
   docx_workflow: src/docx-workflow.mjs
+  feishu_alerts: src/feishu-alerts.mjs
   ai_adapter: src/ai-draft.mjs
   input_schema: README.md
 constraints:
