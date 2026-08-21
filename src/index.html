@@ -17,7 +17,7 @@
         <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
         <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
         <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
-        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain">导入测试 CSV / TXT</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
+        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,text/csv,text/plain">导入测试 CSV / TXT（可多选）</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
         <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
       </section>
 
@@ -49,7 +49,7 @@
             <h2>报告初稿</h2>
             <button id="generate-ai" class="ai-button">生成报告初稿</button>
             <div id="report-preview" class="report-preview"></div>
-            <div class="button-row"><button id="download-report" class="primary-button">下载 Markdown 报告</button><button id="download-json" class="icon-button" title="下载分析证据 JSON">JSON</button></div>
+            <div class="button-row"><button id="download-report" class="primary-button">下载 Markdown 报告</button><button id="download-xlsx" class="icon-button" title="下载 Excel 报告">XLSX</button><button id="download-json" class="icon-button" title="下载分析证据 JSON">JSON</button></div>
           </section>
           <section class="side-card">
             <div class="card-kicker">CONFIGURABLE RULES</div>
@@ -60,6 +60,8 @@
             <label class="profile-import">导入企业配置 JSON<input id="profile-file" type="file" accept="application/json,.json"></label>
             <button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button>
             <small id="profile-import-status" class="profile-import-status">当前使用内置演示配置</small>
+            <label class="profile-import">导入参数/目标工况 Excel<input id="parameter-file" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+            <small id="parameter-import-status" class="profile-import-status">需要“数据处理设定参数”和“目标工况设定”工作表</small>
             <details class="schema-details"><summary>查看字段映射证据</summary><div id="schema-table" class="schema-table"></div><div id="schema-warnings" class="schema-warnings"></div></details>
             <details class="metadata-details"><summary>填写测试元数据 / 签核字段</summary>
               <p class="metadata-intro">这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法、原始数据引用和人工签核；只在当前会话使用。</p>
@@ -123,6 +125,7 @@
     </main>
     <footer><span>H₂ TestLens · Hackathon prototype</span><span>原始数据留在本地浏览器 · 结果可追溯 · 人工签核保留</span></footer>
   </div>
+  <script src="./src/vendor/xlsx.full.min.js"></script>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>

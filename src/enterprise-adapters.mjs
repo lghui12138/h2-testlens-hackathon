@@ -314,6 +314,149 @@ function buildVehicle(rows, config) {
   };
 }
 
+const CONDITION_FIELD_BY_CODE = Object.freeze({
+  CURRENT: 'targetCurrentA',
+  H2_STOICH: 'h2Stoich',
+  H2_FLOW: 'h2Flow',
+  H2_IN_PRESS: 'h2InPressure',
+  H2_IN_TEMP: 'h2InTemp',
+  H2_DEWPOINT: 'h2Dewpoint',
+  AIR_STOICH: 'airStoich',
+  AIR_FLOW: 'airFlow',
+  AIR_IN_PRESS: 'airInPressure',
+  AIR_IN_TEMP: 'airInTemp',
+  AIR_DEWPOINT: 'airDewpoint',
+  COOLANT_IN_TEMP: 'coolantInTemp',
+  COOLANT_DT: 'coolantDt',
+  COOLANT_IN_PRESS: 'coolantInPressure'
+});
+
+function durationForSegment(start, end, sampleCount, samplePeriodS) {
+  if (Number.isFinite(samplePeriodS) && samplePeriodS > 0 && sampleCount >= 2) return { durationS: (sampleCount - 1) * samplePeriodS, source: 'configured_sample_period' };
+  return { durationS: start?.timestamp_s !== null && end?.timestamp_s !== null ? Math.max(0, end.timestamp_s - start.timestamp_s) : 0, source: 'timestamp' };
+}
+
+function targetForRule(rule, condition) {
+  if (rule.target !== null && rule.target !== undefined) return rule.target;
+  const key = CONDITION_FIELD_BY_CODE[rule.code];
+  return key ? condition[key] : null;
+}
+
+function ruleValue(row, rule) {
+  const value = row[rule.field];
+  return value === undefined ? null : value;
+}
+
+function evaluateStableRow(row, condition, rules) {
+  const missing = []; const exceeded = [];
+  for (const rule of rules.filter((item) => item.enabled)) {
+    const value = ruleValue(row, rule);
+    const target = targetForRule(rule, condition);
+    if (value === null || target === null || target === undefined) { missing.push(rule.code); continue; }
+    const lower = rule.lowerTolerance ?? 0;
+    const upper = rule.upperTolerance ?? 0;
+    if (value < target + lower || value > target + upper) exceeded.push({ code: rule.code, value, target, lower, upper });
+  }
+  return { ok: missing.length === 0 && exceeded.length === 0, parameterComplete: missing.length === 0, missing, exceeded };
+}
+
+function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
+  const conditions = parameterConfig?.targetConditions || [];
+  const rules = parameterConfig?.parameterRules || [];
+  if (!conditions.length) return { platforms: [], stableSegments: [], performancePoints: [] };
+  const currentRule = rules.find((rule) => rule.code === 'CURRENT');
+  const fallbackTolerance = Number(fallbackConfig.currentToleranceA ?? 1);
+  const samplePeriodS = Number(fallbackConfig.samplePeriodS);
+  const minPlatformS = Number(fallbackConfig.minimumPlatformS ?? 60);
+  const minStableS = Number(fallbackConfig.minimumStableS ?? 60);
+  const chooseCondition = (row) => {
+    const candidates = conditions.map((condition) => {
+      const tolerance = currentRule?.lowerTolerance !== null && currentRule?.lowerTolerance !== undefined && currentRule?.upperTolerance !== null && currentRule?.upperTolerance !== undefined
+        ? Math.max(Math.abs(currentRule.lowerTolerance), Math.abs(currentRule.upperTolerance))
+        : fallbackTolerance;
+      return { condition, distance: row.current_a === null ? Infinity : Math.abs(row.current_a - condition.targetCurrentA), tolerance };
+    }).filter((item) => item.distance <= item.tolerance).sort((a, b) => a.distance - b.distance);
+    return candidates[0] || null;
+  };
+  const platforms = []; let active = null;
+  const closePlatform = (endIndex) => {
+    if (!active) return;
+    const end = rows[endIndex - 1] || rows.at(-1); const sampleRows = rows.slice(active.startIndex, endIndex);
+    const duration = durationForSegment(active.start, end, sampleRows.length, samplePeriodS);
+    const condition = active.condition;
+    const status = duration.durationS >= minPlatformS ? 'candidate' : 'too_short';
+    const toleranceA = currentRule ? Math.max(Math.abs(currentRule.lowerTolerance ?? fallbackTolerance), Math.abs(currentRule.upperTolerance ?? fallbackTolerance)) : fallbackTolerance;
+    const values = (field) => sampleRows.map((row) => row[field]).filter((value) => value !== null);
+    platforms.push({
+      conditionId: condition.conditionId,
+      targetCurrentA: condition.targetCurrentA,
+      targetCurrentDensity: condition.targetCurrentDensity,
+      toleranceA,
+      startS: active.start.timestamp_s,
+      endS: end?.timestamp_s ?? null,
+      durationS: end?.timestamp_s !== null && active.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - active.start.timestamp_s) : 0,
+      effectiveDurationS: duration.durationS,
+      durationSource: duration.source,
+      sampleCount: sampleRows.length,
+      averageCurrentA: mean(values('current_a')),
+      averageCurrentDensity: mean(values('current_density_mAcm2')),
+      averageCellVoltageV: mean(values('avg_cell_voltage_v')),
+      averageNetPowerKw: mean(values('power_kw')),
+      status,
+      rows: sampleRows
+    });
+    active = null;
+  };
+  rows.forEach((row, index) => {
+    const match = chooseCondition(row);
+    if (!match) { closePlatform(index); return; }
+    if (!active || active.condition.conditionId !== match.condition.conditionId) { closePlatform(index); active = { condition: match.condition, start: row, startIndex: index }; }
+  });
+  closePlatform(rows.length);
+  const stableSegments = [];
+  for (const platform of platforms) {
+    let stable = null;
+    const closeStable = (endIndex) => {
+      if (!stable) return;
+      const end = platform.rows[endIndex - 1] || platform.rows.at(-1); const sampleRows = platform.rows.slice(stable.startIndex, endIndex);
+      const duration = durationForSegment(stable.start, end, sampleRows.length, samplePeriodS);
+      const values = (field) => sampleRows.map((row) => row[field]).filter((value) => value !== null);
+      stableSegments.push({
+        conditionId: platform.conditionId,
+        startS: stable.start.timestamp_s,
+        endS: end?.timestamp_s ?? null,
+        durationS: end?.timestamp_s !== null && stable.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - stable.start.timestamp_s) : 0,
+        effectiveDurationS: duration.durationS,
+        durationSource: duration.source,
+        sampleCount: sampleRows.length,
+        parameterComplete: stable.parameterComplete,
+        status: duration.durationS >= minStableS ? 'stable_candidate' : 'stable_too_short',
+        selected: false,
+        averageCurrentA: mean(values('current_a')),
+        averageCurrentDensity: mean(values('current_density_mAcm2')),
+        averageCellVoltageV: mean(values('avg_cell_voltage_v')),
+        averageNetPowerKw: mean(values('power_kw')),
+        missingParameters: stable.missing,
+        rows: sampleRows
+      });
+      stable = null;
+    };
+    platform.rows.forEach((row, index) => {
+      const evaluated = evaluateStableRow(row, platform, rules);
+      if (!evaluated.ok) { closeStable(index); return; }
+      if (!stable) stable = { start: row, startIndex: index, parameterComplete: evaluated.parameterComplete, missing: evaluated.missing };
+    });
+    closeStable(platform.rows.length);
+  }
+  for (const platform of platforms) {
+    const candidates = stableSegments.filter((segment) => segment.conditionId === platform.conditionId && segment.effectiveDurationS >= minStableS && segment.parameterComplete);
+    const selected = candidates.at(-1);
+    if (selected) selected.selected = true;
+  }
+  const performancePoints = stableSegments.filter((segment) => segment.selected).map((segment) => ({ ...segment, status: 'valid' }));
+  return { platforms: platforms.map(({ rows: _rows, ...platform }) => platform), stableSegments: stableSegments.map(({ rows: _rows, ...segment }) => segment), performancePoints };
+}
+
 function buildStack(rows, config) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const cellHeaders = headers.filter((header) => /^(单片电压\d+|CELL\d+)/i.test(String(header).trim()));
@@ -330,7 +473,8 @@ function buildStack(rows, config) {
     pressure_kpa: findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)', '循环水入堆压力（kPa）']),
     flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
     leak_ppm: findHeader(headers, ['柜内氢气浓度（ppm）', '氢气浓度', '测试区氢气浓度（ppm）']),
-    cell_count: findHeader(headers, ['片数'])
+    cell_count: findHeader(headers, ['片数']),
+    coolant_dt: findHeader(headers, ['冷却液温差', '循环水进出口温差', '冷却水温差'])
   };
   const required = ['timestamp_s', 'current_a', 'voltage_v'];
   const missing = required.filter((field) => !mapping[field]);
@@ -353,6 +497,7 @@ function buildStack(rows, config) {
       flow_slpm: num(row[mapping.flow_slpm]),
       leak_ppm: num(row[mapping.leak_ppm]),
       cell_count: num(row[mapping.cell_count]),
+      coolant_dt: num(row[mapping.coolant_dt]),
       cells
     };
   });
@@ -369,11 +514,15 @@ function buildStack(rows, config) {
     const values = Object.values(row.cells).filter((value) => value !== null);
     return values.length ? Math.max(...values) - Math.min(...values) : null;
   }).filter((value) => value !== null);
+  const parameterConfig = config.parameterConfig || null;
+  const parameterAnalysis = stackPlatforms(normalized, parameterConfig, config);
   const issues = [];
+  if (parameterConfig && !parameterConfig.ok) issues.push({ severity: 'critical', code: 'PARAMETER_WORKBOOK_INVALID', title: '参数工作簿校验未通过', evidence: parameterConfig.errors.join('；'), recommendation: '修正参数代码、单位、偏差和目标工况后再处理。' });
   if (missing.length) issues.push({ severity: 'critical', code: 'STACK_SCHEMA_MISSING', title: '电堆时序关键字段不完整', evidence: `缺少：${missing.join('、')}`, recommendation: '补充时间、电流、电压和单片电压通道后再进行平台/稳定性分析。' });
   if (configuredCellCount && configuredCellCount !== cellHeaders.length) issues.push({ severity: 'warn', code: 'CELL_CHANNEL_COUNT_MISMATCH', title: '单片数量与导出通道数不一致', evidence: `参数表片数 ${configuredCellCount}，导出单片通道 ${cellHeaders.length} 个；有效配置记录 ${rowsWithConfiguredCount} 条`, recommendation: '确认测试台导出列、片数参数和有效通道范围，不能静默截断。' });
   if (quality.duplicateTimestampCount) issues.push({ severity: 'warn', code: 'STACK_TIMESTAMP_RESOLUTION', title: '时间戳分辨率不足以支撑逐秒排序', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，当前时间列需要结合采样序号复核`, recommendation: '改用带秒/毫秒的原始时间列或补充采样周期参数。' });
-  if (!issues.length) issues.push({ severity: 'info', code: 'STACK_DATA_READY', title: '电堆时序数据已完成结构化分析', evidence: `${normalized.length} 条记录、${cellHeaders.length} 个单片通道已进入统计`, recommendation: '补充目标工况设定表后执行平台、稳定区间和符合性判定。' });
+  if (parameterConfig?.ok && !parameterAnalysis.performancePoints.length) issues.push({ severity: 'warn', code: 'STABLE_WINDOW_MISSING', title: '未形成满足参数的稳定区间', evidence: `已读取 ${parameterAnalysis.platforms.length} 个候选平台，但没有稳定区间达到最短稳定时间或参数完整条件`, recommendation: '检查目标工况、稳定判定参数、采样周期和原始时间分辨率。' });
+  if (!issues.length) issues.push({ severity: 'info', code: 'STACK_DATA_READY', title: '电堆时序数据已完成结构化分析', evidence: `${normalized.length} 条记录、${cellHeaders.length} 个单片通道已进入统计`, recommendation: '进入企业方法确认和工程师签核。' });
   const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : 'WARN';
   const dataset = {
     kind: 'stack',
@@ -382,6 +531,10 @@ function buildStack(rows, config) {
     cellChannelCount: cellHeaders.length,
     configuredCellCount,
     cellHeaders,
+    parameterConfig: parameterConfig ? { ok: parameterConfig.ok, parameterSheet: parameterConfig.parameterSheet, targetSheet: parameterConfig.targetSheet, errors: parameterConfig.errors, warnings: parameterConfig.warnings } : null,
+    platforms: parameterAnalysis.platforms,
+    stableSegments: parameterAnalysis.stableSegments,
+    performancePoints: parameterAnalysis.performancePoints,
     metrics: {
       averageCurrentA: mean(normalized.map((row) => row.current_a).filter((value) => value !== null)),
       averageVoltageV: mean(normalized.map((row) => row.voltage_v).filter((value) => value !== null)),
@@ -413,7 +566,7 @@ function buildStack(rows, config) {
     steadySampleCount: normalized.length
   };
   const schema = commonSchema({ ...mapping, ...Object.fromEntries(cellHeaders.map((header, index) => [`cell_${index + 1}_v`, header])) }, Object.keys(mapping).length + cellHeaders.length);
-  const workflowResult = workflow(dataset, quality, issues, false);
+  const workflowResult = workflow(dataset, quality, issues, Boolean(parameterConfig?.ok && parameterConfig.targetConditions?.length));
   return {
     dataset,
     datasetType: 'stack',
@@ -429,7 +582,7 @@ function buildStack(rows, config) {
     phases: [{ phase: '电堆时序', count: normalized.length, startS: 0, endS: metrics.durationS, durationS: metrics.durationS }],
     issues,
     verdict,
-    narrative: verdict === 'FAIL' ? '电堆时序数据关键字段不完整，已阻断后续统计。' : '已完成电堆时序字段映射、时间轴质量检查和单片电压一致性摘要；目标工况、稳定区间和正式异常阈值仍需参数表与工程师签核。',
+    narrative: verdict === 'FAIL' ? '电堆时序数据或参数工作簿未通过校验，已阻断正式统计。' : parameterConfig?.ok ? `已完成 ${parameterAnalysis.platforms.length} 个电流平台和 ${parameterAnalysis.performancePoints.length} 个有效稳定区间的处理；正式符合性结论仍需工程师签核。` : '已完成电堆时序字段映射、时间轴质量检查和单片电压一致性摘要；目标工况、稳定区间和正式异常阈值仍需参数工作簿与工程师签核。',
     source: { type: 'csv', rowCount: normalized.length, requiredFields: required }
   };
 }

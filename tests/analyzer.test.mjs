@@ -9,10 +9,13 @@ import { compareResults } from '../src/compare.mjs';
 import { getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
 import { sha256Hex } from '../src/provenance.mjs';
+import * as SheetJS from 'xlsx';
+import { buildEnterpriseWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const csv = await readFile(join(here, '../sample-data/test_run_001.csv'), 'utf8');
 const baselineCsv = await readFile(join(here, '../sample-data/test_run_baseline.csv'), 'utf8');
+setSpreadsheetEngine(SheetJS);
 
 test('parses the demo CSV into records', () => {
   const rows = parseCSV(csv);
@@ -352,4 +355,33 @@ test('recognizes the enterprise stack contract, supports tab-delimited Chinese h
   assert.equal(result.metrics.durationS, 3);
   assert.equal(result.quality.duplicateTimestampCount, 0);
   assert.match(result.narrative, /单片电压一致性/);
+});
+
+test('reads parameter and target-condition workbooks by header code, computes a stable interval, and writes an auditable workbook', () => {
+  const inputBook = SheetJS.utils.book_new();
+  SheetJS.utils.book_append_sheet(inputBook, SheetJS.utils.aoa_to_sheet([
+    ['参数代码', '参数名称', '启用', '基准来源', '目标值', '下偏差', '上偏差', '单位', '连续时间/s', '必需', '标准字段'],
+    ['CURRENT', '实测电流', '是', '目标工况表', '', -1, 1, 'A', 60, '是', 'current_a']
+  ]), '数据处理设定参数');
+  SheetJS.utils.book_append_sheet(inputBook, SheetJS.utils.aoa_to_sheet([
+    ['工况编号', '目标电流', '目标电流密度'],
+    ['I-10', 10, 100]
+  ]), '目标工况设定');
+  const parsed = parseParameterWorkbook(SheetJS.write(inputBook, { type: 'buffer', bookType: 'xlsx' }));
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.targetConditions[0].targetCurrentA, 10);
+  assert.equal(parsed.parameterRules[0].code, 'CURRENT');
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2',
+    ...Array.from({ length: 61 }, (_, index) => `${index},1.4,10,0.014,0.7,0.69,0.71`)
+  ].join('\n'));
+  const result = analyzeRows(rows, { parameterConfig: parsed, samplePeriodS: 1, minimumPlatformS: 60, minimumStableS: 60 });
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.dataset.platforms.length, 1);
+  assert.equal(result.dataset.performancePoints.length, 1);
+  const output = buildEnterpriseWorkbook(result, 'stack.csv', { parameterConfig: parsed });
+  assert.ok(output.SheetNames.includes('目标工况对比'));
+  const comparison = output.Sheets['目标工况对比'];
+  assert.equal(comparison.D2.f, 'C2-B2');
+  assert.ok(workbookArrayBuffer(output).byteLength > 1000);
 });

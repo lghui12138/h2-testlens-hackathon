@@ -1,6 +1,6 @@
 {
   "name": "h2-testlens",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "description": "氢能设备测试数据分析与自动报告演示作品",
@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

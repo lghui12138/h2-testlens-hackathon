@@ -4,9 +4,10 @@ import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Hex } from './provenance.mjs';
+import { buildEnterpriseWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -60,6 +61,7 @@ function configFromUI() {
     vehicleTargets: ($('#vehicle-targets')?.value || '').split(',').map((value) => Number(value.trim())).filter(Number.isFinite),
     vehicleCurrentToleranceA: Number($('#vehicle-tolerance')?.value) || 5,
     vehicleMinimumDurationS: Number($('#vehicle-duration')?.value) || 180,
+    parameterConfig: state.parameterConfig,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
       testPlanRef: $('#metadata-test-plan').value.trim(),
@@ -283,9 +285,11 @@ function renderEnterprisePanel(result) {
     $('#enterprise-table').innerHTML = `<h3>目标电流段统计</h3><table><thead><tr><th>目标 A</th><th>有效持续 s</th><th>平均单体 V</th><th>离均差 mV</th><th>净功率 kW</th></tr></thead><tbody>${points}</tbody></table>`;
     return;
   }
-  $('#enterprise-controls').innerHTML = '<span class="enterprise-note">目标工况表尚未导入；当前只输出实际时序和单片一致性摘要，不作目标符合性判定。</span>';
-  $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.cellChannelCount}</b> 个导出单片通道</span><span><b>${dataset.configuredCellCount || '—'}</b> 片数参数</span><span><b>${fmt(dataset.metrics.averageCurrentA, 2)}</b> A 平均电流</span><span><b>${fmt(dataset.metrics.cellSpreadMaxV, 3)}</b> V 最大极差</span></div>`;
-  $('#enterprise-table').innerHTML = `<h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
+  const parameterStatus = dataset.parameterConfig ? (dataset.parameterConfig.ok ? '参数工作簿已校验' : `参数工作簿错误 ${dataset.parameterConfig.errors.length} 项`) : '未导入目标工况参数';
+  const platformRows = dataset.platforms?.length ? dataset.platforms.map((item) => `<tr><td>${escapeHtml(item.conditionId)}</td><td>${fmt(item.targetCurrentA, 2)}</td><td>${fmt(item.effectiveDurationS, 0)}</td><td>${escapeHtml(item.status)}</td></tr>`).join('') : '<tr><td colspan="4">未形成电流平台；先导入参数工作簿。</td></tr>';
+  $('#enterprise-controls').innerHTML = `<span class="enterprise-note">${escapeHtml(parameterStatus)} · ${dataset.parameterConfig?.ok ? '平台和稳定区间按参数表计算' : '当前只输出实际时序和单片一致性摘要，不作目标符合性判定'}</span>`;
+  $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.cellChannelCount}</b> 个导出单片通道</span><span><b>${dataset.configuredCellCount || '—'}</b> 片数参数</span><span><b>${fmt(dataset.metrics.averageCurrentA, 2)}</b> A 平均电流</span><span><b>${fmt(dataset.metrics.cellSpreadMaxV, 3)}</b> V 最大极差</span><span><b>${dataset.platforms?.length || 0}</b> 个电流平台</span><span><b>${dataset.performancePoints?.length || 0}</b> 个有效稳定区间</span></div>`;
+  $('#enterprise-table').innerHTML = `<h3>电流平台与稳定区间</h3><table><thead><tr><th>工况</th><th>目标电流 A</th><th>有效持续 s</th><th>状态</th></tr></thead><tbody>${platformRows}</tbody></table><h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
 }
 
 function render(result) {
@@ -327,6 +331,16 @@ async function readUserFile(file) {
   try { return new TextDecoder(encoding).decode(buffer); } catch { return new TextDecoder('utf-8').decode(buffer); }
 }
 
+async function readSelectedDataFiles(files) {
+  const entries = [];
+  for (const file of files) entries.push({ name: file.name, text: await readUserFile(file) });
+  const rows = entries.flatMap(({ text }) => parseCSV(text));
+  const first = rows[0] || {};
+  const timeField = ['Timestamp', '测试时间', '时间'].find((field) => Object.hasOwn(first, field));
+  if (timeField === 'Timestamp') rows.sort((a, b) => String(a[timeField]).localeCompare(String(b[timeField])));
+  return { entries, rows, hashText: entries.map(({ name, text }) => `FILE:${name}\n${text}`).join('\n') };
+}
+
 async function loadSample() {
   await loadCsv('sample-data/test_run_001.csv', '演示样本 · electrolyzer_run_017.csv');
 }
@@ -336,11 +350,11 @@ async function loadLegacySample() {
 }
 
 $('#file-input').addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  const text = await readUserFile(file);
-  await bindRawDataHash(text);
-  state.rows = parseCSV(text); state.fileName = file.name;
+  const files = [...event.target.files];
+  if (!files.length) return;
+  const loaded = await readSelectedDataFiles(files);
+  await bindRawDataHash(loaded.hashText);
+  state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
   render(analyzeRows(state.rows, configFromUI()));
 });
 $('#reanalyze').addEventListener('click', () => { if (state.rows.length) render(analyzeRows(state.rows, configFromUI())); });
@@ -357,6 +371,19 @@ $('#profile-file').addEventListener('change', async (event) => {
     applyProfilePackage(packageResult);
   } catch (error) {
     $('#profile-import-status').textContent = `导入失败：${error.message}`;
+  }
+});
+$('#parameter-file').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const parsed = parseParameterWorkbook(await file.arrayBuffer());
+    state.parameterConfig = parsed;
+    $('#parameter-import-status').textContent = parsed.ok ? `已校验：${parsed.parameterSheet} + ${parsed.targetSheet} · ${parsed.targetConditions.length} 个目标工况` : `导入失败：${parsed.errors.join('；')}`;
+    if (state.rows.length) render(analyzeRows(state.rows, configFromUI()));
+  } catch (error) {
+    state.parameterConfig = null;
+    $('#parameter-import-status').textContent = `导入失败：${error.message}`;
   }
 });
 $('#metadata-raw-ref').addEventListener('input', (event) => { event.target.dataset.generated = 'false'; });
@@ -426,6 +453,16 @@ $('#generate-ai').addEventListener('click', async () => {
   }
 });
 $('#download-report').addEventListener('click', () => { const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-xlsx').addEventListener('click', () => {
+  if (!state.result) return;
+  try {
+    const workbook = buildEnterpriseWorkbook(state.result, state.fileName, { parameterConfig: state.parameterConfig });
+    const blob = new Blob([workbookArrayBuffer(workbook)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.(csv|txt|tsv)$/i, '')}-TestLens报告.xlsx`; link.click(); URL.revokeObjectURL(link.href);
+  } catch (error) {
+    $('#report-status').textContent = `Excel 导出失败：${error.message}`;
+  }
+});
 $('#download-json').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ ...state.result, comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
 window.addEventListener('resize', () => { if (state.result) drawChart(state.result); });
 ensureExtendedMetadataFields();
