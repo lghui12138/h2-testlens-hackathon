@@ -473,3 +473,17 @@ test('reads raw time-series XLSX workbooks by the best signal sheet and keeps st
   assert.equal(rejected.ok, false);
   assert.match(rejected.errors[0], /参数工作簿/);
 });
+
+test('analyzes durability power points and preserves the original report failure plus configured warnings', () => {
+  const rows = [
+    { target_power_kw: '33', net_power_kw: '32.9', average_cell_voltage_mv: '813', average_deviation_mv: '6', voltage_variance: '20', temperature_c: '57.5', source_file: 'durability.docx' },
+    { target_power_kw: '195', net_power_kw: '191.7', average_cell_voltage_mv: '590', average_deviation_mv: '55', voltage_variance: '46', temperature_c: '76.4', source_file: 'durability.docx' }
+  ];
+  const result = analyzeRows(rows, { durabilityReports: [{ metadata: { 测试方案: '耐久0-5', 测试结果: '未通过' }, points: rows }], durabilityRules: { maxDeviationMv: 50, minAverageCellVoltageMv: 600 } });
+  assert.equal(result.datasetType, 'durability');
+  assert.equal(result.verdict, 'FAIL');
+  assert.ok(result.issues.some((item) => item.code === 'DURABILITY_REPORT_FAIL'));
+  assert.ok(result.issues.some((item) => item.code === 'DURABILITY_DEVIATION_HIGH'));
+  assert.ok(result.issues.some((item) => item.code === 'DURABILITY_CELL_VOLTAGE_LOW'));
+  assert.match(reportMarkdown(result, 'durability.docx'), /耐久功率点统计/);
+});

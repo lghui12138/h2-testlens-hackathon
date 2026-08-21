@@ -17,7 +17,7 @@
         <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
         <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
         <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
-        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">导入测试 CSV / TXT / Excel（可多选）</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
+        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document">导入测试 CSV / TXT / Excel / DOCX（可多选）</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
         <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
       </section>
 
@@ -128,6 +128,7 @@
     <footer><span>H₂ TestLens · Hackathon prototype</span><span>原始数据留在本地浏览器 · 结果可追溯 · 人工签核保留</span></footer>
   </div>
   <script src="./src/vendor/xlsx.full.min.js"></script>
+  <script src="./src/vendor/mammoth.browser.min.js"></script>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>

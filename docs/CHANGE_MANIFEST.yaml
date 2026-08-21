@@ -3,7 +3,7 @@ change:
   mode: full
   intent: "Create a local-first hydrogen equipment test-data analysis and auto-report prototype for hackathon track T02."
 surfaces:
-  user: [csv_txt_xlsx_upload, xlsx_parameter_import, dashboard, enterprise_dataset_adapter, trend_chart, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, workflow_readiness, batch_comparison, local_history, ai_report_draft, markdown_report_download, xlsx_report_download]
+  user: [csv_txt_xlsx_docx_upload, xlsx_parameter_import, dashboard, enterprise_dataset_adapter, trend_chart, durability_warning_rules, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, workflow_readiness, batch_comparison, local_history, ai_report_draft, markdown_report_download, xlsx_report_download]
   system_interface: [local_static_server, analysis_api, ai_draft_endpoint, browser_blob_download]
   information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, threshold_config, verdict_enum, comparison_evidence, history_summary]
   operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc, deployment_doc, enterprise_readiness, github_pages_workflow]
@@ -11,6 +11,7 @@ source_of_truth:
   analyzer: src/analyzer.mjs
   enterprise_adapters: src/enterprise-adapters.mjs
   excel_workflow: src/excel-workflow.mjs
+  docx_workflow: src/docx-workflow.mjs
   ai_adapter: src/ai-draft.mjs
   input_schema: README.md
 constraints:

@@ -90,6 +90,23 @@ export function localEvidenceDraft(result) {
       '- 本草稿只引用结构化证据，不生成未提供的故障原因、阈值或符合性结论。'
     ].join('\n');
   }
+  if (result.datasetType === 'durability') {
+    const dataset = evidence.dataset;
+    return [
+      '# 自动报告初稿（结构化证据）', '',
+      '## 结论',
+      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      '', '## 关键证据',
+      `- 数据集：${dataset.label}；${dataset.points.length} 个功率点，覆盖 ${dataset.targetPowers.join('、')} kW。`,
+      `- 原始报告：${dataset.reports.length} 份；${dataset.reports.filter((report) => String(report.metadata?.测试结果 || '').includes('未通过')).length} 份标记未通过。`,
+      `- 预警规则：离均差 ${dataset.rules.maxDeviationMv ?? '未配置'} mV；平均单体电压下限 ${dataset.rules.minAverageCellVoltageMv ?? '未配置'} mV。`,
+      `- 数据边界：${evidence.compliance.status}；${evidence.workflow.nextAction}`,
+      '', '## 优先动作',
+      ...(priority.length ? priority.map((item, index) => `${index + 1}. **${item.title}**：${item.evidence}；${item.recommendation}`) : ['1. 进入企业规则确认和工程师签核。']),
+      '', '## 数据边界',
+      '- 本草稿只引用结构化耐久证据，不伪造飞书推送、故障原因或放行结论。'
+    ].join('\n');
+  }
   const mappingNote = evidence.schema ? `${evidence.schema.mappedCount}/${evidence.schema.fieldCount} 个字段已映射；${Object.values(evidence.schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` : '字段映射信息不可用';
   return [
     '# 自动报告初稿（结构化证据）',

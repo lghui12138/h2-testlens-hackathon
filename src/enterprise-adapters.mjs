@@ -214,6 +214,59 @@ function vehicleSegments(rows, targetCurrents, toleranceA, minimumDurationS) {
   return segments;
 }
 
+function buildDurability(rows, config) {
+  const normalized = rows.map((row, index) => ({
+    timestamp_s: index,
+    phase: `目标功率${row.target_power_kw ?? '未知'}kW`,
+    target_power_kw: num(row.target_power_kw),
+    humidity_pct: num(row.humidity_pct),
+    temperature_c: num(row.temperature_c),
+    net_power_kw: num(row.net_power_kw),
+    current_a: num(row.stack_current_a),
+    average_cell_voltage_mv: num(row.average_cell_voltage_mv),
+    average_deviation_mv: num(row.average_deviation_mv),
+    compressor_power_kw: num(row.compressor_power_kw),
+    pump_power_kw: num(row.pump_power_kw),
+    coolant_in_temp_c: num(row.coolant_in_temp_c),
+    coolant_out_temp_c: num(row.coolant_out_temp_c),
+    hfr: num(row.hfr),
+    lfr: num(row.lfr),
+    voltage_variance: num(row.voltage_variance),
+    source_file: row.source_file || null
+  }));
+  const required = ['timestamp_s', 'target_power_kw', 'average_cell_voltage_mv', 'average_deviation_mv', 'voltage_variance'];
+  const quality = qualityFor(normalized, required);
+  quality.usable = normalized.length >= 2 && quality.missingHeaders.length === 0 && quality.invalidValueCounts.timestamp_s === 0;
+  const reports = Array.isArray(config.durabilityReports) ? config.durabilityReports : [];
+  const rules = config.durabilityRules || {};
+  const maxDeviationMv = Number(rules.maxDeviationMv);
+  const minAverageCellVoltageMv = Number(rules.minAverageCellVoltageMv);
+  const issues = [];
+  for (const report of reports) if (String(report.metadata?.测试结果 || '').includes('未通过')) issues.push({ severity: 'critical', code: 'DURABILITY_REPORT_FAIL', title: '原始耐久报告标记未通过', evidence: `${report.metadata?.测试方案 || '耐久报告'} 的企业原始结果为未通过`, recommendation: '先按原始报告定位异常工步，再决定是否复测或放行。' });
+  if (Number.isFinite(maxDeviationMv)) for (const point of normalized.filter((item) => item.average_deviation_mv !== null && item.average_deviation_mv > maxDeviationMv)) issues.push({ severity: 'warn', code: 'DURABILITY_DEVIATION_HIGH', title: '耐久功率点离均差超过当前规则', evidence: `${point.target_power_kw} kW：离均差 ${point.average_deviation_mv} mV > ${maxDeviationMv} mV`, recommendation: '检查单片电压一致性、负载点稳定时间和采集通道。' });
+  if (Number.isFinite(minAverageCellVoltageMv)) for (const point of normalized.filter((item) => item.average_cell_voltage_mv !== null && item.average_cell_voltage_mv < minAverageCellVoltageMv)) issues.push({ severity: 'warn', code: 'DURABILITY_CELL_VOLTAGE_LOW', title: '耐久功率点平均单体电压低于当前规则', evidence: `${point.target_power_kw} kW：平均单体电压 ${point.average_cell_voltage_mv} mV < ${minAverageCellVoltageMv} mV`, recommendation: '检查电堆衰减、供氢/供气、冷却条件和单片异常。' });
+  const expectedPowers = [33, 58.5, 117, 156, 175.5, 195];
+  const missingPowers = expectedPowers.filter((power) => !normalized.some((point) => point.target_power_kw === power));
+  if (missingPowers.length) issues.push({ severity: 'warn', code: 'DURABILITY_POWER_POINTS_MISSING', title: '耐久报告缺少目标功率点', evidence: `缺少：${missingPowers.join('、')} kW`, recommendation: '确认原始耐久工步是否完整，不要用相邻功率点替代。' });
+  if (!Number.isFinite(maxDeviationMv) && !Number.isFinite(minAverageCellVoltageMv)) issues.push({ severity: 'info', code: 'DURABILITY_RULES_NOT_CONFIGURED', title: '耐久预警阈值未配置', evidence: '当前只保留企业原始测试结果和统计，不自动新增异常判定', recommendation: '由企业负责人填写离均差/平均单体电压预警规则后重新分析。' });
+  const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : 'WARN';
+  const mapping = { target_power_kw: '目标功率（kW）', humidity_pct: '湿度', temperature_c: '温度', net_power_kw: '净输出功率', current_a: '电堆电流', average_cell_voltage_mv: '平均单体电压', average_deviation_mv: '离均差', voltage_variance: '电压方差', coolant_in_temp_c: '冷却水入口温度', coolant_out_temp_c: '冷却水出口温度', hfr: 'HFR', lfr: 'LFR' };
+  const dataset = {
+    kind: 'durability',
+    label: '台架耐久数据',
+    sourceContract: 'T02-02 · 台架耐久数据统计及预警',
+    reports,
+    points: normalized,
+    targetPowers: [...new Set(normalized.map((point) => point.target_power_kw).filter((value) => value !== null))].sort((a, b) => a - b),
+    rules: { maxDeviationMv: Number.isFinite(maxDeviationMv) ? maxDeviationMv : null, minAverageCellVoltageMv: Number.isFinite(minAverageCellVoltageMv) ? minAverageCellVoltageMv : null },
+    sourceFieldMap: mapping
+  };
+  const meanMetric = (field) => mean(normalized.map((point) => point[field]).filter((value) => value !== null));
+  const metrics = { sampleCount: normalized.length, durationS: 0, completenessPct: quality.completenessPct, peakPowerW: Math.max(...normalized.map((point) => point.net_power_kw).filter((value) => value !== null), 0) * 1000, steadyVoltageMeanV: meanMetric('average_cell_voltage_mv') === null ? null : meanMetric('average_cell_voltage_mv') / 1000, steadyVoltageStdV: std(normalized.map((point) => point.average_cell_voltage_mv).filter((value) => value !== null)), peakTemperatureC: Math.max(...normalized.map((point) => point.temperature_c).filter((value) => value !== null), 0) || null, peakPressureBar: null, peakLeakPpm: null, hydrogenVolumeNl: null, energyConsumedWh: null, specificEnergyKWhPerNm3: null, minimumHydrogenPurityPct: null, pressureDriftBarPerMin: 0, steadyWindow: '台架耐久功率点', steadySampleCount: normalized.length };
+  const workflowResult = workflow(dataset, quality, issues, Object.keys(rules).length > 0);
+  return { dataset, datasetType: 'durability', generatedAt: new Date().toISOString(), config: { ...config, datasetType: 'durability' }, rows: normalized, metrics, quality, schema: commonSchema(mapping, Object.keys(mapping).length), compliance: compliance(config, dataset.label), uncertainty: { status: 'not_configured', method: null, coverageFactor: null, metrics: {}, missingFields: [] }, workflow: workflowResult, phases: dataset.targetPowers.map((power) => ({ phase: `目标功率${power}kW`, count: normalized.filter((point) => point.target_power_kw === power).length, startS: null, endS: null, durationS: 0 })), issues, verdict, narrative: verdict === 'FAIL' ? '原始耐久报告或当前规则触发高优先级问题，已阻断放行判断。' : '已完成耐久功率点统计；当前结果仍需企业预警规则和工程师复核。', source: { type: 'docx', rowCount: normalized.length, requiredFields: required } };
+}
+
 function buildVehicle(rows, config) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const mapping = Object.fromEntries(VEHICLE_FIELDS.map(([field, source]) => [field, headers.includes(source) ? source : null]));
@@ -652,6 +705,7 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   const rows = Array.isArray(inputRows) ? inputRows : [];
   if (!rows.length) return null;
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  if (headers.includes('target_power_kw') && headers.includes('average_cell_voltage_mv')) return buildDurability(rows, config);
   if (headers.includes('FC_CurrOut') && headers.includes('FC_VoltOut')) return buildVehicle(rows, config);
   if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;

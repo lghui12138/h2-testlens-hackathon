@@ -5,9 +5,10 @@ import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } f
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Hex } from './provenance.mjs';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
+import { parseDurabilityDocx } from './docx-workflow.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null, durabilityReports: [] };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -35,6 +36,7 @@ ensureExtendedMetadataFields();
 function configFromUI() {
   const profileId = $('#profile-select').value;
   const profile = profileId === CUSTOM_PROFILE_ID ? null : getProfile(profileId, state.profileCatalog);
+  const optionalNumber = (id) => { const value = $(`#${id}`)?.value?.trim(); return value ? Number(value) : null; };
   return {
     maxTemperatureC: Number($('#max-temperature').value) || DEFAULT_CONFIG.maxTemperatureC,
     maxPressureBar: Number($('#max-pressure').value) || DEFAULT_CONFIG.maxPressureBar,
@@ -62,6 +64,8 @@ function configFromUI() {
     vehicleCurrentToleranceA: Number($('#vehicle-tolerance')?.value) || 5,
     vehicleMinimumDurationS: Number($('#vehicle-duration')?.value) || 180,
     parameterConfig: state.parameterConfig,
+    durabilityReports: state.durabilityReports,
+    durabilityRules: { maxDeviationMv: optionalNumber('durability-max-deviation'), minAverageCellVoltageMv: optionalNumber('durability-min-cell-voltage') },
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
       testPlanRef: $('#metadata-test-plan').value.trim(),
@@ -144,6 +148,21 @@ function renderMetrics(result) {
       ['最大单片极差', `${fmt(dataset.metrics.cellSpreadMaxV, 3)} V`, 'warn', '单片通道 max-min'],
       ['单片通道', `${dataset.cellChannelCount}`, dataset.configuredCellCount && dataset.configuredCellCount !== dataset.cellChannelCount ? 'warn' : 'good', `片数参数 ${dataset.configuredCellCount || '—'}`],
       ['时间戳重复', `${result.quality.duplicateTimestampCount}`, result.quality.duplicateTimestampCount ? 'warn' : 'good', '采样分辨率复核']
+    ];
+    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+    return;
+  }
+  if (result.datasetType === 'durability') {
+    const dataset = result.dataset;
+    const lowVoltage = dataset.points.filter((point) => point.averageCellVoltageMv !== null && dataset.rules.minAverageCellVoltageMv !== null && point.averageCellVoltageMv < dataset.rules.minAverageCellVoltageMv).length;
+    const highDeviation = dataset.points.filter((point) => point.averageDeviationMv !== null && dataset.rules.maxDeviationMv !== null && point.averageDeviationMv > dataset.rules.maxDeviationMv).length;
+    const cards = [
+      ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '原始耐久结果 + 当前规则'],
+      ['功率点记录', `${dataset.points.length}`, 'neutral', `${dataset.targetPowers.length} 个目标功率`],
+      ['峰值净功率', `${fmt(metrics.peakPowerW / 1000, 1)} kW`, 'neutral', '净输出功率'],
+      ['最低平均单体', `${fmt(Math.min(...dataset.points.map((point) => point.averageCellVoltageMv).filter((value) => value !== null), 0), 0)} mV`, lowVoltage ? 'warn' : 'good', dataset.rules.minAverageCellVoltageMv === null ? '阈值未配置' : `阈值 ${dataset.rules.minAverageCellVoltageMv} mV`],
+      ['最大离均差', `${fmt(Math.max(...dataset.points.map((point) => point.averageDeviationMv).filter((value) => value !== null), 0), 0)} mV`, highDeviation ? 'warn' : 'good', dataset.rules.maxDeviationMv === null ? '阈值未配置' : `阈值 ${dataset.rules.maxDeviationMv} mV`],
+      ['原始报告', `${dataset.reports.length}`, 'neutral', dataset.reports.some((report) => String(report.metadata?.测试结果 || '').includes('未通过')) ? '含未通过报告' : '未发现未通过标记']
     ];
     $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
     return;
@@ -278,6 +297,16 @@ function drawEnterpriseChart(result) {
     label('绝缘阻值（kΩ）', pad.left, 12, '#13262d'); label('时间窗口', width - 60, height - 8);
     return;
   }
+  if (result.datasetType === 'durability') {
+    const points = (result.dataset.points || []).filter((point) => Number.isFinite(point.targetPowerKw) && Number.isFinite(point.averageCellVoltageMv));
+    if (!points.length) { label('暂无可绘制的耐久功率点', pad.left, pad.top + 20); return; }
+    const xValues = points.map((point) => point.targetPowerKw); const yValues = points.map((point) => point.averageCellVoltageMv); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 10; const yMax = Math.max(...yValues) + 10; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1;
+    const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
+    grid();
+    const sorted = [...points].sort((a, b) => a.targetPowerKw - b.targetPowerKw); ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.targetPowerKw); const py = y(point.averageCellVoltageMv); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+    points.forEach((point) => { const low = result.dataset.rules.minAverageCellVoltageMv !== null && point.averageCellVoltageMv < result.dataset.rules.minAverageCellVoltageMv; const high = result.dataset.rules.maxDeviationMv !== null && point.averageDeviationMv > result.dataset.rules.maxDeviationMv; ctx.fillStyle = low || high ? '#c84e48' : '#127f79'; ctx.beginPath(); ctx.arc(x(point.targetPowerKw), y(point.averageCellVoltageMv), 4, 0, Math.PI * 2); ctx.fill(); });
+    label('平均单体电压（mV）', pad.left, 12, '#13262d'); label('目标功率（kW）', width - 84, height - 8); return;
+  }
   const points = (result.dataset.performancePoints || []).filter((point) => Number.isFinite(point.averageCellVoltageV));
   if (!points.length) { label('暂无有效极化点；请导入目标工况参数并确认稳定区间', pad.left, pad.top + 20); return; }
   const xValues = points.map((point) => point.averageCurrentDensity ?? point.averageCurrentA).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).filter(Number.isFinite);
@@ -306,7 +335,7 @@ function renderEnterprisePanel(result) {
   panel.hidden = false;
   const dataset = result.dataset;
   $('#enterprise-title').textContent = dataset.label;
-  $('#enterprise-subtitle').textContent = result.datasetType === 'vehicle' ? '运行信号、目标电流段、绝缘阻值与趋势预警' : '字段映射、单片通道一致性与测试数据质量';
+  $('#enterprise-subtitle').textContent = result.datasetType === 'vehicle' ? '运行信号、目标电流段、绝缘阻值与趋势预警' : result.datasetType === 'durability' ? '耐久功率点、原始报告结果与可配置预警' : '字段映射、单片通道一致性与测试数据质量';
   $('#enterprise-contract').textContent = dataset.sourceContract;
   if (result.datasetType === 'vehicle') {
     const targets = $('#vehicle-targets');
@@ -318,6 +347,14 @@ function renderEnterprisePanel(result) {
     $('#enterprise-controls').innerHTML = `<label>目标电流 A（逗号分隔）<input id="vehicle-targets" type="text" value="${escapeHtml(dataset.targetCurrents.join(','))}" placeholder="例如 95,105,115"></label><label>允许波动 A<input id="vehicle-tolerance" type="number" value="${dataset.targetToleranceA}" step="1"></label><label>最短持续 s<input id="vehicle-duration" type="number" value="${dataset.minimumDurationS}" step="10"></label>`;
     $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.stateCounts['4'] || 0}</b> 条运行态</span><span><b>${dataset.stateCounts['8'] || 0}</b> 条上电非运行态</span><span><b>${dataset.insulation.validCount}</b> 条绝缘有效记录</span><span><b>${dataset.insulation.points.length}</b> 个 10 分钟窗口</span></div><div class="enterprise-forecast">${forecast}</div>`;
     $('#enterprise-table').innerHTML = `<h3>目标电流段统计</h3><table><thead><tr><th>目标 A</th><th>有效持续 s</th><th>平均单体 V</th><th>离均差 mV</th><th>净功率 kW</th></tr></thead><tbody>${points}</tbody></table>`;
+    return;
+  }
+  if (result.datasetType === 'durability') {
+    const points = dataset.points.map((point) => `<tr><td>${fmt(point.targetPowerKw, 1)}</td><td>${fmt(point.netPowerKw, 1)}</td><td>${fmt(point.averageCellVoltageMv, 0)}</td><td>${fmt(point.averageDeviationMv, 0)}</td><td>${fmt(point.voltageVariance, 0)}</td></tr>`).join('');
+    const reports = dataset.reports.map((report) => `<span><b>${escapeHtml(report.metadata?.测试方案 || '耐久报告')}</b> ${escapeHtml(report.metadata?.测试结果 || '未标注')} · ${report.points.length} 个功率点</span>`).join('');
+    $('#enterprise-controls').innerHTML = `<label>离均差预警 mV（可选）<input id="durability-max-deviation" type="number" value="${dataset.rules.maxDeviationMv ?? ''}" placeholder="企业填写" step="1"></label><label>平均单体电压下限 mV（可选）<input id="durability-min-cell-voltage" type="number" value="${dataset.rules.minAverageCellVoltageMv ?? ''}" placeholder="企业填写" step="1"></label><span class="enterprise-note">未填写阈值时只保留原始报告结果，不新增判定。</span>`;
+    $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.points.length}</b> 个功率点</span><span><b>${dataset.targetPowers.length}</b> 个目标功率</span><span><b>${dataset.rules.maxDeviationMv ?? '—'}</b> mV 离均差规则</span><span><b>${dataset.rules.minAverageCellVoltageMv ?? '—'}</b> mV 电压规则</span></div><div class="enterprise-forecast">${reports}</div>`;
+    $('#enterprise-table').innerHTML = `<h3>耐久功率点统计</h3><table><thead><tr><th>目标功率 kW</th><th>净输出 kW</th><th>平均单体 mV</th><th>离均差 mV</th><th>电压方差</th></tr></thead><tbody>${points}</tbody></table>`;
     return;
   }
   const parameterStatus = dataset.parameterConfig ? (dataset.parameterConfig.ok ? '参数工作簿已校验' : `参数工作簿错误 ${dataset.parameterConfig.errors.length} 项`) : '未导入目标工况参数';
@@ -369,7 +406,10 @@ async function readUserFile(file) {
 async function readSelectedDataFiles(files) {
   const entries = [];
   for (const file of files) {
-    if (/\.(xlsx|xlsm)$/i.test(file.name)) {
+    if (/\.docx$/i.test(file.name)) {
+      const report = await parseDurabilityDocx(await file.arrayBuffer());
+      entries.push({ name: file.name, rows: report.points.map((point) => ({ ...point, source_file: file.name })), durabilityReport: report, text: `DOCX:${file.name}\n${JSON.stringify(report)}` });
+    } else if (/\.(xlsx|xlsm)$/i.test(file.name)) {
       const workbookResult = parseDataWorkbook(await file.arrayBuffer());
       if (!workbookResult.ok) throw new Error(workbookResult.errors.join('；'));
       entries.push({ name: file.name, rows: workbookResult.rows, text: `SHEET:${workbookResult.sheetName}\n${JSON.stringify(workbookResult.rows)}` });
@@ -382,7 +422,7 @@ async function readSelectedDataFiles(files) {
   const first = rows[0] || {};
   const timeField = ['Timestamp', '测试时间', '时间'].find((field) => Object.hasOwn(first, field));
   if (timeField === 'Timestamp') rows.sort((a, b) => String(a[timeField]).localeCompare(String(b[timeField])));
-  return { entries, rows, hashText: entries.map(({ name, text }) => `FILE:${name}\n${text}`).join('\n') };
+  return { entries, rows, durabilityReports: entries.map((entry) => entry.durabilityReport).filter(Boolean), hashText: entries.map(({ name, text }) => `FILE:${name}\n${text}`).join('\n') };
 }
 
 async function loadSample() {
@@ -399,6 +439,7 @@ $('#file-input').addEventListener('change', async (event) => {
   try {
     const loaded = await readSelectedDataFiles(files);
     await bindRawDataHash(loaded.hashText);
+    state.durabilityReports = loaded.durabilityReports;
     state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
     render(analyzeRows(state.rows, configFromUI()));
   } catch (error) {
