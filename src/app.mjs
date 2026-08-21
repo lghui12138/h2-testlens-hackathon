@@ -239,11 +239,11 @@ async function loadCsv(url, name) {
 }
 
 async function loadSample() {
-  await loadCsv('/sample-data/test_run_001.csv', '演示样本 · electrolyzer_run_017.csv');
+  await loadCsv('sample-data/test_run_001.csv', '演示样本 · electrolyzer_run_017.csv');
 }
 
 async function loadLegacySample() {
-  await loadCsv('/sample-data/test_run_legacy_cn.csv', '中文单位样本 · legacy_run_cn.csv');
+  await loadCsv('sample-data/test_run_legacy_cn.csv', '中文单位样本 · legacy_run_cn.csv');
 }
 
 $('#file-input').addEventListener('change', async (event) => {
@@ -273,11 +273,11 @@ $('#profile-file').addEventListener('change', async (event) => {
 $('#metadata-raw-ref').addEventListener('input', (event) => { event.target.dataset.generated = 'false'; });
 $('#load-profile-demo').addEventListener('click', async () => {
   try {
-    const response = await fetch('/config/enterprise-profile.example.json');
+    const response = await fetch('config/enterprise-profile.example.json');
     if (!response.ok) throw new Error('示例配置读取失败');
     const packageResult = profilesFromPackage(await response.json());
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
-    const sampleResponse = await fetch('/sample-data/test_run_legacy_cn.csv');
+    const sampleResponse = await fetch('sample-data/test_run_legacy_cn.csv');
     if (!sampleResponse.ok) throw new Error('配置匹配样本读取失败');
     const sampleText = await sampleResponse.text();
     await bindRawDataHash(sampleText);
@@ -304,7 +304,7 @@ $('#compare-demo').addEventListener('click', async () => {
   button.disabled = true;
   button.textContent = '对比中…';
   try {
-    const response = await fetch('/sample-data/test_run_baseline.csv');
+    const response = await fetch('sample-data/test_run_baseline.csv');
     if (!response.ok) throw new Error('基线文件读取失败');
     state.baselineResult = analyzeRows(parseCSV(await response.text()), configFromUI());
     state.comparison = compareResults(state.baselineResult, state.result, { baselineName: '演示基线 · baseline_run.csv', currentName: state.fileName });
@@ -324,7 +324,7 @@ $('#generate-ai').addEventListener('click', async () => {
   button.textContent = '生成中…';
   const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
   try {
-    const response = await fetch('/api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
+    const response = await fetch('api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
     if (!response.ok) state.aiDraft = localFallback(`api_http_${response.status}`);
     else state.aiDraft = await response.json();
     renderReport(state.result, state.aiDraft);

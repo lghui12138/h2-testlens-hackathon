@@ -3,4 +3,5 @@ dist/
 .next/
 .wrangler/
 .vinext/
+_site/
 .DS_Store

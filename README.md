@@ -15,6 +15,10 @@ npm start
 
 然后打开 <http://127.0.0.1:4173>。项目不依赖外部服务或第三方包，演示数据位于 `sample-data/`：标准样本、中文单位样本和基线样本分别覆盖单次分析、字段适配和批次对比。
 
+## GitHub Pages 独立部署
+
+独立 GitHub 仓库为 `lghui12138/h2-testlens-hackathon`。`.github/workflows/deploy-pages.yml` 会在 `main` 推送后运行完整提交检查，并把 `_site/` 静态产物发布到 GitHub Pages；静态页面使用相对资源路径，适配项目站点 URL。GitHub Pages 版本使用本地证据草稿回退，不依赖 ChatGPT API。
+
 ## 当前输入约定
 
 标准 CSV 字段为：`timestamp_s, phase, current_a, voltage_v, temperature_c, pressure_bar, flow_slpm, leak_ppm`；也支持常见中文/别名表头，并自动换算 `ms/mA/mV/kPa/MPa/ppb`。`phase` 可选，缺失时使用活动窗口回退。阈值在界面中可调整；当前值是演示用默认值，正式接入时应从企业测试标准或工单配置读取。

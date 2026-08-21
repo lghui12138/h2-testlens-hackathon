@@ -28,6 +28,8 @@ const requiredFiles = [
   'scripts/submission-check.mjs',
   'scripts/package-submission.mjs',
   'scripts/api-smoke.mjs',
+  'scripts/prepare-github-pages.mjs',
+  '.github/workflows/deploy-pages.yml',
   'config/enterprise-profile.example.json',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
   '.research/ignite_t02_standards_20260821/evidence.jsonl',

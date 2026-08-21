@@ -23,7 +23,8 @@ function evidenceConfig(config = {}) {
     revision: config.revision || null,
     standardRefs: (config.standardRefs || []).map((reference) => ({ id: reference.id, title: reference.title })),
     requiredMetadata: config.requiredMetadata || [],
-    metadataPresent: Object.fromEntries((config.requiredMetadata || []).map((field) => [field, Boolean(metadata[field])]))
+    metadataPresent: Object.fromEntries((config.requiredMetadata || []).map((field) => [field, Boolean(metadata[field])])),
+    acceptanceCriteria: config.acceptanceCriteria || {}
   };
 }
 
