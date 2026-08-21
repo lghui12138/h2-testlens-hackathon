@@ -43,7 +43,8 @@ const DISPLAY_HTML = DASHBOARD_HTML
   .replaceAll("REPORT DRAFT", "REPORT PREVIEW")
   .replaceAll("工程师报告草稿", "报告初稿")
   .replaceAll("生成证据约束草稿", "生成报告初稿")
-  .replaceAll("这些字段对应测试计划、仪器/校准、执行者、计算方法和人工签核；只在当前会话使用。", "这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法和人工签核；只在当前会话使用。");
+  .replaceAll("这些字段对应测试计划、仪器/校准、执行者、计算方法和人工签核；只在当前会话使用。", "这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法和人工签核；只在当前会话使用。")
+  .replace('<section class="side-card workflow-card">', '<section class="side-card standards-card"><div class="card-kicker">REFERENCE STANDARDS</div><h2>适用标准</h2><p class="side-intro">标准用于选择 profile 和测试方法；页面不会把演示结果写成符合性结论。</p><div class="standards-list"><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB" target="_blank" rel="noreferrer"><b>GB/T 45541-2025</b><small>PEM 电解槽性能测试方法</small></a><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119" target="_blank" rel="noreferrer"><b>GB/T 46104-2025</b><small>电解水制氢系统功率波动适应性测试</small></a><a href="https://www.iso.org/standard/82766.html?browse=ics" target="_blank" rel="noreferrer"><b>ISO 22734-1:2025</b><small>水电解制氢设备安全</small></a><a href="https://www.iso.org/standard/66912.html" target="_blank" rel="noreferrer"><b>ISO/IEC 17025:2017</b><small>测试和校准实验室能力</small></a></div></section><section class="side-card workflow-card">');
 
 export default function Home() {
   useEffect(() => {
