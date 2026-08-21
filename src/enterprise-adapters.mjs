@@ -16,7 +16,9 @@ const VEHICLE_FIELDS = Object.freeze([
 const identity = { mode: 'identity', factor: 1, label: '原单位' };
 
 const num = (value) => {
-  const parsed = Number(String(value ?? '').trim());
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };
 
@@ -333,7 +335,8 @@ const CONDITION_FIELD_BY_CODE = Object.freeze({
 
 function durationForSegment(start, end, sampleCount, samplePeriodS) {
   if (Number.isFinite(samplePeriodS) && samplePeriodS > 0 && sampleCount >= 2) return { durationS: (sampleCount - 1) * samplePeriodS, source: 'configured_sample_period' };
-  return { durationS: start?.timestamp_s !== null && end?.timestamp_s !== null ? Math.max(0, end.timestamp_s - start.timestamp_s) : 0, source: 'timestamp' };
+  const startS = start?.timestamp_s; const endS = end?.timestamp_s;
+  return { durationS: Number.isFinite(startS) && Number.isFinite(endS) ? Math.max(0, endS - startS) : 0, source: 'timestamp' };
 }
 
 function targetForRule(rule, condition) {
@@ -363,35 +366,38 @@ function evaluateStableRow(row, condition, rules) {
 function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
   const conditions = parameterConfig?.targetConditions || [];
   const rules = parameterConfig?.parameterRules || [];
+  const parameters = parameterConfig?.parameters || [];
   if (!conditions.length) return { platforms: [], stableSegments: [], performancePoints: [] };
+  const parameterNumber = (code, fallback) => {
+    const item = parameters.find((candidate) => candidate.code === code);
+    const value = item?.target ?? num(item?.rawValue);
+    return value === null || value === undefined ? fallback : value;
+  };
+  const parameterText = (code, fallback) => parameters.find((candidate) => candidate.code === code)?.rawValue || fallback;
   const currentRule = rules.find((rule) => rule.code === 'CURRENT');
   const fallbackTolerance = Number(fallbackConfig.currentToleranceA ?? 1);
   const samplePeriodS = Number(fallbackConfig.samplePeriodS);
-  const minPlatformS = Number(fallbackConfig.minimumPlatformS ?? 60);
-  const minStableS = Number(fallbackConfig.minimumStableS ?? 60);
-  const chooseCondition = (row) => {
-    const candidates = conditions.map((condition) => {
-      const tolerance = currentRule?.lowerTolerance !== null && currentRule?.lowerTolerance !== undefined && currentRule?.upperTolerance !== null && currentRule?.upperTolerance !== undefined
-        ? Math.max(Math.abs(currentRule.lowerTolerance), Math.abs(currentRule.upperTolerance))
-        : fallbackTolerance;
-      return { condition, distance: row.current_a === null ? Infinity : Math.abs(row.current_a - condition.targetCurrentA), tolerance };
-    }).filter((item) => item.distance <= item.tolerance).sort((a, b) => a.distance - b.distance);
-    return candidates[0] || null;
-  };
-  const platforms = []; let active = null;
+  const minPlatformS = parameterNumber('MIN_CURRENT_PLATFORM_TIME', Number(fallbackConfig.minimumPlatformS ?? 60));
+  const minStableS = parameterNumber('MIN_STABLE_TIME', Number(fallbackConfig.minimumStableS ?? 60));
+  const formalSampleS = parameterNumber('DEFAULT_SAMPLE_TIME', Number(fallbackConfig.sampleDurationS ?? 120));
+  const samplePosition = parameterText('SAMPLE_POSITION', '稳定区间末端');
+  const currentTolerance = currentRule ? Math.max(Math.abs(currentRule.lowerTolerance ?? fallbackTolerance), Math.abs(currentRule.upperTolerance ?? fallbackTolerance)) : fallbackTolerance;
+  const chooseCondition = (row) => conditions.map((condition) => ({ condition, distance: row.current_a === null ? Infinity : Math.abs(row.current_a - condition.targetCurrentA) }))
+    .filter((item) => item.distance <= currentTolerance).sort((a, b) => a.distance - b.distance)[0] || null;
+  const platforms = []; let active = null; let platformSequence = 0;
   const closePlatform = (endIndex) => {
     if (!active) return;
-    const end = rows[endIndex - 1] || rows.at(-1); const sampleRows = rows.slice(active.startIndex, endIndex);
-    const duration = durationForSegment(active.start, end, sampleRows.length, samplePeriodS);
-    const condition = active.condition;
-    const status = duration.durationS >= minPlatformS ? 'candidate' : 'too_short';
-    const toleranceA = currentRule ? Math.max(Math.abs(currentRule.lowerTolerance ?? fallbackTolerance), Math.abs(currentRule.upperTolerance ?? fallbackTolerance)) : fallbackTolerance;
-    const values = (field) => sampleRows.map((row) => row[field]).filter((value) => value !== null);
+    const end = rows[endIndex - 1] || rows.at(-1); const sampleRows = rows.slice(active.startIndex, endIndex); const duration = durationForSegment(active.start, end, sampleRows.length, samplePeriodS);
+    const condition = active.condition; const values = (field) => sampleRows.map((row) => row[field]).filter((value) => value !== null);
+    platformSequence += 1;
     platforms.push({
+      ...condition,
+      platformId: `${condition.conditionId}-${platformSequence}`,
+      platformIndex: platformSequence,
       conditionId: condition.conditionId,
       targetCurrentA: condition.targetCurrentA,
       targetCurrentDensity: condition.targetCurrentDensity,
-      toleranceA,
+      toleranceA: currentTolerance,
       startS: active.start.timestamp_s,
       endS: end?.timestamp_s ?? null,
       durationS: end?.timestamp_s !== null && active.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - active.start.timestamp_s) : 0,
@@ -402,7 +408,7 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
       averageCurrentDensity: mean(values('current_density_mAcm2')),
       averageCellVoltageV: mean(values('avg_cell_voltage_v')),
       averageNetPowerKw: mean(values('power_kw')),
-      status,
+      status: duration.durationS >= minPlatformS ? 'candidate' : 'too_short',
       rows: sampleRows
     });
     active = null;
@@ -418,26 +424,37 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
     let stable = null;
     const closeStable = (endIndex) => {
       if (!stable) return;
-      const end = platform.rows[endIndex - 1] || platform.rows.at(-1); const sampleRows = platform.rows.slice(stable.startIndex, endIndex);
-      const duration = durationForSegment(stable.start, end, sampleRows.length, samplePeriodS);
-      const values = (field) => sampleRows.map((row) => row[field]).filter((value) => value !== null);
+      const end = platform.rows[endIndex - 1] || platform.rows.at(-1); const sampleRows = platform.rows.slice(stable.startIndex, endIndex); const duration = durationForSegment(stable.start, end, sampleRows.length, samplePeriodS);
+      const baseStatus = duration.durationS < minStableS ? 'stable_too_short' : duration.durationS < formalSampleS ? 'short_stable' : 'stable_valid';
+      let selectedRows = sampleRows;
+      if (baseStatus === 'stable_valid' && formalSampleS > 0) {
+        if (Number.isFinite(samplePeriodS) && samplePeriodS > 0) selectedRows = sampleRows.slice(-Math.max(2, Math.floor(formalSampleS / samplePeriodS) + 1));
+        else selectedRows = sampleRows.filter((row) => row.timestamp_s >= (end?.timestamp_s ?? 0) - formalSampleS);
+      }
+      const values = (field, source = selectedRows) => source.map((row) => row[field]).filter((value) => value !== null);
       stableSegments.push({
+        platformId: platform.platformId,
+        platformIndex: platform.platformIndex,
         conditionId: platform.conditionId,
         startS: stable.start.timestamp_s,
         endS: end?.timestamp_s ?? null,
         durationS: end?.timestamp_s !== null && stable.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - stable.start.timestamp_s) : 0,
         effectiveDurationS: duration.durationS,
+        selectedDurationS: durationForSegment(selectedRows[0], selectedRows.at(-1), selectedRows.length, samplePeriodS).durationS,
         durationSource: duration.source,
         sampleCount: sampleRows.length,
+        selectedSampleCount: selectedRows.length,
         parameterComplete: stable.parameterComplete,
-        status: duration.durationS >= minStableS ? 'stable_candidate' : 'stable_too_short',
+        status: stable.parameterComplete ? baseStatus : 'parameter_incomplete',
+        selectionPolicy: baseStatus === 'stable_valid' ? (samplePosition.includes('末') ? `末端${formalSampleS}s` : samplePosition) : '全部有效稳定样本',
         selected: false,
         averageCurrentA: mean(values('current_a')),
         averageCurrentDensity: mean(values('current_density_mAcm2')),
         averageCellVoltageV: mean(values('avg_cell_voltage_v')),
         averageNetPowerKw: mean(values('power_kw')),
         missingParameters: stable.missing,
-        rows: sampleRows
+        rows: sampleRows,
+        selectedRows
       });
       stable = null;
     };
@@ -449,12 +466,11 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
     closeStable(platform.rows.length);
   }
   for (const platform of platforms) {
-    const candidates = stableSegments.filter((segment) => segment.conditionId === platform.conditionId && segment.effectiveDurationS >= minStableS && segment.parameterComplete);
-    const selected = candidates.at(-1);
+    const selected = stableSegments.filter((segment) => segment.platformId === platform.platformId && ['stable_valid', 'short_stable'].includes(segment.status)).at(-1);
     if (selected) selected.selected = true;
   }
-  const performancePoints = stableSegments.filter((segment) => segment.selected).map((segment) => ({ ...segment, status: 'valid' }));
-  return { platforms: platforms.map(({ rows: _rows, ...platform }) => platform), stableSegments: stableSegments.map(({ rows: _rows, ...segment }) => segment), performancePoints };
+  const performancePoints = stableSegments.filter((segment) => segment.selected).map((segment) => ({ ...segment, status: segment.status === 'short_stable' ? 'short_stable' : 'valid' }));
+  return { platforms: platforms.map(({ rows: _rows, ...platform }) => platform), stableSegments: stableSegments.map(({ rows: _rows, selectedRows: _selectedRows, ...segment }) => segment), performancePoints: performancePoints.map(({ rows: _rows, selectedRows: _selectedRows, ...point }) => point) };
 }
 
 function buildStack(rows, config) {
@@ -474,7 +490,19 @@ function buildStack(rows, config) {
     flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
     leak_ppm: findHeader(headers, ['柜内氢气浓度（ppm）', '氢气浓度', '测试区氢气浓度（ppm）']),
     cell_count: findHeader(headers, ['片数']),
-    coolant_dt: findHeader(headers, ['冷却液温差', '循环水进出口温差', '冷却水温差'])
+    coolant_dt: findHeader(headers, ['冷却液温差', '循环水进出口温差', '冷却水温差']),
+    anode_in_pressure_kpa: findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)']),
+    anode_out_pressure_kpa: findHeader(headers, ['阳极出堆压力（kPa）', '阳极气体出堆压力(kpa)']),
+    cathode_in_pressure_kpa: findHeader(headers, ['阴极入堆压力（kPa）', '阴极气体进堆压力(kpa)']),
+    cathode_out_pressure_kpa: findHeader(headers, ['阴极出堆压力（kPa）', '阴极气体出堆压力(kpa)']),
+    coolant_in_pressure_kpa: findHeader(headers, ['循环水入堆压力（kPa）', '电堆循环水进堆压力(kpa)']),
+    coolant_out_pressure_kpa: findHeader(headers, ['循环水出堆压力（kPa）', '电堆循环水出堆压力(kpa)']),
+    coolant_in_temp_c: findHeader(headers, ['循环水入堆温度（℃）', '冷却水入口温度（℃）', '冷却水入口温度']),
+    coolant_out_temp_c: findHeader(headers, ['循环水出堆温度（℃）', '冷却水出口温度（℃）', '冷却水出口温度']),
+    anode_flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
+    cathode_flow_slpm: findHeader(headers, ['阴极流量（SLPM）', '阴极气体流量(L/Min)', '阴极气体流量']),
+    coolant_flow_lpm: findHeader(headers, ['循环水流量（L/min）', '电堆循环水流量(L/Min)']),
+    internal_resistance: findHeader(headers, ['内阻', '内阻（mΩ）', '内阻(mΩ)'])
   };
   const required = ['timestamp_s', 'current_a', 'voltage_v'];
   const missing = required.filter((field) => !mapping[field]);
@@ -498,6 +526,22 @@ function buildStack(rows, config) {
       leak_ppm: num(row[mapping.leak_ppm]),
       cell_count: num(row[mapping.cell_count]),
       coolant_dt: num(row[mapping.coolant_dt]),
+      anode_in_pressure_kpa: num(row[mapping.anode_in_pressure_kpa]),
+      anode_out_pressure_kpa: num(row[mapping.anode_out_pressure_kpa]),
+      cathode_in_pressure_kpa: num(row[mapping.cathode_in_pressure_kpa]),
+      cathode_out_pressure_kpa: num(row[mapping.cathode_out_pressure_kpa]),
+      coolant_in_pressure_kpa: num(row[mapping.coolant_in_pressure_kpa]),
+      coolant_out_pressure_kpa: num(row[mapping.coolant_out_pressure_kpa]),
+      coolant_in_temp_c: num(row[mapping.coolant_in_temp_c]),
+      coolant_out_temp_c: num(row[mapping.coolant_out_temp_c]),
+      anode_flow_slpm: num(row[mapping.anode_flow_slpm]),
+      cathode_flow_slpm: num(row[mapping.cathode_flow_slpm]),
+      coolant_flow_lpm: num(row[mapping.coolant_flow_lpm]),
+      internal_resistance: num(row[mapping.internal_resistance]),
+      anode_flow_resistance_kpa: num(row[mapping.anode_in_pressure_kpa]) !== null && num(row[mapping.anode_out_pressure_kpa]) !== null ? num(row[mapping.anode_in_pressure_kpa]) - num(row[mapping.anode_out_pressure_kpa]) : null,
+      cathode_flow_resistance_kpa: num(row[mapping.cathode_in_pressure_kpa]) !== null && num(row[mapping.cathode_out_pressure_kpa]) !== null ? num(row[mapping.cathode_in_pressure_kpa]) - num(row[mapping.cathode_out_pressure_kpa]) : null,
+      coolant_flow_resistance_kpa: num(row[mapping.coolant_in_pressure_kpa]) !== null && num(row[mapping.coolant_out_pressure_kpa]) !== null ? num(row[mapping.coolant_in_pressure_kpa]) - num(row[mapping.coolant_out_pressure_kpa]) : null,
+      coolant_temperature_difference_c: num(row[mapping.coolant_out_temp_c]) !== null && num(row[mapping.coolant_in_temp_c]) !== null ? num(row[mapping.coolant_out_temp_c]) - num(row[mapping.coolant_in_temp_c]) : null,
       cells
     };
   });
@@ -514,6 +558,10 @@ function buildStack(rows, config) {
     const values = Object.values(row.cells).filter((value) => value !== null);
     return values.length ? Math.max(...values) - Math.min(...values) : null;
   }).filter((value) => value !== null);
+  const summary = (field) => {
+    const values = normalized.map((row) => row[field]).filter((value) => value !== null);
+    return { mean: mean(values), min: values.length ? Math.min(...values) : null, max: values.length ? Math.max(...values) : null, std: std(values) };
+  };
   const parameterConfig = config.parameterConfig || null;
   const parameterAnalysis = stackPlatforms(normalized, parameterConfig, config);
   const issues = [];
@@ -521,6 +569,7 @@ function buildStack(rows, config) {
   if (missing.length) issues.push({ severity: 'critical', code: 'STACK_SCHEMA_MISSING', title: '电堆时序关键字段不完整', evidence: `缺少：${missing.join('、')}`, recommendation: '补充时间、电流、电压和单片电压通道后再进行平台/稳定性分析。' });
   if (configuredCellCount && configuredCellCount !== cellHeaders.length) issues.push({ severity: 'warn', code: 'CELL_CHANNEL_COUNT_MISMATCH', title: '单片数量与导出通道数不一致', evidence: `参数表片数 ${configuredCellCount}，导出单片通道 ${cellHeaders.length} 个；有效配置记录 ${rowsWithConfiguredCount} 条`, recommendation: '确认测试台导出列、片数参数和有效通道范围，不能静默截断。' });
   if (quality.duplicateTimestampCount) issues.push({ severity: 'warn', code: 'STACK_TIMESTAMP_RESOLUTION', title: '时间戳分辨率不足以支撑逐秒排序', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，当前时间列需要结合采样序号复核`, recommendation: '改用带秒/毫秒的原始时间列或补充采样周期参数。' });
+  if (parameterConfig?.ok && parameterAnalysis.performancePoints.some((point) => point.status === 'short_stable')) issues.push({ severity: 'warn', code: 'SHORT_STABLE_WINDOW', title: '稳定区间不足默认统计时长', evidence: `有 ${parameterAnalysis.performancePoints.filter((point) => point.status === 'short_stable').length} 个稳定点达到最短稳定时间但不足默认 ${parameterConfig.parameters.find((item) => item.code === 'DEFAULT_SAMPLE_TIME')?.target ?? 120} s`, recommendation: '保留该点并标记警告；如需正式长窗口曲线，应延长稳定采样。' });
   if (parameterConfig?.ok && !parameterAnalysis.performancePoints.length) issues.push({ severity: 'warn', code: 'STABLE_WINDOW_MISSING', title: '未形成满足参数的稳定区间', evidence: `已读取 ${parameterAnalysis.platforms.length} 个候选平台，但没有稳定区间达到最短稳定时间或参数完整条件`, recommendation: '检查目标工况、稳定判定参数、采样周期和原始时间分辨率。' });
   if (!issues.length) issues.push({ severity: 'info', code: 'STACK_DATA_READY', title: '电堆时序数据已完成结构化分析', evidence: `${normalized.length} 条记录、${cellHeaders.length} 个单片通道已进入统计`, recommendation: '进入企业方法确认和工程师签核。' });
   const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : 'WARN';
@@ -543,9 +592,20 @@ function buildStack(rows, config) {
       cellSpreadMaxV: cellSpread.length ? Math.max(...cellSpread) : null,
       cellSpreadMeanV: mean(cellSpread),
       cellValueStdV: std(cellValues),
-      currentDensityMean: mean(normalized.map((row) => row.current_density_mAcm2).filter((value) => value !== null))
+      currentDensityMean: mean(normalized.map((row) => row.current_density_mAcm2).filter((value) => value !== null)),
+      anodeFlowResistanceKpa: summary('anode_flow_resistance_kpa'),
+      cathodeFlowResistanceKpa: summary('cathode_flow_resistance_kpa'),
+      coolantFlowResistanceKpa: summary('coolant_flow_resistance_kpa'),
+      coolantTemperatureDifferenceC: summary('coolant_temperature_difference_c'),
+      internalResistance: summary('internal_resistance')
     },
-    sourceFieldMap: mapping
+    sourceFieldMap: {
+      ...mapping,
+      anode_flow_resistance_kpa: '计算：阳极入口压力 - 阳极出口压力',
+      cathode_flow_resistance_kpa: '计算：阴极入口压力 - 阴极出口压力',
+      coolant_flow_resistance_kpa: '计算：冷却液入口压力 - 冷却液出口压力',
+      coolant_temperature_difference_c: '计算：冷却液出口温度 - 冷却液入口温度'
+    }
   };
   const metrics = {
     sampleCount: normalized.length,

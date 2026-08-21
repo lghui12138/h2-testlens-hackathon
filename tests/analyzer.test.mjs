@@ -379,9 +379,53 @@ test('reads parameter and target-condition workbooks by header code, computes a 
   assert.equal(result.datasetType, 'stack');
   assert.equal(result.dataset.platforms.length, 1);
   assert.equal(result.dataset.performancePoints.length, 1);
+  assert.equal(result.dataset.performancePoints[0].status, 'short_stable');
+  assert.equal(result.dataset.performancePoints[0].selectedDurationS, 60);
   const output = buildEnterpriseWorkbook(result, 'stack.csv', { parameterConfig: parsed });
   assert.ok(output.SheetNames.includes('目标工况对比'));
   const comparison = output.Sheets['目标工况对比'];
   assert.equal(comparison.D2.f, 'C2-B2');
   assert.ok(workbookArrayBuffer(output).byteLength > 1000);
+});
+
+test('keeps repeated current platforms separate and uses the terminal 120-second window for long stable runs', () => {
+  const parameterConfig = {
+    ok: true,
+    parameters: [
+      { code: 'CURRENT', rawValue: '', target: null },
+      { code: 'MIN_CURRENT_PLATFORM_TIME', rawValue: '60', target: 60 },
+      { code: 'MIN_STABLE_TIME', rawValue: '60', target: 60 },
+      { code: 'DEFAULT_SAMPLE_TIME', rawValue: '120', target: 120 },
+      { code: 'SAMPLE_POSITION', rawValue: '稳定区间末端', target: null }
+    ],
+    parameterRules: [{ code: 'CURRENT', enabled: true, field: 'current_a', target: null, lowerTolerance: -1, upperTolerance: 1 }],
+    targetConditions: [{ conditionId: 'I-10', targetCurrentA: 10 }]
+  };
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2',
+    ...Array.from({ length: 121 }, (_, index) => `${index},1.4,10,${index},0.7,0.69,0.71`),
+    '121,1.4,0,0,0.7,0.69,0.71',
+    ...Array.from({ length: 121 }, (_, index) => `${122 + index},1.4,10,${200 + index},0.8,0.79,0.81`)
+  ].join('\n'));
+  const result = analyzeRows(rows, { parameterConfig, samplePeriodS: 1, minimumPlatformS: 60, minimumStableS: 60 });
+  assert.equal(result.dataset.platforms.length, 2);
+  assert.deepEqual(result.dataset.platforms.map((platform) => platform.platformId), ['I-10-1', 'I-10-2']);
+  assert.equal(result.dataset.performancePoints.length, 2);
+  assert.deepEqual(result.dataset.performancePoints.map((point) => point.selectedDurationS), [120, 120]);
+  assert.deepEqual(result.dataset.performancePoints.map((point) => point.selectionPolicy), ['末端120s', '末端120s']);
+});
+
+test('derives fuel-cell stack flow resistance and coolant temperature difference from mapped raw channels', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极入堆压力（kPa）,阳极出堆压力（kPa）,阴极入堆压力（kPa）,阴极出堆压力（kPa）,循环水入堆压力（kPa）,循环水出堆压力（kPa）,循环水入堆温度（℃）,循环水出堆温度（℃）',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,150,140,160,150,120,110,60,65',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,151,141,161,151,121,111,60,65'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.dataset.metrics.anodeFlowResistanceKpa.mean, 10);
+  assert.equal(result.dataset.metrics.cathodeFlowResistanceKpa.mean, 10);
+  assert.equal(result.dataset.metrics.coolantFlowResistanceKpa.mean, 10);
+  assert.equal(result.dataset.metrics.coolantTemperatureDifferenceC.mean, 5);
+  assert.match(result.dataset.sourceFieldMap.anode_flow_resistance_kpa, /计算/);
 });

@@ -91,6 +91,7 @@ function parseParameterSheet(rows, sheetName) {
       name: text(row[columns.name]),
       enabled: columns.enabled < 0 || truthy(row[columns.enabled]),
       source: text(row[columns.source]),
+      rawValue: columns.target >= 0 ? text(row[columns.target]) : '',
       target: columns.target >= 0 && !text(row[columns.source]).includes('目标工况') ? number(row[columns.target]) : null,
       lowerTolerance: columns.lower >= 0 ? number(row[columns.lower]) : null,
       upperTolerance: columns.upper >= 0 ? number(row[columns.upper]) : null,
@@ -233,12 +234,16 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   addSheet(book, '字段映射', [['标准字段', '原始字段', '单位/换算', '映射状态'], ...Object.entries(result.schema.mapping).map(([field, source]) => [field, source || '', result.schema.conversions[field]?.label || '原单位', source ? '已映射' : '缺失'])]);
   addSheet(book, '数据质量检查', [['检查项', '数值', '判定'], ['记录数', result.quality.rowCount, result.quality.hasEnoughRows ? '通过' : '错误'], ['完整率(%)', result.quality.completenessPct, result.quality.completenessPct >= 98 ? '通过' : '需复核'], ['重复时间戳', result.quality.duplicateTimestampCount, result.quality.duplicateTimestampCount ? '需复核' : '通过'], ['逆序跳变', result.quality.nonMonotonicCount, result.quality.nonMonotonicCount ? '需复核' : '通过'], ...qualityRows(result).map(([field, invalid, valid, status]) => [`字段：${field}`, `${valid} 有效 / ${invalid} 无效`, status])]);
   const platforms = dataset.platforms || dataset.performancePoints || [];
+  const performancePoints = dataset.performancePoints || [];
   addSheet(book, '电流平台', [['平台/工况', '目标电流(A)', '起始(s)', '结束(s)', '持续(s)', '样本数', '判定'], ...platforms.map((item, index) => [item.conditionId || `平台-${index + 1}`, item.targetCurrentA ?? '', item.startS ?? '', item.endS ?? '', item.effectiveDurationS ?? item.durationS ?? '', item.sampleCount ?? '', item.status || '待复核'])]);
-  addSheet(book, '稳定区间', [['平台/工况', '起始(s)', '结束(s)', '持续(s)', '有效样本数', '参数完整', '选定状态', '说明'], ...(dataset.stableSegments || []).map((item) => [item.conditionId || '', item.startS ?? '', item.endS ?? '', item.effectiveDurationS ?? item.durationS ?? '', item.sampleCount ?? '', item.parameterComplete ? '是' : '否', item.selected ? '自动选定' : '候选', item.status || '待复核'])]);
-  addSheet(book, '极化曲线数据', [['工况', '平均电流(A)', '平均电流密度(mA/cm²)', '平均单片电压(V)', '平均净功率(kW)', '有效性'], ...platforms.map((item) => [item.conditionId || '', item.averageCurrentA ?? '', item.averageCurrentDensity ?? '', item.averageCellVoltageV ?? '', item.averageNetPowerKw ?? '', item.status || '待复核'])]);
-  addSheet(book, '实际工况汇总', [['指标', '值', '单位', '证据'], ...Object.entries(dataset.metrics || result.metrics).map(([field, value]) => [field, value ?? '', '', '结构化计算结果'])]);
+  addSheet(book, '稳定区间', [['平台/工况', '起始(s)', '结束(s)', '有效持续(s)', '统计截取(s)', '有效样本数', '参数完整', '选定状态', '说明'], ...(dataset.stableSegments || []).map((item) => [item.platformId || item.conditionId || '', item.startS ?? '', item.endS ?? '', item.effectiveDurationS ?? item.durationS ?? '', item.selectedDurationS ?? '', item.selectedSampleCount ?? item.sampleCount ?? '', item.parameterComplete ? '是' : '否', item.selected ? '自动选定' : '候选', item.status || '待复核'])]);
+  addSheet(book, '极化曲线数据', [['工况', '平均电流(A)', '平均电流密度(mA/cm²)', '平均单片电压(V)', '平均净功率(kW)', '有效性'], ...performancePoints.map((item) => [item.platformId || item.conditionId || '', item.averageCurrentA ?? '', item.averageCurrentDensity ?? '', item.averageCellVoltageV ?? '', item.averageNetPowerKw ?? '', item.status || '待复核'])]);
+  const metricRows = Object.entries(dataset.metrics || result.metrics).flatMap(([field, value]) => value && typeof value === 'object' && !Array.isArray(value)
+    ? Object.entries(value).map(([stat, statValue]) => [`${field}.${stat}`, statValue ?? '', '', '结构化计算结果'])
+    : [[field, value ?? '', '', '结构化计算结果']]);
+  addSheet(book, '实际工况汇总', [['指标', '值', '单位', '证据'], ...metricRows]);
   const comparisonRows = [['工况', '目标电流(A)', '实际平均电流(A)', '偏差(A)', '允许偏差(A)', '符合性']];
-  for (const [index, item] of platforms.entries()) comparisonRows.push([item.conditionId || `平台-${index + 1}`, item.targetCurrentA ?? '', item.averageCurrentA ?? '', '', item.toleranceA ?? '', '']);
+  for (const [index, item] of performancePoints.entries()) comparisonRows.push([item.platformId || item.conditionId || `平台-${index + 1}`, item.targetCurrentA ?? '', item.averageCurrentA ?? '', '', item.toleranceA ?? '', '']);
   const comparisonSheet = addSheet(book, '目标工况对比', comparisonRows);
   for (let row = 2; row <= comparisonRows.length; row += 1) {
     const difference = comparisonSheet[`D${row}`];
@@ -249,7 +254,7 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   const cellStats = dataset.cellChannelCount ? [['指标', '值', '单位'], ['导出单片通道', dataset.cellChannelCount, '个'], ['片数参数', dataset.configuredCellCount || '', '个'], ['平均单片电压', dataset.metrics?.averageCellVoltageV ?? '', 'V'], ['最大单片电压极差', dataset.metrics?.cellSpreadMaxV ?? '', 'V'], ['单片电压标准差', dataset.metrics?.cellValueStdV ?? '', 'V']] : [['指标', '值', '单位'], ['当前数据集', '无单片通道摘要', '']];
   addSheet(book, '单片电压统计', cellStats);
   addSheet(book, '异常清单', [['级别', '代码', '标题', '证据', '建议动作'], ...result.issues.map((item) => [item.severity, item.code, item.title, item.evidence, item.recommendation])]);
-  addSheet(book, '图表数据', [['说明', '本工作簿保留可复核图表数据；实际图形可由企业模板引用本表'], ...((dataset.performancePoints || dataset.platforms || []).map((item) => [item.targetCurrentA ?? '', item.averageCellVoltageV ?? '', item.averageNetPowerKw ?? '']))]);
+  addSheet(book, '图表数据', [['说明', '本工作簿保留可复核图表数据；实际图形可由企业模板引用本表'], ...performancePoints.map((item) => [item.platformId || item.conditionId || '', item.targetCurrentA ?? '', item.averageCurrentDensity ?? '', item.averageCellVoltageV ?? '', item.averageNetPowerKw ?? '', item.status || '待复核'])]);
   addSheet(book, '处理日志', [['步骤', '状态', '证据/来源'], ...(result.workflow?.steps || []).map((step) => [step.label, step.status, step.evidence]), ['参数工作簿', parameterConfig?.ok ? '已校验' : '未提供/未通过', parameterConfig ? `${parameterConfig.parameterSheet || ''}；${parameterConfig.targetSheet || ''}` : '需要导入企业参数工作簿'], ['报告边界', '必须保留', '不替代企业标准负责人、测试人员或实验室签核']]);
   book.Props = { Title: 'H₂ TestLens 企业设备测试分析报告', Subject: dataset.label || '氢能设备测试数据', Author: 'H₂ TestLens' };
   return book;
