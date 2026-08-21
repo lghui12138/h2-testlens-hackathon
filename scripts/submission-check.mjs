@@ -17,6 +17,7 @@ const requiredFiles = [
   'docs/STANDARDS_ALIGNMENT.md',
   'docs/COMPLETION_REPORT.md',
   'docs/CHANGE_MANIFEST.yaml',
+  'docs/DEPLOYMENT.md',
   'src/index.html',
   'src/analyzer.mjs',
   'src/ai-draft.mjs',

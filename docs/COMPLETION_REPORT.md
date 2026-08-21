@@ -4,6 +4,8 @@
 
 H₂ TestLens v2.7.0 is a runnable T02 prototype at the project root. It contains a local static server, public Sites production surface, browser UI, fail-closed analyzer, automatic enterprise-style field mapping and unit conversion, browser-computed CSV SHA-256 provenance, validated current-session enterprise profile/field-mapping JSON import, visible canonical/raw mapping evidence table, official standards alignment ledger and compliance gate, seven-step test workflow readiness checklist, test-plan/acquisition/pre-check/environment/uncertainty/raw-reference metadata, configurable performance metrics and required measurement gates, device profiles with session custom mode, local summary history, current-vs-baseline batch comparison, timestamped peak evidence, guarded evidence-grounded AI draft adapter with metadata minimization, offline AI grounding evaluation, package-aware local analyze/compare APIs, explicit mapping-miss warnings, invalid-package HTTP 422 boundary, AI-inclusive Markdown/JSON exports, submission brief/readiness check, reproducible integrity-checked submission zip/checksum, three sample CSVs, automated tests, requirement spec, implementation plan, test plan, manifest, roadmap, and 3-minute demo script.
 
+The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pages publishes `https://lghui.top/h2-testlens-hackathon/` through a green Actions workflow. The Pages surface is public and does not require ChatGPT, but it deliberately does not claim to provide ordinary user registration until an external identity provider is configured and tested.
+
 ## Verification evidence
 
 - `npm test`: 21 passed, 0 failed.

@@ -6,7 +6,7 @@ surfaces:
   user: [csv_upload, dashboard, trend_chart, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, workflow_readiness, batch_comparison, local_history, ai_report_draft, report_download]
   system_interface: [local_static_server, analysis_api, ai_draft_endpoint, browser_blob_download]
   information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, threshold_config, verdict_enum, comparison_evidence, history_summary]
-  operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc, github_pages_workflow]
+  operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc, deployment_doc, github_pages_workflow]
 source_of_truth:
   analyzer: src/analyzer.mjs
   ai_adapter: src/ai-draft.mjs
