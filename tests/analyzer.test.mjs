@@ -203,6 +203,7 @@ test('enterprise profile package validates, imports thresholds, and supplies fie
   assert.equal(imported.profiles[0].thresholds.maxPressureBar, 30);
   assert.equal(imported.fieldMapping.pressure_bar, '压力(kPa)');
   assert.deepEqual(imported.profiles[0].requiredMeasurements, ['flow_slpm', 'hydrogen_purity_pct']);
+  assert.deepEqual(imported.profiles[0].requiredPhases, []);
   assert.deepEqual(imported.profiles[0].acceptanceCriteria, {});
   const legacy = analyzeRows(parseCSV([
     '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量,泄漏(ppb)',
@@ -290,4 +291,19 @@ test('required performance measurements fail closed when purity is absent', () =
   assert.equal(result.compliance.status, 'NOT_READY');
   assert.deepEqual(result.compliance.missingMeasurements, ['hydrogen_purity_pct']);
   assert.ok(result.issues.some((item) => item.code === 'PERFORMANCE_FIELD_MISSING'));
+});
+
+test('required test phases fail closed when the input run does not cover them', () => {
+  const result = analyzeRows(parseCSV(baselineCsv), {
+    profileId: 'approved-example',
+    profileName: 'Approved example',
+    approvalStatus: 'approved',
+    standardRefs: [{ id: 'GB/T 46104-2025', title: 'Power fluctuation', uri: 'https://std.samr.gov.cn/example' }],
+    methodId: 'GB/T 46104-2025',
+    revision: '2025',
+    requiredPhases: ['dynamic']
+  });
+  assert.equal(result.compliance.status, 'NOT_READY');
+  assert.deepEqual(result.compliance.missingPhases, ['dynamic']);
+  assert.ok(result.issues.some((item) => item.code === 'PHASE_COVERAGE_MISSING'));
 });

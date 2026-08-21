@@ -12,6 +12,7 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [],
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: [],
+    requiredPhases: [],
     acceptanceCriteria: {},
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
   },
@@ -28,6 +29,7 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [],
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: [],
+    requiredPhases: [],
     acceptanceCriteria: {},
     thresholds: { maxTemperatureC: 70, maxPressureBar: 25, maxLeakPpm: 5, maxVoltageStdV: 0.08, maxPressureDriftBarPerMin: 0.8 }
   }
@@ -59,6 +61,7 @@ export function validateProfilePackage(payload) {
     for (const reference of profile.standardRefs ?? []) if (!reference.id || !reference.title || !reference.uri) errors.push(`${profile.id || '未知'} standardRefs 每项需有 id/title/uri`);
     if (profile.requiredMetadata !== undefined && (!Array.isArray(profile.requiredMetadata) || profile.requiredMetadata.some((field) => !metadataFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMetadata 含未知字段`);
     if (profile.requiredMeasurements !== undefined && (!Array.isArray(profile.requiredMeasurements) || profile.requiredMeasurements.some((field) => !measurementFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMeasurements 含未知字段`);
+    if (profile.requiredPhases !== undefined && (!Array.isArray(profile.requiredPhases) || profile.requiredPhases.some((phase) => typeof phase !== 'string' || !phase.trim() || phase.length > 80))) errors.push(`${profile.id || '未知'} requiredPhases 必须是非空字符串数组`);
     if (profile.acceptanceCriteria !== undefined && (typeof profile.acceptanceCriteria !== 'object' || Array.isArray(profile.acceptanceCriteria))) errors.push(`${profile.id || '未知'} acceptanceCriteria 必须是对象`);
     for (const field of ['minHydrogenPurityPct', 'maxSpecificEnergyKWhPerNm3']) if (profile.acceptanceCriteria?.[field] !== undefined && (!Number.isFinite(Number(profile.acceptanceCriteria[field])) || Number(profile.acceptanceCriteria[field]) <= 0)) errors.push(`${profile.id || '未知'} acceptanceCriteria.${field} 必须为正数`);
     for (const field of THRESHOLD_FIELDS) {
@@ -92,6 +95,7 @@ export function profilesFromPackage(payload) {
       standardRefs: profile.standardRefs || [],
       requiredMetadata: profile.requiredMetadata || metadataFields,
       requiredMeasurements: profile.requiredMeasurements || [],
+      requiredPhases: profile.requiredPhases || [],
       acceptanceCriteria: profile.acceptanceCriteria || {},
       source: profile.source || `${payload.organization || '企业'} 当前会话配置`,
       description: profile.description || '由当前会话导入的配置，正式使用前需确认审批状态。',

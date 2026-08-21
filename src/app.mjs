@@ -52,6 +52,7 @@ function configFromUI() {
     standardRefs: profile?.standardRefs ?? [],
     requiredMetadata: profile?.requiredMetadata ?? [],
     requiredMeasurements: profile?.requiredMeasurements ?? [],
+    requiredPhases: profile?.requiredPhases ?? [],
     acceptanceCriteria: profile?.acceptanceCriteria ?? {},
     fieldMapping: state.fieldMapping,
     testMetadata: {

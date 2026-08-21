@@ -208,7 +208,7 @@ function selectSteadyRows(rows) {
   return { rows: fallback.length >= 2 ? fallback : rows, source: explicit.length ? 'phase=steady（样本不足，回退活动窗口）' : '活动窗口回退' };
 }
 
-function complianceReadiness(config, missingMeasurements = []) {
+function complianceReadiness(config, missingMeasurements = [], missingPhases = []) {
   const missingProfileFields = [];
   if (!config.profileId) missingProfileFields.push('profileId');
   if (!config.standardRefs?.length) missingProfileFields.push('standardRefs');
@@ -220,9 +220,9 @@ function complianceReadiness(config, missingMeasurements = []) {
     const value = metadata[field];
     return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
   });
-  const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : missingProfileFields.length || missingMetadata.length || missingMeasurements.length ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
+  const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : missingProfileFields.length || missingMetadata.length || missingMeasurements.length || missingPhases.length ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
   const label = status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? '标准符合性资料不完整' : '可进入人工符合性复核';
-  return { status, label, approvalStatus: config.approvalStatus || 'unspecified', standardRefs: config.standardRefs || [], methodId: config.methodId || null, revision: config.revision || null, applicationScope: config.applicationScope || null, intendedUse: config.intendedUse || null, missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: config.requiredMeasurements || [], missingMeasurements, acceptanceCriteria: config.acceptanceCriteria || {} };
+  return { status, label, approvalStatus: config.approvalStatus || 'unspecified', standardRefs: config.standardRefs || [], methodId: config.methodId || null, revision: config.revision || null, applicationScope: config.applicationScope || null, intendedUse: config.intendedUse || null, missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: config.requiredMeasurements || [], missingMeasurements, requiredPhases: config.requiredPhases || [], missingPhases, acceptanceCriteria: config.acceptanceCriteria || {} };
 }
 
 function missingPerformanceMeasurements(config, rows, schema) {
@@ -231,6 +231,11 @@ function missingPerformanceMeasurements(config, rows, schema) {
     if (field === 'energy_derived') return rows.filter((row) => row.timestamp_s !== null && row.current_a !== null && row.voltage_v !== null).length < 2;
     return !schema.mapping[field] || rows.filter((row) => row[field] !== null).length < 2;
   });
+}
+
+function missingRequiredPhases(config, rows) {
+  const present = new Set(rows.map((row) => String(row.phase || '').trim().toLowerCase()).filter(Boolean));
+  return (Array.isArray(config.requiredPhases) ? config.requiredPhases : []).filter((phase) => !present.has(String(phase).trim().toLowerCase()));
 }
 
 function integrateTrapezoid(rows, field, divisor = 1) {
@@ -253,11 +258,13 @@ function workflowReadiness(config, quality, schema, compliance, verdict) {
   const metadataReady = compliance.missingMetadata.length === 0;
   const signoffReady = Boolean(config.testMetadata?.signoff);
   const performanceReady = compliance.missingMeasurements.length === 0;
+  const phaseCoverageReady = compliance.missingPhases.length === 0;
   const steps = [
     { id: 'profile', label: '设备家族与测试方法', status: compliance.missingProfileFields.length ? 'needs_input' : 'ready', evidence: compliance.missingProfileFields.length ? `缺少 ${compliance.missingProfileFields.join('、')}` : `${compliance.methodId} · ${compliance.revision}` },
     { id: 'metadata', label: '测试计划与仪器溯源', status: metadataReady ? 'ready' : 'needs_input', evidence: metadataReady ? '目的、仪器、校准、执行者、公式、签核字段齐全' : `缺少 ${compliance.missingMetadata.join('、')}` },
     { id: 'data', label: '原始数据质量', status: dataReady ? 'ready' : 'needs_review', evidence: `${quality.rowCount} 条记录 · 完整率 ${quality.completenessPct.toFixed(1)}%` },
     { id: 'traceability', label: '字段、单位与计算追溯', status: traceabilityReady ? 'ready' : 'needs_review', evidence: `${schema.mappedCount}/${schema.fieldCount} 字段已映射 · ${Object.values(schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` },
+    { id: 'coverage', label: '测试段覆盖', status: phaseCoverageReady ? 'ready' : 'needs_input', evidence: phaseCoverageReady ? 'profile 要求的测试段均已出现' : `缺少 ${compliance.missingPhases.join('、')}` },
     { id: 'performance', label: '产氢量、纯度与单位能耗', status: performanceReady ? 'ready' : 'needs_input', evidence: performanceReady ? 'profile 要求的性能测量均有有效数据' : `缺少 ${compliance.missingMeasurements.join('、')}` },
     { id: 'risk', label: '风险处置与复测决定', status: verdict === 'FAIL' ? 'blocked' : verdict === 'WARN' ? 'needs_review' : 'ready', evidence: verdict === 'FAIL' ? '存在高优先级风险，先处置再决定归档' : verdict === 'WARN' ? '存在趋势或质量问题，需要工程师复核' : '当前规则未触发高优先级风险' },
     { id: 'signoff', label: '人工签核与归档', status: signoffReady ? 'ready' : 'needs_input', evidence: signoffReady ? config.testMetadata.signoff : '尚未填写人工签核信息' }
@@ -286,7 +293,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   }));
   const quality = qualityReport(rows, schema);
   const missingMeasurements = missingPerformanceMeasurements(config, rows, schema);
-  const compliance = complianceReadiness(config, missingMeasurements);
+  const missingPhases = missingRequiredPhases(config, rows);
+  const compliance = complianceReadiness(config, missingMeasurements, missingPhases);
   const valueList = (field, selectedRows = rows) => selectedRows.map((row) => row[field]).filter((value) => value !== null);
   const steadySelection = selectSteadyRows(rows);
   const steadyRows = steadySelection.rows;
@@ -356,6 +364,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (metrics.peakPressureBar !== null && metrics.peakPressureBar > config.maxPressureBar) issues.push(issue('critical', 'PRESSURE_HIGH', '压力超过演示阈值', `峰值 ${metrics.peakPressureBar.toFixed(1)} bar > ${config.maxPressureBar} bar${timeRef(metrics.peakPressureAtS)}`, '暂停升载，检查调压与泄压回路。'));
   if (metrics.peakLeakPpm !== null && metrics.peakLeakPpm > config.maxLeakPpm) issues.push(issue('critical', 'LEAK_HIGH', '泄漏监测值超过演示阈值', `峰值 ${metrics.peakLeakPpm.toFixed(1)} ppm > ${config.maxLeakPpm} ppm${timeRef(metrics.peakLeakAtS)}`, '优先复核密封、采样管路与环境本底。'));
   if (missingMeasurements.length) issues.push(issue('critical', 'PERFORMANCE_FIELD_MISSING', '缺少 profile 要求的性能测量', `缺少：${missingMeasurements.join('、')}`, '补充企业方法要求的测量通道和数据采集记录后再生成正式性能结论。'));
+  if (missingPhases.length) issues.push(issue('critical', 'PHASE_COVERAGE_MISSING', '缺少 profile 要求的测试段', `缺少：${missingPhases.join('、')}`, '按测试计划补齐对应工况或在 profile 中确认该测试段不适用。'));
   const acceptance = config.acceptanceCriteria || {};
   if (acceptance.minHydrogenPurityPct !== undefined && metrics.minimumHydrogenPurityPct !== null && metrics.minimumHydrogenPurityPct < acceptance.minHydrogenPurityPct) issues.push(issue('critical', 'PURITY_LOW', '氢气纯度低于 profile 验收准则', `最低纯度 ${metrics.minimumHydrogenPurityPct.toFixed(3)}% < ${acceptance.minHydrogenPurityPct}%${timeRef(metrics.minimumHydrogenPurityAtS)}`, '复核纯度分析仪、净化系统和采样条件。'));
   if (acceptance.maxSpecificEnergyKWhPerNm3 !== undefined && metrics.specificEnergyKWhPerNm3 !== null && metrics.specificEnergyKWhPerNm3 > acceptance.maxSpecificEnergyKWhPerNm3) issues.push(issue('critical', 'SPECIFIC_ENERGY_HIGH', '单位制氢电耗高于 profile 验收准则', `单位电耗 ${metrics.specificEnergyKWhPerNm3.toFixed(3)} kWh/Nm³ > ${acceptance.maxSpecificEnergyKWhPerNm3} kWh/Nm³`, '复核功率、产氢量、稳态窗口和企业计算方法。'));
