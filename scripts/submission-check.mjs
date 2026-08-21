@@ -31,6 +31,7 @@ const requiredFiles = [
   'scripts/package-submission.mjs',
   'scripts/api-smoke.mjs',
   'scripts/prepare-github-pages.mjs',
+  'scripts/profile-audit.mjs',
   '.github/workflows/deploy-pages.yml',
   'config/enterprise-profile.example.json',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
@@ -61,7 +62,8 @@ checks.push({ id: 'script:smoke-api', pass: packageJson.scripts?.['smoke:api'] =
 for (const [id, command, args] of [
   ['tests', 'npm', ['test']],
   ['ai-grounding', 'npm', ['run', 'eval:ai']],
-  ['api-smoke', 'npm', ['run', 'smoke:api']]
+  ['api-smoke', 'npm', ['run', 'smoke:api']],
+  ['profile-audit', 'npm', ['run', 'profile:audit', '--', 'config/enterprise-profile.example.json']]
 ]) {
   try { await exec(command, args, { cwd: root, maxBuffer: 2_000_000 }); checks.push({ id, pass: true }); }
   catch (error) { checks.push({ id, pass: false, detail: error.stdout?.slice(-1000) ?? error.message }); }
