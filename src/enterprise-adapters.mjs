@@ -309,6 +309,11 @@ function buildVehicle(rows, config) {
   }));
   const targetCurrents = (config.vehicleTargets || []).map(Number).filter(Number.isFinite);
   const performancePoints = vehicleSegments(normalized, targetCurrents, Number(config.vehicleCurrentToleranceA ?? 5), Number(config.vehicleMinimumDurationS ?? 180));
+  const trendMetric = (field) => {
+    const points = performancePoints.map((point) => [point.startS, point[field]]).filter(([, value]) => Number.isFinite(value));
+    return { x: 'platform_start_s', pointCount: points.length, ...linearTrend(points) };
+  };
+  const performanceTrend = { averageCellVoltageV: trendMetric('averageCellVoltageV'), averageCellDeviationMv: trendMetric('averageCellDeviationMv'), averageCellVariance: trendMetric('averageCellVariance'), averageNetPowerKw: trendMetric('averageNetPowerKw') };
   const issues = [];
   if (missing.length) issues.push({ severity: 'critical', code: 'VEHICLE_SCHEMA_MISSING', title: '车辆燃电信号不完整', evidence: `缺少：${missing.join('、')}`, recommendation: '补充企业定义的车辆信号后再进行趋势和预警判定。' });
   if (quality.duplicateTimestampCount || quality.nonMonotonicCount) issues.push({ severity: 'warn', code: 'VEHICLE_TIME_SEQUENCE', title: '车辆时间轴需要复核', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，逆序 ${quality.nonMonotonicCount} 次`, recommendation: '确认多文件拼接、采样时钟和时区口径。' });
@@ -344,6 +349,7 @@ function buildVehicle(rows, config) {
     targetToleranceA: Number(config.vehicleCurrentToleranceA ?? 5),
     minimumDurationS: Number(config.vehicleMinimumDurationS ?? 180),
     performancePoints,
+    performanceTrend,
     insulation: { points: insulationPoints, forecast: insulationForecast, validCount: isolationRows.length, invalidCount: invalidIsolation },
     signals: Object.fromEntries(VEHICLE_FIELDS.slice(1).map(([field]) => [field, { source: mapping[field], count: normalized.filter((row) => row[field] !== null).length }]))
   };

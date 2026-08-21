@@ -357,6 +357,16 @@ test('recognizes the enterprise vehicle contract and computes target-current and
   assert.match(reportMarkdown(result, 'vehicle.csv'), /目标电流段统计/);
 });
 
+test('fits vehicle performance trends from separate target-current platforms', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const row = (time, current, avg, power) => `2026-07-07 18:${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')},4,${current},320,${power},0.6,1,${avg},8,10,500,1`;
+  const result = analyzeRows(parseCSV([header, row(0, 95, 0.70, 30), row(180, 95, 0.70, 30), row(181, 0, 0.70, 0), row(361, 105, 0.68, 32), row(541, 105, 0.68, 32)].join('\n')), { vehicleTargets: [95, 105], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 180 });
+  assert.equal(result.dataset.performancePoints.length, 2);
+  assert.equal(result.dataset.performanceTrend.averageCellVoltageV.pointCount, 2);
+  assert.ok(result.dataset.performanceTrend.averageCellVoltageV.slopePerDay < 0);
+  assert.match(reportMarkdown(result, 'vehicle.csv'), /性能趋势参数/);
+});
+
 test('recognizes the enterprise stack contract, supports tab-delimited Chinese headers, and fails closed on timestamp resolution', () => {
   const rows = parseCSV([
     '时间\t电堆电压\t电堆电流\t电堆功率\t平均电压\tCELL1\tCELL2',

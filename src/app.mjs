@@ -322,6 +322,23 @@ function drawEnterpriseChart(result) {
   label(`平均单片电压（V）`, pad.left, 12, '#13262d'); label(`电流密度/电流`, width - 86, height - 8);
 }
 
+function drawEnterprisePerformanceChart(result) {
+  const wrap = $('#enterprise-performance-chart-wrap'); const canvas = $('#enterprise-performance-chart');
+  if (!wrap || !canvas) return;
+  if (result.datasetType !== 'vehicle') { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  const points = (result.dataset.performancePoints || []).filter((point) => Number.isFinite(point.startS) && Number.isFinite(point.averageCellVoltageV));
+  const dpr = window.devicePixelRatio || 1; const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245; canvas.width = width * dpr; canvas.height = height * dpr;
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
+  const pad = { left: 50, right: 24, top: 20, bottom: 32 }; const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillStyle = '#71838a';
+  if (!points.length) { ctx.fillText('暂无有效性能点；输入目标电流并重新分析', pad.left, pad.top + 20); return; }
+  const xValues = points.map((point) => point.startS / 3600); const yValues = points.map((point) => point.averageCellVoltageV); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1; const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
+  ctx.strokeStyle = 'rgba(154,172,184,.16)'; for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * plotH / 3; ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right, gy); ctx.stroke(); }
+  const sorted = [...points].sort((a, b) => a.startS - b.startS); ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.startS / 3600); const py = y(point.averageCellVoltageV); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+  points.forEach((point) => { ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(x(point.startS / 3600), y(point.averageCellVoltageV), 4, 0, Math.PI * 2); ctx.fill(); });
+  const trend = result.dataset.performanceTrend?.averageCellVoltageV; ctx.fillStyle = '#13262d'; ctx.fillText('平均单体电压（V）', pad.left, 12); ctx.fillText(`起始运行时长（h） · 斜率 ${trend?.slopePerDay === null ? '不足' : `${fmt(trend.slopePerDay, 4)} V/日`}`, width - 220, height - 8);
+}
+
 function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
   $('#report-status').textContent = draft ? '自动报告初稿' : `${status} · ${result.issues.length} 条结论`;
@@ -348,7 +365,8 @@ function renderEnterprisePanel(result) {
       : '<tr><td colspan="5">未形成有效目标电流段；输入目标电流并点击“应用阈值并重新分析”。</td></tr>';
     const forecast = Object.values(dataset.insulation.forecast).map((item) => `<span><b>${item.threshold} kΩ</b> ${item.trend.slopePerDay === null ? '趋势不足' : `${fmt(item.trend.slopePerDay, 2)} kΩ/日`} · ${item.forecast?.status === 'forecast' ? `预计 ${fmt(item.forecast.days, 1)} 日触及` : item.forecast?.status === 'already_below' ? '已有低于报警线的窗口' : '未形成下降预测'}</span>`).join('');
     $('#enterprise-controls').innerHTML = `<label>目标电流 A（逗号分隔）<input id="vehicle-targets" type="text" value="${escapeHtml(dataset.targetCurrents.join(','))}" placeholder="例如 95,105,115"></label><label>允许波动 A<input id="vehicle-tolerance" type="number" value="${dataset.targetToleranceA}" step="1"></label><label>最短持续 s<input id="vehicle-duration" type="number" value="${dataset.minimumDurationS}" step="10"></label>`;
-    $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.stateCounts['4'] || 0}</b> 条运行态</span><span><b>${dataset.stateCounts['8'] || 0}</b> 条上电非运行态</span><span><b>${dataset.insulation.validCount}</b> 条绝缘有效记录</span><span><b>${dataset.insulation.points.length}</b> 个 10 分钟窗口</span></div><div class="enterprise-forecast">${forecast}</div>`;
+    const voltageTrend = dataset.performanceTrend?.averageCellVoltageV;
+    $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.stateCounts['4'] || 0}</b> 条运行态</span><span><b>${dataset.stateCounts['8'] || 0}</b> 条上电非运行态</span><span><b>${dataset.insulation.validCount}</b> 条绝缘有效记录</span><span><b>${dataset.insulation.points.length}</b> 个 10 分钟窗口</span><span><b>${voltageTrend?.pointCount || 0}</b> 个性能趋势点</span><span><b>${voltageTrend?.slopePerDay === null ? '—' : fmt(voltageTrend.slopePerDay, 4)}</b> V/日</span></div><div class="enterprise-forecast">${forecast}</div>`;
     $('#enterprise-table').innerHTML = `<h3>目标电流段统计</h3><table><thead><tr><th>目标 A</th><th>有效持续 s</th><th>平均单体 V</th><th>离均差 mV</th><th>净功率 kW</th></tr></thead><tbody>${points}</tbody></table>`;
     return;
   }
@@ -400,7 +418,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result);
+  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result);
   renderComparison();
   renderHistory();
   renderSchema(result);
@@ -580,7 +598,7 @@ $('#download-xlsx').addEventListener('click', async () => {
   }
 });
 $('#download-json').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); } });
+window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 ensureExtendedMetadataFields();
 renderProfileOptions();
 applyProfile('electrolyzer-demo');
