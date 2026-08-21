@@ -56,6 +56,7 @@ npm start
 - 性能指标：产氢量（流量梯形积分）、电能消耗、单位制氢电耗、最低氢气纯度；profile 可强制要求纯度等测量字段
 - profile 可声明必须出现的测试段（如稳态、动态、启停）；缺段时系统阻断正式性能结论
 - `npm run profile:audit -- config/enterprise-profile.example.json` 可在接入前审计企业 profile 的标准、测量、测试段和不确定度配置
+- enterprise profile 可声明适用数据集、车辆目标电流/持续时间和耐久预警规则；profile 与数据集不匹配时系统阻断分析
 - 上传或载入 CSV 时浏览器自动计算 SHA-256，并写入当前会话的原始数据引用字段；哈希随报告/JSON 保存，原始行不上传
 - 可展开查看每个 canonical 字段、原始表头和单位换算证据
 - 本地批次历史：只保存 KPI、判定、profile 和风险摘要，刷新后仍可复核

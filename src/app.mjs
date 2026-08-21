@@ -40,6 +40,9 @@ function configFromUI() {
   const profileId = $('#profile-select').value;
   const profile = profileId === CUSTOM_PROFILE_ID ? null : getProfile(profileId, state.profileCatalog);
   const optionalNumber = (id) => { const value = $(`#${id}`)?.value?.trim(); return value ? Number(value) : null; };
+  const vehicleTargetsInput = $('#vehicle-targets')?.value?.trim();
+  const durabilityDeviation = optionalNumber('durability-max-deviation');
+  const durabilityCellVoltage = optionalNumber('durability-min-cell-voltage');
   return {
     maxTemperatureC: Number($('#max-temperature').value) || DEFAULT_CONFIG.maxTemperatureC,
     maxPressureBar: Number($('#max-pressure').value) || DEFAULT_CONFIG.maxPressureBar,
@@ -59,13 +62,15 @@ function configFromUI() {
     requiredMetadata: profile?.requiredMetadata ?? [],
     requiredMeasurements: profile?.requiredMeasurements ?? [],
     requiredPhases: profile?.requiredPhases ?? [],
+    supportedDatasetTypes: profile?.supportedDatasetTypes ?? [],
+    vehicleTargets: vehicleTargetsInput ? vehicleTargetsInput.split(',').map((value) => Number(value.trim())).filter(Number.isFinite) : profile?.vehicleTargets ?? [],
+    vehicleCurrentToleranceA: optionalNumber('vehicle-tolerance') ?? profile?.vehicleCurrentToleranceA ?? 5,
+    vehicleMinimumDurationS: optionalNumber('vehicle-duration') ?? profile?.vehicleMinimumDurationS ?? 180,
+    durabilityRules: { ...profile?.durabilityRules, ...(durabilityDeviation !== null ? { maxDeviationMv: durabilityDeviation } : {}), ...(durabilityCellVoltage !== null ? { minAverageCellVoltageMv: durabilityCellVoltage } : {}) },
     acceptanceCriteria: profile?.acceptanceCriteria ?? {},
     uncertaintyModelRequired: profile?.uncertaintyModelRequired ?? false,
     uncertaintyModel: profile?.uncertaintyModel ?? null,
     fieldMapping: state.fieldMapping,
-    vehicleTargets: ($('#vehicle-targets')?.value || '').split(',').map((value) => Number(value.trim())).filter(Number.isFinite),
-    vehicleCurrentToleranceA: Number($('#vehicle-tolerance')?.value) || 5,
-    vehicleMinimumDurationS: Number($('#vehicle-duration')?.value) || 180,
     parameterConfig: state.parameterConfig,
     durabilityReports: state.durabilityReports,
     durabilityRules: { maxDeviationMv: optionalNumber('durability-max-deviation'), minAverageCellVoltageMv: optionalNumber('durability-min-cell-voltage') },

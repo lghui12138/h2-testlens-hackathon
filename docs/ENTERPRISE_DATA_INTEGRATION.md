@@ -22,6 +22,7 @@
 - 飞书告警默认不外发；只有填写企业批准的 V2 webhook 并点击确认发送才会尝试 POST，发送结果保留在当前页面，不保存 webhook/密钥。
 - 多文件批次会生成本地 manifest，按文件 SHA-256、大小、记录数和时间范围标记新增/变更/未变；manifest 不上传外部。
 - 参数/目标工况 Excel 按工作表名、表头和参数代码读取，不依赖固定行号；校验失败时阻断正式平台/稳定区间处理。
+- 企业 profile 可限制适用数据集类型；车辆/耐久规则随 profile 进入会话，跨设备复用时直接阻断。
 - 页面提供 [`config/enterprise-parameter-template.xlsx`](../config/enterprise-parameter-template.xlsx) 下载入口；模板中的数值仅是填写格式示例，不是企业标准。
 - Excel 报告导出包含 14 个工作表、目标/实际偏差公式、字段映射、数据质量、平台、稳定区间、单片统计、异常和处理日志；报告不包含原始时序行。
 - 报告初稿和 API 公共响应只发送结构化汇总，不包含原始行；`publicAnalysis` 会移除 `rows`。

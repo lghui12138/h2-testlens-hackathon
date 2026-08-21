@@ -230,6 +230,9 @@ test('enterprise profile package validates, imports thresholds, and supplies fie
   assert.equal(invalid.ok, false);
   assert.ok(invalid.errors.some((error) => error.includes('profile id 非法')));
   assert.ok(invalid.errors.some((error) => error.includes('fieldMapping 含未知字段')));
+  const invalidDatasetType = profilesFromPackage({ schemaVersion: 'h2-testlens.profile.v1', profiles: [{ id: 'dataset-profile', name: '数据集 profile', supportedDatasetTypes: ['unknown'], thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 } }] });
+  assert.equal(invalidDatasetType.ok, false);
+  assert.ok(invalidDatasetType.errors.some((error) => error.includes('supportedDatasetTypes')));
   const mismatchedInput = parseCSV([
     '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量,泄漏(ppb)',
     '0,稳态,1000,1800,30,100,3,1000',
@@ -381,6 +384,18 @@ test('recognizes the enterprise stack contract, supports tab-delimited Chinese h
   assert.equal(result.metrics.durationS, 3);
   assert.equal(result.quality.duplicateTimestampCount, 0);
   assert.match(result.narrative, /单片电压一致性/);
+});
+
+test('blocks an enterprise profile when its approved dataset scope does not match the uploaded stack data', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71'
+  ].join('\n'));
+  const result = analyzeRows(rows, { supportedDatasetTypes: ['vehicle'] });
+  assert.equal(result.verdict, 'FAIL');
+  assert.equal(result.workflow.status, 'BLOCKED_PROFILE_SCOPE');
+  assert.ok(result.issues.some((item) => item.code === 'DATASET_PROFILE_MISMATCH'));
 });
 
 test('reads parameter and target-condition workbooks by header code, computes a stable interval, and writes an auditable workbook', () => {

@@ -36,6 +36,7 @@
 - 已实现：对流量进行时间梯形积分得到产氢量，对电功率进行时间积分得到电能，并给出单位制氢电耗；纯度字段缺失时明确显示缺失，不用默认值填充。
 - 已实现：企业 profile 可声明 `requiredMeasurements` 和 `acceptanceCriteria`；缺失测量或超过企业准则时阻断正式性能结论。
 - 已实现：企业 profile 可声明 `requiredPhases`；输入数据缺少计划要求的稳态、动态或启停段时进入 `NOT_READY`。
+- 已实现：企业 profile 可声明 `supportedDatasetTypes`、车辆目标电流和耐久预警规则；上传数据集不在批准范围时进入 `BLOCKED_PROFILE_SCOPE`，不复用其他设备方法。
 - 已实现：浏览器对当前 CSV/TXT 批次计算 SHA-256，并把哈希写入 provenance；远程 AI 不接收原始 CSV 或哈希以外的测试元数据值。
 - 已实现：参数/目标工况 Excel 按工作表名、表头和参数代码读取；无效参数工作簿会阻断正式平台/稳定区间处理。
 - 已实现：生成 14 个工作表的 Excel 报告，保留有效参数、字段映射、质量检查、平台/稳定区间、异常和处理日志；目标/实际偏差含 Excel 公式并已通过零公式错误复算检查；耐久/极化报告追加标准 OOXML chart/drawing 结构，仍需企业 Excel/WPS 视觉验收。

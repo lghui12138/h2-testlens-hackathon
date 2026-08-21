@@ -48,6 +48,7 @@ const APPROVAL_STATUSES = ['approved', 'pending', 'example_unapproved'];
 const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
 const measurementFields = ['flow_slpm', 'hydrogen_purity_pct', 'energy_derived'];
 const uncertaintyFields = ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm', 'hydrogen_purity_pct'];
+const datasetTypes = ['vehicle', 'stack', 'durability', 'generic'];
 
 export function validateProfilePackage(payload) {
   const errors = [];
@@ -67,6 +68,11 @@ export function validateProfilePackage(payload) {
     if (profile.requiredMetadata !== undefined && (!Array.isArray(profile.requiredMetadata) || profile.requiredMetadata.some((field) => !metadataFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMetadata 含未知字段`);
     if (profile.requiredMeasurements !== undefined && (!Array.isArray(profile.requiredMeasurements) || profile.requiredMeasurements.some((field) => !measurementFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMeasurements 含未知字段`);
     if (profile.requiredPhases !== undefined && (!Array.isArray(profile.requiredPhases) || profile.requiredPhases.some((phase) => typeof phase !== 'string' || !phase.trim() || phase.length > 80))) errors.push(`${profile.id || '未知'} requiredPhases 必须是非空字符串数组`);
+    if (profile.supportedDatasetTypes !== undefined && (!Array.isArray(profile.supportedDatasetTypes) || !profile.supportedDatasetTypes.length || profile.supportedDatasetTypes.some((type) => !datasetTypes.includes(type)))) errors.push(`${profile.id || '未知'} supportedDatasetTypes 含未知或空数据集类型`);
+    if (profile.vehicleTargets !== undefined && (!Array.isArray(profile.vehicleTargets) || !profile.vehicleTargets.length || profile.vehicleTargets.some((value) => !Number.isFinite(Number(value)) || Number(value) <= 0))) errors.push(`${profile.id || '未知'} vehicleTargets 必须是正数数组`);
+    for (const field of ['vehicleCurrentToleranceA', 'vehicleMinimumDurationS']) if (profile[field] !== undefined && (!Number.isFinite(Number(profile[field])) || Number(profile[field]) <= 0)) errors.push(`${profile.id || '未知'} ${field} 必须为正数`);
+    if (profile.durabilityRules !== undefined && (typeof profile.durabilityRules !== 'object' || Array.isArray(profile.durabilityRules))) errors.push(`${profile.id || '未知'} durabilityRules 必须是对象`);
+    for (const field of ['maxDeviationMv', 'minAverageCellVoltageMv']) if (profile.durabilityRules?.[field] !== undefined && (!Number.isFinite(Number(profile.durabilityRules[field])) || Number(profile.durabilityRules[field]) <= 0)) errors.push(`${profile.id || '未知'} durabilityRules.${field} 必须为正数`);
     if (profile.uncertaintyModelRequired !== undefined && typeof profile.uncertaintyModelRequired !== 'boolean') errors.push(`${profile.id || '未知'} uncertaintyModelRequired 必须是布尔值`);
     if (profile.uncertaintyModel !== undefined && profile.uncertaintyModel !== null) {
       if (typeof profile.uncertaintyModel !== 'object' || Array.isArray(profile.uncertaintyModel)) errors.push(`${profile.id || '未知'} uncertaintyModel 必须是对象或 null`);
@@ -110,6 +116,11 @@ export function profilesFromPackage(payload) {
       requiredMetadata: profile.requiredMetadata || metadataFields,
       requiredMeasurements: profile.requiredMeasurements || [],
       requiredPhases: profile.requiredPhases || [],
+      supportedDatasetTypes: profile.supportedDatasetTypes || [],
+      vehicleTargets: profile.vehicleTargets || [],
+      vehicleCurrentToleranceA: profile.vehicleCurrentToleranceA || null,
+      vehicleMinimumDurationS: profile.vehicleMinimumDurationS || null,
+      durabilityRules: profile.durabilityRules || {},
       acceptanceCriteria: profile.acceptanceCriteria || {},
       uncertaintyModelRequired: profile.uncertaintyModelRequired || false,
       uncertaintyModel: profile.uncertaintyModel || null,

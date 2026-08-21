@@ -24,6 +24,11 @@ try {
         requiredMetadata: profile.requiredMetadata,
         requiredMeasurements: profile.requiredMeasurements,
         requiredPhases: profile.requiredPhases,
+        supportedDatasetTypes: profile.supportedDatasetTypes,
+        vehicleTargets: profile.vehicleTargets,
+        vehicleCurrentToleranceA: profile.vehicleCurrentToleranceA,
+        vehicleMinimumDurationS: profile.vehicleMinimumDurationS,
+        durabilityRules: profile.durabilityRules,
         acceptanceCriteria: profile.acceptanceCriteria,
         uncertaintyModelRequired: profile.uncertaintyModelRequired,
         uncertaintyModelConfigured: Boolean(profile.uncertaintyModel)

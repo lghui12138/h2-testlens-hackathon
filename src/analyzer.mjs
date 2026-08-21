@@ -344,7 +344,16 @@ function workflowReadiness(config, quality, schema, compliance, verdict, uncerta
 export function analyzeRows(inputRows, suppliedConfig = {}) {
   const safeInput = Array.isArray(inputRows) ? inputRows : [];
   const enterpriseResult = analyzeEnterpriseRows(safeInput, suppliedConfig);
-  if (enterpriseResult) return enterpriseResult;
+  if (enterpriseResult) {
+    const supported = Array.isArray(suppliedConfig.supportedDatasetTypes) ? suppliedConfig.supportedDatasetTypes : [];
+    if (supported.length && !supported.includes(enterpriseResult.datasetType)) {
+      enterpriseResult.issues = [{ severity: 'critical', code: 'DATASET_PROFILE_MISMATCH', title: '数据集不在 profile 适用范围内', evidence: `${enterpriseResult.datasetType} 不属于当前 profile 允许的数据集：${supported.join('、')}`, recommendation: '选择适用于当前设备/数据集的企业批准 profile，不要复用其他设备方法。' }, ...enterpriseResult.issues];
+      enterpriseResult.verdict = 'FAIL';
+      enterpriseResult.narrative = '当前数据集与所选企业 profile 的适用范围不一致，系统已阻断后续结论。';
+      enterpriseResult.workflow = { ...enterpriseResult.workflow, status: 'BLOCKED_PROFILE_SCOPE', nextAction: '更换适用的数据集 profile 后重新分析。', steps: (enterpriseResult.workflow?.steps || []).map((step) => step.id === 'dataset' ? { ...step, status: 'blocked', evidence: `profile 仅允许 ${supported.join('、')}，当前为 ${enterpriseResult.datasetType}` } : step) };
+    }
+    return enterpriseResult;
+  }
   const { fieldMapping = {}, ...thresholdConfig } = suppliedConfig;
   const config = { ...DEFAULT_CONFIG, ...thresholdConfig };
   const schema = resolveSchema(safeInput, fieldMapping);
