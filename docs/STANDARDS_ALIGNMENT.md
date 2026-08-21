@@ -35,6 +35,7 @@
 - 已实现：完整 profile + 完整 provenance + PASS 运行可进入 `READY_FOR_HUMAN_REVIEW`；异常运行仍进入 `REVIEW_REQUIRED`。
 - 已实现：对流量进行时间梯形积分得到产氢量，对电功率进行时间积分得到电能，并给出单位制氢电耗；纯度字段缺失时明确显示缺失，不用默认值填充。
 - 已实现：企业 profile 可声明 `requiredMeasurements` 和 `acceptanceCriteria`；缺失测量或超过企业准则时阻断正式性能结论。
+- 已实现：浏览器对当前 CSV 计算 SHA-256，并把哈希写入 provenance；远程 AI 不接收原始 CSV 或哈希以外的测试元数据值。
 - 未实现：企业批准的具体验收限值、测量不确定度计算规则、实验室/工单系统和正式电子签章。这些必须由企业资料包提供，不能由演示模板推断。
 
 完整来源、证据和 claim ledger 位于 `.research/ignite_t02_standards_20260821/`。

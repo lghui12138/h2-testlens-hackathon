@@ -8,6 +8,7 @@ import { generateDraft, validateRemoteDraft } from '../src/ai-draft.mjs';
 import { compareResults } from '../src/compare.mjs';
 import { getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
+import { sha256Hex } from '../src/provenance.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const csv = await readFile(join(here, '../sample-data/test_run_001.csv'), 'utf8');
@@ -18,6 +19,10 @@ test('parses the demo CSV into records', () => {
   assert.equal(rows.length, 25);
   assert.equal(rows[0].phase, 'idle');
   assert.equal(rows.at(-1).timestamp_s, '120');
+});
+
+test('computes a deterministic SHA-256 provenance hash without uploading content', async () => {
+  assert.equal(await sha256Hex('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
 });
 
 test('integrates hydrogen volume and electrical energy from timestamped flow data', () => {

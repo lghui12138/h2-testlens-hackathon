@@ -23,6 +23,7 @@ const requiredFiles = [
   'src/compare.mjs',
   'src/history.mjs',
   'src/profiles.mjs',
+  'src/provenance.mjs',
   'scripts/ai-eval.mjs',
   'scripts/submission-check.mjs',
   'scripts/package-submission.mjs',

@@ -3,9 +3,10 @@ import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
+import { sha256Hex } from './provenance.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置' };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -15,6 +16,20 @@ function ensureExtendedMetadataFields() {
   if (!container || $('#metadata-test-plan')) return;
   container.insertAdjacentHTML('beforeend', '<label>测试计划/工况序列<input id="metadata-test-plan" type="text" placeholder="计划编号、稳态/动态/启停段"></label><label>数据采集计划<textarea id="metadata-acquisition" rows="2" placeholder="采样频率、同步时钟、通道/质量状态"></textarea></label><label>试验前检查记录<textarea id="metadata-precheck" rows="2" placeholder="设备、气液路、传感器、安全状态检查记录"></textarea></label><label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label><label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label><label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>');
 }
+
+async function bindRawDataHash(text) {
+  const hash = await sha256Hex(text);
+  if (!hash) return null;
+  state.rawDataHash = hash;
+  const input = $('#metadata-raw-ref');
+  if (input && (!input.value.trim() || input.dataset.generated === 'true')) {
+    input.value = `SHA-256:${hash}`;
+    input.dataset.generated = 'true';
+  }
+  return hash;
+}
+
+ensureExtendedMetadataFields();
 
 function configFromUI() {
   const profileId = $('#profile-select').value;
@@ -216,7 +231,9 @@ function render(result) {
 async function loadCsv(url, name) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`无法读取 ${url}`);
-  state.rows = parseCSV(await response.text());
+  const text = await response.text();
+  await bindRawDataHash(text);
+  state.rows = parseCSV(text);
   state.fileName = name;
   render(analyzeRows(state.rows, configFromUI()));
 }
@@ -232,7 +249,9 @@ async function loadLegacySample() {
 $('#file-input').addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
-  state.rows = parseCSV(await file.text()); state.fileName = file.name;
+  const text = await file.text();
+  await bindRawDataHash(text);
+  state.rows = parseCSV(text); state.fileName = file.name;
   render(analyzeRows(state.rows, configFromUI()));
 });
 $('#reanalyze').addEventListener('click', () => { if (state.rows.length) render(analyzeRows(state.rows, configFromUI())); });
@@ -251,6 +270,7 @@ $('#profile-file').addEventListener('change', async (event) => {
     $('#profile-import-status').textContent = `导入失败：${error.message}`;
   }
 });
+$('#metadata-raw-ref').addEventListener('input', (event) => { event.target.dataset.generated = 'false'; });
 $('#load-profile-demo').addEventListener('click', async () => {
   try {
     const response = await fetch('/config/enterprise-profile.example.json');
@@ -259,7 +279,9 @@ $('#load-profile-demo').addEventListener('click', async () => {
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     const sampleResponse = await fetch('/sample-data/test_run_legacy_cn.csv');
     if (!sampleResponse.ok) throw new Error('配置匹配样本读取失败');
-    state.rows = parseCSV(await sampleResponse.text());
+    const sampleText = await sampleResponse.text();
+    await bindRawDataHash(sampleText);
+    state.rows = parseCSV(sampleText);
     state.fileName = '企业配置示例 · legacy_run_cn.csv';
     applyProfilePackage(packageResult);
   } catch (error) {
