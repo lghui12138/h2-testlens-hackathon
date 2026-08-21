@@ -37,6 +37,7 @@
 - 已实现：企业 profile 可声明 `requiredMeasurements` 和 `acceptanceCriteria`；缺失测量或超过企业准则时阻断正式性能结论。
 - 已实现：企业 profile 可声明 `requiredPhases`；输入数据缺少计划要求的稳态、动态或启停段时进入 `NOT_READY`。
 - 已实现：浏览器对当前 CSV 计算 SHA-256，并把哈希写入 provenance；远程 AI 不接收原始 CSV 或哈希以外的测试元数据值。
+- 已实现：profile 可提供 `first_order_rss` 不确定度模型；系统仅在模型存在时传播峰值、产氢量、电能和单位能耗不确定度，未配置时明确显示未配置。
 - 未实现：企业批准的具体验收限值、测量不确定度计算规则、实验室/工单系统和正式电子签章。这些必须由企业资料包提供，不能由演示模板推断。
 
 完整来源、证据和 claim ledger 位于 `.research/ignite_t02_standards_20260821/`。

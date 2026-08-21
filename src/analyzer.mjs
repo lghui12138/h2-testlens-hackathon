@@ -214,6 +214,7 @@ function complianceReadiness(config, missingMeasurements = [], missingPhases = [
   if (!config.standardRefs?.length) missingProfileFields.push('standardRefs');
   if (!config.methodId || config.methodId === 'demo-rule-set') missingProfileFields.push('methodId');
   if (!config.revision || config.revision === 'demo-v1') missingProfileFields.push('revision');
+  if (config.uncertaintyModelRequired && !config.uncertaintyModel) missingProfileFields.push('uncertaintyModel');
   const metadata = config.testMetadata && typeof config.testMetadata === 'object' ? config.testMetadata : {};
   const requiredMetadata = Array.isArray(config.requiredMetadata) ? config.requiredMetadata : [];
   const missingMetadata = requiredMetadata.filter((field) => {
@@ -252,13 +253,76 @@ function integrateTrapezoid(rows, field, divisor = 1) {
   return segments ? total : null;
 }
 
-function workflowReadiness(config, quality, schema, compliance, verdict) {
+function calculateUncertainty(rows, metrics, model) {
+  if (!model) return { status: 'not_configured', method: null, coverageFactor: null, metrics: {}, missingFields: [] };
+  const standard = model.standardUncertainty || {};
+  const coverageFactor = Number(model.coverageFactor);
+  const u = (field) => Number.isFinite(Number(standard[field])) ? Number(standard[field]) * coverageFactor : null;
+  const rss = (values) => {
+    const usable = values.filter((value) => Number.isFinite(value));
+    return usable.length ? Math.sqrt(usable.reduce((sum, value) => sum + value ** 2, 0)) : null;
+  };
+  const powerU = (row) => {
+    const currentU = u('current_a');
+    const voltageU = u('voltage_v');
+    return row.current_a !== null && row.voltage_v !== null ? rss([row.voltage_v * currentU, row.current_a * voltageU]) : null;
+  };
+  const integrateFlowU = () => {
+    const flowU = u('flow_slpm');
+    if (flowU === null) return null;
+    const segments = [];
+    for (let index = 1; index < rows.length; index += 1) {
+      const previous = rows[index - 1];
+      const current = rows[index];
+      const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
+      if (deltaS > 0 && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
+    }
+    return rss(segments);
+  };
+  const integrateEnergyU = () => {
+    const segments = [];
+    for (let index = 1; index < rows.length; index += 1) {
+      const previous = rows[index - 1];
+      const current = rows[index];
+      const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
+      const previousU = powerU(previous);
+      const currentU = powerU(current);
+      if (deltaS > 0 && previousU !== null && currentU !== null) segments.push(((previousU + currentU) / 2) * deltaS / 3600);
+    }
+    return rss(segments);
+  };
+  const energyU = integrateEnergyU();
+  const volumeU = integrateFlowU();
+  const specificEnergyU = metrics.specificEnergyKWhPerNm3 !== null && metrics.energyConsumedWh !== null && metrics.hydrogenVolumeNl !== null && metrics.energyConsumedWh > 0 && metrics.hydrogenVolumeNl > 0
+    ? metrics.specificEnergyKWhPerNm3 * Math.sqrt((energyU !== null ? energyU / metrics.energyConsumedWh : 0) ** 2 + (volumeU !== null ? volumeU / metrics.hydrogenVolumeNl : 0) ** 2)
+    : null;
+  const fields = ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm', 'hydrogen_purity_pct'];
+  const missingFields = fields.filter((field) => u(field) === null);
+  return {
+    status: 'calculated',
+    method: model.method,
+    coverageFactor,
+    missingFields,
+    metrics: {
+      peakTemperatureC: u('temperature_c'),
+      peakPressureBar: u('pressure_bar'),
+      peakLeakPpm: u('leak_ppm'),
+      minimumHydrogenPurityPct: u('hydrogen_purity_pct'),
+      hydrogenVolumeNl: volumeU,
+      energyConsumedWh: energyU,
+      specificEnergyKWhPerNm3: specificEnergyU
+    }
+  };
+}
+
+function workflowReadiness(config, quality, schema, compliance, verdict, uncertainty) {
   const dataReady = quality.usable && quality.completenessPct >= 98 && quality.duplicateTimestampCount === 0 && quality.nonMonotonicCount === 0;
   const traceabilityReady = schema.mappingWarnings.length === 0 && quality.invalidValueCounts.timestamp_s === 0;
   const metadataReady = compliance.missingMetadata.length === 0;
   const signoffReady = Boolean(config.testMetadata?.signoff);
   const performanceReady = compliance.missingMeasurements.length === 0;
   const phaseCoverageReady = compliance.missingPhases.length === 0;
+  const uncertaintyReady = !config.uncertaintyModelRequired || uncertainty.status === 'calculated';
   const steps = [
     { id: 'profile', label: '设备家族与测试方法', status: compliance.missingProfileFields.length ? 'needs_input' : 'ready', evidence: compliance.missingProfileFields.length ? `缺少 ${compliance.missingProfileFields.join('、')}` : `${compliance.methodId} · ${compliance.revision}` },
     { id: 'metadata', label: '测试计划与仪器溯源', status: metadataReady ? 'ready' : 'needs_input', evidence: metadataReady ? '目的、仪器、校准、执行者、公式、签核字段齐全' : `缺少 ${compliance.missingMetadata.join('、')}` },
@@ -266,6 +330,7 @@ function workflowReadiness(config, quality, schema, compliance, verdict) {
     { id: 'traceability', label: '字段、单位与计算追溯', status: traceabilityReady ? 'ready' : 'needs_review', evidence: `${schema.mappedCount}/${schema.fieldCount} 字段已映射 · ${Object.values(schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` },
     { id: 'coverage', label: '测试段覆盖', status: phaseCoverageReady ? 'ready' : 'needs_input', evidence: phaseCoverageReady ? 'profile 要求的测试段均已出现' : `缺少 ${compliance.missingPhases.join('、')}` },
     { id: 'performance', label: '产氢量、纯度与单位能耗', status: performanceReady ? 'ready' : 'needs_input', evidence: performanceReady ? 'profile 要求的性能测量均有有效数据' : `缺少 ${compliance.missingMeasurements.join('、')}` },
+    { id: 'uncertainty', label: '测量不确定度模型', status: uncertaintyReady ? 'ready' : 'needs_input', evidence: uncertaintyReady ? (uncertainty.status === 'calculated' ? `${uncertainty.method} · k=${uncertainty.coverageFactor}` : 'profile 未要求不确定度模型') : 'profile 要求模型但未配置' },
     { id: 'risk', label: '风险处置与复测决定', status: verdict === 'FAIL' ? 'blocked' : verdict === 'WARN' ? 'needs_review' : 'ready', evidence: verdict === 'FAIL' ? '存在高优先级风险，先处置再决定归档' : verdict === 'WARN' ? '存在趋势或质量问题，需要工程师复核' : '当前规则未触发高优先级风险' },
     { id: 'signoff', label: '人工签核与归档', status: signoffReady ? 'ready' : 'needs_input', evidence: signoffReady ? config.testMetadata.signoff : '尚未填写人工签核信息' }
   ];
@@ -325,6 +390,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const energyWh = rows.map((row) => ({ ...row, power_w: row.current_a !== null && row.voltage_v !== null ? row.current_a * row.voltage_v : null }));
   const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600);
   const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl : null;
+  const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel);
   const timeRef = (times) => times.length ? `，出现于 t=${times.slice(0, 3).join('、')} s` : '';
   const pressureDriftRows = steadyRows.length >= 2 ? steadyRows : rows;
   const metrics = {
@@ -364,6 +430,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (metrics.peakPressureBar !== null && metrics.peakPressureBar > config.maxPressureBar) issues.push(issue('critical', 'PRESSURE_HIGH', '压力超过演示阈值', `峰值 ${metrics.peakPressureBar.toFixed(1)} bar > ${config.maxPressureBar} bar${timeRef(metrics.peakPressureAtS)}`, '暂停升载，检查调压与泄压回路。'));
   if (metrics.peakLeakPpm !== null && metrics.peakLeakPpm > config.maxLeakPpm) issues.push(issue('critical', 'LEAK_HIGH', '泄漏监测值超过演示阈值', `峰值 ${metrics.peakLeakPpm.toFixed(1)} ppm > ${config.maxLeakPpm} ppm${timeRef(metrics.peakLeakAtS)}`, '优先复核密封、采样管路与环境本底。'));
   if (missingMeasurements.length) issues.push(issue('critical', 'PERFORMANCE_FIELD_MISSING', '缺少 profile 要求的性能测量', `缺少：${missingMeasurements.join('、')}`, '补充企业方法要求的测量通道和数据采集记录后再生成正式性能结论。'));
+  if (config.uncertaintyModelRequired && !config.uncertaintyModel) issues.push(issue('critical', 'UNCERTAINTY_MODEL_MISSING', '缺少 profile 要求的测量不确定度模型', '当前 profile 要求不确定度模型，但没有提供可计算的模型参数', '补充企业批准的不确定度预算、覆盖因子和测量标准不确定度。'));
   if (missingPhases.length) issues.push(issue('critical', 'PHASE_COVERAGE_MISSING', '缺少 profile 要求的测试段', `缺少：${missingPhases.join('、')}`, '按测试计划补齐对应工况或在 profile 中确认该测试段不适用。'));
   const acceptance = config.acceptanceCriteria || {};
   if (acceptance.minHydrogenPurityPct !== undefined && metrics.minimumHydrogenPurityPct !== null && metrics.minimumHydrogenPurityPct < acceptance.minHydrogenPurityPct) issues.push(issue('critical', 'PURITY_LOW', '氢气纯度低于 profile 验收准则', `最低纯度 ${metrics.minimumHydrogenPurityPct.toFixed(3)}% < ${acceptance.minHydrogenPurityPct}%${timeRef(metrics.minimumHydrogenPurityAtS)}`, '复核纯度分析仪、净化系统和采样条件。'));
@@ -372,7 +439,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (Math.abs(metrics.pressureDriftBarPerMin) > config.maxPressureDriftBarPerMin) issues.push(issue('warn', 'PRESSURE_DRIFT', '稳态压力仍在漂移', `窗口 ${metrics.steadyWindow} 的压力斜率 ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min`, '延长稳态时间并复核压力闭环控制。'));
   if (!issues.length) issues.push(issue('info', 'ALL_CLEAR', '未发现超出当前规则的异常', '关键 KPI 均落在演示阈值内', '可进入人工复核与正式归档。'));
   const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : issues.some((item) => item.severity === 'warn') ? 'WARN' : 'PASS';
-  const workflow = workflowReadiness(config, quality, schema, compliance, verdict);
+  const workflow = workflowReadiness(config, quality, schema, compliance, verdict, uncertainty);
   const criticalCount = issues.filter((item) => item.severity === 'critical').length;
   const narrative = verdict === 'FAIL'
     ? `本次测试自动判定为需复核：发现 ${criticalCount} 项高优先级风险。系统已将异常指标、阈值和建议动作绑定到同一证据链，工程师可先处理安全相关项，再决定是否重测。`
@@ -387,6 +454,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     quality,
     schema,
     compliance,
+    uncertainty,
     workflow,
     phases: phaseSummary(rows),
     issues,
@@ -410,7 +478,7 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
   const workflowSection = `\n## 测试流程完成度\n\n- 流程状态：**${result.workflow?.status || '未评估'}**\n- 下一步：${result.workflow?.nextAction || '需人工确认。'}\n${(result.workflow?.steps || []).map((step) => `- ${step.status.toUpperCase()}｜${step.label}：${step.evidence}`).join('\n')}\n`;
   const metadataSection = `\n## 测试执行与溯源字段\n\n${Object.entries(config.testMetadata || {}).map(([field, value]) => `- ${field}：${String(value || '未填写').replace(/\r?\n/g, '；')}`).join('\n') || '- 当前未填写测试元数据。'}\n`;
   const acceptanceCriteria = result.compliance?.acceptanceCriteria || {};
-  const performanceSection = `\n## 性能测量摘要\n\n- 产氢量：${metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL\n- 电能消耗：${metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh\n- 单位制氢电耗：${metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³\n- 最低氢气纯度：${metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%${metrics.minimumHydrogenPurityAtS?.length ? `（t=${metrics.minimumHydrogenPurityAtS.slice(0, 3).join('、')} s）` : ''}\n- profile 要求的性能测量缺失：${result.compliance?.missingMeasurements?.join('、') || '无'}\n- profile 验收准则：${Object.entries(acceptanceCriteria).map(([field, value]) => `${field}=${value}`).join('；') || '未配置，不能据此宣称符合'}\n`;
+  const performanceSection = `\n## 性能测量摘要\n\n- 产氢量：${metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL\n- 电能消耗：${metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh\n- 单位制氢电耗：${metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³\n- 最低氢气纯度：${metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%${metrics.minimumHydrogenPurityAtS?.length ? `（t=${metrics.minimumHydrogenPurityAtS.slice(0, 3).join('、')} s）` : ''}\n- profile 要求的性能测量缺失：${result.compliance?.missingMeasurements?.join('、') || '无'}\n- profile 要求的测试段缺失：${result.compliance?.missingPhases?.join('、') || '无'}\n- profile 验收准则：${Object.entries(acceptanceCriteria).map(([field, value]) => `${field}=${value}`).join('；') || '未配置，不能据此宣称符合'}\n- 不确定度模型：${result.uncertainty?.status || '未配置'}${result.uncertainty?.method ? ` · ${result.uncertainty.method} · k=${result.uncertainty.coverageFactor}` : ''}\n`;
   const comparisonSection = `${complianceSection}${workflowSection}${performanceSection}${metadataSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n\n- 生成路径：${options.aiDraft.mode === 'remote-llm' ? '已配置的企业模型服务' : '本地规则回退'}\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
   const profileName = config.profileName ?? '未指定设备模板';
   const profileSource = config.profileSource ?? '当前分析配置';

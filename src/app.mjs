@@ -54,6 +54,8 @@ function configFromUI() {
     requiredMeasurements: profile?.requiredMeasurements ?? [],
     requiredPhases: profile?.requiredPhases ?? [],
     acceptanceCriteria: profile?.acceptanceCriteria ?? {},
+    uncertaintyModelRequired: profile?.uncertaintyModelRequired ?? false,
+    uncertaintyModel: profile?.uncertaintyModel ?? null,
     fieldMapping: state.fieldMapping,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),

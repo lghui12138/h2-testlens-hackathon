@@ -14,6 +14,8 @@ export const DEVICE_PROFILES = Object.freeze([
     requiredMeasurements: [],
     requiredPhases: [],
     acceptanceCriteria: {},
+    uncertaintyModelRequired: false,
+    uncertaintyModel: null,
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
   },
   {
@@ -31,6 +33,8 @@ export const DEVICE_PROFILES = Object.freeze([
     requiredMeasurements: [],
     requiredPhases: [],
     acceptanceCriteria: {},
+    uncertaintyModelRequired: false,
+    uncertaintyModel: null,
     thresholds: { maxTemperatureC: 70, maxPressureBar: 25, maxLeakPpm: 5, maxVoltageStdV: 0.08, maxPressureDriftBarPerMin: 0.8 }
   }
 ]);
@@ -43,6 +47,7 @@ const PROFILE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 const APPROVAL_STATUSES = ['approved', 'pending', 'example_unapproved'];
 const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
 const measurementFields = ['flow_slpm', 'hydrogen_purity_pct', 'energy_derived'];
+const uncertaintyFields = ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm', 'hydrogen_purity_pct'];
 
 export function validateProfilePackage(payload) {
   const errors = [];
@@ -62,6 +67,15 @@ export function validateProfilePackage(payload) {
     if (profile.requiredMetadata !== undefined && (!Array.isArray(profile.requiredMetadata) || profile.requiredMetadata.some((field) => !metadataFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMetadata 含未知字段`);
     if (profile.requiredMeasurements !== undefined && (!Array.isArray(profile.requiredMeasurements) || profile.requiredMeasurements.some((field) => !measurementFields.includes(field)))) errors.push(`${profile.id || '未知'} requiredMeasurements 含未知字段`);
     if (profile.requiredPhases !== undefined && (!Array.isArray(profile.requiredPhases) || profile.requiredPhases.some((phase) => typeof phase !== 'string' || !phase.trim() || phase.length > 80))) errors.push(`${profile.id || '未知'} requiredPhases 必须是非空字符串数组`);
+    if (profile.uncertaintyModelRequired !== undefined && typeof profile.uncertaintyModelRequired !== 'boolean') errors.push(`${profile.id || '未知'} uncertaintyModelRequired 必须是布尔值`);
+    if (profile.uncertaintyModel !== undefined && profile.uncertaintyModel !== null) {
+      if (typeof profile.uncertaintyModel !== 'object' || Array.isArray(profile.uncertaintyModel)) errors.push(`${profile.id || '未知'} uncertaintyModel 必须是对象或 null`);
+      else {
+        if (profile.uncertaintyModel.method !== 'first_order_rss') errors.push(`${profile.id || '未知'} uncertaintyModel.method 必须为 first_order_rss`);
+        if (!Number.isFinite(Number(profile.uncertaintyModel.coverageFactor)) || Number(profile.uncertaintyModel.coverageFactor) <= 0) errors.push(`${profile.id || '未知'} uncertaintyModel.coverageFactor 必须为正数`);
+        for (const [field, value] of Object.entries(profile.uncertaintyModel.standardUncertainty ?? {})) if (!uncertaintyFields.includes(field) || !Number.isFinite(Number(value)) || Number(value) < 0) errors.push(`${profile.id || '未知'} uncertaintyModel.standardUncertainty.${field} 非法`);
+      }
+    }
     if (profile.acceptanceCriteria !== undefined && (typeof profile.acceptanceCriteria !== 'object' || Array.isArray(profile.acceptanceCriteria))) errors.push(`${profile.id || '未知'} acceptanceCriteria 必须是对象`);
     for (const field of ['minHydrogenPurityPct', 'maxSpecificEnergyKWhPerNm3']) if (profile.acceptanceCriteria?.[field] !== undefined && (!Number.isFinite(Number(profile.acceptanceCriteria[field])) || Number(profile.acceptanceCriteria[field]) <= 0)) errors.push(`${profile.id || '未知'} acceptanceCriteria.${field} 必须为正数`);
     for (const field of THRESHOLD_FIELDS) {
@@ -97,6 +111,8 @@ export function profilesFromPackage(payload) {
       requiredMeasurements: profile.requiredMeasurements || [],
       requiredPhases: profile.requiredPhases || [],
       acceptanceCriteria: profile.acceptanceCriteria || {},
+      uncertaintyModelRequired: profile.uncertaintyModelRequired || false,
+      uncertaintyModel: profile.uncertaintyModel || null,
       source: profile.source || `${payload.organization || '企业'} 当前会话配置`,
       description: profile.description || '由当前会话导入的配置，正式使用前需确认审批状态。',
       thresholds: Object.fromEntries(THRESHOLD_FIELDS.map((field) => [field, Number(profile.thresholds[field])]))

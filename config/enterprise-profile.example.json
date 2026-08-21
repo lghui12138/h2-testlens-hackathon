@@ -31,6 +31,8 @@
       "requiredMeasurements": ["flow_slpm", "hydrogen_purity_pct"],
       "requiredPhases": [],
       "acceptanceCriteria": {},
+      "uncertaintyModelRequired": false,
+      "uncertaintyModel": null,
       "thresholds": {
         "maxTemperatureC": 80,
         "maxPressureBar": 30,

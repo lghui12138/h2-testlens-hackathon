@@ -307,3 +307,15 @@ test('required test phases fail closed when the input run does not cover them', 
   assert.deepEqual(result.compliance.missingPhases, ['dynamic']);
   assert.ok(result.issues.some((item) => item.code === 'PHASE_COVERAGE_MISSING'));
 });
+
+test('uncertainty model is required only when the approved profile declares it', () => {
+  const base = { profileId: 'approved-example', profileName: 'Approved example', approvalStatus: 'approved', standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/example' }], methodId: 'GB/T 45541-2025', revision: '2025', uncertaintyModelRequired: true };
+  const missing = analyzeRows(parseCSV(baselineCsv), base);
+  assert.equal(missing.compliance.status, 'NOT_READY');
+  assert.ok(missing.issues.some((item) => item.code === 'UNCERTAINTY_MODEL_MISSING'));
+  const model = { method: 'first_order_rss', coverageFactor: 2, standardUncertainty: { current_a: 0.01, voltage_v: 0.005, temperature_c: 0.2, pressure_bar: 0.02, flow_slpm: 0.05, leak_ppm: 0.5, hydrogen_purity_pct: 0.01 } };
+  const ready = analyzeRows(parseCSV(baselineCsv), { ...base, uncertaintyModel: model, testMetadata: { signoff: 'reviewer' } });
+  assert.equal(ready.uncertainty.status, 'calculated');
+  assert.ok(ready.uncertainty.metrics.energyConsumedWh > 0);
+  assert.ok(ready.workflow.steps.some((step) => step.id === 'uncertainty' && step.status === 'ready'));
+});
