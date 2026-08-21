@@ -39,6 +39,7 @@ const requiredFiles = [
   'scripts/profile-audit.mjs',
   '.github/workflows/deploy-pages.yml',
   'config/enterprise-profile.example.json',
+  'config/enterprise-parameter-template.xlsx',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
   '.research/ignite_t02_standards_20260821/evidence.jsonl',
   '.research/ignite_t02_standards_20260821/claims.jsonl',
