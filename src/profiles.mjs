@@ -10,7 +10,7 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'demo-rule-set',
     revision: 'demo-v1',
     standardRefs: [],
-    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: [],
     requiredPhases: [],
     acceptanceCriteria: {},
@@ -27,7 +27,7 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'demo-rule-set',
     revision: 'demo-v1',
     standardRefs: [],
-    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: [],
     requiredPhases: [],
     acceptanceCriteria: {},
@@ -41,7 +41,7 @@ const THRESHOLD_FIELDS = ['maxTemperatureC', 'maxPressureBar', 'maxLeakPpm', 'ma
 const FIELD_MAPPING_FIELDS = ['timestamp_s', 'phase', 'current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm'];
 const PROFILE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 const APPROVAL_STATUSES = ['approved', 'pending', 'example_unapproved'];
-const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
+const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
 const measurementFields = ['flow_slpm', 'hydrogen_purity_pct', 'energy_derived'];
 
 export function validateProfilePackage(payload) {

@@ -14,7 +14,7 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&'
 function ensureExtendedMetadataFields() {
   const container = $('.metadata-details');
   if (!container || $('#metadata-test-plan')) return;
-  container.insertAdjacentHTML('beforeend', '<label>测试计划/工况序列<input id="metadata-test-plan" type="text" placeholder="计划编号、稳态/动态/启停段"></label><label>数据采集计划<textarea id="metadata-acquisition" rows="2" placeholder="采样频率、同步时钟、通道/质量状态"></textarea></label><label>试验前检查记录<textarea id="metadata-precheck" rows="2" placeholder="设备、气液路、传感器、安全状态检查记录"></textarea></label><label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label><label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label><label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>');
+  container.insertAdjacentHTML('beforeend', '<label>测试计划/工况序列<input id="metadata-test-plan" type="text" placeholder="计划编号、稳态/动态/启停段"></label><label>数据采集计划<textarea id="metadata-acquisition" rows="2" placeholder="采样频率、同步时钟、通道/质量状态"></textarea></label><label>试验前检查记录<textarea id="metadata-precheck" rows="2" placeholder="设备、气液路、传感器、安全状态检查记录"></textarea></label><label>仪器精度/量程要求<textarea id="metadata-instrument-accuracy" rows="2" placeholder="电压、电流、流量、压力、温度、纯度仪器精度和量程"></textarea></label><label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label><label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label><label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>');
 }
 
 async function bindRawDataHash(text) {
@@ -61,6 +61,7 @@ function configFromUI() {
       acquisitionPlan: $('#metadata-acquisition').value.trim(),
       preCheckRecord: $('#metadata-precheck').value.trim(),
       instrumentIds: $('#metadata-instruments').value.trim(),
+      instrumentAccuracy: $('#metadata-instrument-accuracy').value.trim(),
       calibrationRefs: $('#metadata-calibration').value.trim(),
       environment: $('#metadata-environment').value.trim(),
       operator: $('#metadata-operator').value.trim(),

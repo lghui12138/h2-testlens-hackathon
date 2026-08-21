@@ -27,7 +27,7 @@
         { "id": "GB/T 29729-2022", "title": "氢系统安全的基本要求", "uri": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9", "status": "current" },
         { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published" }
       ],
-      "requiredMetadata": ["testPurpose", "testPlanRef", "acquisitionPlan", "preCheckRecord", "instrumentIds", "calibrationRefs", "environment", "operator", "formulaRefs", "uncertaintyPolicy", "rawDataRef", "signoff"],
+      "requiredMetadata": ["testPurpose", "testPlanRef", "acquisitionPlan", "preCheckRecord", "instrumentIds", "instrumentAccuracy", "calibrationRefs", "environment", "operator", "formulaRefs", "uncertaintyPolicy", "rawDataRef", "signoff"],
       "requiredMeasurements": ["flow_slpm", "hydrogen_purity_pct"],
       "requiredPhases": [],
       "acceptanceCriteria": {},

@@ -31,7 +31,7 @@
 
 ## Current implementation boundary
 
-- 已实现：测试计划、数据采集、试验前检查、仪器、校准、环境/安全、执行者、公式、不确定度、原始数据引用/哈希、人工签核字段及 `requiredMetadata` profile 校验。
+- 已实现：测试计划、数据采集、试验前检查、仪器、仪器精度/量程、校准、环境/安全、执行者、公式、不确定度、原始数据引用/哈希、人工签核字段及 `requiredMetadata` profile 校验。
 - 已实现：完整 profile + 完整 provenance + PASS 运行可进入 `READY_FOR_HUMAN_REVIEW`；异常运行仍进入 `REVIEW_REQUIRED`。
 - 已实现：对流量进行时间梯形积分得到产氢量，对电功率进行时间积分得到电能，并给出单位制氢电耗；纯度字段缺失时明确显示缺失，不用默认值填充。
 - 已实现：企业 profile 可声明 `requiredMeasurements` 和 `acceptanceCriteria`；缺失测量或超过企业准则时阻断正式性能结论。
