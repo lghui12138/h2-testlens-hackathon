@@ -6,6 +6,7 @@ import { generateDraft } from './src/ai-draft.mjs';
 import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown } from './src/analyzer.mjs';
 import { compareResults } from './src/compare.mjs';
 import { profilesFromPackage } from './src/profiles.mjs';
+import { sendFeishuAlert } from './src/feishu-alerts.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url)).replace(/[\\/]$/, '');
 const port = Number(process.env.PORT || 4173);
@@ -94,6 +95,30 @@ const server = createServer(async (req, res) => {
       const status = error.message === 'body_too_large' ? 413 : 400;
       res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: status === 413 ? 'request_too_large' : 'invalid_json' }));
+    }
+    return;
+  }
+  if (req.method === 'POST' && requestPath === '/api/feishu-alert') {
+    try {
+      const payload = JSON.parse(await readBody(req, 2_000_000));
+      const webhookUrl = String(process.env.H2_FEISHU_WEBHOOK_URL || '').trim();
+      if (!webhookUrl) {
+        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify({ error: 'feishu_not_configured', mode: 'dry-run', sent: false }));
+        return;
+      }
+      const input = payload.result && typeof payload.result === 'object' ? payload.result : {};
+      const safeResult = {
+        verdict: String(input.verdict || '未评估'),
+        dataset: { points: Array.isArray(input.dataset?.points) ? input.dataset.points.slice(0, 0) : [], targetPowers: Array.isArray(input.dataset?.targetPowers) ? input.dataset.targetPowers.slice(0, 24).map(Number).filter(Number.isFinite) : [] },
+        issues: Array.isArray(input.issues) ? input.issues.slice(0, 12).map((item) => ({ severity: String(item.severity || 'info'), title: String(item.title || ''), evidence: String(item.evidence || '').slice(0, 500) })) : []
+      };
+      const outcome = await sendFeishuAlert(safeResult, { webhookUrl, secret: process.env.H2_FEISHU_SECRET, fileName: String(payload.fileName || 'durability.docx') });
+      res.writeHead(outcome.ok ? 200 : 502, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ ok: outcome.ok, mode: 'server', sent: outcome.ok, status: outcome.status, reason: outcome.reason, response: outcome.response }));
+    } catch (error) {
+      res.writeHead(error.message === 'body_too_large' ? 413 : 400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: error.message === 'body_too_large' ? 'request_too_large' : 'invalid_alert_request' }));
     }
     return;
   }

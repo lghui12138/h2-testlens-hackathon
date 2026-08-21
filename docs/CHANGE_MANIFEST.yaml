@@ -4,7 +4,7 @@ change:
   intent: "Create a local-first hydrogen equipment test-data analysis and auto-report prototype for hackathon track T02."
 surfaces:
   user: [csv_txt_xlsx_docx_upload, xlsx_parameter_import, dashboard, enterprise_dataset_adapter, trend_chart, durability_warning_rules, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, workflow_readiness, batch_comparison, local_history, ai_report_draft, markdown_report_download, xlsx_report_download]
-  system_interface: [local_static_server, analysis_api, ai_draft_endpoint, browser_blob_download]
+  system_interface: [local_static_server, analysis_api, ai_draft_endpoint, feishu_alert_endpoint, browser_blob_download]
   information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, threshold_config, verdict_enum, comparison_evidence, history_summary]
   operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc, deployment_doc, enterprise_readiness, github_pages_workflow]
 source_of_truth:
@@ -37,6 +37,6 @@ evidence:
   api_smoke: [/api/ai-draft]
   manual: [docs/TEST_PLAN.md]
 residual_risks:
-  - "Enterprise field structures, parameter workbook import, multi-file browser batches, and 14-sheet Excel report output are connected; approved field dictionaries, thresholds, automatic incrementals, Feishu alerts, native Excel charts, and server audit are not yet connected."
+  - "Enterprise field structures, parameter workbook import, multi-file browser batches, 14-sheet Excel report output, and a server-side Feishu alert endpoint are connected; approved field dictionaries, thresholds, automatic incrementals, enterprise Feishu policies, native Excel charts, and server audit are not yet connected."
   - "The default mode is deterministic local evidence synthesis; a real model gateway still needs enterprise approval and evaluation."
   - "The Sites production deployment is public; public availability must not be confused with enterprise profile approval."

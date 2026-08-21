@@ -360,8 +360,15 @@ function renderEnterprisePanel(result) {
     };
     $('#send-feishu').onclick = async () => {
       $('#feishu-alert-status').textContent = '发送中…';
-      const response = await sendFeishuAlert(result, { webhookUrl: $('#feishu-webhook').value, secret: $('#feishu-secret').value, fileName: state.fileName });
-      $('#feishu-alert-status').textContent = response.ok ? `已发送（HTTP ${response.status}）；仍需核对飞书群消息。` : response.mode === 'dry-run' ? '未填写 Webhook，保持 dry-run。' : `未发送：${response.reason || '飞书返回失败'}。`;
+      const directUrl = $('#feishu-webhook').value.trim();
+      let response;
+      try {
+        const serverResponse = await fetch('api/feishu-alert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: state.fileName, result: { verdict: result.verdict, dataset: { targetPowers: result.dataset.targetPowers, points: [] }, issues: result.issues } }) });
+        if (serverResponse.status !== 404) response = await serverResponse.json();
+      } catch {}
+      if (!response && directUrl) response = await sendFeishuAlert(result, { webhookUrl: directUrl, secret: $('#feishu-secret').value, fileName: state.fileName });
+      if (!response) response = { ok: false, mode: 'dry-run', reason: 'server_not_configured_and_webhook_missing' };
+      $('#feishu-alert-status').textContent = response.ok ? `已发送（${response.mode === 'server' ? '服务端' : '浏览器'}，HTTP ${response.status || 200}）；仍需核对飞书群消息。` : response.mode === 'dry-run' ? '未配置服务端通道或浏览器 Webhook，保持 dry-run。' : `未发送：${response.reason || '飞书返回失败'}。`;
     };
     $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.points.length}</b> 个功率点</span><span><b>${dataset.targetPowers.length}</b> 个目标功率</span><span><b>${dataset.rules.maxDeviationMv ?? '—'}</b> mV 离均差规则</span><span><b>${dataset.rules.minAverageCellVoltageMv ?? '—'}</b> mV 电压规则</span></div><div class="enterprise-forecast">${reports}</div>`;
     $('#enterprise-table').innerHTML = `<h3>耐久功率点统计</h3><table><thead><tr><th>目标功率 kW</th><th>净输出 kW</th><th>平均单体 mV</th><th>离均差 mV</th><th>电压方差</th></tr></thead><tbody>${points}</tbody></table>`;

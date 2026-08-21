@@ -25,7 +25,7 @@ The demo sample is parsed into 25 records and analyzed into a `FAIL` verdict bec
 
 ## Residual risks
 
-The enterprise structures and report workflow are connected, but the approved thresholds, instrument precision, uncertainty budgets, automatic daily incrementals, Feishu alerts, native embedded Excel charts, and enterprise identity/audit services are not complete. The default draft is deterministic; the remote model adapter is implemented but not evaluated against an enterprise gateway. The GitHub Pages URL is public, but public availability is not enterprise profile approval. Before submission, confirm units and rules with the enterprise, then run a human acceptance pass on the target machine.
+The enterprise structures and report workflow are connected, but the approved thresholds, instrument precision, uncertainty budgets, automatic daily incrementals, enterprise Feishu credentials/policies, native embedded Excel charts, and enterprise identity/audit services are not complete. The default draft is deterministic; the remote model adapter is implemented but not evaluated against an enterprise gateway. The GitHub Pages URL is public, but public availability is not enterprise profile approval. Before submission, confirm units and rules with the enterprise, then run a human acceptance pass on the target machine.
 
 ## Next safe continuation
 

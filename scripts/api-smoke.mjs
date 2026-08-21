@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const port = '4174';
-const child = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: port }, stdio: ['ignore', 'ignore', 'pipe'] });
+const child = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: port, H2_FEISHU_WEBHOOK_URL: '', H2_FEISHU_SECRET: '' }, stdio: ['ignore', 'ignore', 'pipe'] });
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let childError = '';
 child.stderr.on('data', (chunk) => { childError += chunk.toString(); });
@@ -37,6 +37,10 @@ try {
   if (invalidProfileResponse.status !== 422) throw new Error(`invalid profile package was not rejected: ${invalidProfileResponse.status}`);
   const invalidProfile = await invalidProfileResponse.json();
   if (invalidProfile.error !== 'profile_package_invalid' || !Array.isArray(invalidProfile.details)) throw new Error('invalid profile error details missing');
+  const alertResponse = await fetch(`http://127.0.0.1:${port}/api/feishu-alert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: 'smoke.docx', result: { verdict: 'FAIL', dataset: { targetPowers: [195], points: [] }, issues: [{ severity: 'critical', title: 'smoke', evidence: 'bounded evidence' }] } }) });
+  if (alertResponse.status !== 503) throw new Error(`unconfigured Feishu channel should be 503: ${alertResponse.status}`);
+  const alertResult = await alertResponse.json();
+  if (alertResult.error !== 'feishu_not_configured' || alertResult.sent !== false) throw new Error('Feishu dry-run boundary missing');
   console.log(JSON.stringify({ analyze: { verdict: result.verdict, rowsReturned: result.rows !== undefined, report: 'present' }, compare: { transition: comparison.comparison.verdictTransition, rowsReturned: comparison.current.rows !== undefined, report: 'present' }, profilePackage: { profileName: profileResult.config.profileName, mapping: profileResult.schema.mapping.pressure_bar, rowsReturned: profileResult.rows !== undefined }, invalidProfile: { status: invalidProfileResponse.status, error: invalidProfile.error } }, null, 2));
 } finally {
   child.kill();

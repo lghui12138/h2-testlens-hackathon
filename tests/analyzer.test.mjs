@@ -501,6 +501,11 @@ test('Feishu durability alert stays dry-run by default and sends only an approve
   const sent = await sendFeishuAlert(result, { webhookUrl: 'https://open.feishu.cn/open-apis/bot/v2/hook/test', fetchImpl: async (_url, options) => { request = JSON.parse(options.body); return { ok: true, status: 200, text: async () => '{"code":0}' }; } });
   assert.equal(sent.ok, true);
   assert.equal(request.msg_type, 'text');
+  let signedRequest;
+  const signed = await sendFeishuAlert(result, { webhookUrl: 'https://open.feishu.cn/open-apis/bot/v2/hook/test', secret: 'secret', now: 1700000000000, fetchImpl: async (_url, options) => { signedRequest = JSON.parse(options.body); return { ok: true, status: 200, text: async () => '{"code":0}' }; } });
+  assert.equal(signed.ok, true);
+  assert.equal(signedRequest.timestamp, '1700000000');
+  assert.equal(typeof signedRequest.sign, 'string');
   const rejected = await sendFeishuAlert(result, { webhookUrl: 'https://example.com/hook' });
   assert.equal(rejected.reason, 'webhook_host_not_allowed');
 });
