@@ -54,7 +54,7 @@ export function localEvidenceDraft(result) {
   const priority = evidence.issues.filter((item) => item.severity === 'critical' || item.severity === 'warn');
   const mappingNote = evidence.schema ? `${evidence.schema.mappedCount}/${evidence.schema.fieldCount} 个字段已映射；${Object.values(evidence.schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` : '字段映射信息不可用';
   return [
-    '# AI 报告草稿（证据约束模式）',
+    '# 自动报告初稿（结构化证据）',
     '',
     `## 结论`,
     `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative || '证据不足，需人工复核。'}`,

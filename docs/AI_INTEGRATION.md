@@ -2,7 +2,7 @@
 
 ## Default behavior
 
-No environment variable is required. Clicking “生成证据约束草稿” calls the local `/api/ai-draft` route, which produces a deterministic Chinese Markdown draft from the analyzer evidence. The browser sends the evidence bundle, including optional baseline comparison, not `rows`.
+No environment variable is required. Clicking “生成报告初稿” calls the local `/api/ai-draft` route, which produces a deterministic Chinese Markdown draft from the analyzer evidence. The browser sends the evidence bundle, including optional baseline comparison, not `rows`.
 
 ## Optional OpenAI-compatible gateway
 

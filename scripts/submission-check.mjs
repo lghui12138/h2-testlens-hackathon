@@ -18,6 +18,7 @@ const requiredFiles = [
   'docs/COMPLETION_REPORT.md',
   'docs/CHANGE_MANIFEST.yaml',
   'docs/DEPLOYMENT.md',
+  'docs/ENTERPRISE_READINESS.md',
   'src/index.html',
   'src/analyzer.mjs',
   'src/ai-draft.mjs',

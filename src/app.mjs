@@ -197,9 +197,9 @@ function drawChart(result) {
 
 function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
-  $('#report-status').textContent = draft ? (draft.mode === 'remote-llm' ? `模型草稿 · ${draft.model}` : '本地证据草稿') : `${status} · ${result.issues.length} 条结论`;
+  $('#report-status').textContent = draft ? '自动报告初稿' : `${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
-    $('#report-preview').innerHTML = `<div class="report-head"><span>AI DRAFT / evidence-grounded</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">${draft.mode === 'remote-llm' ? '模型只能看到结构化证据；正式发布前仍需工程师签核。' : '当前未配置远程模型，使用本地证据约束草稿；不上传原始样本。'}</div>`;
+    $('#report-preview').innerHTML = `<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;
   }
   $('#report-preview').innerHTML = `<div class="report-head"><span>自动报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与建议</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">阈值、原始样本、计算指标和建议动作可追溯；正式报告需经工程师签核。</div>`;
@@ -321,7 +321,7 @@ $('#generate-ai').addEventListener('click', async () => {
   if (!state.result) return;
   const button = $('#generate-ai');
   button.disabled = true;
-  button.textContent = '生成中…';
+  button.textContent = '处理中…';
   const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
   try {
     const response = await fetch('api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
@@ -333,7 +333,7 @@ $('#generate-ai').addEventListener('click', async () => {
     renderReport(state.result, state.aiDraft);
   } finally {
     button.disabled = false;
-    button.textContent = '生成证据约束草稿';
+    button.textContent = '生成报告初稿';
   }
 });
 $('#download-report').addEventListener('click', () => { const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });

@@ -7,13 +7,13 @@ const DASHBOARD_HTML = String.raw`
 <div class="shell">
   <header class="topbar">
     <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试智报</small></span></a>
-    <div class="topbar-meta"><span class="live-dot"></span><span>ONLINE DEMO</span><span class="divider"></span><span id="last-run">等待数据</span></div>
+    <div class="topbar-meta"><span class="live-dot"></span><span>PUBLIC ANALYSIS</span><span class="divider"></span><span id="last-run">等待数据</span></div>
   </header>
   <main id="top">
     <section class="hero">
       <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
-      <h1>把一份测试日志，<br><em>变成可执行的结论。</em></h1>
-      <p class="hero-copy">面向氢能设备测试工程师的在线优先分析台。自动识别工况、计算关键 KPI、绑定异常证据，并生成一份可以继续复核的中文报告。</p>
+      <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
+      <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
       <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" accept=".csv,text/csv">导入测试 CSV</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
       <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span><span class="muted">·</span><span>线上托管演示</span></div>
     </section>
@@ -36,10 +36,19 @@ const DASHBOARD_HTML = String.raw`
   <footer><span>H₂ TestLens · T02 online prototype</span><span>原始数据留在当前浏览器 · 结果可追溯 · 人工签核保留</span></footer>
 </div>`;
 
+const DISPLAY_HTML = DASHBOARD_HTML
+  .replaceAll("ONLINE DEMO", "PUBLIC ANALYSIS")
+  .replaceAll("把一份测试日志，<br><em>变成可执行的结论。</em>", "测试日志，形成<br><em>可复核的工程结论。</em>")
+  .replaceAll("面向氢能设备测试工程师的在线优先分析台。自动识别工况、计算关键 KPI、绑定异常证据，并生成一份可以继续复核的中文报告。", "面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。")
+  .replaceAll("REPORT DRAFT", "REPORT PREVIEW")
+  .replaceAll("工程师报告草稿", "报告初稿")
+  .replaceAll("生成证据约束草稿", "生成报告初稿")
+  .replaceAll("这些字段对应测试计划、仪器/校准、执行者、计算方法和人工签核；只在当前会话使用。", "这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法和人工签核；只在当前会话使用。");
+
 export default function Home() {
   useEffect(() => {
     void import("../src/app.mjs").catch((error) => console.error("H2 TestLens failed to initialize", error));
   }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: DASHBOARD_HTML }} />;
+  return <div dangerouslySetInnerHTML={{ __html: DISPLAY_HTML }} />;
 }

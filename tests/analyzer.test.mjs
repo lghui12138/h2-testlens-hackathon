@@ -85,7 +85,7 @@ test('AI draft defaults to local evidence mode and does not include raw rows', a
   const result = analyzeRows(parseCSV(csv));
   const draft = await generateDraft(result, { endpoint: '' });
   assert.equal(draft.mode, 'local-evidence');
-  assert.match(draft.draft, /证据约束模式/);
+  assert.match(draft.draft, /结构化证据/);
   assert.equal('rows' in draft.evidence, false);
 });
 
