@@ -15,7 +15,7 @@ const DASHBOARD_HTML = String.raw`
       <h1>把一份测试日志，<br><em>变成可执行的结论。</em></h1>
       <p class="hero-copy">面向氢能设备测试工程师的在线优先分析台。自动识别工况、计算关键 KPI、绑定异常证据，并生成一份可以继续复核的中文报告。</p>
       <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" accept=".csv,text/csv">导入测试 CSV</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
-      <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
+      <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span><span class="muted">·</span><span>线上托管演示</span></div>
     </section>
     <section class="workspace-grid">
       <div class="main-column">
