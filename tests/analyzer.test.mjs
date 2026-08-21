@@ -10,7 +10,7 @@ import { getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
 import { sha256Hex } from '../src/provenance.mjs';
 import * as SheetJS from 'xlsx';
-import { buildEnterpriseWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
+import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const csv = await readFile(join(here, '../sample-data/test_run_001.csv'), 'utf8');
@@ -447,4 +447,29 @@ test('fails closed when required parameter targets or repeated-current condition
   const repeatedWithoutId = makeBook([headers, ['CURRENT', '实测电流', '是', '目标工况表', '', -1, 1, 'A', 60, '是', 'current_a']], [['目标电流'], [10], [10]]);
   assert.equal(repeatedWithoutId.ok, false);
   assert.ok(repeatedWithoutId.errors.some((error) => error.includes('工况编号')));
+});
+
+test('reads raw time-series XLSX workbooks by the best signal sheet and keeps stack-level-only files explicit', () => {
+  const book = SheetJS.utils.book_new();
+  SheetJS.utils.book_append_sheet(book, SheetJS.utils.aoa_to_sheet([
+    ['备注'], ['不是时序表']
+  ]), '说明');
+  SheetJS.utils.book_append_sheet(book, SheetJS.utils.aoa_to_sheet([
+    ['时间', '电堆电压', '电堆电流'],
+    ['00:00:00', 1.4, 10],
+    ['00:00:01', 1.39, 10]
+  ]), '稳定性');
+  const parsed = parseDataWorkbook(SheetJS.write(book, { type: 'buffer', bookType: 'xlsx' }));
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.sheetName, '稳定性');
+  const result = analyzeRows(parsed.rows);
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.dataset.cellChannelCount, 0);
+  assert.ok(result.issues.some((item) => item.code === 'STACK_CELL_CHANNELS_MISSING'));
+  const parameterBook = SheetJS.utils.book_new();
+  SheetJS.utils.book_append_sheet(parameterBook, SheetJS.utils.aoa_to_sheet([['参数代码'], ['CURRENT']]), '数据处理设定参数');
+  SheetJS.utils.book_append_sheet(parameterBook, SheetJS.utils.aoa_to_sheet([['工况编号', '目标电流'], ['I-10', 10]]), '目标工况设定');
+  const rejected = parseDataWorkbook(SheetJS.write(parameterBook, { type: 'buffer', bookType: 'xlsx' }));
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.errors[0], /参数工作簿/);
 });

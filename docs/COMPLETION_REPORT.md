@@ -8,7 +8,7 @@ The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pag
 
 ## Verification evidence
 
-- `npm test`: 29 passed, 0 failed.
+- `npm test`: 30 passed, 0 failed.
 - `npm run smoke:api`: loopback `/api/analyze` returned `FAIL` with report and no rows; `/api/compare` returned `PASS → FAIL`, report present, and no rows in either public analysis.
 - `npm run eval:ai`: 4/4 grounding fixtures passed.
 - `npm run check:submission`: 48 checks passed, 0 failed.
@@ -21,7 +21,7 @@ The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pag
 
 ## What works now
 
-The demo sample is parsed into 25 records and analyzed into a `FAIL` verdict because pressure and leak-monitoring values exceed the default demo thresholds. Raising thresholds and re-running produces a `WARN` verdict. The downloaded T02 materials were independently replayed from the local Downloads directory: vehicle CSVs are recognized as the 46-field vehicle contract; the 127-column stack sample is recognized and its repeated minute-level timestamps are blocked from formal time-series conclusions; the 422-column GB18030 TXT is recognized as a stack time series. Real vehicle and stack replays generated 14-sheet XLSX workbooks, and reopened workbooks retained the report sheets and formulas without raw rows. The report button generates a structured evidence draft without raw rows; a configured enterprise model endpoint can replace only the drafting step.
+The demo sample is parsed into 25 records and analyzed into a `FAIL` verdict because pressure and leak-monitoring values exceed the default demo thresholds. Raising thresholds and re-running produces a `WARN` verdict. The downloaded T02 materials were independently replayed from the local Downloads directory: vehicle CSVs are recognized as the 46-field vehicle contract; the 127-column stack sample is recognized and its repeated minute-level timestamps are blocked from formal time-series conclusions; the 422-column GB18030 TXT is recognized as a stack time series; the enterprise 01 XLSX selects its `稳定性` time-series sheet and marks missing cell channels explicitly. Real vehicle and stack replays generated 14-sheet XLSX workbooks, and reopened workbooks retained the report sheets and formulas without raw rows. The report button generates a structured evidence draft without raw rows; a configured enterprise model endpoint can replace only the drafting step.
 
 ## Residual risks
 

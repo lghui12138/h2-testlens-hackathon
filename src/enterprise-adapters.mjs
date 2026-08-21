@@ -506,7 +506,7 @@ function buildStack(rows, config) {
   };
   const required = ['timestamp_s', 'current_a', 'voltage_v'];
   const missing = required.filter((field) => !mapping[field]);
-  if (missing.length >= 2 || !cellHeaders.length) return null;
+  if (missing.length >= 2) return null;
   const times = relativeTimes(rows.map((row) => row[mapping.timestamp_s]));
   const normalized = rows.map((row, index) => {
     const cells = Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, num(row[header])]));
@@ -567,6 +567,7 @@ function buildStack(rows, config) {
   const issues = [];
   if (parameterConfig && !parameterConfig.ok) issues.push({ severity: 'critical', code: 'PARAMETER_WORKBOOK_INVALID', title: '参数工作簿校验未通过', evidence: parameterConfig.errors.join('；'), recommendation: '修正参数代码、单位、偏差和目标工况后再处理。' });
   if (missing.length) issues.push({ severity: 'critical', code: 'STACK_SCHEMA_MISSING', title: '电堆时序关键字段不完整', evidence: `缺少：${missing.join('、')}`, recommendation: '补充时间、电流、电压和单片电压通道后再进行平台/稳定性分析。' });
+  if (!cellHeaders.length) issues.push({ severity: 'warn', code: 'STACK_CELL_CHANNELS_MISSING', title: '未发现单片电压通道', evidence: '当前工作表可用于堆级电压/电流和工况统计，但不能完成单片一致性判定', recommendation: '导入包含单片电压列的原始测试表后再做单片异常结论。' });
   if (configuredCellCount && configuredCellCount !== cellHeaders.length) issues.push({ severity: 'warn', code: 'CELL_CHANNEL_COUNT_MISMATCH', title: '单片数量与导出通道数不一致', evidence: `参数表片数 ${configuredCellCount}，导出单片通道 ${cellHeaders.length} 个；有效配置记录 ${rowsWithConfiguredCount} 条`, recommendation: '确认测试台导出列、片数参数和有效通道范围，不能静默截断。' });
   if (quality.duplicateTimestampCount) issues.push({ severity: 'warn', code: 'STACK_TIMESTAMP_RESOLUTION', title: '时间戳分辨率不足以支撑逐秒排序', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，当前时间列需要结合采样序号复核`, recommendation: '改用带秒/毫秒的原始时间列或补充采样周期参数。' });
   if (parameterConfig?.ok && parameterAnalysis.performancePoints.some((point) => point.status === 'short_stable')) issues.push({ severity: 'warn', code: 'SHORT_STABLE_WINDOW', title: '稳定区间不足默认统计时长', evidence: `有 ${parameterAnalysis.performancePoints.filter((point) => point.status === 'short_stable').length} 个稳定点达到最短稳定时间但不足默认 ${parameterConfig.parameters.find((item) => item.code === 'DEFAULT_SAMPLE_TIME')?.target ?? 120} s`, recommendation: '保留该点并标记警告；如需正式长窗口曲线，应延长稳定采样。' });
@@ -652,6 +653,6 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   if (!rows.length) return null;
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   if (headers.includes('FC_CurrOut') && headers.includes('FC_VoltOut')) return buildVehicle(rows, config);
-  if (headers.some((header) => /单片电压\d+|^CELL\d+/i.test(String(header).trim())) && headers.some((header) => /实际电流|电堆电流/.test(String(header)))) return buildStack(rows, config);
+  if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }

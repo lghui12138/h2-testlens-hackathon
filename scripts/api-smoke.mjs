@@ -7,12 +7,15 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const port = '4174';
 const child = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: port }, stdio: ['ignore', 'ignore', 'pipe'] });
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let childError = '';
+child.stderr.on('data', (chunk) => { childError += chunk.toString(); });
 try {
   let response;
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
     try { response = await fetch(`http://127.0.0.1:${port}/`); if (response.ok) break; } catch {}
     await wait(50);
   }
+  if (!response?.ok) throw new Error(`server_not_ready${childError ? `: ${childError.trim()}` : ''}`);
   const csv = await readFile(join(root, 'sample-data/test_run_001.csv'), 'utf8');
   const analyzeResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv, fileName: 'smoke.csv', includeReport: true }) });
   if (!analyzeResponse.ok) throw new Error(`api status ${analyzeResponse.status}`);

@@ -225,6 +225,35 @@ export function parseParameterWorkbook(arrayBuffer) {
   }
 }
 
+function findDataHeaderRow(rows) {
+  return rows.findIndex((row) => {
+    const values = row.map(normalized);
+    const hasTime = values.some((value) => value.includes('时间') || value.includes('timestamp'));
+    const hasSignal = values.some((value) => value.includes('电流') || value.includes('current')) && values.some((value) => value.includes('电压') || value.includes('voltage'));
+    return hasTime && hasSignal;
+  });
+}
+
+export function parseDataWorkbook(arrayBuffer) {
+  try {
+    const workbook = xlsx().read(arrayBuffer, { type: 'array', cellDates: true, raw: false });
+    const names = workbook.SheetNames || [];
+    if (names.some((name) => normalized(name).includes('数据处理设定参数')) && names.some((name) => normalized(name).includes('目标工况'))) {
+      return { ok: false, errors: ['当前文件是参数工作簿，请使用“参数/目标工况 Excel”入口'], sheetNames: names, rows: [] };
+    }
+    const candidates = names.map((name) => {
+      const rows = sheetRows(workbook, name); const headerIndex = findDataHeaderRow(rows);
+      return { name, rows, headerIndex, dataRows: headerIndex >= 0 ? objectRows(rows, headerIndex) : [] };
+    }).filter((candidate) => candidate.headerIndex >= 0 && candidate.dataRows.length);
+    if (!candidates.length) return { ok: false, errors: ['未找到同时包含时间、电流和电压字段的时序工作表'], sheetNames: names, rows: [] };
+    candidates.sort((a, b) => b.dataRows.length - a.dataRows.length);
+    const selected = candidates[0];
+    return { ok: true, errors: [], sheetNames: names, sheetName: selected.name, headerRow: selected.headerIndex, rows: selected.dataRows };
+  } catch (error) {
+    return { ok: false, errors: [`无法读取原始数据工作簿：${error.message}`], sheetNames: [], rows: [] };
+  }
+}
+
 function setColumns(sheet, rows) {
   const widths = [];
   for (const row of rows) row.forEach((value, index) => { widths[index] = Math.max(widths[index] || 10, Math.min(42, text(value).length + 2)); });

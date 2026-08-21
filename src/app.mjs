@@ -4,7 +4,7 @@ import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Hex } from './provenance.mjs';
-import { buildEnterpriseWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
+import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null };
@@ -368,8 +368,17 @@ async function readUserFile(file) {
 
 async function readSelectedDataFiles(files) {
   const entries = [];
-  for (const file of files) entries.push({ name: file.name, text: await readUserFile(file) });
-  const rows = entries.flatMap(({ text }) => parseCSV(text));
+  for (const file of files) {
+    if (/\.(xlsx|xlsm)$/i.test(file.name)) {
+      const workbookResult = parseDataWorkbook(await file.arrayBuffer());
+      if (!workbookResult.ok) throw new Error(workbookResult.errors.join('；'));
+      entries.push({ name: file.name, rows: workbookResult.rows, text: `SHEET:${workbookResult.sheetName}\n${JSON.stringify(workbookResult.rows)}` });
+    } else {
+      const text = await readUserFile(file);
+      entries.push({ name: file.name, rows: parseCSV(text), text });
+    }
+  }
+  const rows = entries.flatMap(({ rows: fileRows }) => fileRows);
   const first = rows[0] || {};
   const timeField = ['Timestamp', '测试时间', '时间'].find((field) => Object.hasOwn(first, field));
   if (timeField === 'Timestamp') rows.sort((a, b) => String(a[timeField]).localeCompare(String(b[timeField])));
@@ -387,10 +396,14 @@ async function loadLegacySample() {
 $('#file-input').addEventListener('change', async (event) => {
   const files = [...event.target.files];
   if (!files.length) return;
-  const loaded = await readSelectedDataFiles(files);
-  await bindRawDataHash(loaded.hashText);
-  state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
-  render(analyzeRows(state.rows, configFromUI()));
+  try {
+    const loaded = await readSelectedDataFiles(files);
+    await bindRawDataHash(loaded.hashText);
+    state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
+    render(analyzeRows(state.rows, configFromUI()));
+  } catch (error) {
+    $('#schema-notice').textContent = `导入失败：${error.message}`;
+  }
 });
 $('#reanalyze').addEventListener('click', () => { if (state.rows.length) render(analyzeRows(state.rows, configFromUI())); });
 $('#profile-select').addEventListener('change', () => { applyProfile($('#profile-select').value); if (state.rows.length) render(analyzeRows(state.rows, configFromUI())); });
