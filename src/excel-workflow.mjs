@@ -12,7 +12,9 @@ function xlsx() {
 
 const text = (value) => String(value ?? '').trim();
 const number = (value) => {
-  const parsed = Number(text(value).replace(/,/g, ''));
+  const raw = text(value).replace(/,/g, '');
+  if (!raw) return null;
+  const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };
 const normalized = (value) => text(value).toLowerCase().replace(/[\s_\-().（）[\]{}]/g, '');
@@ -63,6 +65,23 @@ const RULE_FIELD_BY_CODE = Object.freeze({
   COOLANT_DT: 'coolant_dt'
 });
 
+const CONDITION_FIELD_BY_CODE = Object.freeze({
+  CURRENT: 'targetCurrentA',
+  H2_STOICH: 'h2Stoich',
+  H2_FLOW: 'h2Flow',
+  H2_IN_PRESS: 'h2InPressure',
+  H2_IN_TEMP: 'h2InTemp',
+  H2_DEWPOINT: 'h2Dewpoint',
+  AIR_STOICH: 'airStoich',
+  AIR_FLOW: 'airFlow',
+  AIR_IN_PRESS: 'airInPressure',
+  AIR_IN_TEMP: 'airInTemp',
+  AIR_DEWPOINT: 'airDewpoint',
+  COOLANT_IN_TEMP: 'coolantInTemp',
+  COOLANT_DT: 'coolantDt',
+  COOLANT_IN_PRESS: 'coolantInPressure'
+});
+
 function parseParameterSheet(rows, sheetName) {
   const headerIndex = findHeaderRow(rows, ['参数代码']);
   if (headerIndex < 0) return { errors: [`${sheetName} 缺少“参数代码”表头`], warnings: [], parameters: [], rules: [] };
@@ -102,7 +121,7 @@ function parseParameterSheet(rows, sheetName) {
     };
     if (item.minimumDurationS !== null && item.minimumDurationS <= 0) errors.push(`${code} 连续时间必须大于 0`);
     if (item.lowerTolerance !== null && item.upperTolerance !== null && item.lowerTolerance > item.upperTolerance) errors.push(`${code} 下偏差大于上偏差`);
-    if (item.enabled && item.required && item.target === null && !item.source.includes('目标工况')) warnings.push(`${code} 已启用且必需，但参数表未给出目标值；需从目标工况表解析`);
+    if (item.enabled && item.required && item.target === null && !item.source.includes('目标工况')) errors.push(`${code} 已启用且必需，但没有固定目标值或目标工况来源`);
     parameters.push(item);
     if (item.enabled && item.field) rules.push(item);
   }
@@ -137,8 +156,10 @@ function parseTargetSheet(rows, sheetName) {
     if (!row.some((value) => text(value))) continue;
     const targetCurrentA = number(row[columns.current]);
     if (targetCurrentA === null) { errors.push(`${sheetName} 存在无效目标电流`); continue; }
+    const providedConditionId = columns.id >= 0 && Boolean(text(row[columns.id]));
     targetConditions.push({
       conditionId: text(row[columns.id]) || `I-${targetCurrentA}`,
+      providedConditionId,
       targetCurrentA,
       targetCurrentDensity: columns.density >= 0 ? number(row[columns.density]) : null,
       h2Stoich: columns.h2Stoich >= 0 ? number(row[columns.h2Stoich]) : null,
@@ -157,7 +178,13 @@ function parseTargetSheet(rows, sheetName) {
     });
   }
   if (!targetConditions.length) errors.push(`${sheetName} 没有有效目标工况`);
-  if (new Set(targetConditions.map((item) => item.conditionId)).size !== targetConditions.length) warnings.push(`${sheetName} 工况编号重复，报告将保留原顺序`);
+  if (columns.id < 0) errors.push(`${sheetName} 缺少“工况编号”表头，无法区分重复目标电流点`);
+  if (new Set(targetConditions.map((item) => item.conditionId)).size !== targetConditions.length) errors.push(`${sheetName} 工况编号重复`);
+  const byCurrent = new Map();
+  for (const condition of targetConditions) {
+    const list = byCurrent.get(condition.targetCurrentA) || []; list.push(condition); byCurrent.set(condition.targetCurrentA, list);
+  }
+  for (const [current, list] of byCurrent.entries()) if (list.length > 1 && list.some((condition) => !condition.providedConditionId)) errors.push(`${sheetName} 目标电流 ${current} A 重复但缺少工况编号`);
   return { errors, warnings, targetConditions };
 }
 
@@ -174,6 +201,12 @@ export function parseParameterWorkbook(arrayBuffer) {
     const targetResult = targetSheet ? parseTargetSheet(sheetRows(workbook, targetSheet), targetSheet) : { errors: [], warnings: [], targetConditions: [] };
     errors.push(...parameterResult.errors, ...targetResult.errors);
     warnings.push(...parameterResult.warnings, ...targetResult.warnings);
+    for (const rule of parameterResult.parameters.filter((item) => item.enabled && item.required && item.source.includes('目标工况'))) {
+      const conditionField = CONDITION_FIELD_BY_CODE[rule.code];
+      if (!conditionField) { errors.push(`${rule.code} 没有可关联的目标工况字段`); continue; }
+      const missingConditions = targetResult.targetConditions.filter((condition) => condition[conditionField] === null || condition[conditionField] === undefined).map((condition) => condition.conditionId);
+      if (missingConditions.length) errors.push(`${rule.code} 在目标工况中缺少目标值：${missingConditions.join('、')}`);
+    }
     const parameterRules = parameterResult.rules.map((rule) => ({ ...rule, target: rule.target }));
     return {
       ok: errors.length === 0,

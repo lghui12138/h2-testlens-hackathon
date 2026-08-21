@@ -8,7 +8,7 @@ The independent GitHub project is `lghui12138/h2-testlens-hackathon`; GitHub Pag
 
 ## Verification evidence
 
-- `npm test`: 28 passed, 0 failed.
+- `npm test`: 29 passed, 0 failed.
 - `npm run smoke:api`: loopback `/api/analyze` returned `FAIL` with report and no rows; `/api/compare` returned `PASS → FAIL`, report present, and no rows in either public analysis.
 - `npm run eval:ai`: 4/4 grounding fixtures passed.
 - `npm run check:submission`: 48 checks passed, 0 failed.

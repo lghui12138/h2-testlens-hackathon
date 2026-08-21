@@ -429,3 +429,22 @@ test('derives fuel-cell stack flow resistance and coolant temperature difference
   assert.equal(result.dataset.metrics.coolantTemperatureDifferenceC.mean, 5);
   assert.match(result.dataset.sourceFieldMap.anode_flow_resistance_kpa, /计算/);
 });
+
+test('fails closed when required parameter targets or repeated-current condition identifiers are incomplete', () => {
+  const makeBook = (parameterRows, targetRows) => {
+    const book = SheetJS.utils.book_new();
+    SheetJS.utils.book_append_sheet(book, SheetJS.utils.aoa_to_sheet(parameterRows), '数据处理设定参数');
+    SheetJS.utils.book_append_sheet(book, SheetJS.utils.aoa_to_sheet(targetRows), '目标工况设定');
+    return parseParameterWorkbook(SheetJS.write(book, { type: 'buffer', bookType: 'xlsx' }));
+  };
+  const headers = ['参数代码', '参数名称', '启用', '基准来源', '目标值', '下偏差', '上偏差', '单位', '连续时间/s', '必需', '标准字段'];
+  const fixedMissing = makeBook([headers, ['H2_IN_PRESS', '氢气入口压力', '是', '', '', -1, 1, 'kPa.g', 60, '是', 'pressure_kpa']], [['工况编号', '目标电流'], ['I-10', 10]]);
+  assert.equal(fixedMissing.ok, false);
+  assert.ok(fixedMissing.errors.some((error) => error.includes('没有固定目标值')));
+  const targetMissing = makeBook([headers, ['H2_IN_PRESS', '氢气入口压力', '是', '目标工况表', '', -1, 1, 'kPa.g', 60, '是', 'pressure_kpa']], [['工况编号', '目标电流'], ['I-10', 10]]);
+  assert.equal(targetMissing.ok, false);
+  assert.ok(targetMissing.errors.some((error) => error.includes('缺少目标值')));
+  const repeatedWithoutId = makeBook([headers, ['CURRENT', '实测电流', '是', '目标工况表', '', -1, 1, 'A', 60, '是', 'current_a']], [['目标电流'], [10], [10]]);
+  assert.equal(repeatedWithoutId.ok, false);
+  assert.ok(repeatedWithoutId.errors.some((error) => error.includes('工况编号')));
+});
