@@ -468,9 +468,29 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   };
 }
 
+export function publicConfig(config = {}) {
+  const { testMetadata, durabilityReports, parameterConfig, ...safeConfig } = config || {};
+  const metadata = testMetadata && typeof testMetadata === 'object' ? testMetadata : {};
+  return {
+    ...safeConfig,
+    testMetadata: Object.fromEntries(Object.keys(metadata).map((field) => [field, Boolean(metadata[field])])),
+    metadataPresent: Object.fromEntries(Object.keys(metadata).map((field) => [field, Boolean(metadata[field])])),
+    durabilityReportCount: Array.isArray(durabilityReports) ? durabilityReports.length : 0,
+    parameterConfig: parameterConfig && typeof parameterConfig === 'object' ? {
+      ok: Boolean(parameterConfig.ok),
+      parameterSheet: parameterConfig.parameterSheet || null,
+      targetSheet: parameterConfig.targetSheet || null,
+      parameterCount: Array.isArray(parameterConfig.parameters) ? parameterConfig.parameters.length : 0,
+      targetConditionCount: Array.isArray(parameterConfig.targetConditions) ? parameterConfig.targetConditions.length : 0,
+      errors: Array.isArray(parameterConfig.errors) ? parameterConfig.errors : [],
+      warnings: Array.isArray(parameterConfig.warnings) ? parameterConfig.warnings : []
+    } : null
+  };
+}
+
 export function publicAnalysis(result) {
-  const { rows, ...safeResult } = result;
-  return safeResult;
+  const { rows, config, ...safeResult } = result;
+  return { ...safeResult, config: publicConfig(config) };
 }
 
 function enterpriseReportMarkdown(result, fileName, options = {}) {

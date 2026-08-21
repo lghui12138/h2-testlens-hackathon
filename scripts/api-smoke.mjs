@@ -17,11 +17,12 @@ try {
   }
   if (!response?.ok) throw new Error(`server_not_ready${childError ? `: ${childError.trim()}` : ''}`);
   const csv = await readFile(join(root, 'sample-data/test_run_001.csv'), 'utf8');
-  const analyzeResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv, fileName: 'smoke.csv', includeReport: true }) });
+  const analyzeResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv, fileName: 'smoke.csv', includeReport: true, config: { testMetadata: { operator: 'secret-operator', rawDataRef: '/private/raw.csv' } } }) });
   if (!analyzeResponse.ok) throw new Error(`api status ${analyzeResponse.status}`);
   const result = await analyzeResponse.json();
   if (result.rows !== undefined) throw new Error('raw rows leaked from public API');
   if (result.verdict !== 'FAIL' || !result.reportMarkdown?.includes('自动判定')) throw new Error('unexpected analysis response');
+  if (result.config?.testMetadata?.operator !== true || JSON.stringify(result).includes('secret-operator') || result.reportMarkdown.includes('secret-operator')) throw new Error('sensitive metadata leaked from public API');
   const baselineCsv = await readFile(join(root, 'sample-data/test_run_baseline.csv'), 'utf8');
   const compareResponse = await fetch(`http://127.0.0.1:${port}/api/compare`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baselineCsv, currentCsv: csv, baselineFileName: 'baseline.csv', currentFileName: 'current.csv', includeReport: true }) });
   if (!compareResponse.ok) throw new Error(`compare api status ${compareResponse.status}`);

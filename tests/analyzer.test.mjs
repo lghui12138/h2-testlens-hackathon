@@ -244,6 +244,11 @@ test('public analysis removes raw rows before integration responses', () => {
   assert.equal('rows' in safe, false);
   assert.equal(safe.verdict, 'FAIL');
   assert.equal(safe.metrics.sampleCount, 25);
+  const withSensitiveMetadata = publicAnalysis(analyzeRows(parseCSV(csv), { testMetadata: { operator: 'operator-secret', calibrationRefs: 'cal-secret', rawDataRef: '/private/raw.csv' } }));
+  assert.equal(withSensitiveMetadata.config.testMetadata.operator, true);
+  assert.equal(withSensitiveMetadata.config.testMetadata.calibrationRefs, true);
+  assert.equal(JSON.stringify(withSensitiveMetadata).includes('operator-secret'), false);
+  assert.equal(reportMarkdown(withSensitiveMetadata, 'public.json').includes('operator-secret'), false);
 });
 
 test('standards gate distinguishes demo, incomplete, and human-review-ready profiles', () => {

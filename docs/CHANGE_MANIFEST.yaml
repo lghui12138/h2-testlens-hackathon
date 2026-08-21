@@ -27,6 +27,7 @@ constraints:
   - "An explicit mapping miss is surfaced as MAPPING_OVERRIDE_MISSING even when a generic alias fallback succeeds."
   - "Workflow readiness is a process checklist, not a conformity certificate; a FAIL verdict or missing evidence must remain visible as review/blocking state."
   - "Remote AI receives metadata presence flags, not operator names, calibration identifiers, raw-data references, or other testMetadata values."
+  - "Public analysis/API/JSON surfaces redact metadata values, durability report bodies, and parameter workbook contents while retaining bounded presence/count summaries."
   - "Performance measurements are derived with explicit trapezoid integration and remain non-conformity claims unless an approved profile supplies requiredMeasurements and acceptanceCriteria."
   - "CSV SHA-256 is computed in the browser and stored as provenance; raw CSV content is not sent to the AI adapter."
   - "Enterprise source files remain local; only schema adapters, synthetic tests, and derived non-raw documentation are committed."

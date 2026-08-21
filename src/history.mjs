@@ -1,3 +1,5 @@
+import { publicConfig } from './analyzer.mjs';
+
 export const HISTORY_STORAGE_KEY = 'h2-testlens.history.v1';
 export const HISTORY_LIMIT = 12;
 
@@ -10,7 +12,7 @@ export function toHistoryRecord(result, fileName, savedAt = new Date().toISOStri
     metrics: result.metrics,
     quality: result.quality,
     schema: result.schema,
-    config: result.config,
+    config: publicConfig(result.config),
     issues: result.issues,
     source: result.source
   };
