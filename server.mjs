@@ -35,7 +35,7 @@ function resolveApiConfig(payload) {
   if (!imported.ok) { const error = new Error('profile_package_invalid'); error.status = 422; error.details = imported.errors; throw error; }
   const profile = imported.profiles.find((candidate) => candidate.id === payload.profileId) ?? imported.profiles[0];
   if (!profile) { const error = new Error('profile_not_found'); error.status = 422; throw error; }
-  return { ...profile.thresholds, profileId: profile.id, profileName: profile.name, profileSource: profile.source, profileOrganization: imported.organization, approvalStatus: profile.approvalStatus, applicationScope: profile.applicationScope, intendedUse: profile.intendedUse, methodId: profile.methodId, revision: profile.revision, standardRefs: profile.standardRefs, requiredMetadata: profile.requiredMetadata, testMetadata: payload.testMetadata || {}, fieldMapping: imported.fieldMapping };
+  return { ...profile.thresholds, profileId: profile.id, profileName: profile.name, profileSource: profile.source, profileOrganization: imported.organization, approvalStatus: profile.approvalStatus, applicationScope: profile.applicationScope, intendedUse: profile.intendedUse, methodId: profile.methodId, revision: profile.revision, standardRefs: profile.standardRefs, requiredMetadata: profile.requiredMetadata, requiredMeasurements: profile.requiredMeasurements, requiredPhases: profile.requiredPhases, acceptanceCriteria: profile.acceptanceCriteria, testMetadata: payload.testMetadata || {}, fieldMapping: imported.fieldMapping };
 }
 
 function writeApiError(res, error) {

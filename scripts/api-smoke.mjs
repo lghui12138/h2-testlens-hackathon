@@ -29,7 +29,7 @@ try {
   const profileResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: legacyCsv, profilePackage, profileId: 'enterprise-electrolyzer-example' }) });
   if (!profileResponse.ok) throw new Error(`profile api status ${profileResponse.status}`);
   const profileResult = await profileResponse.json();
-  if (profileResult.rows !== undefined || profileResult.config?.profileName !== '企业电解槽 · 示例配置' || profileResult.schema?.mapping?.pressure_bar !== '压力(kPa)' || profileResult.compliance?.status !== 'DEMO_ONLY') throw new Error('profile package was not applied by API');
+  if (profileResult.rows !== undefined || profileResult.config?.profileName !== '企业电解槽 · 示例配置' || profileResult.schema?.mapping?.pressure_bar !== '压力(kPa)' || profileResult.compliance?.status !== 'DEMO_ONLY' || profileResult.compliance?.requiredMeasurements?.includes('hydrogen_purity_pct') !== true || !Array.isArray(profileResult.compliance?.requiredPhases) || profileResult.compliance?.acceptanceCriteria === undefined) throw new Error('profile package was not applied by API');
   const invalidProfileResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: legacyCsv, profilePackage: { schemaVersion: 'wrong', profiles: [] } }) });
   if (invalidProfileResponse.status !== 422) throw new Error(`invalid profile package was not rejected: ${invalidProfileResponse.status}`);
   const invalidProfile = await invalidProfileResponse.json();
