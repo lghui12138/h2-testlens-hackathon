@@ -63,7 +63,7 @@ npm start
 
 这是比赛原型，不把演示阈值当作企业安全标准，也不替代工程师签核。内置设备 profile 是演示模板，正式版必须替换为企业审批后的设备标准。本地历史只保存摘要，不保存原始测试行。没有配置模型服务时，报告初稿仍由本地结构化证据生成；配置远程模型时，建议使用企业内网或已审批的模型网关。
 
-企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。当前页面已经支持参数工作簿读取、Excel 报告导出和耐久告警；仍未接入企业批准阈值、自动每日增量调度、企业 Feishu 凭据/策略、服务端审计和 Excel 内嵌原生图表。
+企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。当前页面已经支持参数工作簿读取、Excel 报告导出、原生 OOXML 图表路径和耐久告警；仍需企业批准阈值、自动每日增量调度、企业 Feishu 凭据/策略、服务端审计和 Excel/WPS 视觉验收。
 
 AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION.md)。
 企业应用边界和逐项标准审计见 [`docs/ENTERPRISE_READINESS.md`](docs/ENTERPRISE_READINESS.md)。

@@ -12,11 +12,16 @@ import { sha256Hex } from '../src/provenance.mjs';
 import * as SheetJS from 'xlsx';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
 import { durabilityAlertPayload, sendFeishuAlert } from '../src/feishu-alerts.mjs';
+import { addNativeChartToWorkbook, setZipEngine } from '../src/xlsx-charts.mjs';
+import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const csv = await readFile(join(here, '../sample-data/test_run_001.csv'), 'utf8');
 const baselineCsv = await readFile(join(here, '../sample-data/test_run_baseline.csv'), 'utf8');
 setSpreadsheetEngine(SheetJS);
+vm.runInThisContext(await readFile(join(here, '../src/vendor/jszip.min.js'), 'utf8'));
+const JSZip = globalThis.JSZip;
+setZipEngine(JSZip);
 
 test('parses the demo CSV into records', () => {
   const rows = parseCSV(csv);
@@ -508,4 +513,22 @@ test('Feishu durability alert stays dry-run by default and sends only an approve
   assert.equal(typeof signedRequest.sign, 'string');
   const rejected = await sendFeishuAlert(result, { webhookUrl: 'https://example.com/hook' });
   assert.equal(rejected.reason, 'webhook_host_not_allowed');
+});
+
+test('adds a standard OOXML line chart to the generated workbook without changing the data sheet', async () => {
+  const rows = [
+    { target_power_kw: 33, net_power_kw: 32.9, average_cell_voltage_mv: 813, average_deviation_mv: 6, voltage_variance: 20 },
+    { target_power_kw: 195, net_power_kw: 191.7, average_cell_voltage_mv: 658, average_deviation_mv: 13, voltage_variance: 46 }
+  ];
+  const result = analyzeRows(rows, { durabilityRules: {} });
+  const workbook = buildEnterpriseWorkbook(result, 'durability.docx');
+  const withChart = await addNativeChartToWorkbook(workbookArrayBuffer(workbook), result.dataset);
+  const zip = await JSZip.loadAsync(withChart);
+  const names = Object.keys(zip.files);
+  assert.ok(names.some((name) => /^xl\/charts\/chart\d+\.xml$/.test(name)));
+  assert.ok(names.some((name) => /^xl\/drawings\/drawing\d+\.xml$/.test(name)));
+  const chartXml = await zip.file(names.find((name) => /^xl\/charts\/chart\d+\.xml$/.test(name))).async('string');
+  assert.match(chartXml, /耐久功率点平均单体电压/);
+  const sheetXml = await zip.file('xl/worksheets/sheet13.xml').async('string').catch(() => '');
+  assert.ok(names.some((name) => name.includes('worksheets/_rels') && name.endsWith('.rels')));
 });

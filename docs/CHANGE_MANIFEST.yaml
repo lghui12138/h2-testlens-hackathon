@@ -11,6 +11,7 @@ source_of_truth:
   analyzer: src/analyzer.mjs
   enterprise_adapters: src/enterprise-adapters.mjs
   excel_workflow: src/excel-workflow.mjs
+  xlsx_charts: src/xlsx-charts.mjs
   docx_workflow: src/docx-workflow.mjs
   feishu_alerts: src/feishu-alerts.mjs
   ai_adapter: src/ai-draft.mjs
@@ -37,6 +38,6 @@ evidence:
   api_smoke: [/api/ai-draft]
   manual: [docs/TEST_PLAN.md]
 residual_risks:
-  - "Enterprise field structures, parameter workbook import, multi-file browser batches, 14-sheet Excel report output, and a server-side Feishu alert endpoint are connected; approved field dictionaries, thresholds, automatic incrementals, enterprise Feishu policies, native Excel charts, and server audit are not yet connected."
+  - "Enterprise field structures, parameter workbook import, multi-file browser batches, 14-sheet Excel report output, a validated OOXML chart writer path, and a server-side Feishu alert endpoint are connected; approved field dictionaries, thresholds, automatic incrementals, enterprise Feishu policies, Excel/WPS visual acceptance, and server audit are not yet complete."
   - "The default mode is deterministic local evidence synthesis; a real model gateway still needs enterprise approval and evaluation."
   - "The Sites production deployment is public; public availability must not be confused with enterprise profile approval."

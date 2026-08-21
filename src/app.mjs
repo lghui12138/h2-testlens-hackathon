@@ -5,6 +5,7 @@ import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } f
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Hex } from './provenance.mjs';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
+import { addNativeChartToWorkbook } from './xlsx-charts.mjs';
 import { parseDurabilityDocx } from './docx-workflow.mjs';
 import { durabilityAlertPayload, sendFeishuAlert } from './feishu-alerts.mjs';
 
@@ -559,11 +560,13 @@ $('#generate-ai').addEventListener('click', async () => {
   }
 });
 $('#download-report').addEventListener('click', () => { const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
-$('#download-xlsx').addEventListener('click', () => {
+$('#download-xlsx').addEventListener('click', async () => {
   if (!state.result) return;
   try {
     const workbook = buildEnterpriseWorkbook(state.result, state.fileName, { parameterConfig: state.parameterConfig });
-    const blob = new Blob([workbookArrayBuffer(workbook)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const rawWorkbook = workbookArrayBuffer(workbook);
+    const workbookBytes = await addNativeChartToWorkbook(rawWorkbook, state.result.dataset || {});
+    const blob = new Blob([workbookBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.(csv|txt|tsv)$/i, '')}-TestLens报告.xlsx`; link.click(); URL.revokeObjectURL(link.href);
   } catch (error) {
     $('#report-status').textContent = `Excel 导出失败：${error.message}`;
