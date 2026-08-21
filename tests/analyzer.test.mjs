@@ -278,6 +278,7 @@ test('standards gate distinguishes demo, incomplete, and human-review-ready prof
   assert.equal(ready.compliance.missingMetadata.length, 0);
   assert.equal(ready.workflow.status, 'REVIEW_REQUIRED');
   assert.ok(ready.workflow.steps.some((step) => step.id === 'signoff' && step.status === 'ready'));
+  assert.equal(ready.releaseGate.status, 'ANALYSIS_DRAFT');
 });
 
 test('approved profile plus complete provenance can reach human review readiness on a passing run', () => {
@@ -298,6 +299,8 @@ test('approved profile plus complete provenance can reach human review readiness
   assert.equal(result.compliance.status, 'READY_FOR_HUMAN_REVIEW');
   assert.equal(result.workflow.status, 'READY_FOR_HUMAN_REVIEW');
   assert.equal(result.workflow.steps.every((step) => step.status === 'ready'), true);
+  assert.equal(result.releaseGate.status, 'HUMAN_REVIEW_PACKAGE');
+  assert.equal(result.releaseGate.ready, true);
 });
 
 test('required performance measurements fail closed when purity is absent', () => {

@@ -282,6 +282,8 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
     ['记录数', result.quality.rowCount, '原始输入记录'],
     ['相对时长(s)', result.metrics.durationS, '由时间字段计算；时间质量见数据质量检查'],
     ['自动判定', result.verdict, '不是安全认证或企业放行结论'],
+    ['交付级别', result.releaseGate?.status || 'ANALYSIS_DRAFT', result.releaseGate?.label || '分析草稿，不得作为放行报告'],
+    ['放行门控', result.releaseGate?.blockedReasons?.join('、') || '无', '只有全部门控通过才可形成 HUMAN_REVIEW_PACKAGE'],
     ['生成时间', result.generatedAt, '系统时间'],
     ['边界', result.narrative, '需要企业批准规则和人工签核']
   ]);

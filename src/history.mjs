@@ -13,6 +13,7 @@ export function toHistoryRecord(result, fileName, savedAt = new Date().toISOStri
     quality: result.quality,
     schema: result.schema,
     config: publicConfig(result.config),
+    releaseGate: result.releaseGate || null,
     manifest: Array.isArray(manifest) ? manifest : [],
     issues: result.issues,
     source: result.source

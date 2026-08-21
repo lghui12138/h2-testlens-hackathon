@@ -346,7 +346,8 @@ function drawEnterprisePerformanceChart(result) {
 
 function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
-  $('#report-status').textContent = draft ? '自动报告初稿' : `${status} · ${result.issues.length} 条结论`;
+  const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : '分析草稿';
+  $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;

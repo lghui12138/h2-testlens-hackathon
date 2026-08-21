@@ -341,6 +341,18 @@ function workflowReadiness(config, quality, schema, compliance, verdict, uncerta
   return { status, nextAction, steps };
 }
 
+export function releaseGate(result) {
+  const checks = {
+    approvedProfile: result.compliance?.status === 'READY_FOR_HUMAN_REVIEW',
+    dataQuality: Boolean(result.quality?.usable),
+    passingVerdict: result.verdict === 'PASS',
+    workflowComplete: result.workflow?.status === 'READY_FOR_HUMAN_REVIEW',
+    humanSignoff: Boolean(result.config?.testMetadata?.signoff)
+  };
+  const blockedReasons = Object.entries(checks).filter(([, pass]) => !pass).map(([id]) => id);
+  return { status: blockedReasons.length ? 'ANALYSIS_DRAFT' : 'HUMAN_REVIEW_PACKAGE', ready: blockedReasons.length === 0, checks, blockedReasons, label: blockedReasons.length ? '分析草稿，不得作为放行报告' : '人工复核包，仍需授权签核' };
+}
+
 export function analyzeRows(inputRows, suppliedConfig = {}) {
   const safeInput = Array.isArray(inputRows) ? inputRows : [];
   const enterpriseResult = analyzeEnterpriseRows(safeInput, suppliedConfig);
@@ -352,6 +364,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
       enterpriseResult.narrative = '当前数据集与所选企业 profile 的适用范围不一致，系统已阻断后续结论。';
       enterpriseResult.workflow = { ...enterpriseResult.workflow, status: 'BLOCKED_PROFILE_SCOPE', nextAction: '更换适用的数据集 profile 后重新分析。', steps: (enterpriseResult.workflow?.steps || []).map((step) => step.id === 'dataset' ? { ...step, status: 'blocked', evidence: `profile 仅允许 ${supported.join('、')}，当前为 ${enterpriseResult.datasetType}` } : step) };
     }
+    enterpriseResult.releaseGate = releaseGate(enterpriseResult);
     return enterpriseResult;
   }
   const { fieldMapping = {}, ...thresholdConfig } = suppliedConfig;
@@ -459,7 +472,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     : verdict === 'WARN'
       ? '本次测试未触发高优先级安全规则，但存在需要工程师复核的趋势或数据质量问题，建议在正式归档前补测。'
       : '本次测试关键指标未触发当前规则，建议结合企业标准和设备工况完成最终人工签核。';
-  return {
+  const result = {
     generatedAt: new Date().toISOString(),
     config,
     rows,
@@ -475,6 +488,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     narrative,
     source: { type: 'csv', rowCount: rows.length, requiredFields: REQUIRED_FIELDS }
   };
+  result.releaseGate = releaseGate(result);
+  return result;
 }
 
 export function publicConfig(config = {}) {
@@ -518,7 +533,7 @@ export function publicAnalysis(result) {
 function enterpriseReportMarkdown(result, fileName, options = {}) {
   const status = result.verdict === 'PASS' ? '通过' : result.verdict === 'WARN' ? '需复核' : '未通过';
   const dataset = result.dataset;
-  const common = `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 数据集：${dataset.label}\n- 自动判定：**${status}（${result.verdict}）**\n- 生成时间：${result.generatedAt}\n- 结论边界：这是企业资料结构适配与工程复核前处理，不是安全认证或企业正式符合性结论。\n\n## 结论\n\n${result.narrative}\n\n## 数据质量与字段追溯\n\n- 记录数：${result.quality.rowCount}\n- 关键字段完整率：${result.quality.completenessPct.toFixed(1)}%\n- 重复时间戳：${result.quality.duplicateTimestampCount} 条；逆序：${result.quality.nonMonotonicCount} 次\n- 字段映射：${Object.entries(result.schema.mapping).filter(([, source]) => source).map(([field, source]) => `${field}←${source}`).join('；')}\n\n## 异常与动作\n\n${result.issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n`;
+  const common = `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 数据集：${dataset.label}\n- 自动判定：**${status}（${result.verdict}）**\n- 交付级别：**${result.releaseGate?.status || 'ANALYSIS_DRAFT'}** · ${result.releaseGate?.label || '分析草稿，不得作为放行报告'}\n- 未通过门控：${result.releaseGate?.blockedReasons?.join('、') || '无'}\n- 生成时间：${result.generatedAt}\n- 结论边界：这是企业资料结构适配与工程复核前处理，不是安全认证或企业正式符合性结论。\n\n## 结论\n\n${result.narrative}\n\n## 数据质量与字段追溯\n\n- 记录数：${result.quality.rowCount}\n- 关键字段完整率：${result.quality.completenessPct.toFixed(1)}%\n- 重复时间戳：${result.quality.duplicateTimestampCount} 条；逆序：${result.quality.nonMonotonicCount} 次\n- 字段映射：${Object.entries(result.schema.mapping).filter(([, source]) => source).map(([field, source]) => `${field}←${source}`).join('；')}\n\n## 异常与动作\n\n${result.issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n`;
   if (result.datasetType === 'durability') {
     const points = dataset.points.map((point) => `| ${point.targetPowerKw} | ${point.netPowerKw ?? '—'} | ${point.averageCellVoltageMv ?? '—'} | ${point.averageDeviationMv ?? '—'} | ${point.voltageVariance ?? '—'} |`).join('\n');
     const reports = dataset.reports.map((report) => `- ${report.metadata?.测试方案 || '耐久报告'}：${report.metadata?.测试结果 || '未标注'}；${report.points.length} 个功率点`).join('\n');
@@ -541,11 +556,12 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
   const mappings = Object.entries(schema.mapping).map(([field, source]) => `${field}←${source}`).join('；');
   const conversions = Object.entries(schema.conversions).filter(([, transform]) => transform.mode !== 'identity').map(([field, transform]) => `${field} ${transform.label}`).join('；') || '无';
   const complianceSection = `\n\n## 标准适用性与符合性门控\n\n- 状态：${result.compliance?.status || '未评估'}（${result.compliance?.label || '需人工确认'}）\n- profile 审批状态：${result.compliance?.approvalStatus || '未指定'}\n- 测试方法：${result.compliance?.methodId || '未指定'} · 版本：${result.compliance?.revision || '未指定'}\n- 适用范围：${result.compliance?.applicationScope || '未指定'}\n- 缺失 profile 字段：${result.compliance?.missingProfileFields?.join('、') || '无'}\n- 缺失测试元数据：${result.compliance?.missingMetadata?.join('、') || '无'}\n- 说明：该状态不是安全认证；正式符合性结论必须由企业标准负责人和测试人员签核。\n`;
+  const releaseGateSection = `\n## 报告交付级别\n\n- 状态：**${result.releaseGate?.status || 'ANALYSIS_DRAFT'}**\n- 说明：${result.releaseGate?.label || '分析草稿，不得作为放行报告'}\n- 未通过门控：${result.releaseGate?.blockedReasons?.join('、') || '无'}\n`;
   const workflowSection = `\n## 测试流程完成度\n\n- 流程状态：**${result.workflow?.status || '未评估'}**\n- 下一步：${result.workflow?.nextAction || '需人工确认。'}\n${(result.workflow?.steps || []).map((step) => `- ${step.status.toUpperCase()}｜${step.label}：${step.evidence}`).join('\n')}\n`;
   const metadataSection = `\n## 测试执行与溯源字段\n\n${Object.entries(config.testMetadata || {}).map(([field, value]) => `- ${field}：${String(value || '未填写').replace(/\r?\n/g, '；')}`).join('\n') || '- 当前未填写测试元数据。'}\n`;
   const acceptanceCriteria = result.compliance?.acceptanceCriteria || {};
   const performanceSection = `\n## 性能测量摘要\n\n- 产氢量：${metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL\n- 电能消耗：${metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh\n- 单位制氢电耗：${metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³\n- 最低氢气纯度：${metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%${metrics.minimumHydrogenPurityAtS?.length ? `（t=${metrics.minimumHydrogenPurityAtS.slice(0, 3).join('、')} s）` : ''}\n- profile 要求的性能测量缺失：${result.compliance?.missingMeasurements?.join('、') || '无'}\n- profile 要求的测试段缺失：${result.compliance?.missingPhases?.join('、') || '无'}\n- profile 验收准则：${Object.entries(acceptanceCriteria).map(([field, value]) => `${field}=${value}`).join('；') || '未配置，不能据此宣称符合'}\n- 不确定度模型：${result.uncertainty?.status || '未配置'}${result.uncertainty?.method ? ` · ${result.uncertainty.method} · k=${result.uncertainty.coverageFactor}` : ''}\n`;
-  const comparisonSection = `${complianceSection}${workflowSection}${performanceSection}${metadataSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n\n- 生成路径：${options.aiDraft.mode === 'remote-llm' ? '已配置的企业模型服务' : '本地规则回退'}\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
+  const comparisonSection = `${complianceSection}${releaseGateSection}${workflowSection}${performanceSection}${metadataSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n\n- 生成路径：${options.aiDraft.mode === 'remote-llm' ? '已配置的企业模型服务' : '本地规则回退'}\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
   const profileName = config.profileName ?? '未指定设备模板';
   const profileSource = config.profileSource ?? '当前分析配置';
   return `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 自动判定：**${status}（${verdict}）**\n- 生成时间：${result.generatedAt}\n- 说明：本报告使用可配置的演示阈值，不替代企业正式安全标准。\n\n## 结论摘要\n\n${narrative}\n\n## 数据质量与字段映射\n\n- 记录数：${quality.rowCount}\n- 关键字段完整率：${quality.completenessPct.toFixed(1)}%\n- 缺失字段：${quality.missingHeaders.length ? quality.missingHeaders.join('、') : '无'}\n- 可选缺失字段：${quality.missingOptionalHeaders.length ? quality.missingOptionalHeaders.join('、') : '无'}\n- 字段映射：${mappings || '无'}\n- 单位换算：${conversions}\n- 重复时间戳：${quality.duplicateTimestampCount} 条；逆序跳变：${quality.nonMonotonicCount} 次\n\n## KPI 摘要\n\n| 指标 | 数值 |\n|---|---:|\n| 测试时长 | ${metrics.durationS.toFixed(0)} s |\n| 峰值功率 | ${metrics.peakPowerW?.toFixed(1) ?? '—'} W |\n| 稳态窗口 | ${metrics.steadyWindow}（${metrics.steadySampleCount} 条） |\n| 稳态平均电压 | ${metrics.steadyVoltageMeanV?.toFixed(3) ?? '—'} V |\n| 稳态电压标准差 | ${metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V |\n| 峰值温度 | ${metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C |\n| 峰值压力 | ${metrics.peakPressureBar?.toFixed(1) ?? '—'} bar |\n| 峰值泄漏监测 | ${metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm |\n| 压力漂移 | ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min |\n\n## 异常与建议\n\n${issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n\n## 工况分段\n\n${phases.map((phase) => `- ${phase.phase}：${phase.count} 个样本，${phase.durationS.toFixed(0)} s`).join('\n')}\n\n## 当前判定阈值\n\n- 设备模板：${profileName}\n- 阈值来源：${profileSource}\n- 温度 ≤ ${config.maxTemperatureC} °C\n- 压力 ≤ ${config.maxPressureBar} bar\n- 泄漏监测 ≤ ${config.maxLeakPpm} ppm\n- 稳态电压标准差 ≤ ${config.maxVoltageStdV} V\n- 压力漂移绝对值 ≤ ${config.maxPressureDriftBarPerMin} bar/min\n${comparisonSection}`;

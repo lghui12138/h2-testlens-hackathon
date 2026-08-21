@@ -48,6 +48,7 @@ export function evidenceBundle(result, comparison = null) {
     phases: result.phases,
     issues: result.issues,
     workflow: result.workflow,
+    releaseGate: result.releaseGate || null,
     thresholds: evidenceConfig(result.config),
     compliance: result.compliance,
     comparison
