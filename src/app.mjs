@@ -255,6 +255,41 @@ function drawChart(result) {
   ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 70, h - 13, 12, 2); ctx.fillText('压力', pad.left + 88, h - 9);
 }
 
+function drawEnterpriseChart(result) {
+  const canvas = $('#enterprise-chart');
+  if (!canvas || !result.datasetType) return;
+  const dpr = window.devicePixelRatio || 1;
+  const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245;
+  canvas.width = width * dpr; canvas.height = height * dpr;
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
+  const pad = { left: 46, right: 24, top: 20, bottom: 32 };
+  const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom;
+  const grid = () => { ctx.strokeStyle = 'rgba(154,172,184,.16)'; ctx.lineWidth = 1; for (let i = 0; i < 4; i += 1) { const y = pad.top + i * plotH / 3; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke(); } };
+  const label = (value, x, y, color = '#71838a') => { ctx.fillStyle = color; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillText(String(value), x, y); };
+  if (result.datasetType === 'vehicle') {
+    const points = result.dataset.insulation.points || [];
+    if (!points.length) { label('暂无有效绝缘阻值窗口', pad.left, pad.top + 20); return; }
+    const values = points.map((point) => point.minimumKohm); const max = Math.max(400, ...values); const min = Math.min(0, ...values); const span = max - min || 1;
+    const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW; const y = (value) => pad.top + (max - value) / span * plotH;
+    grid();
+    for (const threshold of [350, 250]) { ctx.strokeStyle = threshold === 350 ? '#e0aa49' : '#c84e48'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(pad.left, y(threshold)); ctx.lineTo(width - pad.right, y(threshold)); ctx.stroke(); ctx.setLineDash([]); label(`${threshold} kΩ`, width - pad.right - 42, y(threshold) - 4, ctx.strokeStyle); }
+    ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); points.forEach((point, index) => { const px = x(index); const py = y(point.minimumKohm); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+    points.forEach((point, index) => { ctx.fillStyle = point.status === 4 ? '#7c9df2' : '#5bd4c0'; ctx.beginPath(); ctx.arc(x(index), y(point.minimumKohm), 3.2, 0, Math.PI * 2); ctx.fill(); });
+    label('绝缘阻值（kΩ）', pad.left, 12, '#13262d'); label('时间窗口', width - 60, height - 8);
+    return;
+  }
+  const points = (result.dataset.performancePoints || []).filter((point) => Number.isFinite(point.averageCellVoltageV));
+  if (!points.length) { label('暂无有效极化点；请导入目标工况参数并确认稳定区间', pad.left, pad.top + 20); return; }
+  const xValues = points.map((point) => point.averageCurrentDensity ?? point.averageCurrentA).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).filter(Number.isFinite);
+  const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1;
+  const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
+  grid();
+  const sorted = [...points].sort((a, b) => (a.averageCurrentDensity ?? a.averageCurrentA) - (b.averageCurrentDensity ?? b.averageCurrentA));
+  ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+  points.forEach((point) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); });
+  label(`平均单片电压（V）`, pad.left, 12, '#13262d'); label(`电流密度/电流`, width - 86, height - 8);
+}
+
 function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
   $('#report-status').textContent = draft ? '自动报告初稿' : `${status} · ${result.issues.length} 条结论`;
@@ -308,7 +343,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result);
+  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result);
   renderComparison();
   renderHistory();
   renderSchema(result);
@@ -464,7 +499,7 @@ $('#download-xlsx').addEventListener('click', () => {
   }
 });
 $('#download-json').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ ...state.result, comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-window.addEventListener('resize', () => { if (state.result) drawChart(state.result); });
+window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); } });
 ensureExtendedMetadataFields();
 renderProfileOptions();
 applyProfile('electrolyzer-demo');
