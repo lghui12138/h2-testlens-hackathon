@@ -56,12 +56,18 @@
             <small id="profile-import-status" class="profile-import-status">当前使用内置演示配置</small>
             <details class="schema-details"><summary>查看字段映射证据</summary><div id="schema-table" class="schema-table"></div><div id="schema-warnings" class="schema-warnings"></div></details>
             <details class="metadata-details"><summary>填写测试元数据 / 签核字段</summary>
-              <p class="metadata-intro">这些字段对应测试计划、仪器/校准、执行者、计算方法和人工签核；只在当前会话使用。</p>
+              <p class="metadata-intro">这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法、原始数据引用和人工签核；只在当前会话使用。</p>
               <label>测试目的<textarea id="metadata-purpose" rows="2" placeholder="例如：PEM 电解槽稳态性能测试"></textarea></label>
+              <label>测试计划/工况序列<input id="metadata-test-plan" type="text" placeholder="计划编号、稳态/动态/启停段"></label>
+              <label>数据采集计划<textarea id="metadata-acquisition" rows="2" placeholder="采样频率、同步时钟、通道/质量状态"></textarea></label>
+              <label>试验前检查记录<textarea id="metadata-precheck" rows="2" placeholder="设备、气液路、传感器、安全状态检查记录"></textarea></label>
               <label>仪器/采集系统<textarea id="metadata-instruments" rows="2" placeholder="型号、序列号、采集通道"></textarea></label>
               <label>校准/溯源记录<textarea id="metadata-calibration" rows="2" placeholder="证书编号或校准有效期"></textarea></label>
+              <label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label>
               <label>执行者与资质<input id="metadata-operator" type="text" placeholder="姓名 / 资质编号"></label>
               <label>公式/方法引用<textarea id="metadata-formulas" rows="2" placeholder="企业方法编号、公式版本"></textarea></label>
+              <label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label>
+              <label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>
               <label>人工签核<input id="metadata-signoff" type="text" placeholder="签核人 / 时间 / 工单号"></label>
             </details>
             <div class="thresholds">

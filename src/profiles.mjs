@@ -10,7 +10,7 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'demo-rule-set',
     revision: 'demo-v1',
     standardRefs: [],
-    requiredMetadata: ['testPurpose', 'instrumentIds', 'calibrationRefs', 'operator', 'formulaRefs', 'signoff'],
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
   },
   {
@@ -24,7 +24,7 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'demo-rule-set',
     revision: 'demo-v1',
     standardRefs: [],
-    requiredMetadata: ['testPurpose', 'instrumentIds', 'calibrationRefs', 'operator', 'formulaRefs', 'signoff'],
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     thresholds: { maxTemperatureC: 70, maxPressureBar: 25, maxLeakPpm: 5, maxVoltageStdV: 0.08, maxPressureDriftBarPerMin: 0.8 }
   }
 ]);
@@ -35,7 +35,7 @@ const THRESHOLD_FIELDS = ['maxTemperatureC', 'maxPressureBar', 'maxLeakPpm', 'ma
 const FIELD_MAPPING_FIELDS = ['timestamp_s', 'phase', 'current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm'];
 const PROFILE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 const APPROVAL_STATUSES = ['approved', 'pending', 'example_unapproved'];
-const metadataFields = ['testPurpose', 'instrumentIds', 'calibrationRefs', 'operator', 'formulaRefs', 'signoff'];
+const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
 
 export function validateProfilePackage(payload) {
   const errors = [];

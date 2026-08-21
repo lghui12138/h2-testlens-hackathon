@@ -76,7 +76,7 @@ test('AI draft defaults to local evidence mode and does not include raw rows', a
 });
 
 test('remote AI adapter receives structured evidence only', async () => {
-  const result = analyzeRows(parseCSV(csv));
+  const result = analyzeRows(parseCSV(csv), { requiredMetadata: ['operator'], testMetadata: { operator: 'operator-secret-name' } });
   let request;
   const draft = await generateDraft(result, {
     endpoint: 'http://model.test/v1/chat/completions',
@@ -89,7 +89,11 @@ test('remote AI adapter receives structured evidence only', async () => {
   });
   assert.equal(draft.mode, 'remote-llm');
   assert.match(draft.draft, /当前判定 FAIL/);
-  assert.equal('rows' in JSON.parse(request.messages[1].content), false);
+  const evidence = JSON.parse(request.messages[1].content);
+  assert.equal('rows' in evidence, false);
+  assert.equal('testMetadata' in evidence.thresholds, false);
+  assert.equal(evidence.thresholds.metadataPresent.operator, true);
+  assert.equal(request.messages[1].content.includes('operator-secret-name'), false);
 });
 
 test('remote AI output fails closed when it conflicts with verdict or lacks evidence anchors', async () => {
@@ -235,4 +239,24 @@ test('standards gate distinguishes demo, incomplete, and human-review-ready prof
   assert.equal(ready.compliance.missingMetadata.length, 0);
   assert.equal(ready.workflow.status, 'REVIEW_REQUIRED');
   assert.ok(ready.workflow.steps.some((step) => step.id === 'signoff' && step.status === 'ready'));
+});
+
+test('approved profile plus complete provenance can reach human review readiness on a passing run', () => {
+  const profile = {
+    profileId: 'approved-example',
+    profileName: 'Approved example',
+    profileSource: 'enterprise method register',
+    approvalStatus: 'approved',
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/example' }],
+    methodId: 'GB/T 45541-2025',
+    revision: '2025',
+    applicationScope: 'PEM electrolyzer performance test',
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    testMetadata: Object.fromEntries(['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'calibrationRefs', 'environment', 'operator', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'].map((field) => [field, `${field}-value`]))
+  };
+  const result = analyzeRows(parseCSV(baselineCsv), profile);
+  assert.equal(result.verdict, 'PASS');
+  assert.equal(result.compliance.status, 'READY_FOR_HUMAN_REVIEW');
+  assert.equal(result.workflow.status, 'READY_FOR_HUMAN_REVIEW');
+  assert.equal(result.workflow.steps.every((step) => step.status === 'ready'), true);
 });

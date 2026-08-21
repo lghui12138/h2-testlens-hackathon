@@ -7,6 +7,26 @@ const statusTokens = {
   FAIL: ['FAIL', '未通过']
 };
 
+function evidenceConfig(config = {}) {
+  const metadata = config.testMetadata && typeof config.testMetadata === 'object' ? config.testMetadata : {};
+  return {
+    maxTemperatureC: config.maxTemperatureC,
+    maxPressureBar: config.maxPressureBar,
+    maxLeakPpm: config.maxLeakPpm,
+    maxVoltageStdV: config.maxVoltageStdV,
+    maxPressureDriftBarPerMin: config.maxPressureDriftBarPerMin,
+    profileId: config.profileId || null,
+    profileName: config.profileName || null,
+    profileSource: config.profileSource || null,
+    approvalStatus: config.approvalStatus || null,
+    methodId: config.methodId || null,
+    revision: config.revision || null,
+    standardRefs: (config.standardRefs || []).map((reference) => ({ id: reference.id, title: reference.title })),
+    requiredMetadata: config.requiredMetadata || [],
+    metadataPresent: Object.fromEntries((config.requiredMetadata || []).map((field) => [field, Boolean(metadata[field])]))
+  };
+}
+
 export function evidenceBundle(result, comparison = null) {
   if (result?.evidenceVersion) return comparison ? { ...result, comparison } : result;
   return {
@@ -21,7 +41,7 @@ export function evidenceBundle(result, comparison = null) {
     phases: result.phases,
     issues: result.issues,
     workflow: result.workflow,
-    thresholds: result.config,
+    thresholds: evidenceConfig(result.config),
     compliance: result.compliance,
     comparison
   };

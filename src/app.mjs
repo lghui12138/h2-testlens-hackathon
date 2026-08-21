@@ -10,6 +10,12 @@ const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 
+function ensureExtendedMetadataFields() {
+  const container = $('.metadata-details');
+  if (!container || $('#metadata-test-plan')) return;
+  container.insertAdjacentHTML('beforeend', '<label>测试计划/工况序列<input id="metadata-test-plan" type="text" placeholder="计划编号、稳态/动态/启停段"></label><label>数据采集计划<textarea id="metadata-acquisition" rows="2" placeholder="采样频率、同步时钟、通道/质量状态"></textarea></label><label>试验前检查记录<textarea id="metadata-precheck" rows="2" placeholder="设备、气液路、传感器、安全状态检查记录"></textarea></label><label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label><label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label><label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>');
+}
+
 function configFromUI() {
   const profileId = $('#profile-select').value;
   const profile = profileId === CUSTOM_PROFILE_ID ? null : getProfile(profileId, state.profileCatalog);
@@ -33,10 +39,16 @@ function configFromUI() {
     fieldMapping: state.fieldMapping,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
+      testPlanRef: $('#metadata-test-plan').value.trim(),
+      acquisitionPlan: $('#metadata-acquisition').value.trim(),
+      preCheckRecord: $('#metadata-precheck').value.trim(),
       instrumentIds: $('#metadata-instruments').value.trim(),
       calibrationRefs: $('#metadata-calibration').value.trim(),
+      environment: $('#metadata-environment').value.trim(),
       operator: $('#metadata-operator').value.trim(),
       formulaRefs: $('#metadata-formulas').value.trim(),
+      uncertaintyPolicy: $('#metadata-uncertainty').value.trim(),
+      rawDataRef: $('#metadata-raw-ref').value.trim(),
       signoff: $('#metadata-signoff').value.trim()
     }
   };
@@ -299,6 +311,7 @@ $('#generate-ai').addEventListener('click', async () => {
 $('#download-report').addEventListener('click', () => { const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-json').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ ...state.result, comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
 window.addEventListener('resize', () => { if (state.result) drawChart(state.result); });
+ensureExtendedMetadataFields();
 renderProfileOptions();
 applyProfile('electrolyzer-demo');
 state.history = readHistory(window.localStorage);
