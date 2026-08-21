@@ -249,6 +249,7 @@ function buildDurability(rows, config) {
   const missingPowers = expectedPowers.filter((power) => !normalized.some((point) => point.target_power_kw === power));
   if (missingPowers.length) issues.push({ severity: 'warn', code: 'DURABILITY_POWER_POINTS_MISSING', title: '耐久报告缺少目标功率点', evidence: `缺少：${missingPowers.join('、')} kW`, recommendation: '确认原始耐久工步是否完整，不要用相邻功率点替代。' });
   if (!Number.isFinite(maxDeviationMv) && !Number.isFinite(minAverageCellVoltageMv)) issues.push({ severity: 'info', code: 'DURABILITY_RULES_NOT_CONFIGURED', title: '耐久预警阈值未配置', evidence: '当前只保留企业原始测试结果和统计，不自动新增异常判定', recommendation: '由企业负责人填写离均差/平均单体电压预警规则后重新分析。' });
+  const pointSummaries = normalized.map((point) => ({ targetPowerKw: point.target_power_kw, humidityPct: point.humidity_pct, temperatureC: point.temperature_c, netPowerKw: point.net_power_kw, stackCurrentA: point.current_a, averageCellVoltageMv: point.average_cell_voltage_mv, averageDeviationMv: point.average_deviation_mv, compressorPowerKw: point.compressor_power_kw, pumpPowerKw: point.pump_power_kw, coolantInTempC: point.coolant_in_temp_c, coolantOutTempC: point.coolant_out_temp_c, hfr: point.hfr, lfr: point.lfr, voltageVariance: point.voltage_variance, sourceFile: point.source_file }));
   const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : 'WARN';
   const mapping = { target_power_kw: '目标功率（kW）', humidity_pct: '湿度', temperature_c: '温度', net_power_kw: '净输出功率', current_a: '电堆电流', average_cell_voltage_mv: '平均单体电压', average_deviation_mv: '离均差', voltage_variance: '电压方差', coolant_in_temp_c: '冷却水入口温度', coolant_out_temp_c: '冷却水出口温度', hfr: 'HFR', lfr: 'LFR' };
   const dataset = {
@@ -256,7 +257,7 @@ function buildDurability(rows, config) {
     label: '台架耐久数据',
     sourceContract: 'T02-02 · 台架耐久数据统计及预警',
     reports,
-    points: normalized,
+    points: pointSummaries,
     targetPowers: [...new Set(normalized.map((point) => point.target_power_kw).filter((value) => value !== null))].sort((a, b) => a - b),
     rules: { maxDeviationMv: Number.isFinite(maxDeviationMv) ? maxDeviationMv : null, minAverageCellVoltageMv: Number.isFinite(minAverageCellVoltageMv) ? minAverageCellVoltageMv : null },
     sourceFieldMap: mapping
