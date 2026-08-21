@@ -45,6 +45,7 @@ const requiredFiles = [
   'scripts/api-smoke.mjs',
   'scripts/prepare-github-pages.mjs',
   'scripts/profile-audit.mjs',
+  'scripts/batch-watch.mjs',
   '.github/workflows/deploy-pages.yml',
   'config/enterprise-profile.example.json',
   'config/enterprise-parameter-template.xlsx',

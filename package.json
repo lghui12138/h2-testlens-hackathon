@@ -15,7 +15,8 @@
     "eval:ai": "node scripts/ai-eval.mjs",
     "check:submission": "node scripts/submission-check.mjs",
     "package:submission": "node scripts/package-submission.mjs",
-    "smoke:api": "node scripts/api-smoke.mjs"
+    "smoke:api": "node scripts/api-smoke.mjs",
+    "watch:batch": "node scripts/batch-watch.mjs"
   },
   "dependencies": {
     "mammoth": "^1.9.0",
