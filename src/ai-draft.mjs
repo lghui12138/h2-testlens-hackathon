@@ -20,6 +20,7 @@ export function evidenceBundle(result, comparison = null) {
     metrics: result.metrics,
     phases: result.phases,
     issues: result.issues,
+    workflow: result.workflow,
     thresholds: result.config,
     compliance: result.compliance,
     comparison
@@ -42,6 +43,7 @@ export function localEvidenceDraft(result) {
     `- 输入适配：${mappingNote}。`,
     `- 判定模板：${evidence.thresholds.profileName || '未指定'}（${evidence.thresholds.profileSource || '当前分析配置'}）。`,
     `- 标准门控：${evidence.compliance?.status || '未评估'}；方法 ${evidence.compliance?.methodId || '未指定'} ${evidence.compliance?.revision || ''}；缺失元数据 ${evidence.compliance?.missingMetadata?.join('、') || '无'}。`,
+    `- 测试流程：${evidence.workflow?.status || '未评估'}；下一步 ${evidence.workflow?.nextAction || '需人工确认'}。`,
     ...(evidence.comparison ? [`- 批次变化：${evidence.comparison.verdictTransition}；${evidence.comparison.summary}`] : []),
     `- 稳态窗口：${evidence.metrics.steadyWindow}，${evidence.metrics.steadySampleCount} 条记录；稳态电压标准差 ${evidence.metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V。`,
     `- 峰值指标：温度 ${evidence.metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C（t=${evidence.metrics.peakTemperatureAtS?.join('、') || '—'} s），压力 ${evidence.metrics.peakPressureBar?.toFixed(1) ?? '—'} bar（t=${evidence.metrics.peakPressureAtS?.join('、') || '—'} s），泄漏监测 ${evidence.metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm（t=${evidence.metrics.peakLeakAtS?.join('、') || '—'} s）。`,

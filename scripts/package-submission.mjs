@@ -1,4 +1,4 @@
-import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +9,9 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 await exec('npm', ['run', 'check:submission'], { cwd: root, maxBuffer: 3_000_000 });
 const dist = join(root, 'dist');
 await mkdir(dist, { recursive: true });
-const archive = join(dist, 'h2-testlens-submission-v2.3.zip');
+const packageManifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+const version = String(packageManifest.version || '0.0.0').replace(/[^0-9A-Za-z._-]/g, '-');
+const archive = join(dist, `h2-testlens-submission-v${version}.zip`);
 await exec('zip', ['-qr', archive, 'README.md', 'ROADMAP.md', 'package.json', 'src', 'scripts', 'docs', 'sample-data', 'config', '.research'], { cwd: root, maxBuffer: 3_000_000 });
 await exec('unzip', ['-t', archive], { cwd: root, maxBuffer: 3_000_000 });
 const listing = (await exec('unzip', ['-l', archive], { cwd: root, maxBuffer: 3_000_000 })).stdout;

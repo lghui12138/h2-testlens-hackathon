@@ -1,5 +1,5 @@
 import { analyzeRows, parseCSV, reportMarkdown, DEFAULT_CONFIG } from './analyzer.mjs';
-import { evidenceBundle } from './ai-draft.mjs';
+import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
@@ -23,6 +23,13 @@ function configFromUI() {
     profileName: profile?.name ?? '自定义阈值',
     profileSource: profile?.source ?? '用户当前会话输入',
     profileOrganization: state.profileOrganization,
+    approvalStatus: profile?.approvalStatus ?? 'pending',
+    applicationScope: profile?.applicationScope ?? null,
+    intendedUse: profile?.intendedUse ?? null,
+    methodId: profile?.methodId ?? null,
+    revision: profile?.revision ?? null,
+    standardRefs: profile?.standardRefs ?? [],
+    requiredMetadata: profile?.requiredMetadata ?? [],
     fieldMapping: state.fieldMapping,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
@@ -125,6 +132,14 @@ function renderSchema(result) {
   $('#schema-warnings').innerHTML = result.schema.mappingWarnings.length ? result.schema.mappingWarnings.map((warning) => `<div>⚠ ${escapeHtml(warning)}</div>`).join('') : '';
 }
 
+function renderWorkflow(result) {
+  const statusLabels = { ready: '已具备', needs_input: '待补齐', needs_review: '需复核', blocked: '已阻断' };
+  const statusClass = (status) => status.replaceAll('_', '-');
+  $('#workflow-status').textContent = result.workflow?.status || '未评估';
+  $('#workflow-next').textContent = result.workflow?.nextAction || '需人工确认。';
+  $('#workflow-list').innerHTML = (result.workflow?.steps || []).map((step) => `<div class="workflow-row ${statusClass(step.status)}"><span class="workflow-mark">${step.status === 'ready' ? '✓' : step.status === 'blocked' ? '!' : '·'}</span><span><b>${escapeHtml(step.label)}</b><small>${escapeHtml(step.evidence)}</small></span><em>${statusLabels[step.status] || step.status}</em></div>`).join('');
+}
+
 function drawChart(result) {
   const canvas = $('#trend-chart');
   const ctx = canvas.getContext('2d');
@@ -173,7 +188,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderIssues(result); renderPhases(result); renderReport(result); drawChart(result);
+  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); drawChart(result);
   renderComparison();
   renderHistory();
   renderSchema(result);
@@ -267,14 +282,15 @@ $('#generate-ai').addEventListener('click', async () => {
   const button = $('#generate-ai');
   button.disabled = true;
   button.textContent = '生成中…';
+  const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
   try {
     const response = await fetch('/api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    state.aiDraft = await response.json();
+    if (!response.ok) state.aiDraft = localFallback(`api_http_${response.status}`);
+    else state.aiDraft = await response.json();
     renderReport(state.result, state.aiDraft);
   } catch (error) {
-    $('#report-status').textContent = '生成失败';
-    $('#report-preview').innerHTML = `<div class="report-head"><span>AI DRAFT</span><strong>未生成</strong></div><p>报告助手暂时不可用：${escapeHtml(error.message)}。原始规则分析仍可用。</p>`;
+    state.aiDraft = localFallback('api_unavailable');
+    renderReport(state.result, state.aiDraft);
   } finally {
     button.disabled = false;
     button.textContent = '生成证据约束草稿';

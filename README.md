@@ -36,6 +36,7 @@ npm start
 - 当前批次与演示基线的 KPI 差值、判定变化、新增/消除风险
 - 设备类型 profile：电解槽/燃料电池演示模板与当前会话自定义阈值
 - 当前会话可导入企业 profile/字段映射 JSON 配置包
+- 测试流程完成度清单：设备/方法、仪器与校准、数据质量、计算追溯、风险处置、人工签核
 - 可展开查看每个 canonical 字段、原始表头和单位换算证据
 - 本地批次历史：只保存 KPI、判定、profile 和风险摘要，刷新后仍可复核
 - 键盘可操作的按钮、响应式布局、减少动效支持
@@ -47,3 +48,7 @@ npm start
 AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION.md)。
 参赛口径与现场演示顺序见 [`docs/SUBMISSION_BRIEF.md`](docs/SUBMISSION_BRIEF.md)；配置包示例见 [`config/enterprise-profile.example.json`](config/enterprise-profile.example.json)。
 打包说明见 [`docs/SUBMISSION_PACKAGE.md`](docs/SUBMISSION_PACKAGE.md)。
+
+## 标准化工作流边界
+
+界面中的流程清单把公开标准资料转成可审计的输入/复核顺序，但不复制标准全文，也不自动宣称符合标准。只有企业批准的 profile、明确的方法版本、仪器/校准记录、计算引用和授权人员签核齐全后，系统才允许进入 `READY_FOR_HUMAN_REVIEW`；异常数据仍然需要工程师处置和必要的复测。

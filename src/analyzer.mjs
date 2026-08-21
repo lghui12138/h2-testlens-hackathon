@@ -221,6 +221,24 @@ function complianceReadiness(config) {
   return { status, label, approvalStatus: config.approvalStatus || 'unspecified', standardRefs: config.standardRefs || [], methodId: config.methodId || null, revision: config.revision || null, applicationScope: config.applicationScope || null, intendedUse: config.intendedUse || null, missingProfileFields, requiredMetadata, missingMetadata };
 }
 
+function workflowReadiness(config, quality, schema, compliance, verdict) {
+  const dataReady = quality.usable && quality.completenessPct >= 98 && quality.duplicateTimestampCount === 0 && quality.nonMonotonicCount === 0;
+  const traceabilityReady = schema.mappingWarnings.length === 0 && quality.invalidValueCounts.timestamp_s === 0;
+  const metadataReady = compliance.missingMetadata.length === 0;
+  const signoffReady = Boolean(config.testMetadata?.signoff);
+  const steps = [
+    { id: 'profile', label: '设备家族与测试方法', status: compliance.missingProfileFields.length ? 'needs_input' : 'ready', evidence: compliance.missingProfileFields.length ? `缺少 ${compliance.missingProfileFields.join('、')}` : `${compliance.methodId} · ${compliance.revision}` },
+    { id: 'metadata', label: '测试计划与仪器溯源', status: metadataReady ? 'ready' : 'needs_input', evidence: metadataReady ? '目的、仪器、校准、执行者、公式、签核字段齐全' : `缺少 ${compliance.missingMetadata.join('、')}` },
+    { id: 'data', label: '原始数据质量', status: dataReady ? 'ready' : 'needs_review', evidence: `${quality.rowCount} 条记录 · 完整率 ${quality.completenessPct.toFixed(1)}%` },
+    { id: 'traceability', label: '字段、单位与计算追溯', status: traceabilityReady ? 'ready' : 'needs_review', evidence: `${schema.mappedCount}/${schema.fieldCount} 字段已映射 · ${Object.values(schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` },
+    { id: 'risk', label: '风险处置与复测决定', status: verdict === 'FAIL' ? 'blocked' : verdict === 'WARN' ? 'needs_review' : 'ready', evidence: verdict === 'FAIL' ? '存在高优先级风险，先处置再决定归档' : verdict === 'WARN' ? '存在趋势或质量问题，需要工程师复核' : '当前规则未触发高优先级风险' },
+    { id: 'signoff', label: '人工签核与归档', status: signoffReady ? 'ready' : 'needs_input', evidence: signoffReady ? config.testMetadata.signoff : '尚未填写人工签核信息' }
+  ];
+  const status = !quality.usable ? 'BLOCKED_DATA' : compliance.status === 'DEMO_ONLY' ? 'DEMO_ONLY' : compliance.status === 'NOT_READY' ? 'NOT_READY' : verdict !== 'PASS' ? 'REVIEW_REQUIRED' : !signoffReady ? 'SIGNOFF_REQUIRED' : 'READY_FOR_HUMAN_REVIEW';
+  const nextAction = status === 'BLOCKED_DATA' ? '修复数据结构、时间轴或缺失值后重跑。' : status === 'DEMO_ONLY' ? '导入企业批准的 profile、方法版本和验收准则。' : status === 'NOT_READY' ? '补齐 profile 审批状态、方法版本和测试元数据。' : status === 'REVIEW_REQUIRED' ? '处置异常并完成工程师复核，必要时安排复测。' : status === 'SIGNOFF_REQUIRED' ? '由授权测试人员填写签核后归档。' : '可进入人工符合性复核与正式归档。';
+  return { status, nextAction, steps };
+}
+
 export function analyzeRows(inputRows, suppliedConfig = {}) {
   const safeInput = Array.isArray(inputRows) ? inputRows : [];
   const { fieldMapping = {}, ...thresholdConfig } = suppliedConfig;
@@ -293,6 +311,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (Math.abs(metrics.pressureDriftBarPerMin) > config.maxPressureDriftBarPerMin) issues.push(issue('warn', 'PRESSURE_DRIFT', '稳态压力仍在漂移', `窗口 ${metrics.steadyWindow} 的压力斜率 ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min`, '延长稳态时间并复核压力闭环控制。'));
   if (!issues.length) issues.push(issue('info', 'ALL_CLEAR', '未发现超出当前规则的异常', '关键 KPI 均落在演示阈值内', '可进入人工复核与正式归档。'));
   const verdict = issues.some((item) => item.severity === 'critical') ? 'FAIL' : issues.some((item) => item.severity === 'warn') ? 'WARN' : 'PASS';
+  const workflow = workflowReadiness(config, quality, schema, compliance, verdict);
   const criticalCount = issues.filter((item) => item.severity === 'critical').length;
   const narrative = verdict === 'FAIL'
     ? `本次测试自动判定为需复核：发现 ${criticalCount} 项高优先级风险。系统已将异常指标、阈值和建议动作绑定到同一证据链，工程师可先处理安全相关项，再决定是否重测。`
@@ -307,6 +326,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     quality,
     schema,
     compliance,
+    workflow,
     phases: phaseSummary(rows),
     issues,
     verdict,
@@ -326,7 +346,8 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
   const mappings = Object.entries(schema.mapping).map(([field, source]) => `${field}←${source}`).join('；');
   const conversions = Object.entries(schema.conversions).filter(([, transform]) => transform.mode !== 'identity').map(([field, transform]) => `${field} ${transform.label}`).join('；') || '无';
   const complianceSection = `\n\n## 标准适用性与符合性门控\n\n- 状态：${result.compliance?.status || '未评估'}（${result.compliance?.label || '需人工确认'}）\n- profile 审批状态：${result.compliance?.approvalStatus || '未指定'}\n- 测试方法：${result.compliance?.methodId || '未指定'} · 版本：${result.compliance?.revision || '未指定'}\n- 适用范围：${result.compliance?.applicationScope || '未指定'}\n- 缺失 profile 字段：${result.compliance?.missingProfileFields?.join('、') || '无'}\n- 缺失测试元数据：${result.compliance?.missingMetadata?.join('、') || '无'}\n- 说明：该状态不是安全认证；正式符合性结论必须由企业标准负责人和测试人员签核。\n`;
-  const comparisonSection = `${complianceSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## AI 报告草稿（${options.aiDraft.mode === 'remote-llm' ? '远程模型' : '本地证据模式'}）\n\n${options.aiDraft.draft}\n\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
+  const workflowSection = `\n## 测试流程完成度\n\n- 流程状态：**${result.workflow?.status || '未评估'}**\n- 下一步：${result.workflow?.nextAction || '需人工确认。'}\n${(result.workflow?.steps || []).map((step) => `- ${step.status.toUpperCase()}｜${step.label}：${step.evidence}`).join('\n')}\n`;
+  const comparisonSection = `${complianceSection}${workflowSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## AI 报告草稿（${options.aiDraft.mode === 'remote-llm' ? '远程模型' : '本地证据模式'}）\n\n${options.aiDraft.draft}\n\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
   const profileName = config.profileName ?? '未指定设备模板';
   const profileSource = config.profileSource ?? '当前分析配置';
   return `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 自动判定：**${status}（${verdict}）**\n- 生成时间：${result.generatedAt}\n- 说明：本报告使用可配置的演示阈值，不替代企业正式安全标准。\n\n## 结论摘要\n\n${narrative}\n\n## 数据质量与字段映射\n\n- 记录数：${quality.rowCount}\n- 关键字段完整率：${quality.completenessPct.toFixed(1)}%\n- 缺失字段：${quality.missingHeaders.length ? quality.missingHeaders.join('、') : '无'}\n- 可选缺失字段：${quality.missingOptionalHeaders.length ? quality.missingOptionalHeaders.join('、') : '无'}\n- 字段映射：${mappings || '无'}\n- 单位换算：${conversions}\n- 重复时间戳：${quality.duplicateTimestampCount} 条；逆序跳变：${quality.nonMonotonicCount} 次\n\n## KPI 摘要\n\n| 指标 | 数值 |\n|---|---:|\n| 测试时长 | ${metrics.durationS.toFixed(0)} s |\n| 峰值功率 | ${metrics.peakPowerW?.toFixed(1) ?? '—'} W |\n| 稳态窗口 | ${metrics.steadyWindow}（${metrics.steadySampleCount} 条） |\n| 稳态平均电压 | ${metrics.steadyVoltageMeanV?.toFixed(3) ?? '—'} V |\n| 稳态电压标准差 | ${metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V |\n| 峰值温度 | ${metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C |\n| 峰值压力 | ${metrics.peakPressureBar?.toFixed(1) ?? '—'} bar |\n| 峰值泄漏监测 | ${metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm |\n| 压力漂移 | ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min |\n\n## 异常与建议\n\n${issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n\n## 工况分段\n\n${phases.map((phase) => `- ${phase.phase}：${phase.count} 个样本，${phase.durationS.toFixed(0)} s`).join('\n')}\n\n## 当前判定阈值\n\n- 设备模板：${profileName}\n- 阈值来源：${profileSource}\n- 温度 ≤ ${config.maxTemperatureC} °C\n- 压力 ≤ ${config.maxPressureBar} bar\n- 泄漏监测 ≤ ${config.maxLeakPpm} ppm\n- 稳态电压标准差 ≤ ${config.maxVoltageStdV} V\n- 压力漂移绝对值 ≤ ${config.maxPressureDriftBarPerMin} bar/min\n${comparisonSection}`;

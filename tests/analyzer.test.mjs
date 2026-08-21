@@ -45,6 +45,8 @@ test('report contains verdict, metrics, and recommendations', () => {
   assert.match(markdown, /峰值泄漏监测/);
   assert.match(markdown, /建议/);
   assert.match(reportMarkdown(analyzeRows(parseCSV(csv)), 'ai-demo.csv', { aiDraft: { mode: 'local-evidence', fallbackReason: 'no_endpoint_configured', draft: 'AI 草稿内容' } }), /AI 草稿内容/);
+  assert.match(markdown, /测试流程完成度/);
+  assert.match(markdown, /导入企业批准的 profile/);
 });
 
 test('fails closed on missing schema instead of returning a false pass', () => {
@@ -231,4 +233,6 @@ test('standards gate distinguishes demo, incomplete, and human-review-ready prof
   const ready = analyzeRows(parseCSV(csv), { ...base, testMetadata: { testPurpose: 'performance', instrumentIds: 'I-1', calibrationRefs: 'C-1', operator: 'operator/qualification', formulaRefs: 'method equation v1', signoff: 'reviewer/2026-08-21' } });
   assert.equal(ready.compliance.status, 'READY_FOR_HUMAN_REVIEW');
   assert.equal(ready.compliance.missingMetadata.length, 0);
+  assert.equal(ready.workflow.status, 'REVIEW_REQUIRED');
+  assert.ok(ready.workflow.steps.some((step) => step.id === 'signoff' && step.status === 'ready'));
 });
