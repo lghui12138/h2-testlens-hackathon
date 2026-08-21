@@ -54,15 +54,19 @@ function objectRows(rows, headerIndex) {
 
 const RULE_FIELD_BY_CODE = Object.freeze({
   CURRENT: 'current_a',
-  H2_FLOW: 'flow_slpm',
-  H2_IN_PRESS: 'pressure_kpa',
-  H2_IN_TEMP: 'temperature_c',
-  AIR_FLOW: 'flow_slpm',
-  AIR_IN_PRESS: 'pressure_kpa',
-  AIR_IN_TEMP: 'temperature_c',
-  COOLANT_IN_TEMP: 'temperature_c',
-  COOLANT_IN_PRESS: 'pressure_kpa',
-  COOLANT_DT: 'coolant_dt'
+  H2_STOICH: 'h2_stoich',
+  H2_FLOW: 'anode_flow_slpm',
+  H2_IN_PRESS: 'anode_in_pressure_kpa',
+  H2_IN_TEMP: 'anode_in_temp_c',
+  H2_DEWPOINT: 'h2_dewpoint_c',
+  AIR_STOICH: 'air_stoich',
+  AIR_FLOW: 'cathode_flow_slpm',
+  AIR_IN_PRESS: 'cathode_in_pressure_kpa',
+  AIR_IN_TEMP: 'cathode_in_temp_c',
+  AIR_DEWPOINT: 'air_dewpoint_c',
+  COOLANT_IN_TEMP: 'coolant_in_temp_c',
+  COOLANT_IN_PRESS: 'coolant_in_pressure_kpa',
+  COOLANT_DT: 'coolant_temperature_difference_c'
 });
 
 const CONDITION_FIELD_BY_CODE = Object.freeze({
@@ -291,8 +295,8 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   for (const item of parameterConfig?.parameters || []) parameterRows.push([item.code, item.name, item.enabled ? '是' : '否', item.target ?? '', item.lowerTolerance ?? '', item.upperTolerance ?? '', item.unit, item.minimumDurationS ?? '', item.field || '', item.source || '参数工作表']);
   if (parameterRows.length === 1) parameterRows.push(['—', '未导入参数工作簿', '', '', '', '', '', '', '', '']);
   addSheet(book, '本次使用参数', parameterRows);
-  const targetRows = [['工况编号', '目标电流(A)', '目标电流密度(mA/cm²)', '氢气计量比', '氢气流量', '氢气入口压力', '空气计量比', '空气流量', '冷却液入口温度', '冷却液温差', '冷却液入口压力']];
-  for (const item of parameterConfig?.targetConditions || []) targetRows.push([item.conditionId, item.targetCurrentA, item.targetCurrentDensity ?? '', item.h2Stoich ?? '', item.h2Flow ?? '', item.h2InPressure ?? '', item.airStoich ?? '', item.airFlow ?? '', item.coolantInTemp ?? '', item.coolantDt ?? '', item.coolantInPressure ?? '']);
+  const targetRows = [['工况编号', '目标电流(A)', '目标电流密度(mA/cm²)', '氢气计量比', '氢气流量', '氢气入口压力', '氢气入口温度', '氢气入口露点', '空气计量比', '空气流量', '空气入口压力', '空气入口温度', '空气入口露点', '冷却液入口温度', '冷却液温差', '冷却液入口压力']];
+  for (const item of parameterConfig?.targetConditions || []) targetRows.push([item.conditionId, item.targetCurrentA, item.targetCurrentDensity ?? '', item.h2Stoich ?? '', item.h2Flow ?? '', item.h2InPressure ?? '', item.h2InTemp ?? '', item.h2Dewpoint ?? '', item.airStoich ?? '', item.airFlow ?? '', item.airInPressure ?? '', item.airInTemp ?? '', item.airDewpoint ?? '', item.coolantInTemp ?? '', item.coolantDt ?? '', item.coolantInPressure ?? '']);
   if (targetRows.length === 1) targetRows.push(['—', '未导入目标工况工作表']);
   addSheet(book, '目标工况设定', targetRows);
   addSheet(book, '字段映射', [['标准字段', '原始字段', '单位/换算', '映射状态'], ...Object.entries(result.schema.mapping).map(([field, source]) => [field, source || '', result.schema.conversions[field]?.label || '原单位', source ? '已映射' : '缺失'])]);
@@ -306,14 +310,19 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
     ? Object.entries(value).map(([stat, statValue]) => [`${field}.${stat}`, statValue ?? '', '', '结构化计算结果'])
     : [[field, value ?? '', '', '结构化计算结果']]);
   addSheet(book, '实际工况汇总', [['指标', '值', '单位', '证据'], ...metricRows]);
-  const comparisonRows = [['工况', '目标电流(A)', '实际平均电流(A)', '偏差(A)', '允许偏差(A)', '符合性']];
-  for (const [index, item] of performancePoints.entries()) comparisonRows.push([item.platformId || item.conditionId || `平台-${index + 1}`, item.targetCurrentA ?? '', item.averageCurrentA ?? '', '', item.toleranceA ?? '', '']);
+  const comparisonRows = [['工况/平台', '目标值', '实际均值', '绝对偏差', '允许偏差参考', '符合性', '参数代码', '参数名称', '下偏差', '上偏差', '实际最小值', '实际最大值', '实际标准差', '相对偏差(%)', '超限时长(s)', '超限比例(%)', '有效样本', '超限样本', '规则状态']];
+  for (const [index, item] of performancePoints.entries()) {
+    const comparisons = Array.isArray(item.parameterComparisons) && item.parameterComparisons.length
+      ? item.parameterComparisons
+      : [{ code: 'CURRENT', name: '实测电流', target: item.targetCurrentA ?? null, actualMean: item.averageCurrentA ?? null, lowerTolerance: -(item.toleranceA ?? 0), upperTolerance: item.toleranceA ?? 0, actualMin: null, actualMax: null, actualStd: null, relativeDeviationPct: null, exceedDurationS: null, exceedRatioPct: null, validSampleCount: null, exceedSampleCount: null, status: 'undetermined' }];
+    for (const comparison of comparisons) comparisonRows.push([item.platformId || item.conditionId || `平台-${index + 1}`, comparison.target ?? '', comparison.actualMean ?? '', '', Math.max(Math.abs(comparison.lowerTolerance ?? 0), Math.abs(comparison.upperTolerance ?? 0)), '', comparison.code, comparison.name, comparison.lowerTolerance ?? '', comparison.upperTolerance ?? '', comparison.actualMin ?? '', comparison.actualMax ?? '', comparison.actualStd ?? '', comparison.relativeDeviationPct ?? '', comparison.exceedDurationS ?? '', comparison.exceedRatioPct ?? '', comparison.validSampleCount ?? '', comparison.exceedSampleCount ?? '', comparison.status || 'undetermined']);
+  }
   const comparisonSheet = addSheet(book, '目标工况对比', comparisonRows);
   for (let row = 2; row <= comparisonRows.length; row += 1) {
     const difference = comparisonSheet[`D${row}`];
     if (difference) { difference.f = `C${row}-B${row}`; difference.t = 'n'; difference.v = number(comparisonRows[row - 1][2]) !== null && number(comparisonRows[row - 1][1]) !== null ? number(comparisonRows[row - 1][2]) - number(comparisonRows[row - 1][1]) : undefined; }
     const verdict = comparisonSheet[`F${row}`];
-    if (verdict) { verdict.f = `IF(ABS(D${row})<=E${row},"正常","需复核")`; verdict.t = 's'; verdict.v = '需复核'; }
+    if (verdict) { verdict.f = `IF(AND(C${row}>=B${row}+I${row},C${row}<=B${row}+J${row}),"正常","需复核")`; verdict.t = 's'; verdict.v = comparisonRows[row - 1][18] === 'normal' ? '正常' : '需复核'; }
   }
   const cellStats = dataset.cellChannelCount ? [['指标', '值', '单位'], ['导出单片通道', dataset.cellChannelCount, '个'], ['片数参数', dataset.configuredCellCount || '', '个'], ['平均单片电压', dataset.metrics?.averageCellVoltageV ?? '', 'V'], ['最大单片电压极差', dataset.metrics?.cellSpreadMaxV ?? '', 'V'], ['单片电压标准差', dataset.metrics?.cellValueStdV ?? '', 'V']] : [['指标', '值', '单位'], ['当前数据集', '无单片通道摘要', '']];
   addSheet(book, '单片电压统计', cellStats);

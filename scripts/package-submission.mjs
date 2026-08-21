@@ -15,7 +15,7 @@ const archive = join(dist, `h2-testlens-submission-v${version}.zip`);
 await exec('zip', ['-qr', archive, 'README.md', 'ROADMAP.md', 'package.json', 'src', 'scripts', 'docs', 'sample-data', 'config', '.research'], { cwd: root, maxBuffer: 3_000_000 });
 await exec('unzip', ['-t', archive], { cwd: root, maxBuffer: 3_000_000 });
 const listing = (await exec('unzip', ['-l', archive], { cwd: root, maxBuffer: 3_000_000 })).stdout;
-const requiredEntries = ['README.md', 'docs/SUBMISSION_BRIEF.md', 'docs/STANDARDS_ALIGNMENT.md', 'docs/API.md', 'docs/AI_EVAL.md', 'config/enterprise-profile.example.json', 'src/analyzer.mjs', 'src/provenance.mjs', 'scripts/ai-eval.mjs', 'scripts/api-smoke.mjs', 'scripts/profile-audit.mjs', '.research/ignite_t02_standards_20260821/claims.jsonl'];
+const requiredEntries = ['README.md', 'docs/SUBMISSION_BRIEF.md', 'docs/STANDARDS_ALIGNMENT.md', 'docs/T02_REQUIREMENTS_MATRIX.md', 'docs/API.md', 'docs/AI_EVAL.md', 'config/enterprise-profile.example.json', 'src/analyzer.mjs', 'src/provenance.mjs', 'scripts/ai-eval.mjs', 'scripts/api-smoke.mjs', 'scripts/profile-audit.mjs', '.research/ignite_t02_standards_20260821/claims.jsonl'];
 const missingEntries = requiredEntries.filter((entry) => !listing.includes(entry));
 if (missingEntries.length) throw new Error(`submission archive missing: ${missingEntries.join(', ')}`);
 const archiveStat = await stat(archive);

@@ -33,6 +33,8 @@ npm start
 - 批次增量 manifest：保存文件名、大小、记录数、时间范围和 SHA-256，显示新增/变更/未变并写入本地历史与 Excel 处理日志
 - 内部批次运行器：`npm run watch:batch -- --dir /approved/input --once` 可扫描新增/变更文件并生成 JSON、Markdown、Excel 报告；不加 `--send-alerts` 不外发
 - 参数/目标工况 Excel 导入：按表头和参数代码读取“数据处理设定参数”“目标工况设定”，不依赖行号
+- 目标工况逐参数证据：输出目标、上下偏差、实际均值/极值/标准差、绝对/相对偏差、超限时长/比例和正常/警告/异常/无法判定状态
+- 计量比可追溯计算：缺少直接计量比时，按可配置片数、法拉第常数、标准摩尔体积和空气氧体积分数计算氢气/空气理论流量；常数和口径写入报告
 - 企业 Excel 报告导出：测试信息、参数、目标工况、字段映射、质量检查、平台、稳定区间、极化数据、异常清单和处理日志等 14 个工作表
 - 车辆运行态/上电态统计、目标电流段平均值、10 分钟绝缘最小值和 350/250 kΩ 趋势预警摘要
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
@@ -69,6 +71,8 @@ npm start
 这是比赛原型，不把演示阈值当作企业安全标准，也不替代工程师签核。内置设备 profile 是演示模板，正式版必须替换为企业审批后的设备标准。本地历史只保存摘要，不保存原始测试行。没有配置模型服务时，报告初稿仍由本地结构化证据生成；配置远程模型时，建议使用企业内网或已审批的模型网关。
 
 企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。当前页面已经支持参数工作簿读取、Excel 报告导出、原生 OOXML 图表路径和耐久告警；仍需企业批准阈值、自动每日增量调度、企业 Feishu 凭据/策略、服务端审计和 Excel/WPS 视觉验收。
+
+企业需求逐项验收矩阵见 [`docs/T02_REQUIREMENTS_MATRIX.md`](docs/T02_REQUIREMENTS_MATRIX.md)。
 
 AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION.md)。
 企业应用边界和逐项标准审计见 [`docs/ENTERPRISE_READINESS.md`](docs/ENTERPRISE_READINESS.md)。

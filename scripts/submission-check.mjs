@@ -20,6 +20,7 @@ const requiredFiles = [
   'docs/DEPLOYMENT.md',
   'docs/ENTERPRISE_READINESS.md',
   'docs/ENTERPRISE_DATA_INTEGRATION.md',
+  'docs/T02_REQUIREMENTS_MATRIX.md',
   'src/index.html',
   'src/analyzer.mjs',
   'src/enterprise-adapters.mjs',

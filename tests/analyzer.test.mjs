@@ -432,6 +432,53 @@ test('reads parameter and target-condition workbooks by header code, computes a 
   assert.ok(workbookArrayBuffer(output).byteLength > 1000);
 });
 
+test('retains per-parameter target conformity evidence for the selected stable interval', () => {
+  const parameterConfig = {
+    ok: true,
+    parameters: [
+      { code: 'CURRENT', enabled: true, field: 'current_a', target: null, lowerTolerance: -1, upperTolerance: 1 },
+      { code: 'H2_FLOW', enabled: true, field: 'anode_flow_slpm', target: null, lowerTolerance: -0.1, upperTolerance: 0.1 },
+      { code: 'COOLANT_DT', enabled: true, field: 'coolant_temperature_difference_c', target: null, lowerTolerance: -0.2, upperTolerance: 0.2 },
+      { code: 'MIN_CURRENT_PLATFORM_TIME', target: 60 },
+      { code: 'MIN_STABLE_TIME', target: 60 },
+      { code: 'DEFAULT_SAMPLE_TIME', target: 120 },
+      { code: 'SAMPLE_POSITION', rawValue: '稳定区间末端', target: null }
+    ],
+    parameterRules: [
+      { code: 'CURRENT', enabled: true, field: 'current_a', target: null, lowerTolerance: -1, upperTolerance: 1 },
+      { code: 'H2_FLOW', enabled: true, field: 'anode_flow_slpm', target: null, lowerTolerance: -0.1, upperTolerance: 0.1 },
+      { code: 'COOLANT_DT', enabled: true, field: 'coolant_temperature_difference_c', target: null, lowerTolerance: -0.2, upperTolerance: 0.2 }
+    ],
+    targetConditions: [{ conditionId: 'I-10', targetCurrentA: 10, h2Flow: 2, coolantDt: 5 }]
+  };
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极流量（SLPM）,循环水入堆温度（℃）,循环水出堆温度（℃）',
+    ...Array.from({ length: 61 }, (_, index) => `${index},1.4,10,0.014,0.7,0.69,0.71,2,60,65`)
+  ].join('\n'));
+  const result = analyzeRows(rows, { parameterConfig, samplePeriodS: 1, minimumPlatformS: 60, minimumStableS: 60 });
+  const comparisons = result.dataset.performancePoints[0].parameterComparisons;
+  assert.equal(comparisons.find((item) => item.code === 'H2_FLOW').actualMean, 2);
+  assert.equal(comparisons.find((item) => item.code === 'H2_FLOW').status, 'normal');
+  assert.equal(comparisons.find((item) => item.code === 'COOLANT_DT').absoluteDeviation, 0);
+  const workbook = buildEnterpriseWorkbook(result, 'stack.csv', { parameterConfig });
+  const comparison = workbook.Sheets['目标工况对比'];
+  assert.equal(comparison['G2'].v, 'CURRENT');
+  assert.match(comparison['F2'].f, /AND\(C2>=B2\+I2/);
+  assert.match(reportMarkdown(result, 'stack.csv'), /目标工况对比/);
+});
+
+test('derives hydrogen and air stoichiometry with traceable physical constants when flows are present', () => {
+  const result = analyzeRows(parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极流量（SLPM）,阴极流量（SLPM）',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,0.14,0.33',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,0.14,0.33'
+  ].join('\n')));
+  assert.equal(result.dataset.stoich.status, 'calculated_or_raw');
+  assert.ok(result.dataset.metrics.hydrogenStoich.mean > 1);
+  assert.ok(Math.abs(result.dataset.metrics.airStoich.mean - 1) < 0.02);
+  assert.match(result.dataset.sourceFieldMap.h2_stoich, /计算/);
+});
+
 test('keeps repeated current platforms separate and uses the terminal 120-second window for long stable runs', () => {
   const parameterConfig = {
     ok: true,

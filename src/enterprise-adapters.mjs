@@ -393,6 +393,12 @@ const CONDITION_FIELD_BY_CODE = Object.freeze({
   COOLANT_IN_PRESS: 'coolantInPressure'
 });
 
+const DEFAULT_STOICH_CONFIG = Object.freeze({
+  faradayConstantCPerMol: 96485.33212,
+  standardMolarVolumeLPerMol: 22.414,
+  oxygenVolumeFraction: 0.2095
+});
+
 function durationForSegment(start, end, sampleCount, samplePeriodS) {
   if (Number.isFinite(samplePeriodS) && samplePeriodS > 0 && sampleCount >= 2) return { durationS: (sampleCount - 1) * samplePeriodS, source: 'configured_sample_period' };
   const startS = start?.timestamp_s; const endS = end?.timestamp_s;
@@ -408,6 +414,63 @@ function targetForRule(rule, condition) {
 function ruleValue(row, rule) {
   const value = row[rule.field];
   return value === undefined ? null : value;
+}
+
+function conditionComparison(rule, condition, rows, samplePeriodS) {
+  const target = targetForRule(rule, condition);
+  const observed = rows.map((row) => row[rule.field]).filter((value) => Number.isFinite(value));
+  const base = {
+    code: rule.code,
+    name: rule.name || rule.code,
+    field: rule.field,
+    unit: rule.unit || '',
+    target,
+    lowerTolerance: rule.lowerTolerance ?? null,
+    upperTolerance: rule.upperTolerance ?? null,
+    validSampleCount: observed.length,
+    exceedSampleCount: 0,
+    observedDurationS: 0,
+    exceedDurationS: 0,
+    exceedRatioPct: null,
+    actualMean: mean(observed),
+    actualMin: observed.length ? Math.min(...observed) : null,
+    actualMax: observed.length ? Math.max(...observed) : null,
+    actualStd: std(observed),
+    absoluteDeviation: null,
+    relativeDeviationPct: null,
+    status: 'undetermined'
+  };
+  if (!Number.isFinite(target) || !observed.length) return base;
+  const lower = target + (Number.isFinite(rule.lowerTolerance) ? rule.lowerTolerance : 0);
+  const upper = target + (Number.isFinite(rule.upperTolerance) ? rule.upperTolerance : 0);
+  let observedDurationS = 0;
+  let exceedDurationS = 0;
+  let exceedSampleCount = 0;
+  rows.forEach((row, index) => {
+    const value = row[rule.field];
+    if (!Number.isFinite(value)) return;
+    const next = rows[index + 1];
+    const timestampDelta = next && Number.isFinite(row.timestamp_s) && Number.isFinite(next.timestamp_s) && next.timestamp_s > row.timestamp_s
+      ? next.timestamp_s - row.timestamp_s
+      : next && Number.isFinite(samplePeriodS) && samplePeriodS > 0 ? samplePeriodS : 0;
+    observedDurationS += timestampDelta;
+    const exceeded = value < lower || value > upper;
+    if (exceeded) { exceedSampleCount += 1; exceedDurationS += timestampDelta; }
+  });
+  const absoluteDeviation = base.actualMean - target;
+  const relativeDeviationPct = target === 0 ? null : absoluteDeviation / Math.abs(target) * 100;
+  return {
+    ...base,
+    lowerBound: lower,
+    upperBound: upper,
+    observedDurationS,
+    exceedDurationS,
+    exceedSampleCount,
+    exceedRatioPct: observedDurationS > 0 ? exceedDurationS / observedDurationS * 100 : exceedSampleCount / observed.length * 100,
+    absoluteDeviation,
+    relativeDeviationPct,
+    status: base.actualMean < lower || base.actualMean > upper ? 'abnormal' : exceedSampleCount ? 'warning' : 'normal'
+  };
 }
 
 function evaluateStableRow(row, condition, rules) {
@@ -512,6 +575,7 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
         averageCurrentDensity: mean(values('current_density_mAcm2')),
         averageCellVoltageV: mean(values('avg_cell_voltage_v')),
         averageNetPowerKw: mean(values('power_kw')),
+        parameterComparisons: rules.filter((rule) => rule.enabled).map((rule) => conditionComparison(rule, platform, selectedRows, samplePeriodS)),
         missingParameters: stable.missing,
         rows: sampleRows,
         selectedRows
@@ -559,8 +623,14 @@ function buildStack(rows, config) {
     coolant_out_pressure_kpa: findHeader(headers, ['循环水出堆压力（kPa）', '电堆循环水出堆压力(kpa)']),
     coolant_in_temp_c: findHeader(headers, ['循环水入堆温度（℃）', '冷却水入口温度（℃）', '冷却水入口温度']),
     coolant_out_temp_c: findHeader(headers, ['循环水出堆温度（℃）', '冷却水出口温度（℃）', '冷却水出口温度']),
+    anode_in_temp_c: findHeader(headers, ['阳极入堆温度（℃）', '阳极气体进堆温度（℃）', '氢气入口温度']),
+    cathode_in_temp_c: findHeader(headers, ['阴极入堆温度（℃）', '阴极气体进堆温度（℃）', '空气入口温度']),
+    h2_dewpoint_c: findHeader(headers, ['阳极增湿罐水温度（℃）', '氢气入口露点温度', '阳极入口露点温度']),
+    air_dewpoint_c: findHeader(headers, ['阴极增湿罐水温度（℃）', '空气入口露点温度', '阴极入口露点温度']),
     anode_flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
     cathode_flow_slpm: findHeader(headers, ['阴极流量（SLPM）', '阴极气体流量(L/Min)', '阴极气体流量']),
+    h2_stoich: findHeader(headers, ['氢气计量比', '氢气化学计量比']),
+    air_stoich: findHeader(headers, ['空气计量比', '空气化学计量比']),
     coolant_flow_lpm: findHeader(headers, ['循环水流量（L/min）', '电堆循环水流量(L/Min)']),
     internal_resistance: findHeader(headers, ['内阻', '内阻（mΩ）', '内阻(mΩ)'])
   };
@@ -594,8 +664,14 @@ function buildStack(rows, config) {
       coolant_out_pressure_kpa: num(row[mapping.coolant_out_pressure_kpa]),
       coolant_in_temp_c: num(row[mapping.coolant_in_temp_c]),
       coolant_out_temp_c: num(row[mapping.coolant_out_temp_c]),
+      anode_in_temp_c: num(row[mapping.anode_in_temp_c]),
+      cathode_in_temp_c: num(row[mapping.cathode_in_temp_c]),
+      h2_dewpoint_c: num(row[mapping.h2_dewpoint_c]),
+      air_dewpoint_c: num(row[mapping.air_dewpoint_c]),
       anode_flow_slpm: num(row[mapping.anode_flow_slpm]),
       cathode_flow_slpm: num(row[mapping.cathode_flow_slpm]),
+      h2_stoich: num(row[mapping.h2_stoich]),
+      air_stoich: num(row[mapping.air_stoich]),
       coolant_flow_lpm: num(row[mapping.coolant_flow_lpm]),
       internal_resistance: num(row[mapping.internal_resistance]),
       anode_flow_resistance_kpa: num(row[mapping.anode_in_pressure_kpa]) !== null && num(row[mapping.anode_out_pressure_kpa]) !== null ? num(row[mapping.anode_in_pressure_kpa]) - num(row[mapping.anode_out_pressure_kpa]) : null,
@@ -605,6 +681,29 @@ function buildStack(rows, config) {
       cells
     };
   });
+  const configuredCellCountHint = Number(config.stoichConfig?.cellCount ?? config.cellCount ?? config.testMetadata?.cellCount);
+  const inferredCellCount = configuredCellCountHint > 0 ? configuredCellCountHint : cellHeaders.length;
+  const stoichConfig = {
+    ...DEFAULT_STOICH_CONFIG,
+    ...(config.stoichConfig || {}),
+    cellCount: inferredCellCount > 0 ? inferredCellCount : null
+  };
+  const theoreticalFlows = (currentA) => {
+    const faraday = Number(stoichConfig.faradayConstantCPerMol);
+    const molarVolume = Number(stoichConfig.standardMolarVolumeLPerMol);
+    const oxygenFraction = Number(stoichConfig.oxygenVolumeFraction);
+    const cellCount = Number(stoichConfig.cellCount);
+    if (![currentA, faraday, molarVolume, oxygenFraction, cellCount].every(Number.isFinite) || faraday <= 0 || molarVolume <= 0 || oxygenFraction <= 0 || cellCount <= 0) return null;
+    return {
+      h2: currentA * cellCount / (2 * faraday) * molarVolume * 60,
+      air: currentA * cellCount / (4 * faraday) / oxygenFraction * molarVolume * 60
+    };
+  };
+  for (const row of normalized) {
+    const theoretical = theoreticalFlows(row.current_a);
+    if (row.h2_stoich === null && theoretical?.h2 > 0 && row.anode_flow_slpm !== null) row.h2_stoich = row.anode_flow_slpm / theoretical.h2;
+    if (row.air_stoich === null && theoretical?.air > 0 && row.cathode_flow_slpm !== null) row.air_stoich = row.cathode_flow_slpm / theoretical.air;
+  }
   const requiredQuality = ['timestamp_s', 'current_a', 'voltage_v', ...cellHeaders.map((_, index) => `cell_${index + 1}_v`)];
   const quality = qualityFor(normalized, requiredQuality);
   quality.missingHeaders = missing;
@@ -658,15 +757,27 @@ function buildStack(rows, config) {
       cathodeFlowResistanceKpa: summary('cathode_flow_resistance_kpa'),
       coolantFlowResistanceKpa: summary('coolant_flow_resistance_kpa'),
       coolantTemperatureDifferenceC: summary('coolant_temperature_difference_c'),
-      internalResistance: summary('internal_resistance')
+      internalResistance: summary('internal_resistance'),
+      hydrogenStoich: summary('h2_stoich'),
+      airStoich: summary('air_stoich')
     },
     sourceFieldMap: {
       ...mapping,
       anode_flow_resistance_kpa: '计算：阳极入口压力 - 阳极出口压力',
       cathode_flow_resistance_kpa: '计算：阴极入口压力 - 阴极出口压力',
       coolant_flow_resistance_kpa: '计算：冷却液入口压力 - 冷却液出口压力',
-      coolant_temperature_difference_c: '计算：冷却液出口温度 - 冷却液入口温度'
+      coolant_temperature_difference_c: '计算：冷却液出口温度 - 冷却液入口温度',
+      h2_stoich: mapping.h2_stoich || '计算：阳极流量 / 理论耗氢量（法拉第常数、标准摩尔体积、片数）',
+      air_stoich: mapping.air_stoich || '计算：阴极流量 / 理论耗氧对应空气量（法拉第常数、标准摩尔体积、氧体积分数、片数）'
     }
+  };
+  dataset.stoich = {
+    status: Number.isFinite(stoichConfig.cellCount) && stoichConfig.cellCount > 0 ? 'calculated_or_raw' : 'not_configured',
+    cellCount: stoichConfig.cellCount,
+    faradayConstantCPerMol: stoichConfig.faradayConstantCPerMol,
+    standardMolarVolumeLPerMol: stoichConfig.standardMolarVolumeLPerMol,
+    oxygenVolumeFraction: stoichConfig.oxygenVolumeFraction,
+    source: '默认物理常数或企业 profile stoichConfig；正式报告需由企业确认温压基准和片数'
   };
   const metrics = {
     sampleCount: normalized.length,

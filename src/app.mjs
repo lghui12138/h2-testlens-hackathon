@@ -74,6 +74,7 @@ function configFromUI() {
     parameterConfig: state.parameterConfig,
     durabilityReports: state.durabilityReports,
     durabilityRules: { maxDeviationMv: optionalNumber('durability-max-deviation'), minAverageCellVoltageMv: optionalNumber('durability-min-cell-voltage') },
+    stoichConfig: profile?.stoichConfig ?? null,
     testMetadata: {
       testPurpose: $('#metadata-purpose').value.trim(),
       testPlanRef: $('#metadata-test-plan').value.trim(),
@@ -402,9 +403,10 @@ function renderEnterprisePanel(result) {
   }
   const parameterStatus = dataset.parameterConfig ? (dataset.parameterConfig.ok ? '参数工作簿已校验' : `参数工作簿错误 ${dataset.parameterConfig.errors.length} 项`) : '未导入目标工况参数';
   const platformRows = dataset.platforms?.length ? dataset.platforms.map((item) => `<tr><td>${escapeHtml(item.conditionId)}</td><td>${fmt(item.targetCurrentA, 2)}</td><td>${fmt(item.effectiveDurationS, 0)}</td><td>${escapeHtml(item.status)}</td></tr>`).join('') : '<tr><td colspan="4">未形成电流平台；先导入参数工作簿。</td></tr>';
+  const comparisonRows = dataset.performancePoints?.flatMap((point) => (point.parameterComparisons || []).map((comparison) => `<tr><td>${escapeHtml(point.platformId || point.conditionId || '')}</td><td>${escapeHtml(comparison.code)}</td><td>${fmt(comparison.target, 3)}</td><td>${fmt(comparison.actualMean, 3)}</td><td>${fmt(comparison.absoluteDeviation, 3)}</td><td>${fmt(comparison.exceedRatioPct, 1)}</td><td>${escapeHtml(comparison.status || '无法判定')}</td></tr>`)).join('') || '<tr><td colspan="7">未形成目标工况对比；请确认参数表和有效稳定区间。</td></tr>';
   $('#enterprise-controls').innerHTML = `<span class="enterprise-note">${escapeHtml(parameterStatus)} · ${dataset.parameterConfig?.ok ? '平台和稳定区间按参数表计算' : '当前只输出实际时序和单片一致性摘要，不作目标符合性判定'}</span>`;
-  $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.cellChannelCount}</b> 个导出单片通道</span><span><b>${dataset.configuredCellCount || '—'}</b> 片数参数</span><span><b>${fmt(dataset.metrics.averageCurrentA, 2)}</b> A 平均电流</span><span><b>${fmt(dataset.metrics.cellSpreadMaxV, 3)}</b> V 最大极差</span><span><b>${dataset.platforms?.length || 0}</b> 个电流平台</span><span><b>${dataset.performancePoints?.length || 0}</b> 个有效稳定区间</span></div>`;
-  $('#enterprise-table').innerHTML = `<h3>电流平台与稳定区间</h3><table><thead><tr><th>工况</th><th>目标电流 A</th><th>有效持续 s</th><th>状态</th></tr></thead><tbody>${platformRows}</tbody></table><h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
+  $('#enterprise-summary').innerHTML = `<div class="enterprise-facts"><span><b>${dataset.cellChannelCount}</b> 个导出单片通道</span><span><b>${dataset.configuredCellCount || '—'}</b> 片数参数</span><span><b>${fmt(dataset.metrics.averageCurrentA, 2)}</b> A 平均电流</span><span><b>${fmt(dataset.metrics.cellSpreadMaxV, 3)}</b> V 最大极差</span><span><b>${dataset.platforms?.length || 0}</b> 个电流平台</span><span><b>${dataset.performancePoints?.length || 0}</b> 个有效稳定区间</span><span><b>${fmt(dataset.metrics.hydrogenStoich?.mean, 3)}</b> 氢气计量比</span><span><b>${fmt(dataset.metrics.airStoich?.mean, 3)}</b> 空气计量比</span></div>`;
+  $('#enterprise-table').innerHTML = `<h3>电流平台与稳定区间</h3><table><thead><tr><th>工况</th><th>目标电流 A</th><th>有效持续 s</th><th>状态</th></tr></thead><tbody>${platformRows}</tbody></table><h3>目标工况对比</h3><table><thead><tr><th>平台</th><th>参数</th><th>目标</th><th>实际均值</th><th>绝对偏差</th><th>超限比例 %</th><th>状态</th></tr></thead><tbody>${comparisonRows}</tbody></table><h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
 }
 
 function render(result) {

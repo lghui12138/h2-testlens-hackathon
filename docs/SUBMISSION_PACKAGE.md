@@ -8,7 +8,7 @@ npm run package:submission
 
 The command first runs `npm run check:submission`, which recursively runs the unit tests and offline AI grounding suite. Only after those checks pass does it create:
 
-`dist/h2-testlens-submission-v3.1.0.zip`
+`dist/h2-testlens-submission-v3.4.0.zip`
 
 The archive contains the runnable app, source, sample data, configuration-package example, AI evaluation, submission brief, and completion evidence. It intentionally excludes local browser history and downloaded reports.
 

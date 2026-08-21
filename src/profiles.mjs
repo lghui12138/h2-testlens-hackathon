@@ -84,6 +84,8 @@ export function validateProfilePackage(payload) {
     }
     if (profile.acceptanceCriteria !== undefined && (typeof profile.acceptanceCriteria !== 'object' || Array.isArray(profile.acceptanceCriteria))) errors.push(`${profile.id || '未知'} acceptanceCriteria 必须是对象`);
     for (const field of ['minHydrogenPurityPct', 'maxSpecificEnergyKWhPerNm3']) if (profile.acceptanceCriteria?.[field] !== undefined && (!Number.isFinite(Number(profile.acceptanceCriteria[field])) || Number(profile.acceptanceCriteria[field]) <= 0)) errors.push(`${profile.id || '未知'} acceptanceCriteria.${field} 必须为正数`);
+    if (profile.stoichConfig !== undefined && (typeof profile.stoichConfig !== 'object' || Array.isArray(profile.stoichConfig))) errors.push(`${profile.id || '未知'} stoichConfig 必须是对象`);
+    for (const field of ['cellCount', 'faradayConstantCPerMol', 'standardMolarVolumeLPerMol', 'oxygenVolumeFraction']) if (profile.stoichConfig?.[field] !== undefined && (!Number.isFinite(Number(profile.stoichConfig[field])) || Number(profile.stoichConfig[field]) <= 0)) errors.push(`${profile.id || '未知'} stoichConfig.${field} 必须为正数`);
     for (const field of THRESHOLD_FIELDS) {
       const value = Number(profile.thresholds?.[field]);
       if (!Number.isFinite(value)) errors.push(`${profile.id || '未知'} 缺少数值阈值 ${field}`);
@@ -122,6 +124,7 @@ export function profilesFromPackage(payload) {
       vehicleMinimumDurationS: profile.vehicleMinimumDurationS || null,
       durabilityRules: profile.durabilityRules || {},
       acceptanceCriteria: profile.acceptanceCriteria || {},
+      stoichConfig: profile.stoichConfig || null,
       uncertaintyModelRequired: profile.uncertaintyModelRequired || false,
       uncertaintyModel: profile.uncertaintyModel || null,
       source: profile.source || `${payload.organization || '企业'} 当前会话配置`,
