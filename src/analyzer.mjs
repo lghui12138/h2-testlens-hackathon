@@ -488,9 +488,22 @@ export function publicConfig(config = {}) {
   };
 }
 
+export function publicDataset(dataset = null) {
+  if (!dataset || typeof dataset !== 'object') return dataset;
+  const { reports, ...safeDataset } = dataset;
+  return {
+    ...safeDataset,
+    reports: Array.isArray(reports) ? reports.map((report) => ({
+      metadataPresent: Object.fromEntries(Object.keys(report?.metadata || {}).map((field) => [field, Boolean(report.metadata[field])])),
+      pointCount: Array.isArray(report?.points) ? report.points.length : 0,
+      warningCount: Array.isArray(report?.warnings) ? report.warnings.length : 0
+    })) : []
+  };
+}
+
 export function publicAnalysis(result) {
-  const { rows, config, ...safeResult } = result;
-  return { ...safeResult, config: publicConfig(config) };
+  const { rows, config, dataset, ...safeResult } = result;
+  return { ...safeResult, config: publicConfig(config), dataset: publicDataset(dataset) };
 }
 
 function enterpriseReportMarkdown(result, fileName, options = {}) {

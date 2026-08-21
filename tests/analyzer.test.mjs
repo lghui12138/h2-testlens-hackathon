@@ -249,6 +249,9 @@ test('public analysis removes raw rows before integration responses', () => {
   assert.equal(withSensitiveMetadata.config.testMetadata.calibrationRefs, true);
   assert.equal(JSON.stringify(withSensitiveMetadata).includes('operator-secret'), false);
   assert.equal(reportMarkdown(withSensitiveMetadata, 'public.json').includes('operator-secret'), false);
+  const datasetSafe = publicAnalysis({ rows: [], config: {}, dataset: { reports: [{ metadata: { 当前用户: 'secret-user' }, points: [{ targetPowerKw: 195 }] }], points: [{ targetPowerKw: 195 }] }, verdict: 'WARN', issues: [], quality: {}, schema: {}, metrics: {}, phases: [], workflow: {}, compliance: {}, uncertainty: {}, narrative: '', source: {} });
+  assert.equal(JSON.stringify(datasetSafe).includes('secret-user'), false);
+  assert.equal(datasetSafe.dataset.reports[0].metadataPresent['当前用户'], true);
 });
 
 test('standards gate distinguishes demo, incomplete, and human-review-ready profiles', () => {

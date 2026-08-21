@@ -59,8 +59,8 @@ const server = createServer(async (req, res) => {
       }
       const result = analyzeRows(parseCSV(payload.csv), resolveApiConfig(payload));
       const response = publicAnalysis(result);
-      if (payload.fileName) response.source = { ...response.source, fileName: String(payload.fileName) };
-      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...result, config: response.config }, String(payload.fileName || 'test-run.csv'));
+      if (payload.fileName) response.source = { ...response.source, fileNamePresent: true };
+      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...result, config: response.config }, 'uploaded-test-run.csv');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
     } catch (error) { writeApiError(res, error); }
@@ -79,7 +79,7 @@ const server = createServer(async (req, res) => {
       const current = analyzeRows(parseCSV(payload.currentCsv), config);
       const comparison = compareResults(baseline, current, { baselineName: payload.baselineFileName || 'baseline.csv', currentName: payload.currentFileName || 'current.csv' });
       const response = { baseline: publicAnalysis(baseline), current: publicAnalysis(current), comparison };
-      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...current, config: response.current.config }, String(payload.currentFileName || 'current.csv'), { comparison });
+      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...current, config: response.current.config }, 'uploaded-current-test-run.csv', { comparison });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
     } catch (error) { writeApiError(res, error); }
