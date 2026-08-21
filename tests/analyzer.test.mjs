@@ -13,6 +13,7 @@ import * as SheetJS from 'xlsx';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from '../src/excel-workflow.mjs';
 import { durabilityAlertPayload, sendFeishuAlert } from '../src/feishu-alerts.mjs';
 import { addNativeChartToWorkbook, setZipEngine } from '../src/xlsx-charts.mjs';
+import { diffManifests, manifestFromEntries } from '../src/incremental.mjs';
 import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -196,10 +197,11 @@ test('local history stores summaries without raw rows and supports clearing', ()
     removeItem: (key) => values.delete(key)
   };
   const result = analyzeRows(parseCSV(csv));
-  const saved = appendHistory(storage, result, 'current.csv', '2026-08-21T00:00:00.000Z');
+  const saved = appendHistory(storage, result, 'current.csv', '2026-08-21T00:00:00.000Z', [{ name: 'current.csv', rowCount: 25, hash: 'abc' }]);
   assert.equal(saved.length, 1);
   assert.equal('rows' in saved[0], false);
   assert.equal(readHistory(storage)[0].fileName, 'current.csv');
+  assert.equal(readHistory(storage)[0].manifest[0].hash, 'abc');
   assert.deepEqual(clearHistory(storage), []);
   assert.deepEqual(readHistory(storage), []);
 });
@@ -521,6 +523,16 @@ test('Feishu durability alert stays dry-run by default and sends only an approve
   assert.equal(typeof signedRequest.sign, 'string');
   const rejected = await sendFeishuAlert(result, { webhookUrl: 'https://example.com/hook' });
   assert.equal(rejected.reason, 'webhook_host_not_allowed');
+});
+
+test('batch manifest classifies added, changed, unchanged, and removed files', () => {
+  const previous = manifestFromEntries([{ name: 'a.csv', size: 10, rows: [{ Timestamp: 't0' }], contentHash: 'a' }, { name: 'b.csv', size: 10, rows: [{ Timestamp: 't0' }], contentHash: 'b' }]);
+  const current = manifestFromEntries([{ name: 'a.csv', size: 11, rows: [{ Timestamp: 't0' }], contentHash: 'a2' }, { name: 'b.csv', size: 10, rows: [{ Timestamp: 't0' }], contentHash: 'b' }, { name: 'c.csv', size: 10, rows: [{ Timestamp: 't0' }], contentHash: 'c' }]);
+  const diff = diffManifests(previous, current);
+  assert.deepEqual(diff.added.map((entry) => entry.name), ['c.csv']);
+  assert.deepEqual(diff.changed.map((entry) => entry.name), ['a.csv']);
+  assert.deepEqual(diff.unchanged.map((entry) => entry.name), ['b.csv']);
+  assert.deepEqual(diff.removed.map((entry) => entry.name), []);
 });
 
 test('adds a standard OOXML line chart to the generated workbook without changing the data sheet', async () => {

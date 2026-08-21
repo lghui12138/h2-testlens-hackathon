@@ -27,6 +27,7 @@ const requiredFiles = [
   'src/docx-workflow.mjs',
   'src/feishu-alerts.mjs',
   'src/xlsx-charts.mjs',
+  'src/incremental.mjs',
   'src/vendor/xlsx.full.min.js',
   'src/vendor/xlsx.LICENSE.txt',
   'src/vendor/mammoth.browser.min.js',

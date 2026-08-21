@@ -3,14 +3,15 @@ import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
-import { sha256Hex } from './provenance.mjs';
+import { sha256Bytes, sha256Hex } from './provenance.mjs';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, workbookArrayBuffer } from './excel-workflow.mjs';
 import { addNativeChartToWorkbook } from './xlsx-charts.mjs';
 import { parseDurabilityDocx } from './docx-workflow.mjs';
 import { durabilityAlertPayload, sendFeishuAlert } from './feishu-alerts.mjs';
+import { diffManifests, manifestFromEntries, readBatchManifest, writeBatchManifest } from './incremental.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null, durabilityReports: [] };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null, durabilityReports: [], currentManifest: [], incrementalDiff: null };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -392,7 +393,8 @@ function render(result) {
   const convertedUnits = Object.values(result.schema.conversions).filter((item) => item.mode !== 'identity').length;
   const phaseFallback = result.schema.missingOptionalHeaders.includes('phase') ? ' · 工况字段缺失，使用活动窗口' : '';
   const purityNotice = result.schema.missingOptionalHeaders.includes('hydrogen_purity_pct') ? ' · 纯度字段未提供' : '';
-  $('#schema-notice').textContent = result.dataset ? `${result.dataset.label} · 字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}` : `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}`;
+  const incrementalNotice = state.incrementalDiff ? ` · 批次 +${state.incrementalDiff.added.length}/变${state.incrementalDiff.changed.length}/未变${state.incrementalDiff.unchanged.length}` : '';
+  $('#schema-notice').textContent = result.dataset ? `${result.dataset.label} · 字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${incrementalNotice}` : `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}${incrementalNotice}`;
   $('#verdict-chip').textContent = verdictLabel(result.verdict);
   $('#verdict-chip').className = `verdict-chip ${result.verdict.toLowerCase()}`;
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
@@ -412,6 +414,8 @@ async function loadCsv(url, name) {
   await bindRawDataHash(text);
   state.rows = parseCSV(text);
   state.fileName = name;
+  state.currentManifest = manifestFromEntries([{ name, size: new TextEncoder().encode(text).byteLength, rows: state.rows, contentHash: await sha256Hex(text), hashType: 'text' }]);
+  state.incrementalDiff = diffManifests(readBatchManifest(window.localStorage), state.currentManifest);
   render(analyzeRows(state.rows, configFromUI()));
 }
 
@@ -425,22 +429,22 @@ async function readSelectedDataFiles(files) {
   const entries = [];
   for (const file of files) {
     if (/\.docx$/i.test(file.name)) {
-      const report = await parseDurabilityDocx(await file.arrayBuffer());
-      entries.push({ name: file.name, rows: report.points.map((point) => ({ ...point, source_file: file.name })), durabilityReport: report, text: `DOCX:${file.name}\n${JSON.stringify(report)}` });
+      const buffer = await file.arrayBuffer(); const report = await parseDurabilityDocx(buffer);
+      entries.push({ name: file.name, size: file.size, rows: report.points.map((point) => ({ ...point, source_file: file.name })), durabilityReport: report, contentHash: await sha256Bytes(buffer), hashType: 'binary', text: `DOCX:${file.name}\n${JSON.stringify(report)}` });
     } else if (/\.(xlsx|xlsm)$/i.test(file.name)) {
-      const workbookResult = parseDataWorkbook(await file.arrayBuffer());
+      const buffer = await file.arrayBuffer(); const workbookResult = parseDataWorkbook(buffer);
       if (!workbookResult.ok) throw new Error(workbookResult.errors.join('；'));
-      entries.push({ name: file.name, rows: workbookResult.rows, text: `SHEET:${workbookResult.sheetName}\n${JSON.stringify(workbookResult.rows)}` });
+      entries.push({ name: file.name, size: file.size, sheetName: workbookResult.sheetName, rows: workbookResult.rows, contentHash: await sha256Bytes(buffer), hashType: 'binary', text: `SHEET:${workbookResult.sheetName}\n${JSON.stringify(workbookResult.rows)}` });
     } else {
       const text = await readUserFile(file);
-      entries.push({ name: file.name, rows: parseCSV(text), text });
+      entries.push({ name: file.name, size: file.size, rows: parseCSV(text), contentHash: await sha256Hex(text), hashType: 'text', text });
     }
   }
   const rows = entries.flatMap(({ rows: fileRows }) => fileRows);
   const first = rows[0] || {};
   const timeField = ['Timestamp', '测试时间', '时间'].find((field) => Object.hasOwn(first, field));
   if (timeField === 'Timestamp') rows.sort((a, b) => String(a[timeField]).localeCompare(String(b[timeField])));
-  return { entries, rows, durabilityReports: entries.map((entry) => entry.durabilityReport).filter(Boolean), hashText: entries.map(({ name, text }) => `FILE:${name}\n${text}`).join('\n') };
+  return { entries, rows, durabilityReports: entries.map((entry) => entry.durabilityReport).filter(Boolean), manifest: manifestFromEntries(entries), hashText: entries.map(({ name, text }) => `FILE:${name}\n${text}`).join('\n') };
 }
 
 async function loadSample() {
@@ -458,6 +462,8 @@ $('#file-input').addEventListener('change', async (event) => {
     const loaded = await readSelectedDataFiles(files);
     await bindRawDataHash(loaded.hashText);
     state.durabilityReports = loaded.durabilityReports;
+    state.currentManifest = loaded.manifest;
+    state.incrementalDiff = diffManifests(readBatchManifest(window.localStorage), state.currentManifest);
     state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
     render(analyzeRows(state.rows, configFromUI()));
   } catch (error) {
@@ -514,13 +520,14 @@ $('#load-profile-demo').addEventListener('click', async () => {
 $('#save-history').addEventListener('click', () => {
   if (!state.result) return;
   const previous = state.history[0];
-  state.history = appendHistory(window.localStorage, state.result, state.fileName);
+  state.history = appendHistory(window.localStorage, state.result, state.fileName, undefined, state.currentManifest);
+  writeBatchManifest(window.localStorage, state.currentManifest);
   if (previous) state.comparison = compareResults(previous, state.result, { baselineName: previous.fileName, currentName: state.fileName });
   renderHistory();
   renderComparison();
   $('#history-status').textContent = previous ? '已保存并完成上一批对比' : '已保存当前批次';
 });
-$('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); state.comparison = null; renderHistory(); renderComparison(); });
+$('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
   if (!state.result) return;
   const button = $('#compare-demo');
@@ -563,7 +570,7 @@ $('#download-report').addEventListener('click', () => { const blob = new Blob([r
 $('#download-xlsx').addEventListener('click', async () => {
   if (!state.result) return;
   try {
-    const workbook = buildEnterpriseWorkbook(state.result, state.fileName, { parameterConfig: state.parameterConfig });
+    const workbook = buildEnterpriseWorkbook(state.result, state.fileName, { parameterConfig: state.parameterConfig, manifest: state.currentManifest, incrementalDiff: state.incrementalDiff });
     const rawWorkbook = workbookArrayBuffer(workbook);
     const workbookBytes = await addNativeChartToWorkbook(rawWorkbook, state.result.dataset || {});
     const blob = new Blob([workbookBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

@@ -3,7 +3,7 @@ import { publicConfig } from './analyzer.mjs';
 export const HISTORY_STORAGE_KEY = 'h2-testlens.history.v1';
 export const HISTORY_LIMIT = 12;
 
-export function toHistoryRecord(result, fileName, savedAt = new Date().toISOString()) {
+export function toHistoryRecord(result, fileName, savedAt = new Date().toISOString(), manifest = []) {
   return {
     id: `${savedAt}:${fileName}:${result.metrics.sampleCount}`,
     fileName,
@@ -13,6 +13,7 @@ export function toHistoryRecord(result, fileName, savedAt = new Date().toISOStri
     quality: result.quality,
     schema: result.schema,
     config: publicConfig(result.config),
+    manifest: Array.isArray(manifest) ? manifest : [],
     issues: result.issues,
     source: result.source
   };
@@ -27,8 +28,8 @@ export function readHistory(storage) {
   }
 }
 
-export function appendHistory(storage, result, fileName, savedAt) {
-  const current = toHistoryRecord(result, fileName, savedAt);
+export function appendHistory(storage, result, fileName, savedAt, manifest = []) {
+  const current = toHistoryRecord(result, fileName, savedAt, manifest);
   const existing = readHistory(storage).filter((item) => item.id !== current.id);
   const next = [current, ...existing].slice(0, HISTORY_LIMIT);
   storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
