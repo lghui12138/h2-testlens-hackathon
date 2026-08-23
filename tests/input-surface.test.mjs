@@ -71,6 +71,7 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
     assert.match(page, /190/);
     assert.match(page, /2,262,283/);
     assert.match(page, /正式符合性声明：0/);
+    assert.match(page, /二进制\/不可按当前文本合同解析/);
     assert.match(page, /标准实施边界矩阵/);
   }
 });

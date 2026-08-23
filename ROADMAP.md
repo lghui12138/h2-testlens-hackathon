@@ -65,6 +65,12 @@
 - Gate: the phase-gap regression asserts `积分状态 partial_gap`; full test/submission/Pages gates remain required.
 - Residual: report visibility is improved, but a formal method report still requires enterprise-approved evidence and sign-off.
 
+## 2026-08-24 current continuation evidence · blocked binary boundary
+
+- Change: verified the one T02 `blocked_binary` file is genuinely non-text/binary and kept the public page explanation fail-closed: hash retained, rows not fabricated, no test conclusion generated.
+- Gate: `file`/byte inspection, current coverage audit record, browser surface parity and full submission gates pass.
+- Residual: parsing requires an enterprise-supplied format/decoder; no unsafe guess or private raw-file copy is introduced.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
