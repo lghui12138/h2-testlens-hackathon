@@ -4,6 +4,7 @@
 
 - GitHub 仓库：<https://github.com/lghui12138/h2-testlens-hackathon>
 - GitHub Pages：<https://lghui12138.github.io/h2-testlens-hackathon/>
+- 当前公开渲染域名：<https://lghui.top/h2-testlens-hackathon/>
 - 页面入口：`src/index.html`
 - 发布产物：`_site/`，由 `npm run prepare:github-pages` 生成
 

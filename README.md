@@ -8,7 +8,7 @@
 
 直接打开：[H₂ TestLens GitHub Pages](https://lghui12138.github.io/h2-testlens-hackathon/)
 
-项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)
+项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。GitHub 官方 Pages 地址会按仓库配置跳转到公开渲染域名：[lghui.top/h2-testlens-hackathon](https://lghui.top/h2-testlens-hackathon/)。
 
 这是浏览器网页原型：不需要登录，不上传原始 CSV；可以直接载入演示样本，也可以在浏览器内导入 CSV/TXT/Excel/DOCX。公开页面只提供工程分析和报告初稿，不替代标准认证、安全验证或企业放行签核。
 
