@@ -2,11 +2,13 @@
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
-[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](http://lghui.top/h2-testlens-hackathon/)
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/)
 
 ## 公开演示
 
-直接打开：[H₂ TestLens GitHub Pages](http://lghui.top/h2-testlens-hackathon/)
+直接打开：[H₂ TestLens GitHub Pages](https://lghui12138.github.io/h2-testlens-hackathon/)
+
+项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)
 
 这是浏览器网页原型：不需要登录，不上传原始 CSV；可以直接载入演示样本，也可以在浏览器内导入 CSV/TXT/Excel/DOCX。公开页面只提供工程分析和报告初稿，不替代标准认证、安全验证或企业放行签核。
 
@@ -14,9 +16,13 @@
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.37**。本轮新增电堆逐片时序统计、稳定区间排除证据和参数工作簿公式复核门，并继续保持网页与 Next/Vinext App parity；仍不把标准流程映射写成完整符合性声明。
+当前交付版本：**v3.5.37**。本轮新增 GitHub Pages / App 同步的控制室视觉层、页面导航和图表网格背景；保留电堆逐片时序统计、稳定区间排除证据和参数工作簿公式复核门。仍不把标准流程映射写成完整符合性声明。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
+
+网页与 App 的分离边界见 [`docs/WEB_AND_APP.md`](docs/WEB_AND_APP.md)：GitHub Pages 是评审和公开演示入口，Vinext App 是同一分析内核的可扩展应用入口；两者共用 `src/` 分析模块和样本/配置，不把原始 T02 数据提交到仓库。
+
+每轮 GitHub 更新记录见 [`docs/GITHUB_ROUND_LOG.md`](docs/GITHUB_ROUND_LOG.md)。
 
 v3.5.37 证据：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.37.md`。
 

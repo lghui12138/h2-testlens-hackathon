@@ -8,6 +8,7 @@ const DASHBOARD_HTML = String.raw`
   <header class="topbar">
     <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试智报</small></span></a>
     <div class="topbar-meta"><span class="live-dot"></span><span>PUBLIC ANALYSIS</span><span class="divider"></span><span id="last-run">等待数据</span></div>
+    <nav class="site-nav" aria-label="页面导航"><a href="#top">分析台</a><a href="#enterprise-panel">数据视图</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
   </header>
   <main id="top">
     <section class="hero">
