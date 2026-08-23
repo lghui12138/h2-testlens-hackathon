@@ -404,7 +404,7 @@ function powerCrossCheck(rows) {
   };
 }
 
-function phaseCoverageReport(config, rows) {
+function phaseCoverageReport(config, rows, maxIntervalS = null) {
   const present = new Map();
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index];
@@ -436,6 +436,7 @@ function phaseCoverageReport(config, rows) {
         ? rows[currentIndex].timestamp_s - rows[previousIndex].timestamp_s
         : 0;
       if (deltaS <= 0) { nonPositiveIntervalCount += 1; continue; }
+      if (maxIntervalS !== null && deltaS > maxIntervalS) { interruptedSegmentCount += 1; continue; }
       durationS += deltaS;
       validSegmentCount += 1;
     }
@@ -458,7 +459,7 @@ function phaseCoverageReport(config, rows) {
   return { required, missing: required.filter((item) => item.count === 0).map((item) => item.id) };
 }
 
-function phaseMetricReport(config, rows) {
+function phaseMetricReport(config, rows, maxIntervalS = null) {
   const requirements = config.requiredPhaseMetrics && typeof config.requiredPhaseMetrics === 'object' ? config.requiredPhaseMetrics : {};
   const phaseIds = [...new Set([...(config.requiredPhases || []), ...Object.keys(requirements)])];
   const phases = {};
@@ -484,6 +485,7 @@ function phaseMetricReport(config, rows) {
       const current = rows[currentIndex];
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       if (deltaS <= 0) { nonPositiveIntervalCount += 1; continue; }
+      if (maxIntervalS !== null && deltaS > maxIntervalS) { interruptedSegmentCount += 1; continue; }
       durationS += deltaS;
       validSegments += 1;
       const previousPower = electricalPower(previous);
@@ -819,25 +821,28 @@ function missingPerformanceMeasurements(config, rows, schema) {
   });
 }
 
-function missingRequiredPhases(config, rows) {
-  return phaseCoverageReport(config, rows).missing;
+function missingRequiredPhases(config, rows, maxIntervalS = null) {
+  return phaseCoverageReport(config, rows, maxIntervalS).missing;
 }
 
-function integrateTrapezoid(rows, field, divisor = 1) {
+function integrateTrapezoid(rows, field, divisor = 1, maxIntervalS = null, evidence = null) {
   let total = 0;
   let segments = 0;
   for (let index = 1; index < rows.length; index += 1) {
     const previous = rows[index - 1];
     const current = rows[index];
     const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
-    if (deltaS <= 0 || previous[field] === null || current[field] === null) continue;
+    if (deltaS <= 0) { evidence && (evidence.skippedNonPositiveCount += 1); continue; }
+    if (maxIntervalS !== null && deltaS > maxIntervalS) { evidence && (evidence.skippedGapCount += 1); continue; }
+    if (previous[field] === null || current[field] === null) { evidence && (evidence.skippedMissingCount += 1); continue; }
     total += ((previous[field] + current[field]) / 2) * deltaS / divisor;
     segments += 1;
   }
+  if (evidence) evidence.segmentCount = segments;
   return segments ? total : null;
 }
 
-function calculateUncertainty(rows, metrics, model) {
+function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
   if (!model) return { status: 'not_configured', method: null, coverageFactor: null, metrics: {}, missingFields: [] };
   const standard = model.standardUncertainty || {};
   const method = model.method;
@@ -875,7 +880,7 @@ function calculateUncertainty(rows, metrics, model) {
       const previous = rows[index - 1];
       const current = rows[index];
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
-      if (deltaS > 0 && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
+      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
     }
     return rss(segments);
   };
@@ -887,7 +892,7 @@ function calculateUncertainty(rows, metrics, model) {
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       const previousU = powerU(previous);
       const currentU = powerU(current);
-      if (deltaS > 0 && previousU !== null && currentU !== null) segments.push(((previousU + currentU) / 2) * deltaS / 3600);
+      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previousU !== null && currentU !== null) segments.push(((previousU + currentU) / 2) * deltaS / 3600);
     }
     return rss(segments);
   };
@@ -1140,12 +1145,12 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     ambient_pressure_kpa: convertValue(row[schema.mapping.ambient_pressure_kpa], schema.conversions.ambient_pressure_kpa)
     ,efficiency_pct: convertValue(row[schema.mapping.efficiency_pct], schema.conversions.efficiency_pct)
   }));
-  const phaseCoverage = phaseCoverageReport(config, rows);
   const quality = qualityReport(rows, schema, config);
+  const phaseCoverage = phaseCoverageReport(config, rows, quality.gapLimitS);
   const dataQuality = dataQualityReadiness(config, quality, phaseCoverage);
   const missingMeasurements = missingPerformanceMeasurements(config, rows, schema);
-  const missingPhases = missingRequiredPhases(config, rows);
-  const phaseMetrics = phaseMetricReport(config, rows);
+  const missingPhases = missingRequiredPhases(config, rows, quality.gapLimitS);
+  const phaseMetrics = phaseMetricReport(config, rows, quality.gapLimitS);
   const dynamicPowerConfig = config.dynamicPowerAnalysis && typeof config.dynamicPowerAnalysis === 'object'
     ? config.dynamicPowerAnalysis
     : {};
@@ -1186,11 +1191,16 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     return { value, atS: rows.filter((row) => row[field] === value && row.timestamp_s !== null).map((row) => row.timestamp_s) };
   };
   const minimumPurity = minimumWithTimes('hydrogen_purity_pct');
-  const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60);
+  const integrationEvidence = {
+    maxIntervalS: quality.gapLimitS,
+    hydrogenVolume: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0 },
+    energyConsumed: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0 }
+  };
+  const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
-  const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600);
+  const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600, quality.gapLimitS, integrationEvidence.energyConsumed);
   const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl * 1000 : null;
-  const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel);
+  const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel, quality.gapLimitS);
   const scope = scopeReadiness(config);
   const instruments = instrumentReadiness(config);
   const acquisition = acquisitionReadiness(config);
@@ -1212,6 +1222,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     peakPowerW: powers.length ? Math.max(...powers) : null,
     powerSource: powerEvidence.status,
     powerCrossCheck: powerEvidence,
+    integrationEvidence,
     steadyVoltageMeanV: mean(steadyVoltage),
     steadyVoltageStdV: std(steadyVoltage),
     peakTemperatureC: peakTemperature.value,

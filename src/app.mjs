@@ -419,11 +419,13 @@ function renderCalculationSummary(result) {
   const powerSource = metrics.powerSource || datasetMetrics.powerSource || null;
   const powerLabels = { checked: '原始功率 + 电压×电流交叉核算', raw_only: '原始功率通道（未交叉核算）', derived_only: '电压×电流派生功率', not_available: '当前数据集未提供功率口径' };
   const powerEvidence = metrics.powerCrossCheck || datasetMetrics.powerCrossCheck || {};
+  const integrationEvidence = metrics.integrationEvidence || {};
+  const skippedIntegrationGaps = Math.max(Number(integrationEvidence.hydrogenVolume?.skippedGapCount || 0), Number(integrationEvidence.energyConsumed?.skippedGapCount || 0));
   const powerDetail = powerEvidence.maxRelativeDifferencePct !== null && powerEvidence.maxRelativeDifferencePct !== undefined
     ? `最大交叉差异 ${fmt(powerEvidence.maxRelativeDifferencePct, 2)}%`
     : powerEvidence.rawPowerCount ? `${powerEvidence.rawPowerCount} 条原始功率记录` : '未把设定值当作实测功率';
   const timeDetail = quality.medianIntervalS !== undefined
-    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}`
+    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}${skippedIntegrationGaps ? ` · 积分跳过 ${skippedIntegrationGaps} 段` : ''}`
     : '企业适配器按源文件/会话分别统计';
   const mappingDetail = result.schema
     ? `${result.schema.mappedCount}/${result.schema.fieldCount} 核心字段 · 单位换算 ${Object.values(result.schema.conversions || {}).filter((item) => item.mode !== 'identity').length} 项`

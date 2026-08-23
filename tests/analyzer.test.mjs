@@ -811,9 +811,34 @@ test('profile data quality gates expose actual sampling intervals and block a co
   assert.equal(result.quality.medianIntervalS, 2);
   assert.equal(result.quality.maximumIntervalS, 3);
   assert.equal(result.quality.samplingGapCount, 1);
+  assert.equal(result.metrics.integrationEvidence.maxIntervalS, 2);
+  assert.equal(result.metrics.integrationEvidence.hydrogenVolume.skippedGapCount, 1);
+  assert.equal(result.metrics.integrationEvidence.energyConsumed.skippedGapCount, 1);
+  assert.equal(result.metrics.hydrogenVolumeNl, 3 / 60);
+  assert.equal(result.metrics.energyConsumedWh, 1 / 1800);
+  assert.equal(publicAnalysis(result).metrics.integrationEvidence.energyConsumed.skippedGapCount, 1);
   assert.equal(result.compliance.dataQuality.status, 'failed');
   assert.ok(result.issues.some((item) => item.code === 'DATA_QUALITY_GATE'));
   assert.equal(result.workflow.status, 'NOT_READY');
+});
+
+test('phase metrics do not integrate across a configured sampling gap', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,phase',
+    '0,1,2,30,10,3,1,steady',
+    '1,1,2,30,10,3,1,steady',
+    '4,1,2,30,10,3,1,steady'
+  ].join('\n')), {
+    requiredPhases: ['steady'],
+    requiredPhaseMetrics: { steady: ['durationS', 'energyConsumedWh', 'hydrogenVolumeNl'] },
+    dataQualityRequirements: { maxIntervalS: 2 }
+  });
+  const phase = result.phaseMetrics.phases.steady;
+  assert.equal(phase.durationS, 1);
+  assert.equal(phase.energyConsumedWh, 1 / 1800);
+  assert.equal(phase.hydrogenVolumeNl, 3 / 60);
+  assert.equal(phase.interruptedSegmentCount, 1);
+  assert.equal(result.phaseCoverage.required[0].validDataCoveragePct, 25);
 });
 
 test('phase evidence reports interrupted segments and valid coverage without inventing a minimum', () => {

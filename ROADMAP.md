@@ -16,6 +16,13 @@
 - Enterprise Markdown reports and the browser report preview expose standard references, method execution status and release-gate status; they do not declare standard conformity.
 - Verification artifacts: v3.5.37 T02 coverage/reference/integration reports; new per-cell, excluded-interval and parameter-formula regressions; full submission gates remain required before packaging.
 
+## 2026-08-24 current continuation evidence · time-gap-aware integration
+
+- Surfaces: analyzer source of truth, generic phase metrics, uncertainty propagation, browser calculation-summary UI, static/Vinext parity, regression tests, GitHub Pages workflow and round log.
+- Change: when `dataQualityRequirements.maxIntervalS` or `maxIntervalMultiplier` yields a gap limit, generic and phase trapezoid integration skips intervals above that limit; the skipped counts remain visible in `metrics.integrationEvidence` and the UI summary.
+- Gate: `node --test tests/analyzer.test.mjs` passed 104/104; full `npm test`, `npm run check:submission`, Pages preparation, cloud TypeScript/build and public deployment remain required before the commit closes this continuation.
+- Residual: profiles without an explicitly declared gap limit keep the previous descriptive integration behavior; formal enterprise acceptance still requires approved sampling rules, uncertainty budget and human review.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
