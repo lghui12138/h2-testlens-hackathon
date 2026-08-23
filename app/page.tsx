@@ -59,6 +59,8 @@ const DISPLAY_HTML_WITH_ALL_EVIDENCE_FIELDS = DISPLAY_HTML.replace('</details><d
 
 const DISPLAY_HTML_WITH_ALL_AUDIT_FIELDS = DISPLAY_HTML_WITH_ALL_EVIDENCE_FIELDS.replace('</details><div class="thresholds">', '<label>测试对象追溯信息（JSON）<textarea id="metadata-traceability" rows="6" placeholder=\'{"testRunId":"TR-2026-001","deviceId":"PEM-001","testType":"性能测试","testDate":"2026-08-23","cellCount":100,"activeAreaCm2":100,"evidenceRef":"TRACE-001"}\'></textarea></label><label>人工修改审计记录（JSON）<textarea id="metadata-edit-log" rows="7" placeholder=\'[{"field":"pressure_bar","oldValueSummary":"原始列值摘要","newValueSummary":"人工修正后摘要","operator":"工号-001","timestamp":"2026-08-23T12:00:00+08:00","reason":"校正单位定义","evidenceRef":"EDIT-001"}]\'></textarea></label><label>工作簿公式复核证据（JSON）<textarea id="metadata-formula-review" rows="5" placeholder=\'{"reviewerId":"工号-001","reviewedAt":"2026-08-23","evidenceRef":"FORMULA-REVIEW-001","sourceHash":"SHA-256:...","decision":"cached_values_reviewed"}\'></textarea></label></details><div class="thresholds">');
 
+const DISPLAY_HTML_WITH_STANDARD_BOUNDARY_LINK = DISPLAY_HTML_WITH_ALL_AUDIT_FIELDS.replace('</div></section><section class="side-card batch-observation-card">', '</div><a class="template-link" href="https://github.com/lghui12138/h2-testlens-hackathon/blob/main/docs/STANDARD_BOUNDARY_MATRIX.md" target="_blank" rel="noreferrer">查看标准实施边界矩阵 ↗</a></section><section class="side-card batch-observation-card">');
+
 export default function Home() {
   useEffect(() => {
     const load = (path: string, globalName: string) => new Promise<void>((resolve, reject) => {
@@ -78,5 +80,5 @@ export default function Home() {
     })().catch((error) => console.error("H2 TestLens failed to initialize", error));
   }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: DISPLAY_HTML_WITH_ALL_AUDIT_FIELDS.replace('<label>执行者与资质<input id="metadata-operator" type="text" placeholder="姓名 / 资质编号"></label>', '<label>执行者<input id="metadata-operator" type="text" placeholder="姓名 / 工号"></label><label>执行者资质/授权依据<input id="metadata-operator-qualification" type="text" placeholder="资质编号、培训记录或授权依据"></label>') }} />;
+  return <div dangerouslySetInnerHTML={{ __html: DISPLAY_HTML_WITH_STANDARD_BOUNDARY_LINK.replace('<label>执行者与资质<input id="metadata-operator" type="text" placeholder="姓名 / 资质编号"></label>', '<label>执行者<input id="metadata-operator" type="text" placeholder="姓名 / 工号"></label><label>执行者资质/授权依据<input id="metadata-operator-qualification" type="text" placeholder="资质编号、培训记录或授权依据"></label>') }} />;
 }

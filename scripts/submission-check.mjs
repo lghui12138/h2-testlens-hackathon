@@ -16,6 +16,7 @@ const requiredFiles = [
   'docs/AI_INTEGRATION.md',
   'docs/API.md',
   'docs/STANDARDS_ALIGNMENT.md',
+  'docs/STANDARD_BOUNDARY_MATRIX.md',
   'docs/COMPLETION_REPORT.md',
   'docs/CHANGE_MANIFEST.yaml',
   'docs/DEPLOYMENT.md',

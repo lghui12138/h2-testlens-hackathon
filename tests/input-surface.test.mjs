@@ -9,7 +9,7 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 const renderedVinextMarkup = (source) => {
   const withoutImports = source.split('\n').filter((line) => !line.startsWith('import ') && !line.startsWith('"use client"')).join('\n');
   const end = withoutImports.indexOf('\nexport default function Home');
-  const script = `${withoutImports.slice(0, end)}\n__rendered = DISPLAY_HTML_WITH_ALL_AUDIT_FIELDS;`;
+  const script = `${withoutImports.slice(0, end)}\n__rendered = DISPLAY_HTML_WITH_STANDARD_BOUNDARY_LINK;`;
   const context = {};
   vm.createContext(context);
   new vm.Script(script).runInContext(context);
@@ -71,5 +71,6 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
     assert.match(page, /190/);
     assert.match(page, /2,262,283/);
     assert.match(page, /正式符合性声明：0/);
+    assert.match(page, /标准实施边界矩阵/);
   }
 });

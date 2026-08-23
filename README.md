@@ -22,6 +22,8 @@
 
 网页与 App 的分离边界见 [`docs/WEB_AND_APP.md`](docs/WEB_AND_APP.md)：GitHub Pages 是评审和公开演示入口，Vinext App 是同一分析内核的可扩展应用入口；两者共用 `src/` 分析模块和样本/配置，不把原始 T02 数据提交到仓库。
 
+标准实施边界矩阵见 [`docs/STANDARD_BOUNDARY_MATRIX.md`](docs/STANDARD_BOUNDARY_MATRIX.md)，逐项区分产品映射、缺失证据和不可宣称的结论。
+
 每轮 GitHub 更新记录见 [`docs/GITHUB_ROUND_LOG.md`](docs/GITHUB_ROUND_LOG.md)。
 
 v3.5.37 证据：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.37.md`。
