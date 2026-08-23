@@ -100,3 +100,20 @@ test('public static page exposes share metadata and the Pages build copies its p
     assert.match(prepared, /og-card\.svg/);
   }
 });
+
+test('Vinext App public runtime exposes the browser engines and analysis worker used by app/page.tsx', async () => {
+  const required = [
+    'public/src/app.mjs',
+    'public/src/analysis-worker.mjs',
+    'public/src/analyzer.mjs',
+    'public/src/browser-engines.mjs',
+    'public/src/vendor/xlsx.full.min.js',
+    'public/src/vendor/jszip.min.js',
+    'public/src/vendor/mammoth.browser.min.js'
+  ];
+  for (const path of required) assert.ok(await read(path), `${path} must be publicly served for the App runtime`);
+  const page = await read('app/page.tsx');
+  assert.match(page, /src\/vendor\/xlsx\.full\.min\.js/);
+  assert.match(page, /src\/vendor\/jszip\.min\.js/);
+  assert.match(page, /src\/vendor\/mammoth\.browser\.min\.js/);
+});

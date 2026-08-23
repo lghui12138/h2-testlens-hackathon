@@ -191,6 +191,15 @@ const analysisSummary = (result) => {
       maximumIntervalS: result.dataset.dynamicAnalysis.maximumIntervalS,
       boundary: result.dataset.dynamicAnalysis.boundary
     } : null,
+    fieldValueDiagnostics: result.dataset?.signalDiagnostics ? {
+      reviewSignalCount: result.dataset.signalDiagnostics.reviewSignalCount,
+      negativeSignalCount: result.dataset.signalDiagnostics.negativeSignalCount,
+      zeroDominantSignalCount: result.dataset.signalDiagnostics.zeroDominantSignalCount,
+      constantSignalCount: result.dataset.signalDiagnostics.constantSignalCount,
+      parseIssueSignalCount: result.dataset.signalDiagnostics.parseIssueSignalCount,
+      reviewSignals: result.dataset.signalDiagnostics.reviewSignals,
+      boundary: result.dataset.signalDiagnostics.boundary
+    } : null,
     sourceSignalCount: dataset.signalCatalog?.length ?? null,
     fieldUsage,
     metadataUsage: result.metadataUsage || null,
@@ -237,6 +246,17 @@ const batchContribution = (result) => {
     metadataUsage: result?.metadataUsage || analysisSummary(result)?.metadataUsage || null,
     workbookEvidenceSummary: result?.dataset?.workbookEvidence?.summary || result?.workbookEvidenceSummary || null
   };
+  if (result?.dataset?.signalDiagnostics) {
+    contribution.fieldValueDiagnostics = {
+      reviewSignalCount: result.dataset.signalDiagnostics.reviewSignalCount,
+      negativeSignalCount: result.dataset.signalDiagnostics.negativeSignalCount,
+      zeroDominantSignalCount: result.dataset.signalDiagnostics.zeroDominantSignalCount,
+      constantSignalCount: result.dataset.signalDiagnostics.constantSignalCount,
+      parseIssueSignalCount: result.dataset.signalDiagnostics.parseIssueSignalCount,
+      reviewSignals: result.dataset.signalDiagnostics.reviewSignals,
+      boundary: result.dataset.signalDiagnostics.boundary
+    };
+  }
   if (result?.datasetType === 'vehicle') {
     contribution.vehicle = {
       stateCounts: dataset.stateCounts || {},
@@ -282,6 +302,37 @@ const batchContribution = (result) => {
     };
   }
   return contribution;
+};
+
+const aggregateFieldValueDiagnostics = (contributions = []) => {
+  const records = contributions.map((item) => item?.fieldValueDiagnostics).filter(Boolean);
+  const observedFields = new Map();
+  for (const record of records) {
+    for (const signal of record.reviewSignals || []) {
+      const current = observedFields.get(signal.source) || { source: signal.source, fileCount: 0, negativeCount: 0, zeroCount: 0, parseInvalidCount: 0, reasons: new Set() };
+      current.fileCount += 1;
+      current.negativeCount += Number(signal.negativeCount || 0);
+      current.zeroCount += Number(signal.zeroCount || 0);
+      current.parseInvalidCount += Number(signal.parseInvalidCount || 0);
+      for (const reason of signal.reasons || []) current.reasons.add(reason);
+      observedFields.set(signal.source, current);
+    }
+  }
+  return {
+    fileCount: contributions.length,
+    filesWithDiagnostics: records.length,
+    reviewSignalFileCount: records.filter((record) => Number(record.reviewSignalCount || 0) > 0).length,
+    reviewSignalOccurrenceCount: records.reduce((sum, record) => sum + Number(record.reviewSignalCount || 0), 0),
+    negativeSignalFileCount: records.filter((record) => Number(record.negativeSignalCount || 0) > 0).length,
+    zeroDominantSignalFileCount: records.filter((record) => Number(record.zeroDominantSignalCount || 0) > 0).length,
+    constantSignalFileCount: records.filter((record) => Number(record.constantSignalCount || 0) > 0).length,
+    parseIssueSignalFileCount: records.filter((record) => Number(record.parseIssueSignalCount || 0) > 0).length,
+    topObservedReviewFields: [...observedFields.values()]
+      .sort((a, b) => b.fileCount - a.fileCount || b.negativeCount - a.negativeCount || b.zeroCount - a.zeroCount || a.source.localeCompare(b.source, 'zh-Hans-CN'))
+      .slice(0, 20)
+      .map((item) => ({ ...item, reasons: [...item.reasons] })),
+    boundary: '全包字段值诊断只汇总原始值分布复核点，不替代企业字段语义、无效码表、单位、校准或标准验收限值。'
+  };
 };
 
 const referenceKind = (rel, name) => {
@@ -402,11 +453,33 @@ const crossReportDurabilitySummary = (records) => {
 
 const usageLedger = (record) => {
   if (record.status === 'processed') {
+    const analysis = record.analysis || {};
+    const dynamicEventCount = Number(analysis.dynamicAnalysis?.eventCount || 0);
+    const descriptiveCandidateCount = Number(analysis.descriptiveCandidateCount || 0);
+    const formalPerformancePointCount = Number(analysis.formalPerformancePointCount || 0);
+    const durabilityPointCount = Number(record.batchContribution?.durability?.pointCount || 0);
+    const evidenceDepth = formalPerformancePointCount > 0
+      ? 'formal_kpi'
+      : descriptiveCandidateCount > 0
+        ? 'descriptive_interval'
+        : dynamicEventCount > 0
+          ? 'dynamic_event_only'
+          : durabilityPointCount > 0
+            ? 'descriptive_interval'
+            : 'generic_metrics_only';
     return {
       disposition: 'processed_and_aggregated',
       parserExecuted: true,
       datasetType: record.analysis?.datasetType || null,
       rowsEnteredAdapter: record.rowCount ?? null,
+      evidenceDepth,
+      evidenceDepthCounts: {
+        formalPerformancePointCount,
+        descriptiveCandidateCount,
+        dynamicEventCount,
+        durabilityPointCount,
+        genericMetricCount: Array.isArray(analysis.metricNames) ? analysis.metricNames.length : 0
+      },
       fieldUsage: record.analysis?.fieldUsage || null,
       metadataUsage: record.analysis?.metadataUsage || null,
       workbookEvidenceSummary: record.analysis?.workbookEvidenceSummary || null,
@@ -420,6 +493,7 @@ const usageLedger = (record) => {
   if (record.status === 'reference_only') {
     return {
       disposition: 'reference_boundary_only',
+      evidenceDepth: 'reference_boundary',
       parserExecuted: false,
       datasetType: null,
       rowsEnteredAdapter: 0,
@@ -434,6 +508,7 @@ const usageLedger = (record) => {
   if (record.status === 'blocked_binary') {
     return {
       disposition: 'blocked_binary_boundary',
+      evidenceDepth: 'reference_boundary',
       parserExecuted: false,
       datasetType: null,
       rowsEnteredAdapter: 0,
@@ -448,6 +523,7 @@ const usageLedger = (record) => {
   if (record.status === 'declared_no_upload') {
     return {
       disposition: 'declared_no_upload_boundary',
+      evidenceDepth: 'reference_boundary',
       parserExecuted: false,
       datasetType: null,
       rowsEnteredAdapter: 0,
@@ -461,6 +537,7 @@ const usageLedger = (record) => {
   }
   return {
     disposition: `${record.status || 'unknown'}_boundary`,
+    evidenceDepth: 'reference_boundary',
     parserExecuted: false,
     datasetType: null,
     rowsEnteredAdapter: record.rowCount ?? 0,
@@ -623,6 +700,7 @@ for (const [inputIndex, path] of files.entries()) {
 }
 
 const counts = Object.fromEntries([...new Set(records.map((record) => record.status))].sort().map((status) => [status, records.filter((record) => record.status === status).length]));
+const evidenceDepthCounts = Object.fromEntries([...new Set(records.map((record) => record.usageLedger?.evidenceDepth || 'unknown'))].sort().map((depth) => [depth, records.filter((record) => (record.usageLedger?.evidenceDepth || 'unknown') === depth).length]));
 const packageCounts = Object.fromEntries([...new Set(records.map((record) => record.package))].sort().map((name) => [name, Object.fromEntries([...new Set(records.map((record) => record.status))].sort().map((status) => [status, records.filter((record) => record.package === name && record.status === status).length]))]));
 const processedRecords = records.filter((record) => record.status === 'processed' && record.batchContribution);
 const duplicateHashes = Object.entries(processedRecords.reduce((accumulator, record) => {
@@ -639,6 +717,7 @@ const duplicateHashes = Object.entries(processedRecords.reduce((accumulator, rec
   const catalogOnlySignals = [...new Set(contributions.flatMap((item) => item.catalogOnlySignals))].sort();
   const datasetTypes = [...new Set(contributions.map((item) => item.datasetType))].sort();
   const statusCounts = Object.fromEntries([...new Set(packageRecords.map((record) => record.status))].map((status) => [status, packageRecords.filter((record) => record.status === status).length]));
+  const packageEvidenceDepthCounts = Object.fromEntries([...new Set(packageRecords.map((record) => record.usageLedger?.evidenceDepth || 'unknown'))].sort().map((depth) => [depth, packageRecords.filter((record) => (record.usageLedger?.evidenceDepth || 'unknown') === depth).length]));
   const vehicle = contributions.filter((item) => item.vehicle);
   const stack = contributions.filter((item) => item.stack);
   const durability = contributions.filter((item) => item.durability);
@@ -688,6 +767,7 @@ const duplicateHashes = Object.entries(processedRecords.reduce((accumulator, rec
     processedRowCount: contributions.reduce((sum, item) => sum + item.rowCount, 0),
     datasetTypes,
     statusCounts,
+    evidenceDepthCounts: packageEvidenceDepthCounts,
     mappedFieldUnion: mappedFields,
     catalogOnlySignalUnion: catalogOnlySignals,
     metricUnion: [...new Set(contributions.flatMap((item) => item.metricNames))].sort(),
@@ -732,6 +812,7 @@ const duplicateHashes = Object.entries(processedRecords.reduce((accumulator, rec
       overlappingSourceFields,
       boundary: '每个源字段必须进入 analysis_input、context_or_cross_check 或 catalog_only；未分类和多角色冲突字段不计为完整覆盖。'
     },
+    fieldValueDiagnostics: aggregateFieldValueDiagnostics(contributions),
     durabilityFieldUsage: {
       roleCounts: Object.fromEntries(Object.entries(durabilityFieldUsageByRole).map(([role, fields]) => [role, fields.length])),
       byRole: durabilityFieldUsageByRole,
@@ -780,9 +861,11 @@ const summary = {
     recordsWithUsageLedger: records.filter((record) => record.usageLedger && record.usageLedger.disposition).length,
     dispositionCounts: Object.fromEntries([...new Set(records.map((record) => record.usageLedger?.disposition || 'missing'))].sort().map((disposition) => [disposition, records.filter((record) => (record.usageLedger?.disposition || 'missing') === disposition).length])),
     processedRowsEnteredAdapters: records.filter((record) => record.status === 'processed').reduce((sum, record) => sum + (record.usageLedger?.rowsEnteredAdapter || 0), 0),
+    evidenceDepthCounts,
     formalConformityClaims: records.filter((record) => record.usageLedger?.formalConformityClaim === true).length,
     boundary: '每个文件都必须有使用台账；处理、参考、阻断和未上传状态分别保留用途与边界，不把“已处理”扩大解释为“已满足标准”。'
   },
+    fieldValueDiagnostics: aggregateFieldValueDiagnostics(processedRecords.map((record) => record.batchContribution)),
   records: records.map(({ batchContribution: _batchContribution, ...record }) => record)
 };
 const serialized = JSON.stringify(normalizeNumbers(summary), null, 2);
@@ -799,6 +882,17 @@ if (basename(outputPath) === currentAuditName) {
     counts: summary.counts,
     processedRowsEnteredAdapters: summary.utilization.processedRowsEnteredAdapters,
     formalConformityClaims: summary.utilization.formalConformityClaims,
+    fieldDiagnostics: {
+      filesWithDiagnostics: summary.fieldValueDiagnostics.filesWithDiagnostics,
+      reviewSignalFileCount: summary.fieldValueDiagnostics.reviewSignalFileCount,
+      reviewSignalOccurrenceCount: summary.fieldValueDiagnostics.reviewSignalOccurrenceCount,
+      negativeSignalFileCount: summary.fieldValueDiagnostics.negativeSignalFileCount,
+      zeroDominantSignalFileCount: summary.fieldValueDiagnostics.zeroDominantSignalFileCount,
+      constantSignalFileCount: summary.fieldValueDiagnostics.constantSignalFileCount,
+      topObservedReviewFields: summary.fieldValueDiagnostics.topObservedReviewFields.slice(0, 8),
+      boundary: summary.fieldValueDiagnostics.boundary
+    },
+    evidenceDepthCounts: summary.utilization.evidenceDepthCounts,
     blockedReasons,
     boundary: summary.utilization.boundary
   }, null, 2)}\n`;

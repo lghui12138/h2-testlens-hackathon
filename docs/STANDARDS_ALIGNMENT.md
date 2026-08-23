@@ -9,10 +9,10 @@
 | 水电解制氢安全 | [ISO 22734-1:2025](https://www.iso.org/standard/82766.html?browse=ics)；[GB/T 29729-2022](https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9) | 适用范围/安全 profile 不能与燃料电池共用 |
 | PEM 电解槽性能 | [GB/T 45541-2025](https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB)；[官方解读](https://std.samr.gov.cn/search/videoDetailed?id=33D629C63896064EE06397BE0A0A07F1) | 现行；2025-07-01 实施。官方解读明确覆盖基本检查、基础测试、性能测试和测试报告；产品通过参数/profile/元数据/报告门控承接，不能代替完整试验方法 |
 | 电解水制氢系统功率波动 | [GB/T 46104-2025](https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119) | 现行；2025-12-01 实施。测试计划、采集计划、试验前检查、稳态/动态/启停和报告字段进入 readiness 清单；功率波动执行器仍未接入 |
-| 固定式燃料电池性能 | [GB/T 27748.2-2022](https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=2D7DA5B2D9F4D55AB5E627A41BCDFA2D) | 燃料电池 profile 使用独立方法，不复用电解槽阈值 |
+| 固定式燃料电池性能 | [GB/T 27748.2-2022](https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=2D7DA5B2D9F4D55AB5E627A41BCDFA2D) | 当前仅有燃料电池演示模板；尚未实现该标准的方法条款映射，不复用电解槽阈值 |
 | 燃料电池安全 | [IEC 62282-2-100:2020](https://webstore.iec.ch/en/publication/59780)；[IEC 62282-3-100:2019](https://webstore.iec.ch/en/publication/59566) | 模块安全与固定式系统安全按对象区分 |
 | 测试实验室可信度 | [ISO/IEC 17025:2017](https://www.iso.org/standard/66912.html) | 报告保留实验室/组织、仪器校准、执行者、计算和签核 provenance |
-| AI 治理/风险 | [ISO/IEC 42001:2023](https://www.iso.org/standard/42001)；[ISO/IEC 23894:2023](https://www.iso.org/standard/77304.html) | grounding guard、fallback、评估和持续监测是风险控制，不等于认证 |
+| AI 治理/风险 | [ISO/IEC 42001:2023](https://www.iso.org/standard/42001)；[ISO/IEC 23894:2023](https://www.iso.org/standard/77304.html) | grounding guard、fallback 和离线评估是有限的输出风险控制；当前没有持续监测或认证体系 |
 
 ## Product gate
 

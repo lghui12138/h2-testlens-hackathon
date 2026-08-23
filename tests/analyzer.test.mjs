@@ -45,6 +45,10 @@ test('parses the demo CSV into records', () => {
   assert.equal(rows.at(-1).timestamp_s, '120');
 });
 
+test('does not silently fall back when a profile id is unknown', () => {
+  assert.equal(getProfile('profile-that-does-not-exist'), null);
+});
+
 test('bounds browser chart rows while preserving source-session boundaries', () => {
   const rows = Array.from({ length: 1000 }, (_, index) => ({ index, session_id: index < 500 ? 'file:a.csv' : 'file:b.csv' }));
   const sampled = sampleRowsForDisplay(rows, 100);
@@ -1509,6 +1513,21 @@ test('recognizes the enterprise stack contract, supports tab-delimited Chinese h
   assert.equal(result.metrics.durationS, 3);
   assert.equal(result.quality.duplicateTimestampCount, 0);
   assert.match(result.narrative, /单片电压一致性/);
+});
+
+test('prefers actual stack voltage and uses per-row cell count for power and cell metrics', () => {
+  const rows = parseCSV([
+    '时间,实际电压（V）,总电压（V）,实际电流（A）,功率（kW）,片数,阳极流量（SLPM）,阴极流量（SLPM）,单片电压1（V）,单片电压2（V）,单片电压3（V）,单片电压4（V）',
+    '00:00:00,2,5,10,0.02,2,1,2,0.50,0.60,0,0',
+    '00:00:01,2.1,5.1,10,0.021,2,1,2,0.51,0.61,0,0'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.schema.mapping.voltage_v, '实际电压（V）');
+  assert.equal(result.metrics.powerCrossCheck.maxAbsoluteDifferenceW, 0);
+  assert.equal(result.dataset.activeCellChannelCount, 2);
+  assert.equal(result.dataset.cellTimeSeriesStats.find((item) => item.cellIndex === 3).count, 0);
+  assert.ok(result.dataset.metrics.cellValueStdV < 0.1);
+  assert.equal(result.dataset.stoich.cellCountSource, '逐行片数字段（缺失时回退 profile/导出通道数）');
 });
 
 test('unwraps fractional time-only timestamps across midnight for vehicle sessions', () => {

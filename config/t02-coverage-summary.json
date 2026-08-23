@@ -10,6 +10,113 @@
   },
   "processedRowsEnteredAdapters": 2262283,
   "formalConformityClaims": 0,
+  "fieldDiagnostics": {
+    "filesWithDiagnostics": 182,
+    "reviewSignalFileCount": 176,
+    "reviewSignalOccurrenceCount": 2759,
+    "negativeSignalFileCount": 176,
+    "zeroDominantSignalFileCount": 181,
+    "constantSignalFileCount": 181,
+    "topObservedReviewFields": [
+      {
+        "source": "FC_MinCellVoltage",
+        "fileCount": 165,
+        "negativeCount": 692561,
+        "zeroCount": 107639,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "存在负值，需确认符号/无效码定义",
+          "有效值只有一个取值，需确认是否为状态码或未采集",
+          "零值占比≥95%，需确认停机态、未接入或无效码"
+        ]
+      },
+      {
+        "source": "FC_AvgCellVoltage",
+        "fileCount": 95,
+        "negativeCount": 1098,
+        "zeroCount": 445633,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "存在负值，需确认符号/无效码定义",
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      },
+      {
+        "source": "TotalVoltage",
+        "fileCount": 60,
+        "negativeCount": 881,
+        "zeroCount": 309072,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "存在负值，需确认符号/无效码定义",
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      },
+      {
+        "source": "FC_MaxCellVoltage",
+        "fileCount": 50,
+        "negativeCount": 99,
+        "zeroCount": 6221,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "存在负值，需确认符号/无效码定义"
+        ]
+      },
+      {
+        "source": "FC_NetPwrOut",
+        "fileCount": 35,
+        "negativeCount": 0,
+        "zeroCount": 192511,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      },
+      {
+        "source": "FC_VoltOut",
+        "fileCount": 35,
+        "negativeCount": 0,
+        "zeroCount": 192220,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      },
+      {
+        "source": "FC_SysLoadCurr",
+        "fileCount": 19,
+        "negativeCount": 0,
+        "zeroCount": 73532,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      },
+      {
+        "source": "FC_VARVoltage",
+        "fileCount": 16,
+        "negativeCount": 0,
+        "zeroCount": 135062,
+        "parseInvalidCount": 0,
+        "reasons": [
+          "零值占比≥95%，需确认停机态、未接入或无效码",
+          "有效值只有一个取值，需确认是否为状态码或未采集"
+        ]
+      }
+    ],
+    "boundary": "全包字段值诊断只汇总原始值分布复核点，不替代企业字段语义、无效码表、单位、校准或标准验收限值。"
+  },
+  "evidenceDepthCounts": {
+    "descriptive_interval": 143,
+    "dynamic_event_only": 13,
+    "generic_metrics_only": 34,
+    "reference_boundary": 8
+  },
   "blockedReasons": [
     "nul_byte"
   ],

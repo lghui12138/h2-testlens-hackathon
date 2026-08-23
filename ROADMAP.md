@@ -23,6 +23,14 @@
 - Gate: `npm test` passed `409/409`; Node syntax checks and `git diff --check` passed. Full submission/Pages gates remain required before delivery.
 - Residual: negative/zero values remain unresolved until the enterprise supplies field semantics, units, device-state definitions and invalid-code tables; the diagnostic is evidence triage, not a conformity or safety conclusion.
 
+## 2026-08-24 current continuation evidence · full-package depth and source-calculation correction
+
+- Full T02 replay now records evidence depth in each usage ledger and package summary: `143 descriptive_interval`, `13 dynamic_event_only`, `34 generic_metrics_only`, `8 reference_boundary`, `0 formal_kpi`.
+- Qingchuan stack source correction: actual voltage is preferred for raw-power cross-check; per-row `片数` controls active cell channels and stoichiometry; zero-padded channels and non-positive cell values are excluded only from derived statistics with explicit counts, while raw values remain available.
+- Vehicle source correction: unresolved out-of-range cell-voltage units do not enter V KPI, `65535` variance sentinels are separated, empty selected windows do not fall back to all rows, and multi-session trends remain `not_comparable` without an explicit allowance.
+- App runtime evidence: public `src` modules/vendor assets are present for Vinext direct loading; mobile navigation and pre-analysis download guards are aligned across surfaces.
+- Residual: enterprise unit dictionaries, invalid-code/state definitions, batch declarations, approved profiles and formal method evidence remain external gates.
+
 ## 2026-08-24 current continuation evidence · time-gap-aware integration
 
 - Surfaces: analyzer source of truth, generic phase metrics, uncertainty propagation, browser calculation-summary UI, static/Vinext parity, regression tests, GitHub Pages workflow and round log.

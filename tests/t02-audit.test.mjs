@@ -16,6 +16,12 @@ test('T02 coverage evidence gives every source file an explicit usage ledger', a
   assert.equal(audit.utilization.recordsWithUsageLedger, audit.totalFiles);
   assert.equal(audit.utilization.formalConformityClaims, 0);
   assert.equal(audit.utilization.processedRowsEnteredAdapters, 2262283);
+  assert.deepEqual(audit.utilization.evidenceDepthCounts, {
+    descriptive_interval: 143,
+    dynamic_event_only: 13,
+    generic_metrics_only: 34,
+    reference_boundary: 8
+  });
   assert.deepEqual(audit.utilization.dispositionCounts, {
     blocked_binary_boundary: 1,
     declared_no_upload_boundary: 1,
@@ -26,12 +32,14 @@ test('T02 coverage evidence gives every source file an explicit usage ledger', a
     assert.ok(record.usageLedger?.disposition, `missing usage ledger: ${record.path}`);
     assert.equal(record.usageLedger.formalConformityClaim, false, `unexpected conformity claim: ${record.path}`);
     if (record.status === 'processed') {
+      assert.ok(['formal_kpi', 'descriptive_interval', 'dynamic_event_only', 'generic_metrics_only'].includes(record.usageLedger.evidenceDepth));
       assert.equal(record.usageLedger.parserExecuted, true);
       assert.equal(record.usageLedger.rowsEnteredAdapter, record.rowCount);
       assert.equal(record.usageLedger.referenceAudit.required, false);
       assert.ok(Array.isArray(record.usageLedger.evidenceSurfaces));
       for (const fields of Object.values(record.usageLedger.fieldUsage?.byRole || {})) assert.ok(fields.every((field) => String(field).trim()), `blank field in usage ledger: ${record.path}`);
     } else {
+      assert.equal(record.usageLedger.evidenceDepth, 'reference_boundary');
       assert.equal(record.usageLedger.parserExecuted, false);
       assert.equal(record.usageLedger.rowsEnteredAdapter, 0);
       if (['reference_only', 'declared_no_upload'].includes(record.status)) assert.equal(record.usageLedger.referenceAudit.required, true);
@@ -162,6 +170,9 @@ test('T02 integration report exposes every file ledger and preserves non-conform
   assert.match(report, /DURABILITY_COMPARABILITY_STACK_MODEL_MISMATCH/);
   assert.match(report, /仅作跨报告元数据、功率集合和时间关系筛查/);
   assert.match(report, /字段用途明细（不是每个字段都进入 KPI）/);
+  assert.match(report, /证据深度分层/);
+  assert.match(report, /generic_metrics_only/);
+  assert.match(report, /formal_kpi/);
   assert.match(report, /动态设定变化事件（描述性）/);
   assert.match(report, /不跨文件拼接/);
   assert.match(report, /\| 企业资料包02_氢质氢离 \| vehicle \| 46 \| 13 \| 33 \| 0 \| 0 \| 0 \|/);
