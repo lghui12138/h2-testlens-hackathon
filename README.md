@@ -2,6 +2,14 @@
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](http://lghui.top/h2-testlens-hackathon/)
+
+## 公开演示
+
+直接打开：[H₂ TestLens GitHub Pages](http://lghui.top/h2-testlens-hackathon/)
+
+这是浏览器网页原型：不需要登录，不上传原始 CSV；可以直接载入演示样本，也可以在浏览器内导入 CSV/TXT/Excel/DOCX。公开页面只提供工程分析和报告初稿，不替代标准认证、安全验证或企业放行签核。
+
 ## 一句话
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
