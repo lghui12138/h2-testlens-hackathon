@@ -82,6 +82,11 @@
 - Pages 准备脚本复制分享图到 `_site/`，提交门和输入面测试确认公开资源存在；分享预览只说明项目用途，不生成标准符合性宣传。
 - 因自定义域 HTTPS 证书尚未配置，OG/Twitter 图片改用 GitHub raw HTTPS 资源；canonical/url 与当前公开 HTTP 域名保持一致，避免分享爬虫遇到证书阻断。
 
+## 2026-08-24 · T02 覆盖卡动态摘要轮
+
+- 覆盖卡不再以 198/190/6/1/1 作为唯一来源；coverage audit 生成小型 `t02-coverage-summary.json`，静态页和 App 启动时读取并更新数字、进度条和阻断原因。
+- `config/` 与 `public/config/` 摘要做 parity 检查，避免 T02 重放后页面数字漂移。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。

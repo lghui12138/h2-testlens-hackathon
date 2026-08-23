@@ -95,6 +95,12 @@
 - Gate: static/App metadata parity test, submission gate, and Pages artifact check pass; metadata describes the prototype and its boundaries, not standard compliance.
 - Residual: social crawlers and custom-domain HTTPS behavior remain external platform concerns.
 
+## 2026-08-24 current continuation evidence · dynamic coverage summary
+
+- Change: coverage audit writes the versioned public summary JSON; both browser surfaces read it at startup, while hard-coded markup remains only an offline fallback.
+- Gate: source/public summary parity, static/App coverage card tests, submission gate and Pages artifact checks must pass.
+- Residual: summary is bounded audit metadata and never exposes raw enterprise rows or turns processed counts into conformity claims.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

@@ -55,6 +55,19 @@ test('static batch declaration example is available to both local browser surfac
   assert.deepEqual(JSON.parse(publicCopy), JSON.parse(source));
 });
 
+test('T02 coverage summary is parity-checked for static page runtime loading', async () => {
+  const [source, publicCopy] = await Promise.all([
+    read('config/t02-coverage-summary.json'),
+    read('public/config/t02-coverage-summary.json')
+  ]);
+  assert.deepEqual(JSON.parse(publicCopy), JSON.parse(source));
+  const summary = JSON.parse(source);
+  assert.equal(summary.schemaVersion, 'h2-testlens.t02-coverage-summary.v1');
+  assert.equal(summary.auditVersion, '3.5.37');
+  assert.equal(summary.totalFiles, 198);
+  assert.equal(summary.counts.processed, 190);
+});
+
 test('Vinext rendered markup keeps the full enterprise evidence and standards contract', async () => {
   const rendered = renderedVinextMarkup(await read('app/page.tsx'));
   for (const id of ['parameter-file', 'metadata-acquisition-record', 'metadata-precheck-items', 'metadata-test-stages', 'metadata-test-system', 'metadata-test-conditions', 'metadata-environment-conditions', 'metadata-measurement-methods', 'metadata-efficiency-record', 'metadata-phase-results', 'metadata-traceability', 'metadata-edit-log', 'metadata-formula-review', 'batch-declaration-file']) assert.match(rendered, new RegExp(id));
@@ -68,6 +81,7 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
   const rendered = renderedVinextMarkup(appSource);
   for (const page of [staticPage, rendered]) {
     assert.match(page, /T02 资料接入范围/);
+    for (const id of ['coverage-audit-version', 'coverage-total-files', 'coverage-processed', 'coverage-reference', 'coverage-blocked', 'coverage-meter-fill', 'coverage-note']) assert.match(page, new RegExp(id));
     assert.match(page, /190/);
     assert.match(page, /2,262,283/);
     assert.match(page, /正式符合性声明：0/);

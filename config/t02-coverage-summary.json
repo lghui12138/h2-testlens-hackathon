@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "h2-testlens.t02-coverage-summary.v1",
+  "auditVersion": "3.5.37",
+  "totalFiles": 198,
+  "counts": {
+    "blocked_binary": 1,
+    "declared_no_upload": 1,
+    "processed": 190,
+    "reference_only": 6
+  },
+  "processedRowsEnteredAdapters": 2262283,
+  "formalConformityClaims": 0,
+  "blockedReasons": [
+    "nul_byte"
+  ],
+  "boundary": "每个文件都必须有使用台账；处理、参考、阻断和未上传状态分别保留用途与边界，不把“已处理”扩大解释为“已满足标准”。"
+}

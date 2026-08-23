@@ -789,4 +789,20 @@ const serialized = JSON.stringify(normalizeNumbers(summary), null, 2);
 const outputPath = resolve(process.argv[3] || `${repoRoot}/.research/ignite_t02_standards_20260821/t02_coverage_audit_v${packageVersion}.json`);
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${serialized}\n`, 'utf8');
+const currentAuditName = `t02_coverage_audit_v${packageVersion}.json`;
+if (basename(outputPath) === currentAuditName) {
+  const blockedReasons = records.filter((record) => record.status === 'blocked_binary').map((record) => record.binaryReason || 'unknown');
+  const coverageSummary = `${JSON.stringify({
+    schemaVersion: 'h2-testlens.t02-coverage-summary.v1',
+    auditVersion: packageVersion,
+    totalFiles: records.length,
+    counts: summary.counts,
+    processedRowsEnteredAdapters: summary.utilization.processedRowsEnteredAdapters,
+    formalConformityClaims: summary.utilization.formalConformityClaims,
+    blockedReasons,
+    boundary: summary.utilization.boundary
+  }, null, 2)}\n`;
+  await writeFile(`${repoRoot}/config/t02-coverage-summary.json`, coverageSummary, 'utf8');
+  await writeFile(`${repoRoot}/public/config/t02-coverage-summary.json`, coverageSummary, 'utf8');
+}
 console.log(JSON.stringify({ outputPath, auditVersion: packageVersion, totalFiles: records.length, processedRowsEnteredAdapters: summary.utilization.processedRowsEnteredAdapters }, null, 2));

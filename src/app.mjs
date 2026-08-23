@@ -960,6 +960,32 @@ async function loadSample() {
   await loadCsv(assetUrl('sample-data/test_run_001.csv'), '演示样本 · electrolyzer_run_017.csv');
 }
 
+async function loadCoverageSummary() {
+  try {
+    const response = await fetch(assetUrl('config/t02-coverage-summary.json'));
+    if (!response.ok) return;
+    const summary = await response.json();
+    const counts = summary.counts || {};
+    const total = Number(summary.totalFiles || 0);
+    const processed = Number(counts.processed || 0);
+    const reference = Number(counts.reference_only || 0);
+    const blocked = Number(counts.blocked_binary || 0);
+    const noUpload = Number(counts.declared_no_upload || 0);
+    const setText = (id, value) => { const element = $(`#${id}`); if (element) element.textContent = value; };
+    setText('coverage-audit-version', `v${summary.auditVersion || '—'}`);
+    setText('coverage-total-files', total.toLocaleString('zh-CN'));
+    setText('coverage-processed', processed.toLocaleString('zh-CN'));
+    setText('coverage-reference', reference.toLocaleString('zh-CN'));
+    setText('coverage-blocked', `${blocked} + ${noUpload}`);
+    const fill = $('#coverage-meter-fill');
+    if (fill) fill.style.width = `${total > 0 ? Math.min(100, (processed / total) * 100) : 0}%`;
+    const note = $('#coverage-note');
+    if (note) note.innerHTML = `处理数据进入适配器：${Number(summary.processedRowsEnteredAdapters || 0).toLocaleString('zh-CN')} 行/功率点 · 正式符合性声明：${Number(summary.formalConformityClaims || 0)}<br>阻断项：${escapeHtml((summary.blockedReasons || ['unknown']).join('、'))}；${escapeHtml(summary.boundary || '保留哈希，不生成测试结论。')}`;
+  } catch {
+    // The hard-coded markup remains a safe fallback for offline/local previews.
+  }
+}
+
 async function loadLegacySample() {
   await loadCsv(assetUrl('sample-data/test_run_legacy_cn.csv'), '中文单位样本 · legacy_run_cn.csv');
 }
@@ -1143,4 +1169,5 @@ renderProfileOptions();
 applyProfile('electrolyzer-demo');
 state.history = readHistory(window.localStorage);
 renderHistory();
+void loadCoverageSummary();
 loadSample();
