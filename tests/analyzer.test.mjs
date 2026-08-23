@@ -408,7 +408,7 @@ test('approved profiles fail closed on missing object traceability and manual ed
     profileName: 'Traceability gate',
     approvalStatus: 'approved',
     approvalEvidence: APPROVAL_EVIDENCE,
-    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/example' }],
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB' }],
     methodId: 'GB/T 45541-2025',
     revision: '2025',
     traceabilityRequirements: {
@@ -512,7 +512,7 @@ test('approved standard profiles require traceable standard-reference provenance
     name: 'Standard provenance package',
     approvalStatus: 'approved',
     approvalEvidence: APPROVAL_EVIDENCE,
-    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/example' }],
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB' }],
     methodId: 'GB/T 45541-2025',
     revision: '2025',
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
@@ -1468,6 +1468,18 @@ test('exposes field-level value diagnostics without silently filtering raw value
   assert.ok(result.dataset.signalDiagnostics.reviewSignalCount >= 2);
   assert.ok(result.issues.some((item) => item.code === 'SIGNAL_VALUE_SEMANTICS_REVIEW'));
   assert.equal(result.rows[0].min_cell_voltage_v, -2);
+});
+
+test('applies an explicitly declared vehicle mV unit without guessing from magnitude', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const rows = parseCSV([header,
+    '0,4,10,320,3.2,700,3,740,8,12,500,1',
+    '1,4,10,320,3.2,701,3,741,8,12,500,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, { vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'mV' }, avg_cell_voltage_v: { sourceUnit: 'mV' } } });
+  assert.equal(result.dataset.unitDiagnostics.unresolvedFields.length, 0);
+  assert.equal(result.rows[0].avg_cell_voltage_v, 0.74);
+  assert.ok(Math.abs(result.metrics.steadyVoltageMeanV - 0.7405) < 1e-12);
 });
 
 test('keeps vehicle sessions separate and exposes two independently scaled display signals', () => {

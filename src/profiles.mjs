@@ -396,6 +396,15 @@ export const EVALUATION_MODES = Object.freeze(['descriptive_only', 'risk_screeni
 const METHOD_EVIDENCE_SCHEMA_VERSION = 'h2-testlens.method-evidence.v1';
 const METHOD_COVERAGE_STATUSES = ['implemented', 'not_applicable', 'partial', 'planned'];
 const STANDARD_STATUSES = ['current', 'published', 'withdrawn', 'draft', 'unknown'];
+const CANONICAL_STANDARD_URIS = Object.freeze({
+  'GB/T 45541-2025': 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB',
+  'GB/T 46104-2025': 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119',
+  'GB/T 27748.2-2022': 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=2D7DA5B2D9F4D55AB5E627A41BCDFA2D',
+  'ISO 22734-1:2025': 'https://www.iso.org/standard/82766.html?browse=ics',
+  'ISO/IEC 17025:2017': 'https://www.iso.org/standard/66912.html',
+  'ISO/IEC 42001:2023': 'https://www.iso.org/standard/81230.html',
+  'ISO/IEC 23894:2023': 'https://www.iso.org/standard/77304.html'
+});
 const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'];
 const traceabilityFields = ['testRunId', 'deviceId', 'testType', 'testDate', 'cellCount', 'activeAreaCm2', 'evidenceRef'];
 const traceabilityValueTypes = ['text', 'number', 'date', 'reference'];
@@ -412,6 +421,14 @@ const uncertaintyFields = [
 const datasetTypes = ['vehicle', 'stack', 'durability', 'generic'];
 const acceptanceMetrics = ['peakTemperatureC', 'peakPressureBar', 'peakLeakPpm', 'steadyVoltageStdV', 'pressureDriftBarPerMin', 'minimumHydrogenPurityPct', 'specificEnergyKWhPerNm3', 'efficiency_pct'];
 const acceptanceOperators = ['<=', '>=', '<', '>', '=='];
+
+const validIsoDate = (value) => {
+  const text = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const [year, month, day] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
 
 export function standardReferenceReadiness(profile = {}) {
   const references = Array.isArray(profile.standardRefs) ? profile.standardRefs : [];
@@ -440,6 +457,15 @@ export function standardReferenceReadiness(profile = {}) {
     if (id && ids.has(id)) duplicateIds.push(id);
     if (id) ids.add(id);
     if (reference.status !== undefined && !STANDARD_STATUSES.includes(String(reference.status).trim())) malformed.push(`${label}.status`);
+    const uri = String(reference.uri || '').trim();
+    try {
+      const parsedUri = new URL(uri);
+      if (parsedUri.protocol !== 'https:') malformed.push(`${label}.uri_https_required`);
+    } catch {
+      malformed.push(`${label}.uri_invalid`);
+    }
+    const canonicalUri = CANONICAL_STANDARD_URIS[id];
+    if (canonicalUri && uri !== canonicalUri) malformed.push(`${label}.uri_not_canonical_for_${id}`);
   }
 
   if (profile.approvalStatus === 'approved') {
@@ -454,11 +480,11 @@ export function standardReferenceReadiness(profile = {}) {
     else for (const field of ['sourceId', 'locator', 'evidenceType']) if (!String(source[field] || '').trim()) missing.push(`methodSource.${field}`);
     for (const field of ['scopeEvidence', 'workflowEvidence']) if (!String(profile[field] || '').trim()) missing.push(field);
     for (const field of ['publicationDate', 'effectiveDate']) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(profile[field] || '').trim())) missing.push(field);
+      if (!validIsoDate(profile[field])) missing.push(field);
     }
     const publicationDate = String(profile.publicationDate || '').trim();
     const effectiveDate = String(profile.effectiveDate || '').trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(publicationDate) && /^\d{4}-\d{2}-\d{2}$/.test(effectiveDate) && effectiveDate < publicationDate) malformed.push('effectiveDate_before_publicationDate');
+    if (validIsoDate(publicationDate) && validIsoDate(effectiveDate) && effectiveDate < publicationDate) malformed.push('effectiveDate_before_publicationDate');
   }
 
   const status = malformed.length || duplicateIds.length ? 'malformed' : missing.length ? 'missing' : 'ready';
@@ -481,7 +507,7 @@ function approvalEvidenceShape(evidence, revision) {
   const record = evidence && typeof evidence === 'object' && !Array.isArray(evidence) ? evidence : null;
   const fields = {
     approverId: typeof record?.approverId === 'string' && record.approverId.trim().length > 0,
-    approvalDate: typeof record?.approvalDate === 'string' && APPROVAL_DATE_PATTERN.test(record.approvalDate.trim()),
+    approvalDate: typeof record?.approvalDate === 'string' && validIsoDate(record.approvalDate),
     approvalRef: typeof record?.approvalRef === 'string' && record.approvalRef.trim().length > 0,
     profileRevision: typeof record?.profileRevision === 'string' && record.profileRevision.trim().length > 0,
     profileRevisionRef: typeof record?.profileRevisionRef === 'string' && record.profileRevisionRef.trim().length > 0
@@ -489,7 +515,7 @@ function approvalEvidenceShape(evidence, revision) {
   const missing = Object.entries(fields).filter(([, present]) => !present).map(([field]) => field);
   const malformed = [];
   if (record && record.approverId !== undefined && (typeof record.approverId !== 'string' || record.approverId.length > 160)) malformed.push('approverId');
-  if (record && record.approvalDate !== undefined && (typeof record.approvalDate !== 'string' || !APPROVAL_DATE_PATTERN.test(record.approvalDate.trim()))) malformed.push('approvalDate');
+  if (record && record.approvalDate !== undefined && (typeof record.approvalDate !== 'string' || !validIsoDate(record.approvalDate))) malformed.push('approvalDate');
   if (record && record.approvalRef !== undefined && (typeof record.approvalRef !== 'string' || record.approvalRef.length > 240)) malformed.push('approvalRef');
   if (record && record.profileRevision !== undefined && (typeof record.profileRevision !== 'string' || record.profileRevision.length > 120)) malformed.push('profileRevision');
   if (record && record.profileRevisionRef !== undefined && (typeof record.profileRevisionRef !== 'string' || record.profileRevisionRef.length > 240)) malformed.push('profileRevisionRef');
@@ -916,6 +942,14 @@ export function validateProfilePackage(payload) {
     }
     if (profile.supportedDatasetTypes !== undefined && (!Array.isArray(profile.supportedDatasetTypes) || !profile.supportedDatasetTypes.length || profile.supportedDatasetTypes.some((type) => !datasetTypes.includes(type)))) errors.push(`${profile.id || '未知'} supportedDatasetTypes 含未知或空数据集类型`);
     if (profile.vehicleTargets !== undefined && (!Array.isArray(profile.vehicleTargets) || !profile.vehicleTargets.length || profile.vehicleTargets.some((value) => !Number.isFinite(Number(value)) || Number(value) <= 0))) errors.push(`${profile.id || '未知'} vehicleTargets 必须是正数数组`);
+    if (profile.vehicleSignalUnits !== undefined) {
+      if (!profile.vehicleSignalUnits || typeof profile.vehicleSignalUnits !== 'object' || Array.isArray(profile.vehicleSignalUnits)) errors.push(`${profile.id || '未知'} vehicleSignalUnits 必须是对象`);
+      else for (const [field, unitSpec] of Object.entries(profile.vehicleSignalUnits)) {
+        if (!['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field)) errors.push(`${profile.id || '未知'} vehicleSignalUnits 含未知字段：${field}`);
+        const sourceUnit = typeof unitSpec === 'string' ? unitSpec : unitSpec?.sourceUnit;
+        if (!['V', 'mV'].includes(sourceUnit)) errors.push(`${profile.id || '未知'} vehicleSignalUnits.${field}.sourceUnit 必须为 V 或 mV`);
+      }
+    }
     for (const field of ['vehicleCurrentToleranceA', 'vehicleMinimumDurationS']) if (profile[field] !== undefined && (!Number.isFinite(Number(profile[field])) || Number(profile[field]) <= 0)) errors.push(`${profile.id || '未知'} ${field} 必须为正数`);
     if (profile.vehicleTrendXAxis !== undefined && !['runtime_h', 'timestamp'].includes(profile.vehicleTrendXAxis)) errors.push(`${profile.id || '未知'} vehicleTrendXAxis 必须为 runtime_h 或 timestamp`);
     if (profile.vehicleTrendModel !== undefined && !['linear', 'quadratic'].includes(profile.vehicleTrendModel)) errors.push(`${profile.id || '未知'} vehicleTrendModel 必须为 linear 或 quadratic`);
@@ -1008,6 +1042,7 @@ export function profilesFromPackage(payload) {
       vehicleCurrentToleranceA: profile.vehicleCurrentToleranceA || null,
       vehicleMinimumDurationS: profile.vehicleMinimumDurationS || null,
       vehicleDynamicAnalysis: profile.vehicleDynamicAnalysis || null,
+      vehicleSignalUnits: profile.vehicleSignalUnits || {},
       vehicleTrendXAxis: profile.vehicleTrendXAxis || 'runtime_h',
       vehicleTrendModel: profile.vehicleTrendModel || 'linear',
       durabilityRules: profile.durabilityRules || {},

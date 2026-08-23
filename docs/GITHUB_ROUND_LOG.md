@@ -1,5 +1,10 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 标准引用真实性门控轮
+
+- profile 包校验已知 GB/T/ISO 的 canonical HTTPS URL、真实 ISO 日期和审批日期；伪造标准 URL 或非法日期会在导入前拒绝。
+- `vehicleSignalUnits` 通过 profile/API/batch-watch 传递，未声明单位时不按数值大小猜测车辆单体电压单位。
+
 ## 2026-08-24 · XLSX 检测字段与耐久图表语义修复轮
 
 - 出厂报告 XLSX 解析改为按真实表头定位“标准/测试结果/是否合格”，并保留 `measuredValues[]`；真实包 01 检测项目现在把 `0.2` 作为测量值、`是` 作为原报告结果。

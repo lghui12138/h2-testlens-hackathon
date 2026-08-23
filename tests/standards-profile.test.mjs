@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEVICE_PROFILES } from '../src/profiles.mjs';
+import { DEVICE_PROFILES, profilesFromPackage } from '../src/profiles.mjs';
 
 const profileByMethod = (methodId) => DEVICE_PROFILES.find((profile) => profile.methodId === methodId);
 
@@ -57,4 +57,19 @@ test('standard-referenced built-in profiles keep an explicit non-certification e
     assert.notEqual(profile.approvalStatus, 'approved', `${profile.id} must not ship as an approved enterprise profile`);
     assert.ok(profile.standardRefs.every((reference) => reference.uri && reference.status), `${profile.id} references need URI and status`);
   }
+});
+
+test('profile packages reject invalid dates and non-canonical known standard URLs', () => {
+  const result = profilesFromPackage({ schemaVersion: 'h2-testlens.profile.v1', organization: 'test', profiles: [{
+    id: 'approved-test', name: 'approved-test', approvalStatus: 'approved', evaluationMode: 'acceptance',
+    methodId: 'GB/T 45541-2025', revision: '2025', status: 'current',
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://example.com/fake', status: 'current' }],
+    methodSource: { sourceId: 'SRC', locator: 'LOC', evidenceType: 'register' }, scopeEvidence: 'scope', workflowEvidence: 'workflow',
+    publicationDate: '2025-99-01', effectiveDate: '2025-07-01',
+    approvalEvidence: { approverId: 'A', approvalDate: '2025-99-01', approvalRef: 'R', profileRevision: '2025', profileRevisionRef: 'RR' },
+    thresholds: { maxTemperatureC: 1, maxPressureBar: 1, maxLeakPpm: 1, maxVoltageStdV: 1, maxPressureDriftBarPerMin: 1 }, supportedDatasetTypes: ['generic']
+  }] });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes('uri_not_canonical')));
+  assert.ok(result.errors.some((error) => error.includes('approvalDate')));
 });
