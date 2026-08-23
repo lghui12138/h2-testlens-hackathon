@@ -844,6 +844,22 @@ test('phase metrics do not integrate across a configured sampling gap', () => {
   assert.equal(result.phaseCoverage.required[0].validDataCoveragePct, 25);
 });
 
+test('phase energy remains independently calculable when flow is absent', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,leak_ppm,phase',
+    '0,1,2,30,10,1,steady',
+    '1,1,2,30,10,1,steady'
+  ].join('\n')), {
+    requiredPhases: ['steady'],
+    requiredPhaseMetrics: { steady: ['energyConsumedWh'] }
+  });
+  const phase = result.phaseMetrics.phases.steady;
+  assert.equal(phase.energyConsumedWh, 1 / 1800);
+  assert.equal(phase.hydrogenVolumeNl, null);
+  assert.equal(phase.integrationStatus, 'partial_input');
+  assert.deepEqual(result.compliance.missingPhaseMetrics, []);
+});
+
 test('phase evidence reports interrupted segments and valid coverage without inventing a minimum', () => {
   const result = analyzeRows(parseCSV([
     'timestamp_s,phase,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',

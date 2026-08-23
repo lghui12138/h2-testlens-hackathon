@@ -53,6 +53,12 @@
 - Gate: phase-gap regression must pass together with the full 403-test/120-check gate; UI phase status must show “缺口阻断” rather than “已计算”.
 - Residual: global descriptive integrations retain bounded evidence for exploration; formal phase conclusions still require enterprise-approved data-quality and acceptance rules.
 
+## 2026-08-24 current continuation evidence · independent phase inputs
+
+- Change: phase energy and hydrogen-volume gates are independent; missing flow no longer invalidates a valid energy integral, while specific energy remains blocked until both are complete.
+- Gate: analyzer regression passes with a two-row power-only phase and reports `energyConsumedWh` plus `partial_input` status.
+- Residual: this improves metric availability but does not infer missing flow, efficiency, acceptance limits or standard compliance.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

@@ -542,11 +542,9 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       }
       if (previous.flow_slpm !== null && current.flow_slpm !== null) hydrogenVolumeNl += ((previous.flow_slpm + current.flow_slpm) / 2) * deltaS / 60;
     }
-    const completeIntegration = validSegments > 0
-      && interruptedSegmentCount === 0
-      && nonPositiveIntervalCount === 0
-      && indexes.every((index) => electricalPower(rows[index]) !== null)
-      && indexes.every((index) => rows[index].flow_slpm !== null);
+    const completeTime = validSegments > 0 && interruptedSegmentCount === 0 && nonPositiveIntervalCount === 0;
+    const completeEnergy = completeTime && indexes.every((index) => electricalPower(rows[index]) !== null);
+    const completeVolume = completeTime && indexes.every((index) => rows[index].flow_slpm !== null);
     const phase = {
       phaseId,
       labels: [...new Set(indexes.map((index) => String(rows[index].phase || '未标注')))],
@@ -557,10 +555,10 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       startS: indexes.length ? rows[indexes[0]].timestamp_s : null,
       endS: indexes.length ? rows[indexes.at(-1)].timestamp_s : null,
       durationS: validSegments ? durationS : null,
-      energyConsumedWh: completeIntegration ? energyConsumedWh : null,
-      hydrogenVolumeNl: completeIntegration ? hydrogenVolumeNl : null,
+      energyConsumedWh: completeEnergy ? energyConsumedWh : null,
+      hydrogenVolumeNl: completeVolume ? hydrogenVolumeNl : null,
       specificEnergyKWhPerNm3: null,
-      integrationStatus: completeIntegration ? 'complete' : indexes.length < 2 ? 'insufficient' : skippedGapCount ? 'partial_gap' : skippedSessionBoundaryCount ? 'partial_session_boundary' : 'partial_interrupted',
+      integrationStatus: completeEnergy && completeVolume ? 'complete' : indexes.length < 2 ? 'insufficient' : skippedGapCount ? 'partial_gap' : skippedSessionBoundaryCount ? 'partial_session_boundary' : !completeTime ? 'partial_interrupted' : 'partial_input',
       skippedGapCount,
       skippedSessionBoundaryCount,
       powerRangeW: maxPower !== null && minPower !== null ? maxPower - minPower : null,
