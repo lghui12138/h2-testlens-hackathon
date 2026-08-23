@@ -29,6 +29,12 @@
 - Gate: `node --test tests/analyzer.test.mjs` passed 105/105 after adding the two-file reset regression; full suite and cloud Pages gate remain required for delivery.
 - Residual: enterprise adapters already preserve their own source-file/session contracts; formal cross-file aggregation still requires an enterprise batch declaration and remains descriptive_only without one.
 
+## 2026-08-24 current continuation evidence · public T02 coverage card
+
+- Change: static Pages and Vinext App now expose the versioned T02 file-use boundary directly in the dashboard: 198 total, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, and 0 formal conformity claims.
+- Gate: verify the card and audit link in `src/index.html`, `app/page.tsx`, `_site/index.html`, and the current audit JSON; responsive 2-column mobile layout is tokenized in `src/styles.css`.
+- Residual: counts are versioned audit evidence, not a claim that every source field enters a KPI or that the resulting profile satisfies any standard.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

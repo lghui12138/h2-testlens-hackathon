@@ -62,3 +62,14 @@ test('Vinext rendered markup keeps the full enterprise evidence and standards co
   assert.match(rendered, /未执行安全验证/);
   assert.match(rendered, /非原生 iOS\/Android 客户端/);
 });
+
+test('T02 coverage card is visible on both public browser surfaces', async () => {
+  const [staticPage, appSource] = await Promise.all([read('src/index.html'), read('app/page.tsx')]);
+  const rendered = renderedVinextMarkup(appSource);
+  for (const page of [staticPage, rendered]) {
+    assert.match(page, /T02 资料接入范围/);
+    assert.match(page, /190/);
+    assert.match(page, /2,262,283/);
+    assert.match(page, /正式符合性声明：0/);
+  }
+});

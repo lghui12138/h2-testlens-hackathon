@@ -278,15 +278,26 @@ function convertValue(rawValue, transform) {
 }
 
 const slopePerMinute = (rows, field) => {
-  const points = rows
-    .map((row) => [row.timestamp_s, row[field]])
-    .filter(([x, y]) => x !== null && y !== null);
-  if (points.length < 2) return 0;
-  const xMean = mean(points.map(([x]) => x));
-  const yMean = mean(points.map(([, y]) => y));
-  const numerator = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0);
-  const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
-  return denominator ? (numerator / denominator) * 60 : 0;
+  const bySession = new Map();
+  rows.forEach((row) => {
+    if (row.timestamp_s === null || row[field] === null) return;
+    const key = sessionKey(row);
+    const points = bySession.get(key) || [];
+    points.push([row.timestamp_s, row[field]]);
+    bySession.set(key, points);
+  });
+  const fits = [...bySession.values()].map((points) => {
+    if (points.length < 2) return null;
+    const xMean = mean(points.map(([x]) => x));
+    const yMean = mean(points.map(([, y]) => y));
+    const numerator = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0);
+    const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
+    if (!denominator) return null;
+    return { slopePerMinute: (numerator / denominator) * 60, spanS: Math.max(...points.map(([x]) => x)) - Math.min(...points.map(([x]) => x)) };
+  }).filter(Boolean);
+  if (!fits.length) return 0;
+  const weight = fits.reduce((sum, fit) => sum + Math.max(fit.spanS, 1), 0);
+  return fits.reduce((sum, fit) => sum + fit.slopePerMinute * Math.max(fit.spanS, 1), 0) / weight;
 };
 
 function sessionKey(row) {

@@ -857,9 +857,9 @@ test('phase evidence reports interrupted segments and valid coverage without inv
 test('keeps generic multi-file sessions separate for quality, phase summaries, and integration', () => {
   const result = analyzeRows([
     { session_id: 'file:a.csv', source_file: 'a.csv', timestamp_s: '0', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
-    { session_id: 'file:a.csv', source_file: 'a.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
-    { session_id: 'file:b.csv', source_file: 'b.csv', timestamp_s: '0', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
-    { session_id: 'file:b.csv', source_file: 'b.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' }
+    { session_id: 'file:a.csv', source_file: 'a.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '11', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'file:b.csv', source_file: 'b.csv', timestamp_s: '0', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '20', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'file:b.csv', source_file: 'b.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '18', flow_slpm: '3', leak_ppm: '1' }
   ]);
   assert.equal(result.quality.duplicateTimestampCount, 0);
   assert.equal(result.quality.nonMonotonicCount, 0);
@@ -867,6 +867,7 @@ test('keeps generic multi-file sessions separate for quality, phase summaries, a
   assert.equal(result.metrics.energyConsumedWh, 1 / 900);
   assert.equal(result.metrics.hydrogenVolumeNl, 6 / 60);
   assert.equal(result.metrics.integrationEvidence.energyConsumed.skippedSessionBoundaryCount, 1);
+  assert.equal(result.metrics.pressureDriftBarPerMin, -30);
   assert.equal(result.phases.length, 2);
   assert.deepEqual(result.phases.map((phase) => phase.sessionId), ['session:file:a.csv', 'session:file:b.csv']);
 });
