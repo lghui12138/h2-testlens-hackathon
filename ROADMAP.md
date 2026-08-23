@@ -47,6 +47,12 @@
 - Gate: the matrix is required by `scripts/submission-check.mjs`; static/Vinext parity and the cloud Pages release gate must pass before delivery.
 - Residual: the matrix improves truthful disclosure; it does not close the external evidence needed for formal conformity or certification.
 
+## 2026-08-24 current continuation evidence · phase integration fail-closed
+
+- Change: phase energy/volume/specific-energy outputs become null with explicit partial status when a declared gap, session boundary, interruption, non-positive interval or missing input prevents a complete phase integral.
+- Gate: phase-gap regression must pass together with the full 403-test/120-check gate; UI phase status must show “缺口阻断” rather than “已计算”.
+- Residual: global descriptive integrations retain bounded evidence for exploration; formal phase conclusions still require enterprise-approved data-quality and acceptance rules.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

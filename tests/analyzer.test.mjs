@@ -835,9 +835,12 @@ test('phase metrics do not integrate across a configured sampling gap', () => {
   });
   const phase = result.phaseMetrics.phases.steady;
   assert.equal(phase.durationS, 1);
-  assert.equal(phase.energyConsumedWh, 1 / 1800);
-  assert.equal(phase.hydrogenVolumeNl, 3 / 60);
+  assert.equal(phase.energyConsumedWh, null);
+  assert.equal(phase.hydrogenVolumeNl, null);
+  assert.equal(phase.integrationStatus, 'partial_gap');
+  assert.equal(phase.skippedGapCount, 1);
   assert.equal(phase.interruptedSegmentCount, 1);
+  assert.deepEqual(result.compliance.missingPhaseMetrics, ['steady.energyConsumedWh', 'steady.hydrogenVolumeNl']);
   assert.equal(result.phaseCoverage.required[0].validDataCoveragePct, 25);
 });
 

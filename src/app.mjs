@@ -480,7 +480,8 @@ function renderPhases(result) {
     const metricValues = fields.filter((field) => phaseMetricLabels[field]).map((field) => phaseMetricMarkup(field, field === 'durationS' ? (metric?.durationS ?? phase.durationS) : metric[field]));
     const missing = metric ? missingMetrics.filter((item) => item.startsWith(`${metric.phaseId}.`)).map((item) => item.slice(metric.phaseId.length + 1)) : [];
     const missingText = missing.length ? `<small class="phase-missing">待补齐：${missing.map((field) => phaseMetricLabels[field]?.[0] || field).join('、')}</small>` : '';
-    return `<div class="phase-row"><span class="phase-dot"></span><div class="phase-heading"><span>${escapeHtml(phase.phase)}</span><small>${phase.count} 条样本 · ${fmt(phase.durationS, 0)} s</small></div><b>${metric ? '已计算' : '分段'}</b><div class="phase-metrics">${metricValues.join('')}</div>${missingText}</div>`;
+    const metricStatus = metric?.integrationStatus === 'complete' ? '已计算' : metric?.integrationStatus === 'partial_gap' ? '缺口阻断' : metric ? '需复核' : '分段';
+    return `<div class="phase-row"><span class="phase-dot"></span><div class="phase-heading"><span>${escapeHtml(phase.phase)}</span><small>${phase.count} 条样本 · ${fmt(phase.durationS, 0)} s</small></div><b>${metricStatus}</b><div class="phase-metrics">${metricValues.join('')}</div>${missingText}</div>`;
   }).join('');
 }
 

@@ -519,16 +519,19 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
     let validSegments = 0;
     let interruptedSegmentCount = 0;
     let nonPositiveIntervalCount = 0;
+    let skippedGapCount = 0;
+    let skippedSessionBoundaryCount = 0;
     const rampRates = [];
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1 || !sameSession(rows[previousIndex], rows[currentIndex])) { interruptedSegmentCount += 1; continue; }
+      if (currentIndex !== previousIndex + 1) { interruptedSegmentCount += 1; continue; }
+      if (!sameSession(rows[previousIndex], rows[currentIndex])) { interruptedSegmentCount += 1; skippedSessionBoundaryCount += 1; continue; }
       const previous = rows[previousIndex];
       const current = rows[currentIndex];
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       if (deltaS <= 0) { nonPositiveIntervalCount += 1; continue; }
-      if (maxIntervalS !== null && deltaS > maxIntervalS) { interruptedSegmentCount += 1; continue; }
+      if (maxIntervalS !== null && deltaS > maxIntervalS) { interruptedSegmentCount += 1; skippedGapCount += 1; continue; }
       durationS += deltaS;
       validSegments += 1;
       const previousPower = electricalPower(previous);
@@ -539,6 +542,11 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       }
       if (previous.flow_slpm !== null && current.flow_slpm !== null) hydrogenVolumeNl += ((previous.flow_slpm + current.flow_slpm) / 2) * deltaS / 60;
     }
+    const completeIntegration = validSegments > 0
+      && interruptedSegmentCount === 0
+      && nonPositiveIntervalCount === 0
+      && indexes.every((index) => electricalPower(rows[index]) !== null)
+      && indexes.every((index) => rows[index].flow_slpm !== null);
     const phase = {
       phaseId,
       labels: [...new Set(indexes.map((index) => String(rows[index].phase || '未标注')))],
@@ -549,9 +557,12 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       startS: indexes.length ? rows[indexes[0]].timestamp_s : null,
       endS: indexes.length ? rows[indexes.at(-1)].timestamp_s : null,
       durationS: validSegments ? durationS : null,
-      energyConsumedWh: validSegments && indexes.every((index) => electricalPower(rows[index]) !== null) ? energyConsumedWh : null,
-      hydrogenVolumeNl: validSegments && indexes.every((index) => rows[index].flow_slpm !== null) ? hydrogenVolumeNl : null,
+      energyConsumedWh: completeIntegration ? energyConsumedWh : null,
+      hydrogenVolumeNl: completeIntegration ? hydrogenVolumeNl : null,
       specificEnergyKWhPerNm3: null,
+      integrationStatus: completeIntegration ? 'complete' : indexes.length < 2 ? 'insufficient' : skippedGapCount ? 'partial_gap' : skippedSessionBoundaryCount ? 'partial_session_boundary' : 'partial_interrupted',
+      skippedGapCount,
+      skippedSessionBoundaryCount,
       powerRangeW: maxPower !== null && minPower !== null ? maxPower - minPower : null,
       maxRampUpWPerS: rampRates.length ? Math.max(0, ...rampRates) : null,
       maxRampDownWPerS: rampRates.length ? Math.max(0, ...rampRates.map((rate) => -rate)) : null,
