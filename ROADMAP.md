@@ -1,5 +1,7 @@
 # H₂ TestLens Roadmap
 
+> Current top-level status: **v3.5.37**. The historical phase rows below retain their original scope wording; current verification is recorded in the v3.5.37 continuation entries.
+
 | Phase | Entry / exit criteria | Verification | Status | Notes |
 |---|---|---|---|---|
 | 0. Scope | T02 chosen; user problem and safety boundary recorded | Review `docs/REQUIREMENT_SPEC.md` | PASS | Prototype uses local APFS workspace; no external-disk access |
