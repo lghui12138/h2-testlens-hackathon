@@ -310,6 +310,20 @@ function sameSession(previous, current) {
   return sessionKey(previous) === sessionKey(current);
 }
 
+function sessionDurationSummary(rows) {
+  const spans = new Map();
+  rows.forEach((row) => {
+    if (row.timestamp_s === null) return;
+    const key = sessionKey(row);
+    const span = spans.get(key) || { min: row.timestamp_s, max: row.timestamp_s };
+    span.min = Math.min(span.min, row.timestamp_s);
+    span.max = Math.max(span.max, row.timestamp_s);
+    spans.set(key, span);
+  });
+  const durations = [...spans.values()].map((span) => Math.max(0, span.max - span.min));
+  return { sessionCount: spans.size, totalDurationS: durations.reduce((sum, duration) => sum + duration, 0), durations };
+}
+
 function phaseSummary(rows) {
   const groups = [];
   for (const row of rows) {
@@ -1247,9 +1261,12 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const report = reportReadiness(config, quality);
   const timeRef = (times) => times.length ? `，出现于 t=${times.slice(0, 3).join('、')} s` : '';
   const pressureDriftRows = steadyRows.length >= 2 ? steadyRows : rows;
+  const sessionSummary = sessionDurationSummary(rows);
   const metrics = {
     sampleCount: rows.length,
-    durationS: timestamps.length ? Math.max(...timestamps) - Math.min(...timestamps) : 0,
+    durationS: sessionSummary.totalDurationS,
+    sessionDurationS: sessionSummary.totalDurationS,
+    sessionCount: sessionSummary.sessionCount,
     completenessPct: quality.completenessPct,
     peakPowerW: powers.length ? Math.max(...powers) : null,
     powerSource: powerEvidence.status,

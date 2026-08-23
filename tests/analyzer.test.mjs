@@ -866,6 +866,8 @@ test('keeps generic multi-file sessions separate for quality, phase summaries, a
   assert.equal(result.quality.observedIntervalCount, 2);
   assert.equal(result.metrics.energyConsumedWh, 1 / 900);
   assert.equal(result.metrics.hydrogenVolumeNl, 6 / 60);
+  assert.equal(result.metrics.sessionCount, 2);
+  assert.equal(result.metrics.durationS, 2);
   assert.equal(result.metrics.integrationEvidence.energyConsumed.skippedSessionBoundaryCount, 1);
   assert.equal(result.metrics.pressureDriftBarPerMin, -30);
   assert.equal(result.phases.length, 2);

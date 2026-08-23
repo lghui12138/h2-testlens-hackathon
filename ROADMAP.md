@@ -35,6 +35,12 @@
 - Gate: verify the card and audit link in `src/index.html`, `app/page.tsx`, `_site/index.html`, and the current audit JSON; responsive 2-column mobile layout is tokenized in `src/styles.css`.
 - Residual: counts are versioned audit evidence, not a claim that every source field enters a KPI or that the resulting profile satisfies any standard.
 
+## 2026-08-24 current continuation evidence · session duration semantics
+
+- Change: generic `metrics.durationS` now sums per-session timestamp spans and exposes `sessionCount/sessionDurationS`; it no longer reports only the global range when files restart their clocks.
+- Gate: the two-file session regression passes with `sessionCount=2`, `durationS=2`, separate integrations, and the complete test/submission gates remain required.
+- Residual: duration is observed timestamp span, not proof of uninterrupted test execution; declared batch boundaries and enterprise test records remain necessary for formal interpretation.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

@@ -426,7 +426,7 @@ function renderCalculationSummary(result) {
     ? `最大交叉差异 ${fmt(powerEvidence.maxRelativeDifferencePct, 2)}%`
     : powerEvidence.rawPowerCount ? `${powerEvidence.rawPowerCount} 条原始功率记录` : '未把设定值当作实测功率';
   const timeDetail = quality.medianIntervalS !== undefined
-    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}${skippedIntegrationGaps ? ` · 积分跳过 ${skippedIntegrationGaps} 段` : ''}${skippedSessionBoundaries ? ` · 文件边界 ${skippedSessionBoundaries} 个` : ''}`
+    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}${sessionNote}${skippedIntegrationGaps ? ` · 积分跳过 ${skippedIntegrationGaps} 段` : ''}${skippedSessionBoundaries ? ` · 文件边界 ${skippedSessionBoundaries} 个` : ''}`
     : '企业适配器按源文件/会话分别统计';
   const mappingDetail = result.schema
     ? `${result.schema.mappedCount}/${result.schema.fieldCount} 核心字段 · 单位换算 ${Object.values(result.schema.conversions || {}).filter((item) => item.mode !== 'identity').length} 项`
@@ -436,6 +436,7 @@ function renderCalculationSummary(result) {
     : result.uncertainty?.status === 'invalid'
       ? '模型无效，已阻断不确定度门控'
       : '未配置；不代表不确定度为零';
+  const sessionNote = Number(metrics.sessionCount || 0) > 1 ? ` · ${metrics.sessionCount} 个会话 · 总观测 ${fmt(metrics.sessionDurationS, 3)} s` : '';
   element.innerHTML = `<div class="calculation-summary-head"><span>计算口径</span><small>结果可追溯，但仍需企业方法与人工复核</small></div><div class="calculation-strip"><span><b>功率</b>${powerLabels[powerSource] || '企业适配器源字段口径'}<small>${powerDetail}</small></span><span><b>时间轴</b>按原始时间戳计算<small>${timeDetail}</small></span><span><b>字段与单位</b>映射后再计算<small>${mappingDetail}</small></span><span><b>不确定度</b>${uncertainty}<small>需要企业批准模型才可进入正式门控</small></span></div>`;
 }
 
