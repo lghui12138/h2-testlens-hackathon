@@ -34,7 +34,17 @@ const readBody = async (req, limit = 64_000_000) => {
 };
 
 function resolveApiConfig(payload) {
-  if (!payload.profilePackage) return payload.config && typeof payload.config === 'object' ? payload.config : {};
+  if (!payload.profilePackage) {
+    const config = payload.config && typeof payload.config === 'object' ? payload.config : {};
+    const requestsFormalPath = config.approvalStatus === 'approved'
+      || config.evaluationMode === 'acceptance'
+      || config.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED'
+      || (Array.isArray(config.standardRefs) && config.standardRefs.length > 0);
+    if (requestsFormalPath) {
+      const error = new Error('profile_package_required'); error.status = 422; throw error;
+    }
+    return config;
+  }
   const imported = profilesFromPackage(payload.profilePackage);
   if (!imported.ok) { const error = new Error('profile_package_invalid'); error.status = 422; error.details = imported.errors; throw error; }
   const profile = imported.profiles.find((candidate) => candidate.id === payload.profileId);
@@ -45,7 +55,8 @@ function resolveApiConfig(payload) {
 function writeApiError(res, error) {
   const status = error.status ?? (error.message === 'body_too_large' ? 413 : 400);
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify({ error: status === 413 ? 'request_too_large' : error.message === 'profile_package_invalid' ? error.message : 'invalid_json', details: error.details }));
+  const errorCode = status === 413 ? 'request_too_large' : ['profile_package_invalid', 'profile_package_required', 'profile_not_found'].includes(error.message) ? error.message : 'invalid_json';
+  res.end(JSON.stringify({ error: errorCode, details: error.details }));
 }
 
 const server = createServer(async (req, res) => {

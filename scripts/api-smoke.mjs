@@ -62,6 +62,8 @@ try {
   if (invalidProfileResponse.status !== 422) throw new Error(`invalid profile package was not rejected: ${invalidProfileResponse.status}`);
   const invalidProfile = await invalidProfileResponse.json();
   if (invalidProfile.error !== 'profile_package_invalid' || !Array.isArray(invalidProfile.details)) throw new Error('invalid profile error details missing');
+  const unboundFormalResponse = await fetch(`http://127.0.0.1:${port}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: legacyCsv, config: { approvalStatus: 'approved', standardRefs: [{ id: 'GB/T 45541-2025' }] } }) });
+  if (unboundFormalResponse.status !== 422 || (await unboundFormalResponse.json()).error !== 'profile_package_required') throw new Error('unbound formal config was not rejected');
   const alertResponse = await fetch(`http://127.0.0.1:${port}/api/feishu-alert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: 'smoke.docx', result: { verdict: 'FAIL', dataset: { targetPowers: [195], points: [] }, issues: [{ severity: 'critical', title: 'smoke', evidence: 'bounded evidence' }] } }) });
   if (alertResponse.status !== 503) throw new Error(`unconfigured Feishu channel should be 503: ${alertResponse.status}`);
   const alertResult = await alertResponse.json();

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { decodeTextBuffer, isLikelyBinary } from '../src/input-safety.mjs';
-import { MAX_WORKBOOK_BYTES, MAX_WORKBOOK_COMPRESSION_RATIO, MAX_WORKBOOK_UNCOMPRESSED_BYTES, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine } from '../src/excel-workflow.mjs';
+import { MAX_WORKBOOK_BYTES, MAX_WORKBOOK_COMPRESSION_RATIO, MAX_WORKBOOK_UNCOMPRESSED_BYTES, inspectWorkbookFormulaAudit, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine } from '../src/excel-workflow.mjs';
 import { loadXlsx } from '../src/xlsx-node-loader.mjs';
 import { parseInput } from '../scripts/batch-watch.mjs';
 
@@ -127,6 +127,23 @@ test('workbook parser audits formula cells without executing or hiding cached va
   assert.equal(result.formulaAudit.uncachedFormulaCellCount, 0);
   assert.equal(result.formulaAudit.status, 'review_required');
   assert.equal(result.workbookEvidenceSummary.formulaCellCount, 1);
+});
+
+test('workbook formula audit separates error, text, numeric, and blank cached values', () => {
+  const book = SheetJS.utils.book_new();
+  const sheet = SheetJS.utils.aoa_to_sheet([['时间', '电流', '电压', '功率'], [0, 1, 2, 2], [1, 2, 3, 6], [2, 3, 4, 12], [3, 4, 5, 20]]);
+  sheet.D2 = { t: 'e', f: '=1/0', v: '#DIV/0!' };
+  sheet.D3 = { t: 's', f: '="缓存文本"', v: '缓存文本' };
+  sheet.D4 = { t: 'n', f: '=B4*C4', v: 12 };
+  sheet.D5 = { t: 'n', f: '=B5*C5' };
+  SheetJS.utils.book_append_sheet(book, sheet, '稳定性');
+  const audit = inspectWorkbookFormulaAudit(book);
+  assert.equal(audit.formulaCellCount, 4);
+  assert.equal(audit.errorFormulaCellCount, 1);
+  assert.equal(audit.textCachedFormulaCellCount, 1);
+  assert.equal(audit.numericCachedFormulaCellCount, 1);
+  assert.equal(audit.blankFormulaCellCount, 1);
+  assert.equal(audit.status, 'invalid_formula_cache');
 });
 
 test('workbook parser blocks VBA macro entries before SheetJS', () => {

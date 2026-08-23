@@ -31,6 +31,13 @@
 - App runtime evidence: public `src` modules/vendor assets are present for Vinext direct loading; mobile navigation and pre-analysis download guards are aligned across surfaces.
 - Residual: enterprise unit dictionaries, invalid-code/state definitions, batch declarations, approved profiles and formal method evidence remain external gates.
 
+## 2026-08-24 current continuation evidence · XLSX and durability report semantics
+
+- Factory-report XLSX rows now use header-positioned `reference`, `measuredValues` and `outcome` fields; actual package 01 output was spot-checked after parsing 8 sheets and 24 detection items.
+- Durability workbook chart data now carries source report and point order, inserts source-group separators, and uses report-labelled string categories; it no longer implies a cross-report time series from repeated target powers.
+- API formal-path gate now rejects direct approved/acceptance/standard-referenced config without a profile package; unknown profile IDs remain fail-closed.
+- Verification: targeted analyzer tests and `npm run smoke:api` pass; full release gates remain required after the current changes.
+
 ## 2026-08-24 current continuation evidence · time-gap-aware integration
 
 - Surfaces: analyzer source of truth, generic phase metrics, uncertainty propagation, browser calculation-summary UI, static/Vinext parity, regression tests, GitHub Pages workflow and round log.

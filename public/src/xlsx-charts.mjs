@@ -43,14 +43,18 @@ export async function addNativeChartToWorkbook(arrayBuffer, dataset = {}) {
   const drawingIndex = maxIndex(names, /xl\/drawings\/drawing(\d+)\.xml$/) + 1;
   const chartIndex = maxIndex(names, /xl\/charts\/chart(\d+)\.xml$/) + 1;
   const kind = dataset.kind || 'stack';
-  const rows = kind === 'durability' ? (dataset.points || []) : kind === 'vehicle' ? ((dataset.performancePoints?.length ? dataset.performancePoints : dataset.inferredSegments) || []) : (dataset.performancePoints || []);
+  const sourceRows = kind === 'durability' ? (dataset.points || []) : kind === 'vehicle' ? ((dataset.performancePoints?.length ? dataset.performancePoints : dataset.inferredSegments) || []) : (dataset.performancePoints || []);
+  const rows = kind === 'durability' ? sourceRows.flatMap((row, index) => [
+    ...(index > 0 && (row.sourceFile || 'DOCX报告') !== (sourceRows[index - 1].sourceFile || 'DOCX报告') ? [{ __separator: true }] : []),
+    row
+  ]) : sourceRows;
   if (!rows.length) return arrayBuffer;
-  const categoryNumeric = kind !== 'vehicle' || rows.every((row) => Number.isFinite(row.averageCurrentDensity ?? row.averageCurrentA));
-  const categories = kind === 'durability' ? rows.map((row) => row.targetPowerKw) : kind === 'vehicle' && !dataset.performancePoints?.length ? rows.map((row) => row.averageCurrentA) : rows.map((row) => row.averageCurrentDensity ?? row.averageCurrentA);
-  const values = kind === 'durability' ? rows.map((row) => row.averageCellVoltageMv) : rows.map((row) => row.averageCellVoltageV);
+  const categoryNumeric = kind !== 'durability' && (kind !== 'vehicle' || rows.every((row) => Number.isFinite(row.averageCellDensity ?? row.averageCurrentA)));
+  const categories = kind === 'durability' ? rows.map((row) => row.__separator ? '' : `${row.sourceFile || 'DOCX报告'} · ${row.targetPowerKw ?? '—'} kW · 点${row.pointIndex ?? ''}`) : kind === 'vehicle' && !dataset.performancePoints?.length ? rows.map((row) => row.averageCurrentA) : rows.map((row) => row.averageCurrentDensity ?? row.averageCurrentA);
+  const values = kind === 'durability' ? rows.map((row) => row.__separator ? null : row.averageCellVoltageMv) : rows.map((row) => row.averageCellVoltageV);
   const dataStart = 2; const dataEnd = dataStart + rows.length - 1;
-  const catColumn = kind === 'durability' ? 'A' : 'C'; const valColumn = kind === 'durability' ? 'B' : 'D';
-  const title = kind === 'durability' ? '耐久功率点平均单体电压' : kind === 'vehicle' && !dataset.performancePoints?.length ? '车辆描述性候选区间平均单体电压' : '极化曲线平均单体电压';
+  const catColumn = kind === 'durability' ? 'A' : 'C'; const valColumn = kind === 'durability' ? 'D' : 'D';
+  const title = kind === 'durability' ? '耐久功率点平均单体电压（按报告/来源分组）' : kind === 'vehicle' && !dataset.performancePoints?.length ? '车辆描述性候选区间平均单体电压' : '极化曲线平均单体电压';
   const chart = chartXml({ sheetName: '图表数据', title, catRef: `图表数据!$${catColumn}$${dataStart}:$${catColumn}$${dataEnd}`, valRef: `图表数据!$${valColumn}$${dataStart}:$${valColumn}$${dataEnd}`, categories, values, categoryNumeric });
   const drawingPath = `xl/drawings/drawing${drawingIndex}.xml`; const chartPath = `xl/charts/chart${chartIndex}.xml`;
   const drawingRelsPath = `xl/drawings/_rels/drawing${drawingIndex}.xml.rels`;

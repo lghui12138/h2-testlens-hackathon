@@ -2023,6 +2023,10 @@ test('uses every structured sheet in an enterprise XLSX and keeps workbook evide
   assert.equal(parsed.workbookEvidenceSummary.staticMatrixCellCount, 40);
   assert.equal(parsed.workbookEvidenceSummary.reportEvidenceSheetCount, 1);
   assert.equal(parsed.workbookEvidenceSummary.reportPerformanceCheckCount, 1);
+  assert.equal(parsed.workbookEvidence.reportEvidence.performanceChecks.records[0].measuredValues.length, 1);
+  assert.equal(Number(parsed.workbookEvidence.reportEvidence.performanceChecks.records[0].measuredValues[0]), 0.2);
+  assert.equal(parsed.workbookEvidence.reportEvidence.performanceChecks.records[0].measured, 0.2);
+  assert.equal(parsed.workbookEvidence.reportEvidence.performanceChecks.records[0].outcome, '是');
   assert.equal(parsed.workbookEvidenceSummary.deviceIdentityFieldCount, 2);
   assert.equal(parsed.workbookEvidenceSummary.parameterCatalogRowCount, 2);
   const result = analyzeRows(parsed.rows, { workbookEvidence: parsed.workbookEvidence });
@@ -2137,6 +2141,26 @@ test('adds a standard OOXML line chart to the generated workbook without changin
   assert.match(chartXml, /耐久功率点平均单体电压/);
   const sheetXml = await zip.file('xl/worksheets/sheet13.xml').async('string').catch(() => '');
   assert.ok(names.some((name) => name.includes('worksheets/_rels') && name.endsWith('.rels')));
+});
+
+test('separates durability chart data by source report instead of joining a false cross-report line', async () => {
+  const rows = [
+    { target_power_kw: 33, net_power_kw: 32.9, average_cell_voltage_mv: 813, average_deviation_mv: 6, voltage_variance: 20, source_file: 'report-a.docx' },
+    { target_power_kw: 195, net_power_kw: 191.7, average_cell_voltage_mv: 658, average_deviation_mv: 13, voltage_variance: 46, source_file: 'report-a.docx' },
+    { target_power_kw: 33, net_power_kw: 32.8, average_cell_voltage_mv: 810, average_deviation_mv: 7, voltage_variance: 21, source_file: 'report-b.docx' }
+  ];
+  const result = analyzeRows(rows, { durabilityRules: {} });
+  const workbook = buildEnterpriseWorkbook(result, 'durability.docx');
+  const chartSheet = SheetJS.utils.sheet_to_json(workbook.Sheets['图表数据'], { header: 1, raw: true });
+  assert.equal(String(chartSheet[0][0]), '报告/来源');
+  assert.equal(String(chartSheet[0][1]), '点序');
+  assert.equal(String(chartSheet[0][2]), '目标功率(kW)');
+  assert.equal(chartSheet.some((row) => row.length === 0 || row.every((value) => value === '')), true);
+  const withChart = await addNativeChartToWorkbook(workbookArrayBuffer(workbook), result.dataset);
+  const zip = await JSZip.loadAsync(withChart);
+  const chartXml = await zip.file(Object.keys(zip.files).find((name) => /^xl\/charts\/chart\d+\.xml$/.test(name))).async('string');
+  assert.match(chartXml, /report-a\.docx/);
+  assert.match(chartXml, /report-b\.docx/);
 });
 
 test('acceptance mode blocks cached workbook formulas until formula review evidence is bound', () => {

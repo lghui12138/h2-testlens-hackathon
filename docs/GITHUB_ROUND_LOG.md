@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · XLSX 检测字段与耐久图表语义修复轮
+
+- 出厂报告 XLSX 解析改为按真实表头定位“标准/测试结果/是否合格”，并保留 `measuredValues[]`；真实包 01 检测项目现在把 `0.2` 作为测量值、`是` 作为原报告结果。
+- 耐久 Excel `图表数据` 增加报告/来源、点序和目标功率列；不同 DOCX 报告之间插入空分组行，原生 OOXML 图表标题和类别改为按报告/来源标识，不再绘制伪造的跨报告连续趋势。
+- API 对无 profile 包却请求 `approved/acceptance/standardRefs` 的配置返回 422 `profile_package_required`，未知 profile ID 继续 422；避免未经验证的标准/审批配置进入分析。
+- 本轮针对性验证：XLSX/图表回归通过，API smoke 通过；完整 `npm test` 151/151、提交检查 124/124、AI 4/4、Pages 发布门将在提交前重跑。
+
 ## 2026-08-24 · 全包证据深度与电堆口径修复轮
 
 - 全量重放 198 个 T02 文件后，审计新增逐文件证据深度：143 `descriptive_interval`、13 `dynamic_event_only`、34 `generic_metrics_only`、8 `reference_boundary`、0 `formal_kpi`；全包字段值复核为 176 个文件/2,759 次提示。

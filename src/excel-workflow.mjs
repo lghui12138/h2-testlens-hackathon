@@ -153,6 +153,10 @@ export function inspectWorkbookFormulaAudit(workbook, inputSafety = {}) {
   let formulaCellCount = 0;
   let formulaSheetCount = 0;
   let cachedFormulaCellCount = 0;
+  let errorFormulaCellCount = 0;
+  let textCachedFormulaCellCount = 0;
+  let numericCachedFormulaCellCount = 0;
+  let blankFormulaCellCount = 0;
   let uncachedFormulaCellCount = 0;
   let externalReferenceCount = 0;
   let externalFunctionCount = 0;
@@ -161,6 +165,10 @@ export function inspectWorkbookFormulaAudit(workbook, inputSafety = {}) {
     const sheet = workbook.Sheets?.[sheetName] || {};
     let sheetFormulaCellCount = 0;
     let sheetCachedFormulaCellCount = 0;
+    let sheetErrorFormulaCellCount = 0;
+    let sheetTextCachedFormulaCellCount = 0;
+    let sheetNumericCachedFormulaCellCount = 0;
+    let sheetBlankFormulaCellCount = 0;
     let sheetExternalReferenceCount = 0;
     let sheetExternalFunctionCount = 0;
     let sheetVolatileFormulaCount = 0;
@@ -169,17 +177,27 @@ export function inspectWorkbookFormulaAudit(workbook, inputSafety = {}) {
       const formula = typeof cell.f === 'string' ? cell.f : typeof cell.F === 'string' ? cell.F : '';
       if (!formula) continue;
       sheetFormulaCellCount += 1;
-      if (cell.v !== undefined && cell.v !== null && cell.v !== '') sheetCachedFormulaCellCount += 1;
+      const valuePresent = cell.v !== undefined && cell.v !== null && cell.v !== '';
+      const errorValue = cell.t === 'e' || (typeof cell.v === 'string' && /^#(?:REF|DIV\/0|VALUE|N\/A|NAME|NUM|NULL|SPILL|CALC)/i.test(cell.v.trim()));
+      if (valuePresent) sheetCachedFormulaCellCount += 1;
+      if (!valuePresent) sheetBlankFormulaCellCount += 1;
+      else if (errorValue) sheetErrorFormulaCellCount += 1;
+      else if (cell.t === 's' || typeof cell.v === 'string') sheetTextCachedFormulaCellCount += 1;
+      else sheetNumericCachedFormulaCellCount += 1;
       if (FORMULA_EXTERNAL_REFERENCE_PATTERN.test(formula)) sheetExternalReferenceCount += 1;
       if (FORMULA_EXTERNAL_FUNCTION_PATTERN.test(formula)) sheetExternalFunctionCount += 1;
       if (FORMULA_VOLATILE_PATTERN.test(formula)) sheetVolatileFormulaCount += 1;
     }
     if (sheetFormulaCellCount) {
       formulaSheetCount += 1;
-      bySheet.push({ sheetName, formulaCellCount: sheetFormulaCellCount, cachedFormulaCellCount: sheetCachedFormulaCellCount, uncachedFormulaCellCount: sheetFormulaCellCount - sheetCachedFormulaCellCount, externalReferenceCount: sheetExternalReferenceCount, externalFunctionCount: sheetExternalFunctionCount, volatileFormulaCount: sheetVolatileFormulaCount });
+      bySheet.push({ sheetName, formulaCellCount: sheetFormulaCellCount, cachedFormulaCellCount: sheetCachedFormulaCellCount, uncachedFormulaCellCount: sheetFormulaCellCount - sheetCachedFormulaCellCount, errorFormulaCellCount: sheetErrorFormulaCellCount, textCachedFormulaCellCount: sheetTextCachedFormulaCellCount, numericCachedFormulaCellCount: sheetNumericCachedFormulaCellCount, blankFormulaCellCount: sheetBlankFormulaCellCount, externalReferenceCount: sheetExternalReferenceCount, externalFunctionCount: sheetExternalFunctionCount, volatileFormulaCount: sheetVolatileFormulaCount });
     }
     formulaCellCount += sheetFormulaCellCount;
     cachedFormulaCellCount += sheetCachedFormulaCellCount;
+    errorFormulaCellCount += sheetErrorFormulaCellCount;
+    textCachedFormulaCellCount += sheetTextCachedFormulaCellCount;
+    numericCachedFormulaCellCount += sheetNumericCachedFormulaCellCount;
+    blankFormulaCellCount += sheetBlankFormulaCellCount;
     externalReferenceCount += sheetExternalReferenceCount;
     externalFunctionCount += sheetExternalFunctionCount;
     volatileFormulaCount += sheetVolatileFormulaCount;
@@ -191,6 +209,8 @@ export function inspectWorkbookFormulaAudit(workbook, inputSafety = {}) {
   const externalLinksPresent = Boolean(artifacts.externalLinksPresent);
   const status = macroPresent || activeContentPresent || externalLinksPresent
     ? 'blocked_active_content'
+    : errorFormulaCellCount
+      ? 'invalid_formula_cache'
     : formulaCellCount || externalReferenceCount || externalFunctionCount
       ? 'review_required'
       : 'no_formulas';
@@ -200,6 +220,10 @@ export function inspectWorkbookFormulaAudit(workbook, inputSafety = {}) {
     formulaSheetCount,
     cachedFormulaCellCount,
     uncachedFormulaCellCount,
+    errorFormulaCellCount,
+    textCachedFormulaCellCount,
+    numericCachedFormulaCellCount,
+    blankFormulaCellCount,
     externalReferenceCount,
     externalFunctionCount,
     volatileFormulaCount,
@@ -372,12 +396,30 @@ function parseReportEvidence(rows, sheetName) {
   }
   const performanceRecords = [];
   if (reportHeaderIndex >= 0) {
+    const reportHeaders = (rows[reportHeaderIndex] || []).map(text);
+    const headerIndex = (needle) => reportHeaders.findIndex((value) => normalized(value).includes(needle));
+    const itemIndex = headerIndex('检测项目名称');
+    const referenceIndex = headerIndex('标准');
+    const measuredIndex = headerIndex('测试结果');
+    const outcomeIndex = headerIndex('是否合格');
     const end = chartStart >= 0 ? chartStart : rows.length;
     for (let rowIndex = reportHeaderIndex + 1; rowIndex < end; rowIndex += 1) {
-      const cells = (rows[rowIndex] || []).map((value) => text(value)).filter(Boolean);
+      const rawCells = rows[rowIndex] || [];
+      const cells = rawCells.map((value) => text(value)).filter(Boolean);
       if (!cells.length || /^图表?/.test(cells[0])) continue;
-      const outcome = [...cells].reverse().find((value) => /^(是|否|OK|NG|通过|不通过)$/i.test(value)) || null;
-      performanceRecords.push({ sourceRow: rowIndex + 1, item: cells[0], reference: cells[1] || null, measured: cells[2] || null, outcome, values: cells });
+      const outcome = outcomeIndex >= 0 ? text(rawCells[outcomeIndex]) || null : [...cells].reverse().find((value) => /^(是|否|OK|NG|通过|不通过)$/i.test(value)) || null;
+      const measuredValues = measuredIndex >= 0
+        ? rawCells.slice(measuredIndex, outcomeIndex > measuredIndex ? outcomeIndex : rawCells.length).map(valueOrText).filter((value) => value !== null && value !== '')
+        : (cells.slice(2).filter((value) => value !== outcome));
+      performanceRecords.push({
+        sourceRow: rowIndex + 1,
+        item: itemIndex >= 0 ? text(rawCells[itemIndex]) || cells[0] : cells[0],
+        reference: referenceIndex >= 0 ? text(rawCells[referenceIndex]) || null : cells[1] || null,
+        measured: measuredValues.length ? measuredValues[0] : null,
+        measuredValues,
+        outcome,
+        values: cells
+      });
     }
   }
   const polarizationHeaderIndex = rows.findIndex((row) => {
@@ -490,6 +532,10 @@ export function summarizeWorkbookEvidence(evidence = null) {
     formulaSheetCount: formulaAudit?.formulaSheetCount || 0,
     cachedFormulaCellCount: formulaAudit?.cachedFormulaCellCount || 0,
     uncachedFormulaCellCount: formulaAudit?.uncachedFormulaCellCount || 0,
+    errorFormulaCellCount: formulaAudit?.errorFormulaCellCount || 0,
+    textCachedFormulaCellCount: formulaAudit?.textCachedFormulaCellCount || 0,
+    numericCachedFormulaCellCount: formulaAudit?.numericCachedFormulaCellCount || 0,
+    blankFormulaCellCount: formulaAudit?.blankFormulaCellCount || 0,
     formulaExternalReferenceCount: formulaAudit?.externalReferenceCount || 0,
     formulaExternalFunctionCount: formulaAudit?.externalFunctionCount || 0,
     formulaVolatileCount: formulaAudit?.volatileFormulaCount || 0,
@@ -901,7 +947,7 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   if (dataset.cellTimeSeriesStats?.length) addSheet(book, '单片时序统计', [['源字段', '规范字段', '单片序号', '有效记录', '缺失记录', '完整率(%)', '均值(V)', '最小(V)', '最大(V)', '极差(V)', '标准差(V)', '边界'], ...dataset.cellTimeSeriesStats.map((item) => [item.source, item.field, item.cellIndex, item.count, item.missingCount, item.completenessPct, item.mean, item.min, item.max, item.range, item.std, item.boundary])]);
   if (dataset.excludedIntervals?.length) addSheet(book, '排除区间', [['平台', '工况', '会话', '来源文件', '起始(s)', '结束(s)', '持续(s)', '样本数', '原因代码', '原因'], ...dataset.excludedIntervals.map((item) => [item.platformId || '', item.conditionId || '', item.sessionId || '', item.sourceFile || '', item.startS ?? '', item.endS ?? '', item.durationS ?? '', item.sampleCount ?? '', item.reasonCode || '', item.reason || ''])]);
   addSheet(book, '异常清单', [['级别', '代码', '标题', '证据', '建议动作'], ...result.issues.map((item) => [item.severity, item.code, item.title, item.evidence, item.recommendation])]);
-  if (dataset.kind === 'durability') addSheet(book, '耐久功率点', [['目标功率(kW)', '净输出功率(kW)', '平均单体电压(mV)', '离均差(mV)', '电压方差', '来源文件'], ...(dataset.points || []).map((item) => [item.targetPowerKw ?? '', item.netPowerKw ?? '', item.averageCellVoltageMv ?? '', item.averageDeviationMv ?? '', item.voltageVariance ?? '', item.sourceFile || 'DOCX报告'])]);
+  if (dataset.kind === 'durability') addSheet(book, '耐久功率点', [['报告/来源', '点序', '目标功率(kW)', '净输出功率(kW)', '平均单体电压(mV)', '离均差(mV)', '电压方差'], ...(dataset.points || []).map((item) => [item.sourceFile || 'DOCX报告', item.pointIndex ?? '', item.targetPowerKw ?? '', item.netPowerKw ?? '', item.averageCellVoltageMv ?? '', item.averageDeviationMv ?? '', item.voltageVariance ?? ''])]);
   if (dataset.kind === 'vehicle') addSheet(book, '车辆信号目录', [
     ['原始信号', '类型', '使用层级', '数值记录', '总记录', '完整率(%)', '最小值', '最大值', '平均值', '标准差', '左轴展示', '右轴展示', '常见离散值'],
     ...(dataset.signalCatalog || []).map((item) => [item.source, item.kind || '', item.usage || '', item.numericCount, item.rowCount, item.completenessPct, item.min ?? '', item.max ?? '', item.mean ?? '', item.std ?? '', item.source === dataset.selectedSignal ? '是' : '否', item.source === dataset.secondarySignal ? '是' : '否', (item.uniqueValues || []).map((entry) => `${entry.value}:${entry.count}`).join('；')])
@@ -913,12 +959,19 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   if (dataset.kind === 'vehicle' && (dataset.crossChecks || []).length) addSheet(book, '车辆交叉核对', [['检查', '设定字段', '实测字段', '设定完整率(%)', '实测完整率(%)', '平均偏差', '单位'], ...(dataset.crossChecks || []).map((item) => [item.code, item.targetSource, item.actualSource, item.target.completenessPct, item.actual.completenessPct, item.deviation.mean ?? '', item.unit])]);
   if (dataset.kind === 'stack' && (dataset.settingCrossChecks || []).length) addSheet(book, '设定实测核对', [['检查', '设定字段', '实测字段', '设定完整率(%)', '实测完整率(%)', '平均偏差', '单位'], ...(dataset.settingCrossChecks || []).map((item) => [item.code, item.targetSource, item.actualSource, item.target.completenessPct, item.actual.completenessPct, item.deviation.mean ?? '', item.unit])]);
   const chartRows = dataset.kind === 'durability'
-    ? (dataset.points || []).map((item) => [item.targetPowerKw ?? '', item.averageCellVoltageMv ?? '', item.averageDeviationMv ?? '', item.voltageVariance ?? ''])
+    ? (dataset.points || []).flatMap((item, index, points) => {
+      const source = item.sourceFile || 'DOCX报告';
+      const previousSource = index > 0 ? points[index - 1].sourceFile || 'DOCX报告' : source;
+      const separator = index > 0 && source !== previousSource ? [['', '', '', '', '', '', '']] : [];
+      return [...separator, [source, item.pointIndex ?? index + 1, item.targetPowerKw ?? '', item.averageCellVoltageMv ?? '', item.averageDeviationMv ?? '', item.voltageVariance ?? '', '按报告/来源分组']];
+    })
     : performancePoints.map((item) => {
       const trend = dataset.performanceTrend?.averageCellVoltageV;
       return [item.platformId || item.conditionId || '', item.targetCurrentA ?? '', item.trendX ?? '', item.trendLabel || '', item.averageCellVoltageV ?? '', evaluateTrendValue(trend, item.trendX), item.averageNetPowerKw ?? '', item.status || '待复核'];
     });
-  addSheet(book, '图表数据', [['说明', '本工作簿保留可复核图表数据；实际图形可由企业模板引用本表'], ...chartRows]);
+  addSheet(book, '图表数据', dataset.kind === 'durability'
+    ? [['报告/来源', '点序', '目标功率(kW)', '平均单体电压(mV)', '离均差(mV)', '电压方差', '图表边界'], ...chartRows]
+    : [['说明', '本工作簿保留可复核图表数据；实际图形可由企业模板引用本表'], ...chartRows]);
   if (dataset.kind === 'vehicle') addSheet(book, '车辆性能趋势', [
     ['平台/区间', '横轴类型', '横轴值', '横轴显示', '模型', '平均单体电压(V)', '拟合电压(V)', '平均净功率(kW)', '状态', '拟合状态', 'R²', '边界'],
     ...performancePoints.map((item) => {

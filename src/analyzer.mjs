@@ -1080,6 +1080,7 @@ function workbookFormulaReviewReadiness(config = {}, workbookEvidence = null) {
   const auditSource = workbookEvidence?.formulaAudit ? '数据工作簿' : config.parameterConfig?.formulaAudit ? '参数/目标工况工作簿' : '输入工作簿';
   if (!formulaPresent) return { required: false, ready: true, status: 'not_required', audit, missing: [], evidence: '当前输入工作簿未发现公式或活动内容审计信号' };
   if (audit.status === 'blocked_active_content' || audit.macroPresent || audit.externalLinksPresent || audit.activeContentPresent) return { required, ready: false, status: 'blocked_active_content', audit, missing: ['safe_workbook_container'], evidence: '工作簿包含宏、外部链接或活动内容；该输入不进入可验证分析路径' };
+  if (audit.status === 'invalid_formula_cache' || Number(audit.errorFormulaCellCount) > 0) return { required, ready: false, status: 'invalid_formula_cache', audit, missing: ['error_formula_cache'], evidence: `${auditSource}发现 ${audit.errorFormulaCellCount || 0} 个公式错误缓存值；错误缓存不进入可验证分析路径` };
   if (!required) return { required: false, ready: true, status: 'review_required_for_acceptance', audit, missing: [], evidence: `${auditSource}发现 ${audit.formulaCellCount} 个公式单元格；当前仅作描述/风险筛查，未把缓存公式值当作正式验收结论` };
   const record = config.testMetadata?.formulaReviewEvidence;
   const missing = [];
@@ -1157,8 +1158,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     if (workbookFormulaReview.audit?.formulaCellCount > 0) {
       enterpriseResult.issues = [{
         severity: workbookFormulaReview.required && !workbookFormulaReview.ready ? 'critical' : 'warn',
-        code: workbookFormulaReview.required && !workbookFormulaReview.ready ? 'WORKBOOK_FORMULA_REVIEW_MISSING' : 'WORKBOOK_FORMULA_CACHE_USED',
-        title: workbookFormulaReview.required && !workbookFormulaReview.ready ? '工作簿公式复核证据缺失' : '工作簿含公式缓存值',
+        code: workbookFormulaReview.status === 'invalid_formula_cache' ? 'WORKBOOK_FORMULA_CACHE_INVALID' : workbookFormulaReview.required && !workbookFormulaReview.ready ? 'WORKBOOK_FORMULA_REVIEW_MISSING' : 'WORKBOOK_FORMULA_CACHE_USED',
+        title: workbookFormulaReview.status === 'invalid_formula_cache' ? '工作簿含公式错误缓存值' : workbookFormulaReview.required && !workbookFormulaReview.ready ? '工作簿公式复核证据缺失' : '工作簿含公式缓存值',
         evidence: workbookFormulaReview.evidence,
         recommendation: workbookFormulaReview.required && !workbookFormulaReview.ready
           ? '补充 reviewerId、reviewedAt、evidenceRef、sourceHash 和复核决定；系统不把未复核缓存值用于正式验收。'
