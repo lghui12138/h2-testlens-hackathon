@@ -80,6 +80,7 @@
 
 - 静态 Pages 和 Vinext App 新增 description、canonical、Open Graph、Twitter card 和 `og-card.svg` 分享图。
 - Pages 准备脚本复制分享图到 `_site/`，提交门和输入面测试确认公开资源存在；分享预览只说明项目用途，不生成标准符合性宣传。
+- 因自定义域 HTTPS 证书尚未配置，OG/Twitter 图片改用 GitHub raw HTTPS 资源；canonical/url 与当前公开 HTTP 域名保持一致，避免分享爬虫遇到证书阻断。
 
 ## 使用边界
 

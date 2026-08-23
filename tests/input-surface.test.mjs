@@ -80,6 +80,7 @@ test('public static page exposes share metadata and the Pages build copies its p
   const [source, prepared] = await Promise.all([read('src/index.html'), read('_site/index.html').catch(() => '')]);
   assert.match(source, /property="og:image"/);
   assert.match(source, /og-card\.svg/);
+  assert.match(source, /raw\.githubusercontent\.com\/lghui12138\/h2-testlens-hackathon/);
   assert.match(source, /twitter:card|name="twitter:card"/);
   if (prepared) {
     assert.match(prepared, /og-card\.svg/);
