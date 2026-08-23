@@ -978,7 +978,7 @@ function workflowReadiness(config, quality, schema, compliance, verdict, uncerta
 }
 
 function workbookFormulaReviewReadiness(config = {}, workbookEvidence = null) {
-  const audit = workbookEvidence?.formulaAudit || null;
+  const audit = workbookEvidence?.formulaAudit || config.parameterConfig?.formulaAudit || null;
   const formulaPresent = Boolean(audit && (
     Number(audit.formulaCellCount) > 0
     || Number(audit.externalReferenceCount) > 0
@@ -988,18 +988,19 @@ function workbookFormulaReviewReadiness(config = {}, workbookEvidence = null) {
     || audit.activeContentPresent
   ));
   const required = formulaPresent && (config.evaluationMode === 'acceptance' || config.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED');
+  const auditSource = workbookEvidence?.formulaAudit ? '数据工作簿' : config.parameterConfig?.formulaAudit ? '参数/目标工况工作簿' : '输入工作簿';
   if (!formulaPresent) return { required: false, ready: true, status: 'not_required', audit, missing: [], evidence: '当前输入工作簿未发现公式或活动内容审计信号' };
   if (audit.status === 'blocked_active_content' || audit.macroPresent || audit.externalLinksPresent || audit.activeContentPresent) return { required, ready: false, status: 'blocked_active_content', audit, missing: ['safe_workbook_container'], evidence: '工作簿包含宏、外部链接或活动内容；该输入不进入可验证分析路径' };
-  if (!required) return { required: false, ready: true, status: 'review_required_for_acceptance', audit, missing: [], evidence: `发现 ${audit.formulaCellCount} 个公式单元格；当前仅作描述/风险筛查，未把缓存公式值当作正式验收结论` };
+  if (!required) return { required: false, ready: true, status: 'review_required_for_acceptance', audit, missing: [], evidence: `${auditSource}发现 ${audit.formulaCellCount} 个公式单元格；当前仅作描述/风险筛查，未把缓存公式值当作正式验收结论` };
   const record = config.testMetadata?.formulaReviewEvidence;
   const missing = [];
-  if (!record || typeof record !== 'object' || Array.isArray(record)) return { required: true, ready: false, status: 'missing', audit, missing: ['formulaReviewEvidence'], evidence: '验收路径发现公式缓存值，但未提供公式复核证据' };
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return { required: true, ready: false, status: 'missing', audit, missing: ['formulaReviewEvidence'], evidence: `${auditSource}存在公式缓存值，但未提供公式复核证据` };
   for (const field of ['reviewerId', 'reviewedAt', 'evidenceRef', 'sourceHash']) if (!String(record[field] || '').trim()) missing.push(field);
   if (!['cached_values_reviewed', 'recalculated_externally'].includes(String(record.decision || '').trim())) missing.push('decision');
   const reviewedAt = String(record.reviewedAt || '').trim();
   if (reviewedAt && !/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(reviewedAt)) missing.push('reviewedAt_format');
   const status = missing.length ? 'missing' : 'ready';
-  return { required: true, ready: status === 'ready', status, audit, missing: [...new Set(missing)], evidence: status === 'ready' ? `公式复核证据已绑定 ${audit.formulaCellCount} 个公式单元格、来源哈希和复核决定` : `公式复核证据缺失：${[...new Set(missing)].join('、')}` };
+  return { required: true, ready: status === 'ready', status, audit, missing: [...new Set(missing)], evidence: status === 'ready' ? `${auditSource}公式复核证据已绑定 ${audit.formulaCellCount} 个公式单元格、来源哈希和复核决定` : `${auditSource}公式复核证据缺失：${[...new Set(missing)].join('、')}` };
 }
 
 export function releaseGate(result) {
@@ -1489,8 +1490,11 @@ function addStackEngineeringSection(result, markdown) {
     ['内阻', dataset.metrics.internalResistance, '原始单位', dataset.sourceFieldMap.internal_resistance || '未提供内阻字段']
   ].map(([label, summary, unit, source]) => `| ${label} | ${summary?.mean ?? '—'} | ${unit} | ${summary?.count ?? 0} | ${source || '未形成映射'} |`).join('\n');
   const powerEvidence = `| 电功率来源 | ${dataset.metrics.powerSource || '—'} | — | ${dataset.metrics.powerCrossCheck?.effectivePowerCount ?? 0} | ${dataset.metrics.powerCrossCheck?.evidence || '—'} |`;
+  const cellTimeSeries = (dataset.cellTimeSeriesStats || []).map((item) => `| ${item.source} | ${item.count} | ${item.missingCount} | ${item.completenessPct?.toFixed?.(2) ?? '—'} | ${item.mean?.toFixed?.(4) ?? '—'} | ${item.min?.toFixed?.(4) ?? '—'} | ${item.max?.toFixed?.(4) ?? '—'} | ${item.std?.toFixed?.(4) ?? '—'} |`).join('\n') || '| — | — | — | — | — | — | — |';
+  const excludedIntervals = (dataset.excludedIntervals || []).map((item) => `| ${item.platformId || '—'} | ${item.startS ?? '—'} | ${item.endS ?? '—'} | ${item.durationS ?? '—'} | ${item.sampleCount ?? '—'} | ${item.reasonCode || '—'} | ${item.reason || '—'} |`).join('\n') || '| — | — | — | — | — | — | — |';
+  const analysisEvidence = `\n\n## 原始电堆单片时序统计（描述性）\n\n| 源字段 | 有效记录 | 缺失记录 | 完整率(%) | 均值(V) | 最小(V) | 最大(V) | 标准差(V) |\n|---|---:|---:|---:|---:|---:|---:|---:|\n${cellTimeSeries}\n\n## 稳定区间排除证据\n\n| 平台 | 起始(s) | 结束(s) | 持续(s) | 样本数 | 原因代码 | 原因 |\n|---|---:|---:|---:|---:|---|---|\n${excludedIntervals}\n\n> 逐片统计与排除区间只记录原始数据覆盖和分析路径，不构成企业限值或标准符合性判定。`;
   const stabilityEvidence = dataset.workbookStabilityCrossCheck ? `\n\n## 原始 XLSX 稳定性描述性交叉核对\n\n- 状态：${dataset.workbookStabilityCrossCheck.status}；报告点 ${dataset.workbookStabilityCrossCheck.reportPointCount ?? 0} 个；匹配 ${dataset.workbookStabilityCrossCheck.matchedCount ?? 0} 个。\n- 边界：${dataset.workbookStabilityCrossCheck.boundary}\n${(dataset.workbookStabilityCrossCheck.matches || []).map((item) => `- 报告源行 ${item.reportSourceRow ?? '—'}：电流 ${item.reportCurrentA ?? '—'} A → 时序 ${item.timeSeriesCurrentA ?? '—'} A（Δ ${item.currentDeltaA ?? '—'}）；电压 ${item.reportVoltageV ?? '—'} V → 时序 ${item.timeSeriesVoltageV ?? '—'} V（Δ ${item.voltageDeltaV ?? '—'}）；功率 ${item.reportPowerKw ?? '—'} → ${item.timeSeriesPowerKw ?? '—'} kW（Δ ${item.powerDeltaKw ?? '—'}）`).join('\n') || '- 未形成可匹配报告点。'}\n` : '';
-  const section = `\n## 工程量摘要（统计/核对，不是标准符合性结论）\n\n| 工程量 | 均值 | 单位 | 有效记录 | 来源/公式 |\n|---|---:|---|---:|---|\n${rows}\n${powerEvidence}\n\n> “入口露点”只接受原始字段明确标注为露点的记录；增湿罐水温单独列示，不能替代露点。${stabilityEvidence}`;
+  const section = `\n## 工程量摘要（统计/核对，不是标准符合性结论）\n\n| 工程量 | 均值 | 单位 | 有效记录 | 来源/公式 |\n|---|---:|---|---:|---|\n${rows}\n${powerEvidence}\n\n> “入口露点”只接受原始字段明确标注为露点的记录；增湿罐水温单独列示，不能替代露点。${analysisEvidence}${stabilityEvidence}`;
   return markdown.replace('\n## 字段覆盖边界\n', `${section}\n## 字段覆盖边界\n`);
 }
 

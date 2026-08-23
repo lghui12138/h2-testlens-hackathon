@@ -1608,6 +1608,7 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
   const samplePosition = parameterText('SAMPLE_POSITION', '稳定区间末端');
   const currentTolerance = currentRule ? Math.max(Math.abs(currentRule.lowerTolerance ?? fallbackTolerance), Math.abs(currentRule.upperTolerance ?? fallbackTolerance)) : fallbackTolerance;
   const gapLimitS = descriptiveGapLimitS(rows);
+  const timeOf = (row) => row?.session_timestamp_s ?? row?.timestamp_s;
   const chooseCondition = (row) => {
     const candidates = conditions.map((condition) => ({ condition, distance: row.current_a === null ? Infinity : Math.abs(row.current_a - condition.targetCurrentA) }))
       .filter((item) => item.distance <= currentTolerance).sort((a, b) => a.distance - b.distance);
@@ -1634,9 +1635,9 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
       targetCurrentA: condition.targetCurrentA,
       targetCurrentDensity: condition.targetCurrentDensity,
       toleranceA: currentTolerance,
-      startS: active.start.timestamp_s,
-      endS: end?.timestamp_s ?? null,
-      durationS: end?.timestamp_s !== null && active.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - active.start.timestamp_s) : 0,
+      startS: timeOf(active.start),
+      endS: timeOf(end),
+      durationS: Number.isFinite(timeOf(end)) && Number.isFinite(timeOf(active.start)) ? Math.max(0, timeOf(end) - timeOf(active.start)) : 0,
       effectiveDurationS: duration.durationS,
       durationSource: duration.source,
       sampleCount: sampleRows.length,
@@ -1661,9 +1662,10 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
   });
   closePlatform(rows.length);
   const stableSegments = [];
+  const excludedIntervals = [];
   for (const platform of platforms) {
     let stable = null; let stableSequence = 0;
-    const closeStable = (endIndex) => {
+    const closeStable = (endIndex, closeReason = null) => {
       if (!stable) return;
       const end = platform.rows[endIndex - 1] || platform.rows.at(-1); const sampleRows = platform.rows.slice(stable.startIndex, endIndex); const duration = durationForSegment(stable.start, end, sampleRows.length, samplePeriodS);
       const baseStatus = duration.durationS < minStableS ? 'stable_too_short' : duration.durationS < formalSampleS ? 'short_stable' : 'stable_valid';
@@ -1671,7 +1673,7 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
       let selectedRows = sampleRows;
       if (baseStatus === 'stable_valid' && formalSampleS > 0) {
         if (Number.isFinite(samplePeriodS) && samplePeriodS > 0) selectedRows = sampleRows.slice(-Math.max(2, Math.floor(formalSampleS / samplePeriodS) + 1));
-        else selectedRows = sampleRows.filter((row) => row.timestamp_s >= (end?.timestamp_s ?? 0) - formalSampleS);
+        else selectedRows = sampleRows.filter((row) => timeOf(row) >= (timeOf(end) ?? 0) - formalSampleS);
       }
       const values = (field, source = selectedRows) => source.map((row) => row[field]).filter((value) => value !== null);
       stableSegments.push({
@@ -1680,9 +1682,9 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
         segmentIndex: stableSequence,
         platformIndex: platform.platformIndex,
         conditionId: platform.conditionId,
-        startS: stable.start.timestamp_s,
-        endS: end?.timestamp_s ?? null,
-        durationS: end?.timestamp_s !== null && stable.start.timestamp_s !== null ? Math.max(0, end.timestamp_s - stable.start.timestamp_s) : 0,
+        startS: timeOf(stable.start),
+        endS: timeOf(end),
+        durationS: Number.isFinite(timeOf(end)) && Number.isFinite(timeOf(stable.start)) ? Math.max(0, timeOf(end) - timeOf(stable.start)) : 0,
         effectiveDurationS: duration.durationS,
         selectedDurationS: durationForSegment(selectedRows[0], selectedRows.at(-1), selectedRows.length, samplePeriodS).durationS,
         durationSource: duration.source,
@@ -1701,14 +1703,34 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
         averageNetPowerKw: mean(values('power_kw')),
         parameterComparisons: rules.filter((rule) => rule.enabled).map((rule) => conditionComparison(rule, platform, selectedRows, samplePeriodS)),
         missingParameters: stable.missing,
+        exclusionReason: closeReason?.code || null,
+        exclusionEvidence: closeReason?.evidence || null,
         rows: sampleRows,
         selectedRows
+      });
+      if (closeReason || !stable.parameterComplete || !['stable_valid', 'short_stable'].includes(baseStatus)) excludedIntervals.push({
+        platformId: platform.platformId,
+        conditionId: platform.conditionId,
+        sessionId: platform.sessionId,
+        sourceFile: platform.sourceFile,
+        startS: timeOf(stable.start),
+        endS: timeOf(end),
+        durationS: duration.durationS,
+        sampleCount: sampleRows.length,
+        reasonCode: closeReason?.code || (!stable.parameterComplete ? 'PARAMETER_INCOMPLETE' : baseStatus),
+        reason: closeReason?.evidence || (!stable.parameterComplete ? `缺少参数：${stable.missing.join('、') || '未形成完整参数记录'}` : `有效持续时间 ${duration.durationS}s 未达到要求`)
       });
       stable = null;
     };
     platform.rows.forEach((row, index) => {
       const evaluated = evaluateStableRow(row, platform, rules);
-      if (!evaluated.ok) { closeStable(index); return; }
+      if (!evaluated.ok) {
+        closeStable(index, {
+          code: evaluated.missing.length ? 'MISSING_PARAMETER' : 'OUT_OF_TOLERANCE',
+          evidence: evaluated.missing.length ? `缺少参数：${evaluated.missing.join('、')}` : `参数超出允许范围：${evaluated.exceeded.map((item) => `${item.code}=${item.value}，目标 ${item.target}`).join('；')}`
+        });
+        return;
+      }
       if (!stable) stable = { start: row, startIndex: index, parameterComplete: evaluated.parameterComplete, missing: evaluated.missing };
     });
     closeStable(platform.rows.length);
@@ -1752,6 +1774,7 @@ function stackPlatforms(rows, parameterConfig, fallbackConfig = {}) {
     stableSegments: stableSegments.map(({ rows: _rows, selectedRows: _selectedRows, ...segment }) => segment),
     performancePoints: performancePoints.map(({ rows: _rows, selectedRows: _selectedRows, ...point }) => point),
     selectionAudit,
+    excludedIntervals,
     selectionPolicy: 'last_eligible_stable_segment_unless_manual_override'
   };
 }
@@ -2060,6 +2083,24 @@ function buildStack(rows, config) {
     const values = Object.values(row.cells).filter((value) => value !== null);
     return values.length ? Math.max(...values) - Math.min(...values) : null;
   }).filter((value) => value !== null);
+  const cellTimeSeriesStats = cellHeaders.map((source, index) => {
+    const field = `cell_${index + 1}_v`;
+    const values = normalized.map((row) => row.cells[field]).filter((value) => value !== null);
+    return {
+      source,
+      field,
+      cellIndex: index + 1,
+      count: values.length,
+      missingCount: normalized.length - values.length,
+      completenessPct: normalized.length ? values.length / normalized.length * 100 : 0,
+      mean: mean(values),
+      min: values.length ? Math.min(...values) : null,
+      max: values.length ? Math.max(...values) : null,
+      range: values.length ? Math.max(...values) - Math.min(...values) : null,
+      std: std(values),
+      boundary: '原始电堆时序逐片描述性统计；不含企业限值或标准符合性判定'
+    };
+  });
   const summary = (field) => {
     const values = normalized.map((row) => row[field]).filter((value) => value !== null);
     return { count: values.length, mean: mean(values), min: values.length ? Math.min(...values) : null, max: values.length ? Math.max(...values) : null, std: std(values) };
@@ -2121,19 +2162,21 @@ function buildStack(rows, config) {
     cellChannelCount: cellHeaders.length,
     configuredCellCount,
     cellHeaders,
+    cellTimeSeriesStats,
     signalCatalog,
     sessions: sessionTime.sessions,
     sessionCount: sessionTime.sessions.length,
     coverage: coverageSummary(signalCatalog),
     settingCrossChecks,
     feedbackSignals,
-    parameterConfig: parameterConfig ? { ok: parameterConfig.ok, analysisMode: parameterConfig.analysisMode || 'target_conformity', parameterSheet: parameterConfig.parameterSheet, targetSheet: parameterConfig.targetSheet, errors: parameterConfig.errors, warnings: parameterConfig.warnings } : null,
+    parameterConfig: parameterConfig ? { ok: parameterConfig.ok, analysisMode: parameterConfig.analysisMode || 'target_conformity', parameterSheet: parameterConfig.parameterSheet, targetSheet: parameterConfig.targetSheet, errors: parameterConfig.errors, warnings: parameterConfig.warnings, formulaAudit: parameterConfig.formulaAudit ? { status: parameterConfig.formulaAudit.status, formulaCellCount: parameterConfig.formulaAudit.formulaCellCount, cachedFormulaCellCount: parameterConfig.formulaAudit.cachedFormulaCellCount, uncachedFormulaCellCount: parameterConfig.formulaAudit.uncachedFormulaCellCount, macroPresent: Boolean(parameterConfig.formulaAudit.macroPresent), externalLinksPresent: Boolean(parameterConfig.formulaAudit.externalLinksPresent), activeContentPresent: Boolean(parameterConfig.formulaAudit.activeContentPresent) } : null } : null,
     platforms: parameterAnalysis.platforms,
     stableSegments: parameterAnalysis.stableSegments,
     performancePoints: parameterAnalysis.performancePoints,
     inferredSegments: parameterAnalysis.inferredSegments || [],
     relativeStability: parameterAnalysis.relativeStability || null,
     selectionAudit: parameterAnalysis.selectionAudit,
+    excludedIntervals: parameterAnalysis.excludedIntervals || [],
     selectionPolicy: parameterAnalysis.selectionPolicy,
     metrics: {
       averageCurrentA: mean(normalized.map((row) => row.current_a).filter((value) => value !== null)),

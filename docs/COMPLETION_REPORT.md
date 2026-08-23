@@ -2,7 +2,7 @@
 
 ## Delivered
 
-Current revision: **v3.5.36**. Enterprise adapter compliance and report surfaces preserve standard-reference provenance and the explicit non-certification boundary; vehicle/session timing, stack quality gates, derived-power acceptance provenance, and rendered web/App parity are additionally closed by regression tests.
+Current revision: **v3.5.37**. Enterprise adapter compliance and report surfaces preserve standard-reference provenance and the explicit non-certification boundary; vehicle/session timing, stack quality gates, derived-power acceptance provenance, per-cell evidence, formula review and rendered web/App parity are additionally closed by regression tests.
 
 Historical v3.4.0–v3.5.34 wording is retained only where it records prior releases; current coverage and regression evidence are listed separately.
 
@@ -18,7 +18,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Historical automated gate: `npm test` **114/114**, `npm run check:submission` **107/107**, `npm run eval:ai` **4/4**, API smoke, profile audit and GitHub Pages preparation pass; T02 source integrity is **198/198 unchanged**. A clean APFS staging tree with the v3.5.30 source and locked dependencies completed the Vinext production build **5/5 stages**.
 - Historical delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.30.zip`; SHA-256 was recorded in the adjacent `.sha256` sidecar and the archive passed `unzip -t`.
 
-## v3.5.36 current gate
+## v3.5.37 current gate
 
 - Added the explicit `evaluationMode` contract with `descriptive_only`, `risk_screening` and `acceptance` modes. T02 vehicle, stack and durability example profiles are restricted to their dataset type, unapproved, descriptive-only and threshold-free (`thresholds: null`).
 - `descriptive_only` converts threshold-like findings into informational observations, returns `DESCRIPTIVE`, sets threshold/acceptance decisions to `NOT_RUN`, and fixes the release gate at `ANALYSIS_DRAFT`. The report and local evidence draft explicitly state that no threshold, safety, conformity or release decision was executed.

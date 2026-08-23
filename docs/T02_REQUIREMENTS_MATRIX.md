@@ -6,7 +6,7 @@
 
 当前 v3.5.34 机器证据使用 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.34.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.34.json` 和全包报告 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.34.md`；源资料完整性由 `npm run t02:integrity` 对当前目录逐文件复核，并额外校验审计根目录、记录数和路径唯一性；approved profile 另增加标准引用 provenance、完整方法前置证据、公式复核和 `evaluationMode` 门；下方旧版本路径仅保留历史记录。
 
-当前 v3.5.36 机器证据另包含 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.36.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.36.json` 和 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.36.md`；本轮新增车辆会话本地时间、堆级数据质量阻断、重复目标条件消歧、原始功率验收 provenance 和网页/App 渲染 parity 回归。
+当前 v3.5.37 机器证据另包含 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.37.json` 和 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.37.md`；本轮新增电堆逐片时序统计、稳定区间排除证据和参数工作簿公式复核门回归。
 
 v3.5.34 额外要求：除 v3.5.32 的源完整性、标准引用、完整方法前置证据和 `evaluationMode` 门外，`descriptive_only` profile 不得携带 acceptanceRules/acceptanceCriteria，必须使用 `thresholds: null`，并将阈值/验收状态写成 `NOT_RUN`、release gate 固定为 `ANALYSIS_DRAFT`；含公式单元格的正式验收路径必须提供人工公式复核证据；VBA 宏、ActiveX/OLE 和外部链接在 SheetJS 前阻断且返回 `ok: false`。三个 T02 示例 profile 必须分别限制 vehicle、stack、durability 数据集，不能被误用于其他数据类型。XLSX 入口还必须在 vendored SheetJS 前执行 ZIP 容器预检（64 MiB 压缩输入、256 MiB 声明展开、2048 条目、200:1 压缩比及损坏/ZIP64/加密阻断），且把这些参数标为解析器保护而非标准限值。车辆 profile 还必须进入动态设定变化描述分析，并在逐文件/包级证据中保留事件数、保持窗口数、未稳定数和采样缺口数；这些指标不得被写成 GB/T 46104-2025 合格结论。该门只证明资料审计和分析模式边界的可追溯性，不把机器审计变成标准符合性声明。
 

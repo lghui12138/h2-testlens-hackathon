@@ -1556,6 +1556,53 @@ test('disambiguates repeated current conditions using enabled target fields', ()
   assert.equal(result.dataset.performancePoints[0].conditionId, 'I-10-B');
 });
 
+test('exports per-cell time-series statistics and excluded stable-interval evidence', () => {
+  const parameterConfig = {
+    ok: true,
+    parameters: [{ code: 'MIN_CURRENT_PLATFORM_TIME', target: 1 }, { code: 'MIN_STABLE_TIME', target: 1 }, { code: 'DEFAULT_SAMPLE_TIME', target: 1 }],
+    parameterRules: [
+      { code: 'CURRENT', enabled: true, field: 'current_a', target: null, lowerTolerance: -1, upperTolerance: 1 },
+      { code: 'H2_FLOW', enabled: true, field: 'anode_flow_slpm', target: null, lowerTolerance: -0.1, upperTolerance: 0.1 }
+    ],
+    targetConditions: [{ conditionId: 'I-10', targetCurrentA: 10, h2Flow: 2 }]
+  };
+  const result = analyzeRows(parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极流量（SLPM）',
+    '0,1.4,10,0.014,0.7,0.69,0.71,2',
+    '1,1.4,10,0.014,0.7,0.69,0.71,2',
+    '2,1.4,10,0.014,0.7,0.69,0.71,5',
+    '3,1.4,10,0.014,0.7,0.68,0.72,2'
+  ].join('\n')), { parameterConfig, samplePeriodS: 1 });
+  assert.equal(result.dataset.cellTimeSeriesStats.length, 2);
+  assert.equal(result.dataset.cellTimeSeriesStats[0].count, 4);
+  assert.ok(result.dataset.excludedIntervals.some((item) => item.reasonCode === 'OUT_OF_TOLERANCE'));
+  assert.match(reportMarkdown(result, 'stack-evidence.csv'), /原始电堆单片时序统计/);
+  assert.match(reportMarkdown(result, 'stack-evidence.csv'), /稳定区间排除证据/);
+  const workbook = buildEnterpriseWorkbook(result, 'stack-evidence.csv', { parameterConfig });
+  assert.ok(workbook.SheetNames.includes('单片时序统计'));
+  assert.ok(workbook.SheetNames.includes('排除区间'));
+});
+
+test('parameter-workbook formula audit blocks acceptance until review evidence is supplied', () => {
+  const parameterConfig = {
+    ok: true,
+    parameterSheet: '数据处理设定参数',
+    targetSheet: '目标工况设定',
+    parameters: [],
+    parameterRules: [],
+    targetConditions: [],
+    formulaAudit: { status: 'review_required', formulaCellCount: 2, cachedFormulaCellCount: 2, uncachedFormulaCellCount: 0, macroPresent: false, externalLinksPresent: false, activeContentPresent: false }
+  };
+  const result = analyzeRows(parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2',
+    '0,1.4,10,0.014,0.7,0.69,0.71',
+    '1,1.4,10,0.014,0.7,0.69,0.71'
+  ].join('\n')), { evaluationMode: 'acceptance', parameterConfig });
+  assert.ok(result.issues.some((item) => item.code === 'WORKBOOK_FORMULA_REVIEW_MISSING'));
+  assert.equal(result.releaseGate.workbookFormulaReview.ready, false);
+  assert.ok(result.releaseGate.blockedReasons.includes('workbookFormulaReview'));
+});
+
 test('allows a settings-only workbook to run configurable relative-stability screening without target conformity', () => {
   const inputBook = SheetJS.utils.book_new();
   SheetJS.utils.book_append_sheet(inputBook, SheetJS.utils.aoa_to_sheet([

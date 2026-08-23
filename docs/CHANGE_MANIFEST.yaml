@@ -1,6 +1,6 @@
 change:
   id: h2-testlens-v3-5-34
-  release: h2-testlens-v3-5-36
+  release: h2-testlens-v3-5-37
   mode: full
   intent: "Create a local-first hydrogen equipment test-data analysis and auto-report prototype for hackathon track T02."
 surfaces:
