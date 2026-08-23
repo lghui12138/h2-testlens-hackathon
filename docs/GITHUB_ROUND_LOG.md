@@ -66,6 +66,11 @@
 - 输入安全层新增 `binaryReason`：`nul_byte`、`control_byte_ratio`、`decoded_control_bytes`、`unsupported_bom_encoding`。
 - 浏览器、batch-watch 和 T02 coverage audit 共享并保留该原因，阻断处理仍不进入解析器。
 
+## 2026-08-24 · 损坏编码 fail-closed 轮
+
+- 输入文本出现 Unicode replacement character（`�`）时现在阻断为 `decode_replacement_character`，不再用替换字符继续解析 KPI。
+- 新增 malformed UTF-8 回归，确保损坏字节不会静默进入 CSV/TSV 分析。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。

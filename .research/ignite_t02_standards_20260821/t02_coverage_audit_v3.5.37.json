@@ -1816,7 +1816,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 132,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -3120,7 +3120,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 3671,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -4424,7 +4424,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 5922,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -5729,7 +5729,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 23974,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -7034,7 +7034,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 543,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -8370,7 +8370,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 7304,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -9676,7 +9676,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 535,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -10982,7 +10982,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 14647,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -12285,7 +12285,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 58,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,
@@ -13587,7 +13587,7 @@
       "note": "真实解析并进入企业数据适配器与结构化分析入口",
       "rowCount": 786,
       "columnCount": 422,
-      "encoding": "text",
+      "encoding": "binary-or-non-text",
       "analysis": {
         "datasetType": "stack",
         "mappedFields": 327,

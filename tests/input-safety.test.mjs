@@ -24,6 +24,13 @@ test('shared input boundary classifies control-byte binary without a NUL byte', 
   assert.equal(decodeTextBuffer(binary, 'gb18030').binaryReason, 'control_byte_ratio');
 });
 
+test('shared input boundary blocks undecodable replacement characters', () => {
+  const malformedUtf8 = Uint8Array.from([0xe4, 0xb8]);
+  const decoded = decodeTextBuffer(malformedUtf8, 'utf-8');
+  assert.equal(decoded.binary, true);
+  assert.equal(decoded.binaryReason, 'decode_replacement_character');
+});
+
 test('shared input boundary keeps ordinary GB18030-like text parseable', () => {
   const text = new TextEncoder().encode('时间\t功率(kW)\r\n0\t10\r\n');
   const decoded = decodeTextBuffer(text, 'utf-8');

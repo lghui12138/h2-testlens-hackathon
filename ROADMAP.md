@@ -77,6 +77,12 @@
 - Gate: input-safety regression, real T02 coverage replay, source integrity 198/198 and full submission gates pass.
 - Residual: a reason code explains why parsing stopped; it does not make the file parseable or establish enterprise format approval.
 
+## 2026-08-24 current continuation evidence · malformed text fail-closed
+
+- Change: decoders reject Unicode replacement characters with `decode_replacement_character` instead of passing lossy text to the CSV/TSV parser.
+- Gate: malformed UTF-8 input-safety regression plus full test/submission/Pages gates must pass.
+- Residual: valid enterprise encodings still require an explicit/approved decoder; this guard prevents silent corruption but does not infer encoding.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

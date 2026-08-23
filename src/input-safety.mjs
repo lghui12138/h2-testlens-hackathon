@@ -53,10 +53,13 @@ export const decodeTextBuffer = (input, encoding = 'utf-8') => {
   const offset = bom?.offset || 0;
   try {
     const text = new TextDecoder(selectedEncoding).decode(bytes.subarray(offset)).replace(/^\uFEFF/, '');
+    if (text.includes('\uFFFD')) return { binary: true, text: null, encoding: 'binary-or-non-text', binaryReason: 'decode_replacement_character' };
     if (!textLooksSafe(text)) return { binary: true, text: null, encoding: 'binary-or-non-text', binaryReason: 'decoded_control_bytes' };
     return { binary: false, text, encoding: selectedEncoding };
   } catch {
     if (bom) return { binary: true, text: null, encoding: 'binary-or-non-text', binaryReason: 'unsupported_bom_encoding' };
-    return { binary: false, text: new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, ''), encoding: 'utf-8-fallback' };
+    const fallbackText = new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
+    if (fallbackText.includes('\uFFFD')) return { binary: true, text: null, encoding: 'binary-or-non-text', binaryReason: 'decode_replacement_character' };
+    return { binary: false, text: fallbackText, encoding: 'utf-8-fallback' };
   }
 };
