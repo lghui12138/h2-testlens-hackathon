@@ -841,6 +841,7 @@ test('phase metrics do not integrate across a configured sampling gap', () => {
   assert.equal(phase.skippedGapCount, 1);
   assert.equal(phase.interruptedSegmentCount, 1);
   assert.deepEqual(result.compliance.missingPhaseMetrics, ['steady.energyConsumedWh', 'steady.hydrogenVolumeNl']);
+  assert.match(reportMarkdown(result, 'phase-gap.csv'), /积分状态 partial_gap/);
   assert.equal(result.phaseCoverage.required[0].validDataCoveragePct, 25);
 });
 

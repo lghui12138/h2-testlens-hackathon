@@ -59,6 +59,12 @@
 - Gate: analyzer regression passes with a two-row power-only phase and reports `energyConsumedWh` plus `partial_input` status.
 - Residual: this improves metric availability but does not infer missing flow, efficiency, acceptance limits or standard compliance.
 
+## 2026-08-24 current continuation evidence · report phase evidence
+
+- Change: Markdown phase summaries now include integration status, skipped sampling-gap count and skipped session-boundary count.
+- Gate: the phase-gap regression asserts `积分状态 partial_gap`; full test/submission/Pages gates remain required.
+- Residual: report visibility is improved, but a formal method report still requires enterprise-approved evidence and sign-off.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
