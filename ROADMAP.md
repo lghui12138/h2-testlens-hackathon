@@ -16,6 +16,13 @@
 - Enterprise Markdown reports and the browser report preview expose standard references, method execution status and release-gate status; they do not declare standard conformity.
 - Verification artifacts: v3.5.37 T02 coverage/reference/integration reports; new per-cell, excluded-interval and parameter-formula regressions; full submission gates remain required before packaging.
 
+## 2026-08-24 current continuation evidence · field-value diagnostics
+
+- Change: vehicle and stack adapters now preserve per-signal numeric coverage, missing/non-numeric mix, negative-value count, zero-dominance, unique-value count and semantic-review reasons; raw values are never silently filtered.
+- Real T02 spot check: Qingchuan stack `38,257 × 127` produced `14` analysis-field review signals and `37,600` duplicate timestamps; vehicle sample `5,310 × 46` produced `5` review signals, including all-zero voltage/power summaries and all-negative `FC_MinCellVoltage`.
+- Gate: `npm test` passed `409/409`; Node syntax checks and `git diff --check` passed. Full submission/Pages gates remain required before delivery.
+- Residual: negative/zero values remain unresolved until the enterprise supplies field semantics, units, device-state definitions and invalid-code tables; the diagnostic is evidence triage, not a conformity or safety conclusion.
+
 ## 2026-08-24 current continuation evidence · time-gap-aware integration
 
 - Surfaces: analyzer source of truth, generic phase metrics, uncertainty propagation, browser calculation-summary UI, static/Vinext parity, regression tests, GitHub Pages workflow and round log.

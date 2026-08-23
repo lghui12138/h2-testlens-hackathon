@@ -301,6 +301,65 @@ function summarizeDiscreteSignal(rows, source) {
   };
 }
 
+function signalValueDiagnostics(rows, source, usage) {
+  const rawValues = rows.map((row) => String(row[source] ?? '').trim());
+  const nonEmptyValues = rawValues.filter(Boolean);
+  const numericValues = nonEmptyValues.map((value) => num(value)).filter((value) => value !== null);
+  const numericSignal = numericValues.length > 0;
+  const parseInvalidCount = numericSignal ? nonEmptyValues.length - numericValues.length : 0;
+  const negativeCount = numericValues.filter((value) => value < 0).length;
+  const zeroCount = numericValues.filter((value) => value === 0).length;
+  const uniqueCount = new Set(nonEmptyValues).size;
+  const zeroDominant = numericSignal && numericValues.length > 0 && zeroCount / numericValues.length >= 0.95;
+  const constant = numericSignal && uniqueCount <= 1;
+  const reviewReasons = [];
+  if (parseInvalidCount > 0) reviewReasons.push('数值列含非数值文本');
+  if (negativeCount > 0) reviewReasons.push('存在负值，需确认符号/无效码定义');
+  if (zeroDominant) reviewReasons.push('零值占比≥95%，需确认停机态、未接入或无效码');
+  if (constant) reviewReasons.push('有效值只有一个取值，需确认是否为状态码或未采集');
+  const reviewable = parseInvalidCount > 0 || negativeCount > 0 || (zeroDominant && usage === 'analysis_input');
+  return {
+    nonEmptyCount: nonEmptyValues.length,
+    missingCount: rows.length - nonEmptyValues.length,
+    parseInvalidCount,
+    negativeCount,
+    zeroCount,
+    zeroPct: numericValues.length ? zeroCount / numericValues.length * 100 : null,
+    uniqueCount,
+    zeroDominant,
+    constant,
+    reviewable,
+    reviewReasons,
+    policy: '不按通用规则删除负值/零值；需结合企业字段定义、设备状态和无效码确认'
+  };
+}
+
+function signalDiagnosticsSummary(signalCatalog) {
+  const reviewSignals = signalCatalog
+    .filter((item) => item.reviewable)
+    .sort((a, b) => (b.negativeCount + b.zeroCount + b.parseInvalidCount) - (a.negativeCount + a.zeroCount + a.parseInvalidCount));
+  return {
+    signalCount: signalCatalog.length,
+    numericSignalCount: signalCatalog.filter((item) => item.numericCount > 0).length,
+    reviewSignalCount: reviewSignals.length,
+    negativeSignalCount: signalCatalog.filter((item) => item.negativeCount > 0).length,
+    zeroDominantSignalCount: signalCatalog.filter((item) => item.zeroDominant).length,
+    constantSignalCount: signalCatalog.filter((item) => item.constant).length,
+    parseIssueSignalCount: signalCatalog.filter((item) => item.parseInvalidCount > 0).length,
+    reviewSignals: reviewSignals.slice(0, 16).map((item) => ({
+      source: item.source,
+      usage: item.usage,
+      negativeCount: item.negativeCount,
+      zeroCount: item.zeroCount,
+      zeroPct: item.zeroPct,
+      parseInvalidCount: item.parseInvalidCount,
+      uniqueCount: item.uniqueCount,
+      reasons: item.reviewReasons
+    })),
+    boundary: '字段级诊断只提示原始值分布和语义复核点，不替代企业无效码表、单位确认或标准验收限值。'
+  };
+}
+
 function coverageSummary(signalCatalog) {
   const usableSignals = signalCatalog.filter((item) => String(item.source ?? '').trim());
   const counts = Object.fromEntries([...new Set(usableSignals.map((item) => item.usage))].sort().map((usage) => [usage, usableSignals.filter((item) => item.usage === usage).length]));
@@ -323,7 +382,7 @@ function annotateSignalCatalog(rows, headers, mapping, roleBySource = {}) {
     const summary = summarizeNumericSignal(rows, source);
     const discrete = summarizeDiscreteSignal(rows, source);
     const usage = roleBySource[source] || (mappedSources.has(source) ? 'analysis_input' : 'catalog_only');
-    return { ...summary, kind: summary.numericCount ? 'numeric_or_mixed' : 'discrete_or_text', uniqueValues: discrete.uniqueValues, usage };
+    return { ...summary, ...signalValueDiagnostics(rows, source, usage), kind: summary.numericCount ? 'numeric_or_mixed' : 'discrete_or_text', uniqueValues: discrete.uniqueValues, usage };
   });
 }
 
@@ -1362,6 +1421,7 @@ function buildVehicle(rows, config) {
   ]);
   if (dynamicConfig.enabled === true && headers.includes(dynamicCommandSource)) vehicleRoleBySource[dynamicCommandSource] = 'analysis_input';
   const signalCatalog = annotateSignalCatalog(rows, headers, mapping, vehicleRoleBySource);
+  const signalDiagnostics = signalDiagnosticsSummary(signalCatalog);
   const contextSignals = signalCatalog.filter((item) => item.usage === 'context_or_cross_check');
   const vehicleCrossChecks = pairEvidence(rows, [
     { code: 'MAX_CURRENT_ALLOW', target: 'FC_MaxCurrAllow', actual: 'FC_CurrOut', unit: 'A' },
@@ -1384,6 +1444,7 @@ function buildVehicle(rows, config) {
   if (requestedWindow && !analysisRows.length) issues.push({ severity: 'warn', code: 'VEHICLE_WINDOW_EMPTY', title: '时间窗口没有记录', evidence: `请求窗口 ${windowStartS}–${windowEndS} s 未找到记录；本次摘要回退到全量 ${normalized.length} 条记录`, recommendation: '调整起止时间，或先确认时间戳转换和多文件拼接顺序。' });
   const invalidIsolation = normalized.filter((row) => row.isolation_kohm === null || row.isolation_kohm <= 0 || row.isolation_kohm >= 9999 || row.isolation_kohm === 65535).length;
   if (invalidIsolation) issues.push({ severity: 'info', code: 'ISOLATION_FILTERED', title: '绝缘阻值已按企业规则过滤', evidence: `${invalidIsolation} 条记录未进入 10 分钟最小值统计`, recommendation: '正式报告中保留过滤规则，并核对传感器无效码定义。' });
+  if (signalDiagnostics.reviewSignalCount) issues.push({ severity: 'warn', code: 'SIGNAL_VALUE_SEMANTICS_REVIEW', title: '原始信号值分布需要语义复核', evidence: `${signalDiagnostics.reviewSignalCount} 个核心/交叉核对字段存在负值、零值集中、常量值或数值解析混合；示例：${signalDiagnostics.reviewSignals.slice(0, 4).map((item) => `${item.source}（${item.reasons.join('、')}）`).join('；')}`, recommendation: '先确认字段单位、设备状态和企业无效码表；系统不自动删除负值/零值，也不把该提示直接转为不合格。' });
   if (dynamicAnalysis.enabled && dynamicAnalysis.status === 'not_available') issues.push({ severity: 'info', code: 'VEHICLE_DYNAMIC_FIELDS_MISSING', title: '车辆动态事件分析未执行', evidence: dynamicAnalysis.evidence, recommendation: `补充 ${dynamicCommandSource} 设定信号或在企业 profile 中关闭该可选分析。` });
   if (dynamicAnalysis.enabled && dynamicAnalysis.dataGapCount > 0) issues.push({ severity: 'warn', code: 'VEHICLE_DYNAMIC_DATA_GAP', title: '车辆动态事件存在采样缺口', evidence: `识别 ${dynamicAnalysis.dataGapCount} 个超过配置上限的间隔；最大观测间隔 ${dynamicAnalysis.maximumIntervalS ?? '—'} s`, recommendation: '复核采集计划、时钟同步和文件边界；不以插值替代原始记录。' });
   if (!targetCurrents.length) issues.push({ severity: 'warn', code: 'VEHICLE_TARGETS_MISSING', title: '未提供性能统计目标电流', evidence: `已发现 ${inferredSegments.length} 个连续电流候选区间，但这些区间仅按实际数据推断，未生成正式目标电流性能点`, recommendation: '导入企业批准的目标电流、允许波动范围和最短持续时间后重新分析；当前候选只用于描述性复核。' });
@@ -1423,6 +1484,7 @@ function buildVehicle(rows, config) {
     sessions: sessionTime.sessions,
     sessionCount: sessionTime.sessions.length,
     signalCatalog,
+    signalDiagnostics,
     coverage: coverageSummary(signalCatalog),
     contextSignals,
     crossChecks: vehicleCrossChecks,
@@ -2118,6 +2180,7 @@ function buildStack(rows, config) {
     ...headers.filter((source) => /反馈|泵反馈|阀反馈/.test(String(source))).map((source) => [source, 'context_or_cross_check'])
   ]);
   const signalCatalog = annotateSignalCatalog(rows, headers, mapping, stackRoleBySource);
+  const signalDiagnostics = signalDiagnosticsSummary(signalCatalog);
   const settingPairs = [
     { code: 'ANODE_IN_PRESSURE_SETPOINT', target: '阳极入堆压力设定值（kPa）', actual: '阳极入堆压力（kPa）', unit: 'kPa' },
     { code: 'ANODE_OUT_PRESSURE_SETPOINT', target: '阳极出堆压力设定值（kPa）', actual: '阳极出堆压力（kPa）', unit: 'kPa' },
@@ -2142,6 +2205,7 @@ function buildStack(rows, config) {
   if (!cellHeaders.length) issues.push({ severity: 'warn', code: 'STACK_CELL_CHANNELS_MISSING', title: '未发现单片电压通道', evidence: '当前工作表可用于堆级电压/电流和工况统计，但不能完成单片一致性判定', recommendation: '导入包含单片电压列的原始测试表后再做单片异常结论。' });
   if (configuredCellCount && configuredCellCount !== cellHeaders.length) issues.push({ severity: 'warn', code: 'CELL_CHANNEL_COUNT_MISMATCH', title: '单片数量与导出通道数不一致', evidence: `参数表片数 ${configuredCellCount}，导出单片通道 ${cellHeaders.length} 个；有效配置记录 ${rowsWithConfiguredCount} 条`, recommendation: '确认测试台导出列、片数参数和有效通道范围，不能静默截断。' });
   if (quality.duplicateTimestampCount) issues.push({ severity: 'warn', code: 'STACK_TIMESTAMP_RESOLUTION', title: '时间戳分辨率不足以支撑逐秒排序', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，当前时间列需要结合采样序号复核`, recommendation: '改用带秒/毫秒的原始时间列或补充采样周期参数。' });
+  if (signalDiagnostics.reviewSignalCount) issues.push({ severity: 'warn', code: 'SIGNAL_VALUE_SEMANTICS_REVIEW', title: '原始信号值分布需要语义复核', evidence: `${signalDiagnostics.reviewSignalCount} 个核心/交叉核对字段存在负值、零值集中、常量值或数值解析混合；示例：${signalDiagnostics.reviewSignals.slice(0, 4).map((item) => `${item.source}（${item.reasons.join('、')}）`).join('；')}`, recommendation: '先确认字段单位、设备状态和企业无效码表；系统不自动删除负值/零值，也不把该提示直接转为不合格。' });
   if (sessionTime.sessions.length > 1) issues.push({ severity: 'info', code: 'STACK_SESSIONS_PRESERVED', title: '多文件会话边界已保留', evidence: `识别 ${sessionTime.sessions.length} 个独立会话；电流平台和稳定区间不会跨文件拼接`, recommendation: '按来源文件复核各会话的时间轴、平台顺序和采样连续性。' });
   if (parameterConfig?.ok && parameterAnalysis.performancePoints.some((point) => point.status === 'short_stable')) issues.push({ severity: 'warn', code: 'SHORT_STABLE_WINDOW', title: '稳定区间不足默认统计时长', evidence: `有 ${parameterAnalysis.performancePoints.filter((point) => point.status === 'short_stable').length} 个稳定点达到最短稳定时间但不足默认 ${parameterConfig.parameters.find((item) => item.code === 'DEFAULT_SAMPLE_TIME')?.target ?? 120} s`, recommendation: '保留该点并标记警告；如需正式长窗口曲线，应延长稳定采样。' });
   if (parameterConfig?.ok && !parameterAnalysis.performancePoints.length && hasUsableTargetConditions) issues.push({ severity: 'warn', code: 'STABLE_WINDOW_MISSING', title: '未形成满足参数的稳定区间', evidence: `已读取 ${parameterAnalysis.platforms.length} 个候选平台，但没有稳定区间达到最短稳定时间或参数完整条件`, recommendation: '检查目标工况、稳定判定参数、采样周期和原始时间分辨率。' });
@@ -2164,6 +2228,7 @@ function buildStack(rows, config) {
     cellHeaders,
     cellTimeSeriesStats,
     signalCatalog,
+    signalDiagnostics,
     sessions: sessionTime.sessions,
     sessionCount: sessionTime.sessions.length,
     coverage: coverageSummary(signalCatalog),

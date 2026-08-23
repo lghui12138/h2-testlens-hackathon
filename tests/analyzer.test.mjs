@@ -1448,6 +1448,24 @@ test('retains every enterprise vehicle signal in the coverage catalog and applie
   assert.ok(workbook.SheetNames.includes('车辆交叉核对'));
 });
 
+test('exposes field-level value diagnostics without silently filtering raw values', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const rows = parseCSV([header,
+    '0,4,10,320,3.2,-2,3,0,8,0,500,1',
+    '1,4,10,320,3.2,-1,3,0,8,0,500,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, {});
+  const minCell = result.dataset.signalCatalog.find((item) => item.source === 'FC_MinCellVoltage');
+  const avgCell = result.dataset.signalCatalog.find((item) => item.source === 'FC_AvgCellVoltage');
+  assert.equal(minCell.negativeCount, 2);
+  assert.equal(minCell.reviewable, true);
+  assert.equal(avgCell.zeroCount, 2);
+  assert.equal(avgCell.zeroDominant, true);
+  assert.ok(result.dataset.signalDiagnostics.reviewSignalCount >= 2);
+  assert.ok(result.issues.some((item) => item.code === 'SIGNAL_VALUE_SEMANTICS_REVIEW'));
+  assert.equal(result.rows[0].min_cell_voltage_v, -2);
+});
+
 test('keeps vehicle sessions separate and exposes two independently scaled display signals', () => {
   const rows = [];
   const makeRow = (sessionId, sourceFile, timestamp, speed) => ({
