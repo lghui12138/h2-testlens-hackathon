@@ -61,7 +61,7 @@ async function parseInput(filePath, buffer) {
   }
   const encoding = /\.(txt|tsv)$/i.test(filePath) ? 'gb18030' : 'utf-8';
   const decoded = decodeTextBuffer(buffer, encoding);
-  if (decoded.binary) return { rows: [], config: {}, inputType: `${extension.slice(1)}:blocked_binary`, status: 'blocked_binary', error: '文本入口检测到二进制内容，未进入解析器' };
+  if (decoded.binary) return { rows: [], config: {}, inputType: `${extension.slice(1)}:blocked_binary`, status: 'blocked_binary', binaryReason: decoded.binaryReason || 'unknown', error: `文本入口检测到二进制内容（${decoded.binaryReason || 'unknown'}），未进入解析器` };
   const text = decoded.text;
   const { parseCSV } = await import('../src/analyzer.mjs');
   return { rows: parseCSV(text), config: {}, inputType: extension.slice(1), status: 'processed' };

@@ -8333,10 +8333,11 @@
       "sha256": "a6469c2282f4dc50cb9e792aa4f38c0897313c15d2861ac9d95840d9df3e8da7",
       "parser": "GB18030/TSV 识别器",
       "status": "blocked_binary",
-      "note": "样本包含二进制/不可按当前文本合同解析",
+      "note": "样本包含二进制/不可按当前文本合同解析（nul_byte）",
       "rowCount": null,
       "columnCount": null,
       "encoding": "binary-or-non-text",
+      "binaryReason": "nul_byte",
       "usageLedger": {
         "disposition": "blocked_binary_boundary",
         "parserExecuted": false,

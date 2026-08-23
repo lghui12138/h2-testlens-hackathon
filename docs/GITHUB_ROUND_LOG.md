@@ -61,6 +61,11 @@
 - 核实唯一 blocked_binary 文件为真实二进制/不可读文本，不是可安全转换的 UTF-16 或 GB18030 表格。
 - T02 覆盖卡片现在明确显示：保留哈希、不生成测试结论；阻断原因也保留在 versioned audit 和报告中。
 
+## 2026-08-24 · binaryReason 机器证据轮
+
+- 输入安全层新增 `binaryReason`：`nul_byte`、`control_byte_ratio`、`decoded_control_bytes`、`unsupported_bom_encoding`。
+- 浏览器、batch-watch 和 T02 coverage audit 共享并保留该原因，阻断处理仍不进入解析器。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。

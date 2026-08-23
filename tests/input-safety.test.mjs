@@ -11,10 +11,17 @@ setSpreadsheetEngine(SheetJS);
 test('shared input boundary detects binary content before text parsing', async () => {
   const binary = Uint8Array.from([0x18, 0x1b, 0x03, 0x1a, 0x15, 0x10, 0x19, 0x7c, 0x00]);
   assert.equal(isLikelyBinary(binary), true);
-  assert.deepEqual(decodeTextBuffer(binary, 'gb18030'), { binary: true, text: null, encoding: 'binary-or-non-text' });
+  assert.deepEqual(decodeTextBuffer(binary, 'gb18030'), { binary: true, text: null, encoding: 'binary-or-non-text', binaryReason: 'nul_byte' });
   const parsed = await parseInput('blocked.txt', binary);
   assert.equal(parsed.status, 'blocked_binary');
+  assert.equal(parsed.binaryReason, 'nul_byte');
   assert.equal(parsed.rows.length, 0);
+});
+
+test('shared input boundary classifies control-byte binary without a NUL byte', () => {
+  const binary = Uint8Array.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a]);
+  assert.equal(isLikelyBinary(binary), true);
+  assert.equal(decodeTextBuffer(binary, 'gb18030').binaryReason, 'control_byte_ratio');
 });
 
 test('shared input boundary keeps ordinary GB18030-like text parseable', () => {

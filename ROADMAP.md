@@ -71,6 +71,12 @@
 - Gate: `file`/byte inspection, current coverage audit record, browser surface parity and full submission gates pass.
 - Residual: parsing requires an enterprise-supplied format/decoder; no unsafe guess or private raw-file copy is introduced.
 
+## 2026-08-24 current continuation evidence · binary reason contract
+
+- Change: `src/input-safety.mjs` now returns a machine-readable binary reason and T02 coverage replay records it; browser and batch-watch preserve the same reason.
+- Gate: input-safety regression, real T02 coverage replay, source integrity 198/198 and full submission gates pass.
+- Residual: a reason code explains why parsing stopped; it does not make the file parseable or establish enterprise format approval.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

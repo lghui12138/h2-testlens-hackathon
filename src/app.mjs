@@ -933,7 +933,7 @@ async function readSelectedDataFiles(files) {
       const decoded = await readUserFile(file);
       const contentHash = await sha256Bytes(decoded.buffer);
       if (decoded.binary) {
-        entries.push({ name, size: file.size, rows: [], status: 'blocked_binary', contentHash, hashType: 'binary', text: `BLOCKED_BINARY:${name}` });
+        entries.push({ name, size: file.size, rows: [], status: 'blocked_binary', binaryReason: decoded.binaryReason || 'unknown', contentHash, hashType: 'binary', text: `BLOCKED_BINARY:${name}` });
         inputSummary.blockedBinary += 1;
       } else {
         entries.push({ name, size: file.size, rows: parseCSV(decoded.text), status: 'processed', contentHash, hashType: 'binary', text: decoded.text });
@@ -984,7 +984,8 @@ $('#file-input').addEventListener('change', async (event) => {
     state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
     if (!state.rows.length) {
       setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；参考资料已保留，二进制文本已阻断。`, 'error');
-      $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份 · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
+      const blockedReasons = loaded.entries.filter((entry) => entry.status === 'blocked_binary').map((entry) => entry.binaryReason || 'unknown');
+      $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
       return;
     }
     await analyzeCurrent('导入分析');

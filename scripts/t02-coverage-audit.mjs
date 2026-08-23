@@ -490,7 +490,7 @@ const auditFile = async (path, sample, extension, inputIndex) => {
     const encoding = extension === '.csv' ? 'utf-8' : 'gb18030';
     const decoded = decodeTextBuffer(bytes, encoding);
     if (decoded.binary) {
-      return { status: 'blocked_binary', parser: 'GB18030/TSV 识别器', note: '样本包含二进制/不可按当前文本合同解析' };
+      return { status: 'blocked_binary', parser: 'GB18030/TSV 识别器', binaryReason: decoded.binaryReason || 'unknown', note: `样本包含二进制/不可按当前文本合同解析（${decoded.binaryReason || 'unknown'}）` };
     }
     const text = decoded.text;
     const rows = parseCSV(text || '');
