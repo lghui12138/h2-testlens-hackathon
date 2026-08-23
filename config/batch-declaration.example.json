@@ -1,0 +1,19 @@
+{
+  "version": "h2-testlens.batch-declaration.v1",
+  "groups": [
+    {
+      "id": "TR-2026-001-session-01",
+      "testRunId": "TR-2026-001",
+      "sessionGroup": "SG-01",
+      "files": ["vehicle/part-001.csv", "vehicle/part-002.csv"],
+      "fileOrder": ["vehicle/part-001.csv", "vehicle/part-002.csv"],
+      "clockReference": "DAQ-CLOCK-01",
+      "samplingIntervalS": 5,
+      "samplingTolerancePct": 5,
+      "restartBoundaries": ["vehicle/part-002.csv"],
+      "boundaryPolicy": "per_file_session",
+      "approvalStatus": "declared",
+      "evidenceRefs": ["TEST-RUN-RECORD-001"]
+    }
+  ]
+}

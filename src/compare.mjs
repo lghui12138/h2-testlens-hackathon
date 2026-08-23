@@ -8,7 +8,7 @@ const METRIC_DEFINITIONS = Object.freeze([
   { field: 'completenessPct', label: '数据完整率', unit: '%', digits: 1 }
 ]);
 
-const statusLabel = (verdict) => verdict === 'PASS' ? '通过' : verdict === 'WARN' ? '需复核' : '未通过';
+const statusLabel = (verdict) => verdict === 'PASS' ? '通过' : verdict === 'WARN' ? '需复核' : verdict === 'DESCRIPTIVE' ? '仅描述' : '未通过';
 
 const rounded = (value, digits) => value === null || value === undefined || !Number.isFinite(value) ? null : Number(value.toFixed(digits));
 

@@ -9,7 +9,13 @@
     "temperature_c": "温度(°C)",
     "pressure_bar": "压力(kPa)",
     "flow_slpm": "流量",
-    "leak_ppm": "泄漏(ppb)"
+    "leak_ppm": "泄漏(ppb)",
+    "hydrogen_purity_pct": "氢气纯度(%)",
+    "gas_temperature_c": "出口气体温度(°C)",
+    "gas_pressure_bar": "出口压力(kPa)",
+    "ambient_temperature_c": "环境温度(°C)",
+    "ambient_humidity_pct": "环境湿度(%)",
+    "ambient_pressure_kpa": "环境压力(kPa)"
   },
   "profiles": [
     {
@@ -20,6 +26,8 @@
       "approvalStatus": "example_unapproved",
       "applicationScope": "PEM 水电解制氢设备示例",
       "intendedUse": "验证字段映射和报告链路，不作符合性判定",
+      "evaluationMode": "risk_screening",
+      "supportedDatasetTypes": ["generic"],
       "methodId": "GB/T 45541-2025",
       "revision": "2025",
       "standardRefs": [
@@ -27,9 +35,117 @@
         { "id": "GB/T 29729-2022", "title": "氢系统安全的基本要求", "uri": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9", "status": "current" },
         { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published" }
       ],
-      "requiredMetadata": ["testPurpose", "testPlanRef", "acquisitionPlan", "preCheckRecord", "instrumentIds", "instrumentAccuracy", "calibrationRefs", "environment", "operator", "formulaRefs", "uncertaintyPolicy", "rawDataRef", "signoff"],
+      "methodSource": { "sourceId": "gbt_45541_interpretation_2025", "locator": "课程简介", "evidenceType": "official_interpretation_paraphrase", "evidenceIds": ["ev_gbt45541_interpretation"] },
+      "methodExecutionStatus": "PUBLIC_SCOPE_MAPPING",
+      "status": "current",
+      "publicationDate": "2025-03-28",
+      "effectiveDate": "2025-07-01",
+      "scopeEvidence": "官方标准页面与官方解读公开适用范围；具体标准条文、仪器精度和验收计算仍需企业批准资料。",
+      "workflowEvidence": "官方解读公开描述基本检查、基础测试、性能测试和测试报告四类流程。",
+      "requiredMetadata": ["testPurpose", "testPlanRef", "acquisitionPlan", "preCheckRecord", "instrumentIds", "instrumentAccuracy", "calibrationRefs", "environment", "operator", "operatorQualification", "formulaRefs", "uncertaintyPolicy", "rawDataRef", "signoff"],
+      "traceabilityRequirements": {
+        "required": true,
+        "requireEvidenceRef": true,
+        "fields": [
+          { "id": "testRunId", "label": "测试运行编号", "valueType": "reference" },
+          { "id": "deviceId", "label": "设备编号", "valueType": "reference" },
+          { "id": "testType", "label": "测试类型", "valueType": "text" },
+          { "id": "testDate", "label": "测试日期", "valueType": "date" },
+          { "id": "cellCount", "label": "片数", "valueType": "number" },
+          { "id": "activeAreaCm2", "label": "活性面积", "valueType": "number" }
+        ]
+      },
+      "editLogRequirements": {
+        "required": true,
+        "minEntries": 1,
+        "requireEvidenceRef": true
+      },
       "requiredMeasurements": ["flow_slpm", "hydrogen_purity_pct"],
+      "acquisitionRequirements": {
+        "requireSamplingFrequency": true,
+        "requireSynchronization": true,
+        "requireEvidenceRef": true,
+        "requiredChannels": [
+          { "field": "timestamp_s", "unit": "s" },
+          { "field": "current_a", "unit": "A" },
+          { "field": "voltage_v", "unit": "V" },
+          { "field": "flow_slpm", "unit": "SLPM" },
+          { "field": "hydrogen_purity_pct", "unit": "%" }
+        ]
+      },
+      "dataQualityRequirements": {
+        "requireMonotonicTimestamps": true,
+        "requireUniqueTimestamps": true,
+        "requirePositiveIntervals": true,
+        "maxIntervalMultiplier": 3
+      },
+      "preCheckRequirements": [
+        { "id": "device_identity", "label": "设备身份与额定范围", "required": true },
+        { "id": "test_bench", "label": "测试台与气液路状态", "required": true },
+        { "id": "instruments", "label": "仪器与采集系统状态", "required": true },
+        { "id": "safety", "label": "安全联锁与报警状态", "required": true }
+      ],
       "requiredPhases": [],
+      "phaseAliases": {},
+      "requiredTestStages": [
+        { "id": "basic_check", "label": "基本检查", "required": true },
+        { "id": "basic_test", "label": "基础测试", "required": true },
+        { "id": "performance_test", "label": "性能测试", "required": true },
+        { "id": "test_report", "label": "测试报告与结论", "required": true }
+      ],
+      "workflowSequence": [
+        { "id": "basic_check", "label": "基本检查", "gate": "testStages" },
+        { "id": "basic_test", "label": "基础测试", "gate": "testStages" },
+        { "id": "performance_test", "label": "性能测试", "gate": "testStages" },
+        { "id": "test_report", "label": "测试报告与结论", "gate": "report" }
+      ],
+      "testSystemRequirements": [
+        { "id": "pem_electrolyzer", "label": "PEM 电解槽及配套测试系统", "required": true },
+        { "id": "measurement_system", "label": "电输入、产氢量和纯度测量系统", "required": true }
+      ],
+      "testConditionRequirements": {
+        "requireEvidenceRef": true,
+        "fields": [
+          { "id": "testSite", "label": "测试场所", "valueType": "text" },
+          { "id": "ambientTemperatureC", "label": "环境温度", "valueType": "number" },
+          { "id": "systemConfigurationRef", "label": "系统组成/配置确认", "valueType": "reference" },
+          { "id": "abnormalDispositionRef", "label": "测试中止或异常处置引用", "valueType": "reference" }
+        ]
+      },
+      "environmentConditionRequirements": {
+        "requireEvidenceRef": true,
+        "fields": [
+          { "id": "ambientTemperatureC", "label": "环境温度", "valueType": "number" },
+          { "id": "ambientHumidityPct", "label": "环境湿度", "valueType": "number" },
+          { "id": "ambientPressureKpa", "label": "环境气压", "valueType": "number" }
+        ]
+      },
+      "phaseResultRequirements": [],
+      "measurementMethodRequirements": [
+        { "id": "electrical_input", "label": "电输入测量方法", "required": true },
+        { "id": "gas_output", "label": "气体输出测量方法", "required": true },
+        { "id": "environment", "label": "环境条件测量方法", "required": true },
+        { "id": "high_frequency_acquisition", "label": "高频采集方法", "required": true }
+      ],
+      "efficiencyRequirement": {
+        "required": true,
+        "metric": "efficiency_pct",
+        "outputUnit": "%",
+        "formulaRefRequired": true,
+        "dataSource": "measured_or_approved_formula_record"
+      },
+      "scopeRules": {
+        "requiresDeviceFamily": true,
+        "requiresRatedHydrogenPressureMpa": true,
+        "maxRatedHydrogenPressureMpa": 10,
+        "requiresRatedHydrogenProductionM3h": true,
+        "minRatedHydrogenProductionM3h": 1,
+        "maxRatedHydrogenProductionM3h": 500,
+        "outOfScopeDisposition": "REFER_TO_STANDARD"
+      },
+      "instrumentRequirements": ["electrical_input", "gas_output", "environment"],
+      "reportRequirements": ["testPurpose", "instrumentIds", "operator", "operatorQualification", "formulaRefs", "charts", "conclusion"],
+      "acceptanceRules": [],
       "acceptanceCriteria": {},
       "uncertaintyModelRequired": false,
       "uncertaintyModel": null,

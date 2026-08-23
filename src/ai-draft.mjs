@@ -6,7 +6,8 @@ const MAX_DRAFT_LENGTH = 12000;
 const statusTokens = {
   PASS: ['PASS', '通过'],
   WARN: ['WARN', '需复核'],
-  FAIL: ['FAIL', '未通过']
+  FAIL: ['FAIL', '未通过'],
+  DESCRIPTIVE: ['DESCRIPTIVE', '仅描述']
 };
 
 function evidenceConfig(config = {}) {
@@ -20,12 +21,17 @@ function evidenceConfig(config = {}) {
     profileId: config.profileId || null,
     profileName: config.profileName || null,
     profileSource: config.profileSource || null,
+    evaluationMode: config.evaluationMode || 'risk_screening',
     approvalStatus: config.approvalStatus || null,
     methodId: config.methodId || null,
     revision: config.revision || null,
     standardRefs: (config.standardRefs || []).map((reference) => ({ id: reference.id, title: reference.title })),
     requiredMetadata: config.requiredMetadata || [],
     requiredPhases: config.requiredPhases || [],
+    requiredTestStages: config.requiredTestStages || [],
+    testConditionRequirements: config.testConditionRequirements || null,
+    measurementMethodRequirements: config.measurementMethodRequirements || [],
+    efficiencyRequirement: config.efficiencyRequirement || null,
     metadataPresent: Object.fromEntries((config.requiredMetadata || []).map((field) => [field, Boolean(metadata[field])])),
     acceptanceCriteria: config.acceptanceCriteria || {},
     uncertaintyModelRequired: config.uncertaintyModelRequired || false
@@ -57,7 +63,7 @@ export function evidenceBundle(result, comparison = null) {
 
 export function localEvidenceDraft(result) {
   const evidence = evidenceBundle(result);
-  const status = evidence.verdict === 'PASS' ? '通过' : evidence.verdict === 'WARN' ? '需复核' : '未通过';
+  const status = evidence.verdict === 'PASS' ? '通过' : evidence.verdict === 'WARN' ? '需复核' : evidence.verdict === 'DESCRIPTIVE' ? '仅描述' : '未通过';
   const priority = evidence.issues.filter((item) => item.severity === 'critical' || item.severity === 'warn');
   if (result.datasetType === 'vehicle') {
     const dataset = evidence.dataset;
@@ -67,7 +73,7 @@ export function localEvidenceDraft(result) {
       `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
       '', '## 关键证据',
       `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
-      `- 性能统计：${dataset.performancePoints.length} 个目标电流段；目标电流 ${dataset.targetCurrents.length ? dataset.targetCurrents.join('、') + ' A' : '未配置'}。`,
+      `- 性能统计：${dataset.performancePoints.length} 个正式目标电流段；目标电流 ${dataset.targetCurrents.length ? dataset.targetCurrents.join('、') + ' A' : '未配置'}；描述性候选区间 ${dataset.inferredSegments?.length || 0} 个（未进入目标符合性判定）。`,
       `- 绝缘统计：${dataset.insulation.validCount} 条有效记录，${dataset.insulation.points.length} 个 10 分钟窗口；过滤 ${dataset.insulation.invalidCount} 条无效码。`,
       `- 数据边界：${evidence.compliance.status}；${evidence.workflow.nextAction}`,
       '', '## 优先动作',
@@ -85,7 +91,7 @@ export function localEvidenceDraft(result) {
       '', '## 关键证据',
       `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
       `- 单片通道：导出 ${dataset.cellChannelCount} 个，片数参数最大值 ${dataset.configuredCellCount || '未提供'}。`,
-      `- 一致性摘要：平均单片电压 ${dataset.metrics.averageCellVoltageV?.toFixed(3) ?? '—'} V，最大极差 ${dataset.metrics.cellSpreadMaxV?.toFixed(3) ?? '—'} V。`,
+      `- 一致性摘要：平均单片电压 ${dataset.metrics.averageCellVoltageV?.toFixed(3) ?? '—'} V，最大极差 ${dataset.metrics.cellSpreadMaxV?.toFixed(3) ?? '—'} V；描述性候选区间 ${dataset.inferredSegments?.length || 0} 个，未生成正式极化点。`,
       `- 数据边界：${evidence.compliance.status}；${evidence.workflow.nextAction}`,
       '', '## 优先动作',
       ...(priority.length ? priority.map((item, index) => `${index + 1}. **${item.title}**：${item.evidence}；${item.recommendation}`) : ['1. 补充目标工况设定表并进入工程师签核。']),
@@ -120,7 +126,7 @@ export function localEvidenceDraft(result) {
     '## 关键证据',
     `- 数据质量：${evidence.quality.completenessPct.toFixed(1)}% 完整，${evidence.quality.rowCount} 条记录。`,
     `- 输入适配：${mappingNote}。`,
-    `- 判定模板：${evidence.thresholds.profileName || '未指定'}（${evidence.thresholds.profileSource || '当前分析配置'}）。`,
+    `- 分析 profile：${evidence.thresholds.profileName || '未指定'}（${evidence.thresholds.profileSource || '当前分析配置'}）· 模式 ${evidence.thresholds.evaluationMode || 'risk_screening'}。`,
     `- 标准门控：${evidence.compliance?.status || '未评估'}；方法 ${evidence.compliance?.methodId || '未指定'} ${evidence.compliance?.revision || ''}；缺失元数据 ${evidence.compliance?.missingMetadata?.join('、') || '无'}。`,
     `- 测试流程：${evidence.workflow?.status || '未评估'}；下一步 ${evidence.workflow?.nextAction || '需人工确认'}。`,
     `- 测试段覆盖：${evidence.compliance?.missingPhases?.length ? `缺少 ${evidence.compliance.missingPhases.join('、')}` : 'profile 要求的测试段均已出现'}。`,
@@ -135,7 +141,9 @@ export function localEvidenceDraft(result) {
     '',
     '## 数据边界',
     '- 本草稿只引用结构化分析证据；它不是安全认证，也不替代工程师签核。',
-    `- 当前阈值为可配置演示阈值：温度 ≤ ${evidence.thresholds.maxTemperatureC} °C、压力 ≤ ${evidence.thresholds.maxPressureBar} bar、泄漏监测 ≤ ${evidence.thresholds.maxLeakPpm} ppm。`,
+    ...(evidence.thresholds.evaluationMode === 'descriptive_only'
+      ? ['- 当前为 descriptive_only：未执行温度、压力、泄漏、稳定性或验收阈值判定。']
+      : [`- 当前阈值为可配置演示阈值：温度 ≤ ${evidence.thresholds.maxTemperatureC} °C、压力 ≤ ${evidence.thresholds.maxPressureBar} bar、泄漏监测 ≤ ${evidence.thresholds.maxLeakPpm} ppm。`]),
     '- 正式使用前应完成企业字段、单位和设备标准映射。'
   ].join('\n');
 }

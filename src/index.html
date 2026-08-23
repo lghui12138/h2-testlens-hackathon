@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>氢能测试智报 · H2 TestLens</title>
-  <link rel="stylesheet" href="./src/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div class="shell">
@@ -17,7 +17,8 @@
         <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
         <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
         <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
-        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document">导入测试 CSV / TXT / Excel / DOCX（可多选）</label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
+        <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
+        <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
         <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
       </section>
 
@@ -55,16 +56,18 @@
           </section>
           <section class="side-card">
             <div class="card-kicker">CONFIGURABLE RULES</div>
-            <h2>判定阈值</h2>
-            <p class="side-intro">按设备模板加载阈值；内置模板仅用于演示，正式部署时应替换为企业标准。</p>
+            <h2>分析模式与规则</h2>
+            <p class="side-intro">profile 明确区分描述性统计、风险筛查和企业验收；描述性 profile 不携带或执行伪企业阈值。</p>
             <label class="profile-label">设备模板<select id="profile-select"></select></label>
             <small id="profile-note" class="profile-note">等待模板</small>
             <label class="profile-import">导入企业配置 JSON<input id="profile-file" type="file" accept="application/json,.json"></label>
             <button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button>
+            <button id="load-t02-profiles" class="quiet-button profile-demo-button">载入 T02 描述性 profiles</button>
+            <a class="template-link" href="../config/t02-profile.example.json" download>下载 T02 profile 示例包</a>
             <small id="profile-import-status" class="profile-import-status">当前使用内置演示配置</small>
             <label class="profile-import">导入参数/目标工况 Excel<input id="parameter-file" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
             <small id="parameter-import-status" class="profile-import-status">需要“数据处理设定参数”和“目标工况设定”工作表</small>
-            <a class="template-link" href="./config/enterprise-parameter-template.xlsx" download>下载参数工作簿模板</a>
+            <a class="template-link" href="../config/enterprise-parameter-template.xlsx" download>下载参数工作簿模板</a>
             <details class="schema-details"><summary>查看字段映射证据</summary><div id="schema-table" class="schema-table"></div><div id="schema-warnings" class="schema-warnings"></div></details>
             <details class="metadata-details"><summary>填写测试元数据 / 签核字段</summary>
               <p class="metadata-intro">这些字段对应测试计划、数据采集、试验前检查、仪器/校准、环境、计算方法、原始数据引用和人工签核；只在当前会话使用。</p>
@@ -75,9 +78,26 @@
               <label>仪器/采集系统<textarea id="metadata-instruments" rows="2" placeholder="型号、序列号、采集通道"></textarea></label>
               <label>仪器精度/量程要求<textarea id="metadata-instrument-accuracy" rows="2" placeholder="电压、电流、流量、压力、温度、纯度仪器精度和量程"></textarea></label>
               <label>校准/溯源记录<textarea id="metadata-calibration" rows="2" placeholder="证书编号或校准有效期"></textarea></label>
+              <label>结构化仪器记录（JSON）<textarea id="metadata-instrument-records" rows="4" placeholder='[{"id":"P-01","category":"electrical_input","accuracy":"0.2%FS","calibrationRef":"CAL-2026-001"}]'></textarea></label>
+              <label>结构化采集记录（JSON）<textarea id="metadata-acquisition-record" rows="6" placeholder='{"samplingFrequencyHz":10,"synchronization":{"status":"verified","clockReference":"DAQ-CLK-01"},"channels":[{"field":"current_a","channelId":"CH-01","unit":"A"}],"evidenceRef":"ACQ-001"}'></textarea></label>
+              <label>结构化前检查项目（JSON）<textarea id="metadata-precheck-items" rows="5" placeholder='[{"id":"device_identity","status":"pass","evidenceRef":"PC-001"}]'></textarea></label>
+              <label>结构化测试阶段（JSON）<textarea id="metadata-test-stages" rows="6" placeholder='[{"id":"test_plan","status":"complete","evidenceRef":"TP-001"}]'></textarea></label>
+              <label>测试系统组成证据（JSON）<textarea id="metadata-test-system" rows="7" placeholder='[{"id":"power_supply","status":"pass","evidenceRef":"SYS-001"}]'></textarea></label>
+              <label>结构化测试条件（JSON）<textarea id="metadata-test-conditions" rows="6" placeholder='{"testSite":"台架A","ambientTemperatureC":25,"systemConfigurationRef":"CFG-001","abnormalDispositionRef":"ABN-001","evidenceRef":"COND-001"}'></textarea></label>
+              <label>环境条件证据（JSON）<textarea id="metadata-environment-conditions" rows="6" placeholder='{"ambientTemperatureC":25,"ambientHumidityPct":50,"ambientPressureKpa":101,"evidenceRef":"ENV-001"}'></textarea></label>
+              <label>结构化测量方法记录（JSON）<textarea id="metadata-measurement-methods" rows="6" placeholder='[{"id":"electrical_input","methodRef":"METHOD-E-001","evidenceRef":"MEAS-E-001"}]'></textarea></label>
+              <label>效率结果记录（JSON）<textarea id="metadata-efficiency-record" rows="4" placeholder='{"valuePct":null,"formulaRef":"企业批准公式编号","sourceRef":"效率结果证据编号"}'></textarea></label>
+              <label>方法阶段结果证据（JSON）<textarea id="metadata-phase-results" rows="8" placeholder='[{"phase":"steady","status":"complete","evidenceRef":"RESULT-001"}]'></textarea></label>
               <label>环境/安全条件<textarea id="metadata-environment" rows="2" placeholder="环境温度、湿度、压力及安全前置条件"></textarea></label>
-              <label>执行者与资质<input id="metadata-operator" type="text" placeholder="姓名 / 资质编号"></label>
+              <label>测试对象追溯信息（JSON）<textarea id="metadata-traceability" rows="6" placeholder='{"testRunId":"TR-2026-001","deviceId":"PEM-001","testType":"性能测试","testDate":"2026-08-23","cellCount":100,"activeAreaCm2":100,"evidenceRef":"TRACE-001"}'></textarea></label>
+              <label>人工修改审计记录（JSON）<textarea id="metadata-edit-log" rows="7" placeholder='[{"field":"pressure_bar","oldValueSummary":"原始列值摘要","newValueSummary":"人工修正后摘要","operator":"工号-001","timestamp":"2026-08-23T12:00:00+08:00","reason":"校正单位定义","evidenceRef":"EDIT-001"}]'></textarea></label>
+              <label>设备家族/型号<input id="metadata-device-family" type="text" placeholder="例如：PEM 电解水制氢系统 / 型号"></label>
+              <label>额定产氢压力（MPa）<input id="metadata-rated-pressure" type="number" min="0" step="0.01" placeholder="按适用标准填写"></label>
+              <label>额定产氢量（m³/h）<input id="metadata-rated-production" type="number" min="0" step="0.01" placeholder="按适用标准填写"></label>
+              <label>执行者<input id="metadata-operator" type="text" placeholder="姓名 / 工号"></label>
+              <label>执行者资质/授权依据<input id="metadata-operator-qualification" type="text" placeholder="资质编号、培训记录或授权依据"></label>
               <label>公式/方法引用<textarea id="metadata-formulas" rows="2" placeholder="企业方法编号、公式版本"></textarea></label>
+              <label>工作簿公式复核证据（JSON）<textarea id="metadata-formula-review" rows="5" placeholder='{"reviewerId":"工号-001","reviewedAt":"2026-08-23","evidenceRef":"FORMULA-REVIEW-001","sourceHash":"SHA-256:...","decision":"cached_values_reviewed"}'></textarea></label>
               <label>不确定度/误差策略<textarea id="metadata-uncertainty" rows="2" placeholder="测量不确定度、误差或缺失值处理策略"></textarea></label>
               <label>原始数据引用/哈希<input id="metadata-raw-ref" type="text" placeholder="文件编号、对象路径或 SHA-256"></label>
               <label>人工签核<input id="metadata-signoff" type="text" placeholder="签核人 / 时间 / 工单号"></label>
@@ -95,7 +115,18 @@
             <div class="card-kicker">REFERENCE STANDARDS</div>
             <h2>适用标准</h2>
             <p class="side-intro">标准用于选择 profile 和测试方法；页面不会把演示结果写成符合性结论。</p>
-            <div class="standards-list"><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB" target="_blank" rel="noreferrer"><b>GB/T 45541-2025</b><small>PEM 电解槽性能测试方法</small></a><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119" target="_blank" rel="noreferrer"><b>GB/T 46104-2025</b><small>电解水制氢系统功率波动适应性测试</small></a><a href="https://www.iso.org/standard/82766.html?browse=ics" target="_blank" rel="noreferrer"><b>ISO 22734-1:2025</b><small>水电解制氢设备安全</small></a><a href="https://www.iso.org/standard/66912.html" target="_blank" rel="noreferrer"><b>ISO/IEC 17025:2017</b><small>测试和校准实验室能力</small></a></div>
+            <div class="standards-list"><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB" target="_blank" rel="noreferrer"><b>GB/T 45541-2025</b><small>PEM 性能流程映射 · 未执行完整方法</small></a><a href="https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119" target="_blank" rel="noreferrer"><b>GB/T 46104-2025</b><small>功率波动流程映射 · 未执行测试控制器</small></a><a href="https://www.iso.org/standard/82766.html?browse=ics" target="_blank" rel="noreferrer"><b>ISO 22734-1:2025</b><small>安全标准参考 · 未执行安全验证</small></a><a href="https://www.iso.org/standard/66912.html" target="_blank" rel="noreferrer"><b>ISO/IEC 17025:2017</b><small>实验室能力参考 · 不证明认可状态</small></a></div>
+          </section>
+          <section class="side-card batch-observation-card">
+            <div class="card-kicker">DECLARED BATCH CHECK <span id="batch-observation-status">未提供声明</span></div>
+            <h2>声明式批次核对</h2>
+            <p class="side-intro">只接受企业提供的批次声明；核对每个文件的时间戳、采样间隔和重启边界。结果保持 descriptive_only，不拼接连续时序。</p>
+            <label class="profile-import">导入批次声明 JSON<input id="batch-declaration-file" type="file" accept="application/json,.json"></label>
+            <small id="batch-observation-file-status" class="profile-import-status">示例仅展示字段形状，不代表企业批准</small>
+            <a class="template-link" href="../config/batch-declaration.example.json" download>下载批次声明示例</a>
+            <div id="batch-observation-summary" class="batch-observation-summary"></div>
+            <div id="batch-observation-files" class="batch-observation-files"></div>
+            <div id="batch-observation-issues" class="batch-observation-issues"></div>
           </section>
           <section class="side-card workflow-card">
             <div class="card-kicker">STANDARD WORKFLOW <span id="workflow-status">未评估</span></div>
@@ -126,11 +157,11 @@
         </aside>
       </section>
     </main>
-    <footer><span>H₂ TestLens · Hackathon prototype</span><span>原始数据留在本地浏览器 · 结果可追溯 · 人工签核保留</span></footer>
+    <footer><span>H₂ TestLens · T02 browser web prototype</span><span>非原生 iOS/Android 客户端 · 原始数据留在本地浏览器 · 结果可追溯 · 人工签核保留</span></footer>
   </div>
-  <script src="./src/vendor/xlsx.full.min.js"></script>
-  <script src="./src/vendor/jszip.min.js"></script>
-  <script src="./src/vendor/mammoth.browser.min.js"></script>
-  <script type="module" src="./src/app.mjs"></script>
+  <script src="./vendor/xlsx.full.min.js"></script>
+  <script src="./vendor/jszip.min.js"></script>
+  <script src="./vendor/mammoth.browser.min.js"></script>
+  <script type="module" src="./app.mjs"></script>
 </body>
 </html>

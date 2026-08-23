@@ -7,6 +7,7 @@ import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown } from './src/ana
 import { compareResults } from './src/compare.mjs';
 import { profilesFromPackage } from './src/profiles.mjs';
 import { sendFeishuAlert } from './src/feishu-alerts.mjs';
+import { annotateDeclaredBatchRows, batchAggregationMarkdown, observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration } from './src/batch-aggregation.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url)).replace(/[\\/]$/, '');
 const port = Number(process.env.PORT || 4173);
@@ -38,7 +39,7 @@ function resolveApiConfig(payload) {
   if (!imported.ok) { const error = new Error('profile_package_invalid'); error.status = 422; error.details = imported.errors; throw error; }
   const profile = imported.profiles.find((candidate) => candidate.id === payload.profileId) ?? imported.profiles[0];
   if (!profile) { const error = new Error('profile_not_found'); error.status = 422; throw error; }
-  return { ...profile.thresholds, profileId: profile.id, profileName: profile.name, profileSource: profile.source, profileOrganization: imported.organization, approvalStatus: profile.approvalStatus, applicationScope: profile.applicationScope, intendedUse: profile.intendedUse, methodId: profile.methodId, revision: profile.revision, standardRefs: profile.standardRefs, requiredMetadata: profile.requiredMetadata, requiredMeasurements: profile.requiredMeasurements, requiredPhases: profile.requiredPhases, supportedDatasetTypes: profile.supportedDatasetTypes, vehicleTargets: profile.vehicleTargets, vehicleCurrentToleranceA: profile.vehicleCurrentToleranceA, vehicleMinimumDurationS: profile.vehicleMinimumDurationS, durabilityRules: profile.durabilityRules, acceptanceCriteria: profile.acceptanceCriteria, uncertaintyModelRequired: profile.uncertaintyModelRequired, uncertaintyModel: profile.uncertaintyModel, testMetadata: payload.testMetadata || {}, fieldMapping: imported.fieldMapping };
+  return { ...profile.thresholds, profileId: profile.id, profileName: profile.name, profileSource: profile.source, profileOrganization: imported.organization, approvalStatus: profile.approvalStatus, approvalEvidence: profile.approvalEvidence, applicationScope: profile.applicationScope, intendedUse: profile.intendedUse, methodId: profile.methodId, revision: profile.revision, standardRefs: profile.standardRefs, methodSource: profile.methodSource, methodImplementationEvidence: profile.methodImplementationEvidence, methodExecutionStatus: profile.methodExecutionStatus, evaluationMode: profile.evaluationMode, status: profile.status, publicationDate: profile.publicationDate, effectiveDate: profile.effectiveDate, scopeEvidence: profile.scopeEvidence, workflowEvidence: profile.workflowEvidence, requiredMetadata: profile.requiredMetadata, traceabilityRequirements: profile.traceabilityRequirements, editLogRequirements: profile.editLogRequirements, requiredMeasurements: profile.requiredMeasurements, acquisitionRequirements: profile.acquisitionRequirements, preCheckRequirements: profile.preCheckRequirements, dataQualityRequirements: profile.dataQualityRequirements, requiredPhases: profile.requiredPhases, requiredPhaseMetrics: profile.requiredPhaseMetrics, phaseAcceptanceRules: profile.phaseAcceptanceRules, phaseAliases: profile.phaseAliases, requiredTestStages: profile.requiredTestStages, workflowSequence: profile.workflowSequence, testSystemRequirements: profile.testSystemRequirements, testConditionRequirements: profile.testConditionRequirements, environmentConditionRequirements: profile.environmentConditionRequirements, phaseResultRequirements: profile.phaseResultRequirements, measurementMethodRequirements: profile.measurementMethodRequirements, efficiencyRequirement: profile.efficiencyRequirement, scopeRules: profile.scopeRules, instrumentRequirements: profile.instrumentRequirements, reportRequirements: profile.reportRequirements, acceptanceRules: profile.acceptanceRules, supportedDatasetTypes: profile.supportedDatasetTypes, vehicleTargets: profile.vehicleTargets, vehicleCurrentToleranceA: profile.vehicleCurrentToleranceA, durabilityRules: profile.durabilityRules, acceptanceCriteria: profile.acceptanceCriteria, uncertaintyModelRequired: profile.uncertaintyModelRequired, uncertaintyModel: profile.uncertaintyModel, testMetadata: payload.testMetadata || {}, fieldMapping: imported.fieldMapping };
 }
 
 function writeApiError(res, error) {
@@ -63,6 +64,45 @@ const server = createServer(async (req, res) => {
       if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...result, config: response.config }, 'uploaded-test-run.csv');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
+    } catch (error) { writeApiError(res, error); }
+    return;
+  }
+  if (req.method === 'POST' && requestPath === '/api/analyze-batch') {
+    try {
+      const payload = JSON.parse(await readBody(req));
+      if (!Array.isArray(payload.files) || !payload.files.length || payload.files.some((file) => typeof file?.name !== 'string' || typeof file?.csv !== 'string' || !file.csv.trim())) {
+        res.writeHead(422, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'files_name_and_csv_required' }));
+        return;
+      }
+      const entries = payload.files.map((file) => { const rows = parseCSV(file.csv); return { name: file.name, rows, status: 'processed', rowCount: rows.length }; });
+      const validation = validateBatchDeclaration(payload.declaration, entries);
+      if (!validation.ok) {
+        res.writeHead(422, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'batch_declaration_invalid', details: validation.errors }));
+        return;
+      }
+      const config = resolveApiConfig(payload);
+      const groups = [];
+      for (const group of validation.groups) {
+        const groupEntries = group.fileOrder.map((name) => entries.find((entry) => entry.name.replaceAll('\\', '/') === name));
+        const fileResults = groupEntries.map((entry) => ({ name: entry.name, result: analyzeRows(entry.rows, config) }));
+        const datasetTypes = [...new Set(fileResults.map((item) => item.result.datasetType).filter(Boolean))];
+        if (datasetTypes.length > 1) {
+          res.writeHead(422, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'batch_dataset_type_mismatch', details: [`${group.id} 包含多个数据集类型：${datasetTypes.join('、')}`] }));
+          return;
+        }
+        const observation = observeDeclaredBatch(group, fileResults);
+        const combined = analyzeRows(annotateDeclaredBatchRows(group, groupEntries), config);
+        const summary = summarizeDeclaredBatch(group, groupEntries, fileResults, combined, observation);
+        const publicSummary = publicBatchAggregation(summary);
+        const responseGroup = { batchAggregation: publicSummary, analysis: publicAnalysis(combined) };
+        if (payload.includeReport) responseGroup.reportMarkdown = `${batchAggregationMarkdown(publicSummary)}\n${reportMarkdown({ ...combined, config: responseGroup.analysis.config }, 'uploaded-batch.csv')}`;
+        groups.push(responseGroup);
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ declaration: { version: payload.declaration?.version || null, status: 'validated', groupCount: groups.length }, groups }));
     } catch (error) { writeApiError(res, error); }
     return;
   }
@@ -122,7 +162,14 @@ const server = createServer(async (req, res) => {
     }
     return;
   }
-  const relative = requestPath === '/' ? 'src/index.html' : requestPath.replace(/^\/+/, '');
+  const requestedRelative = requestPath.replace(/^\/+/, '');
+  const relative = requestPath === '/'
+    ? 'src/index.html'
+    : requestedRelative === 'styles.css' || requestedRelative === 'app.mjs'
+      ? `src/${requestedRelative}`
+      : requestedRelative.startsWith('vendor/')
+        ? `src/${requestedRelative}`
+        : requestedRelative;
   const filePath = normalize(join(root, relative));
   if (!filePath.startsWith(root + sep) && filePath !== root) {
     res.writeHead(403).end('Forbidden');

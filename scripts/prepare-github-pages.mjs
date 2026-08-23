@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,7 +7,13 @@ const site = join(root, '_site');
 
 await rm(site, { recursive: true, force: true });
 await mkdir(site, { recursive: true });
-await cp(join(root, 'src/index.html'), join(site, 'index.html'));
+const sourceHtml = await readFile(join(root, 'src/index.html'), 'utf8');
+const pagesHtml = sourceHtml
+  .replaceAll('href="./styles.css"', 'href="./src/styles.css"')
+  .replaceAll('href="../config/', 'href="./config/')
+  .replaceAll('src="./vendor/', 'src="./src/vendor/')
+  .replaceAll('src="./app.mjs"', 'src="./src/app.mjs"');
+await writeFile(join(site, 'index.html'), pagesHtml, 'utf8');
 await cp(join(root, 'src'), join(site, 'src'), { recursive: true });
 await cp(join(root, 'sample-data'), join(site, 'sample-data'), { recursive: true });
 await cp(join(root, 'config'), join(site, 'config'), { recursive: true });

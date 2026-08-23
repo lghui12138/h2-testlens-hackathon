@@ -1,46 +1,86 @@
 change:
-  id: h2-testlens-v2-7
+  id: h2-testlens-v3-5-34
+  release: h2-testlens-v3-5-36
   mode: full
   intent: "Create a local-first hydrogen equipment test-data analysis and auto-report prototype for hackathon track T02."
 surfaces:
-  user: [csv_txt_xlsx_docx_upload, xlsx_parameter_import, dashboard, enterprise_dataset_adapter, trend_chart, durability_warning_rules, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, workflow_readiness, batch_comparison, local_history, ai_report_draft, markdown_report_download, xlsx_report_download]
-  system_interface: [local_static_server, analysis_api, ai_draft_endpoint, feishu_alert_endpoint, browser_blob_download]
-  information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, threshold_config, verdict_enum, comparison_evidence, history_summary]
-  operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, api_doc, deployment_doc, enterprise_readiness, github_pages_workflow]
+  user: [csv_txt_xlsx_docx_pdf_multi_file_upload, xlsx_parameter_import, dashboard, enterprise_dataset_adapter, trend_chart, large_file_import_status, analysis_worker_fallback, display_only_chart_sampling, vehicle_dual_axis_chart, session_boundary_visibility, stack_stable_interval_selection, selection_audit_visibility, durability_warning_rules, performance_metrics, csv_sha256_provenance, issue_list, compliance_metadata, test_plan_metadata, structured_acquisition_evidence, structured_precheck_evidence, object_traceability_metadata, manual_edit_log_metadata, workflow_sequence, operator_qualification, measurement_field_coverage, workflow_readiness, batch_comparison, local_history, ai_report_draft, markdown_report_download, xlsx_report_download]
+  system_interface: [local_static_server, analysis_api, analyze_batch_api, profile_package_api, ai_draft_endpoint, feishu_alert_endpoint, browser_blob_download]
+  information: [csv_schema, field_mapping, unit_conversion, device_profile, profile_package, profile_dataset_scope, public_profile_parity, approval_evidence, method_implementation_evidence, evaluation_mode, t02_descriptive_profiles, acquisition_requirements, precheck_requirements, object_traceability_requirements, manual_edit_log_requirements, workflow_sequence, operator_qualification, measurement_field_coverage, signal_descriptive_statistics, threshold_config, verdict_enum, comparison_evidence, history_summary, display_sampling_metadata, batch_declaration, workbook_formula_audit, workbook_active_content_boundary]
+  operational: [readme, roadmap, test_plan, completion_report, submission_brief, submission_check, submission_package, security_boundaries, api_doc, deployment_doc, enterprise_readiness, t02_coverage_audit, t02_reference_audit, batch_watch, github_pages_workflow]
 source_of_truth:
   analyzer: src/analyzer.mjs
+  structured_evidence: src/structured-evidence.mjs
   enterprise_adapters: src/enterprise-adapters.mjs
   excel_workflow: src/excel-workflow.mjs
   xlsx_charts: src/xlsx-charts.mjs
   incremental_manifest: src/incremental.mjs
+  display_sampling: src/display-sampling.mjs
+  analysis_worker: src/analysis-worker.mjs
+  browser_engines: src/browser-engines.mjs
+  input_safety: src/input-safety.mjs
   docx_workflow: src/docx-workflow.mjs
   feishu_alerts: src/feishu-alerts.mjs
   ai_adapter: src/ai-draft.mjs
+  batch_aggregation: src/batch-aggregation.mjs
+  batch_watch: scripts/batch-watch.mjs
+  package_submission: scripts/package-submission.mjs
+  build_config: vite.config.ts
   input_schema: README.md
 constraints:
   - "Demo thresholds are configurable and must not be presented as enterprise safety standards."
   - "Human engineering sign-off remains required."
   - "No external service or credential is required for the prototype."
+  - "T02 example profiles are unapproved descriptive_only packages with thresholds: null; they cannot produce acceptance, safety, conformity or release conclusions."
   - "Remote AI is optional; only structured evidence is sent and API keys remain server-side."
   - "Local history stores summaries only; raw test rows are excluded and a clear action is provided."
   - "Remote AI output is fail-closed on verdict conflict, missing evidence, or oversized output."
   - "Profile package input is fail-closed on invalid IDs, thresholds, unknown fields, or malformed mappings."
+  - "Every profile consumer (browser, API, and batch watcher) must preserve evaluationMode; T02 descriptive_only profiles remain DESCRIPTIVE/NOT_RUN after routing and cannot silently fall back to risk_screening."
   - "An explicit mapping miss is surfaced as MAPPING_OVERRIDE_MISSING even when a generic alias fallback succeeds."
   - "Workflow readiness is a process checklist, not a conformity certificate; a FAIL verdict or missing evidence must remain visible as review/blocking state."
   - "Remote AI receives metadata presence flags, not operator names, calibration identifiers, raw-data references, or other testMetadata values."
   - "Public analysis/API/JSON surfaces redact metadata values, durability report bodies, and parameter workbook contents while retaining bounded presence/count summaries."
   - "Batch watch is explicit-directory, once/interval controlled, and does not send Feishu unless --send-alerts plus server environment credentials are present."
-  - "Performance measurements are derived with explicit trapezoid integration and remain non-conformity claims unless an approved profile supplies requiredMeasurements and acceptanceCriteria."
+  - "Raw power_w is preferred for power/energy integration when present; voltage-current remains an independent cross-check. Explicitly labeled derived power may support descriptive KPIs, but it cannot satisfy an approved profile's required raw power_w measurement gate. These measurements remain non-conformity claims unless an approved profile supplies requiredMeasurements and acceptanceCriteria."
+  - "Structured acquisition and pre-check gates only validate enterprise-supplied evidence shape and status; the prototype must not infer standard sampling rates, instrument precision, safety limits, or conformity."
+  - "Structured test stages, test conditions, measurement methods, and efficiency evidence are profile-controlled; missing evidence blocks approved-profile readiness, and efficiency is never inferred from energy/flow."
+  - "An approved profile must carry non-sensitive approvalEvidence with approverId, approvalDate, approvalRef, profileRevision matching revision, and profileRevisionRef; missing or mismatched evidence fails closed, while public surfaces expose presence/status only."
+  - "A standard-referenced profile declaring FULL_METHOD_IMPLEMENTED must carry methodImplementationEvidence with method/source references, clause/step coverage items, per-item evidence references, verifier/date/reference, and openGaps: [], plus enterprise acceptance rules, instrument requirements, uncertaintyModelRequired: true, and a valid uncertainty model; any missing, mismatched, partial, or open-gap evidence fails closed and cannot produce HUMAN_REVIEW_PACKAGE."
   - "CSV SHA-256 is computed in the browser and stored as provenance; raw CSV content is not sent to the AI adapter."
   - "Enterprise source files remain local; only schema adapters, synthetic tests, and derived non-raw documentation are committed."
   - "Vehicle and stack adapters fail closed on missing fields, insufficient timestamp resolution, or unapproved enterprise rules."
   - "Parameter workbooks are read by sheet/header/code, not row number; invalid parameter packages block formal platform/stability processing."
   - "Generated Excel reports preserve effective parameters, mappings, quality checks, platform/stability results, anomalies, formulas, and processing log without embedding raw enterprise rows."
+  - "Vehicle and stack multi-file sessions are explicit boundaries: target-current segments, insulation windows, platforms, and stable intervals never cross source files; vehicle display axes are independently scaled and do not change KPI semantics."
+  - "Every cataloged enterprise signal receives descriptive numeric coverage when numeric values exist; catalog-only fields remain descriptive evidence and never create automatic conformity conclusions."
+  - "When approved target parameters are absent, inferred current intervals are labeled descriptive_only and must not populate formal performance points, stable intervals, polarization points, or conformity conclusions."
+  - "Example PEM profiles explicitly allow only generic datasets; stack, vehicle, and durability adapters must fail closed on profile scope mismatch instead of reusing a method for another device family."
+  - "config/enterprise-profile.example.json is the profile source of truth and public/config/enterprise-profile.example.json must remain byte-identical; submission checks enforce parity."
+  - "config/batch-declaration.example.json is the browser batch-declaration source of truth and public/config/batch-declaration.example.json must remain byte-identical; submission checks enforce parity."
+  - "The T02 coverage audit emits bounded heartbeat progress and lazy-loads the existing project Mammoth browser bundle; browser multi-file import preserves reference-only and blocked-binary boundaries without expanding the processed-data or conformity definition."
+  - "The T02 coverage audit emits a per-file usage ledger and package-level field-role union; analysis_input, context_or_cross_check, catalog_only, reference_only, blocked_binary, and declared_no_upload remain distinct, and the ledger cannot create a conformity claim."
+  - "T02 source integrity validates the audit root, declared record count and path uniqueness in addition to per-file size/SHA-256; any audit-shape mismatch fails closed before file drift is accepted."
+  - "Approved profiles with standard references must bind each reference status, method source, scope/workflow evidence, publication/effective dates and methodId; missing or inconsistent provenance fails package import."
+  - "T02 coverage and reference audit commands write the current versioned evidence artifact by default; explicit input/output arguments remain supported for historical replay."
+  - "The generated T02 integration report must show a separate field-use matrix for vehicle/stack and durability fields; missing roles render as zero, and the matrix must state that catalog or cross-check fields are not automatically KPIs or conformity claims."
+  - "Cross-file T02 aggregation is fail-closed on missing enterprise batch declaration; testRunId, sessionGroup, file order, clock, sampling, and restart boundaries are required, and any resulting summary remains descriptive_only with per-file sessions preserved."
+  - "Batch observation compares canonical per-file timestamps and median intervals with the declaration; missing/invalid sequences, undeclared overlap/rewind, and enterprise-declared sampling-tolerance violations remain NOT_READY, while no default sampling tolerance is invented."
+  - "Approved profiles may require object traceability fields and structured manual edit logs; missing or malformed evidence remains NOT_READY. Public/API/Markdown/Excel surfaces expose only bounded status/count summaries and never raw operator identity or old/new value summaries."
+  - "The submission archive must be self-contained: required runtime/build entries are checked, and packaging must pass clean extraction install, tests, typecheck, production build, server startup and HTTP smoke before writing the checksum."
+  - "The optional local .openai/hosting.json is never packaged; package builds skip only the hosting-copy plugin when that local project configuration is absent."
+  - "The optional hosting-copy plugin rechecks .openai/hosting.json at bundle close, so a missing or temporarily unavailable local config cannot fail the normal Vinext build; the file remains outside the submission archive."
+  - "The npm xlsx dependency is not used directly and is removed; the vendored SheetJS 0.18.5 compatibility bundle remains a controlled local/enterprise-input risk and is not treated as security-certified."
+  - "Raw parameter and time-series XLSX input is checked against a 64 MiB resource-protection limit before the vendored SheetJS parser; this is an input-safety boundary, not a GB/T, ISO or enterprise acceptance limit."
+  - "Before SheetJS, XLSX/XLSM ZIP metadata is checked for a valid central directory, supported store/deflate methods, non-encrypted entries, non-ZIP64 layout, at most 2048 entries, at most 256 MiB declared expansion and at most 200:1 compression ratio; these are resource-protection limits, not standards limits."
 evidence:
-  automated: [tests/analyzer.test.mjs, scripts/ai-eval.mjs, scripts/submission-check.mjs]
+  automated: [tests/analyzer.test.mjs, tests/input-surface.test.mjs, tests/input-safety.test.mjs, tests/batch-aggregation.test.mjs, tests/batch-watch-cli.test.mjs, tests/evaluation-mode.test.mjs, tests/t02-audit.test.mjs, tests/t02-source-integrity.test.mjs, tests/standards-profile.test.mjs, scripts/ai-eval.mjs, scripts/submission-check.mjs, scripts/package-submission.mjs, scripts/profile-audit.mjs, scripts/t02-source-integrity.mjs, src/t02-report.mjs, scripts/t02-report.mjs, .research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.34.json, .research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.34.json, .research/ignite_t02_standards_20260821/t02_integration_report_v3.5.34.md]
   api_smoke: [/api/ai-draft]
   manual: [docs/TEST_PLAN.md]
 residual_risks:
   - "Enterprise field structures, parameter workbook import, multi-file browser batches, 14-sheet Excel report output, a validated OOXML chart writer path, and a server-side Feishu alert endpoint are connected; approved field dictionaries, thresholds, automatic incrementals, enterprise Feishu policies, Excel/WPS visual acceptance, and server audit are not yet complete."
   - "The default mode is deterministic local evidence synthesis; a real model gateway still needs enterprise approval and evaluation."
   - "The Sites production deployment is public; public availability must not be confused with enterprise profile approval."
+  - "The Worker and display-sampling path is locally verified and has a main-thread fallback, but timing/interaction on the enterprise target browser and Excel/WPS visual acceptance still require human validation."
+  - "The real T02 files have no enterprise batch declaration, so the current audit stops at per-file and package-level descriptive aggregation; cross-file time-series KPI merge and durability method/cycle equivalence remain open."
+  - "Mammoth is upgraded to 1.12.1 and the browser bundle is synchronized; npm direct production dependency audit is clean after removing unused xlsx, but the vendored SheetJS 0.18.5 compatibility bundle is outside npm audit. The shared XLSX path now rejects oversized or structurally unsafe ZIP containers before parsing, but untrusted XLSX handling must remain local/sandboxed until the parsing stack is replaced or otherwise revalidated, including formula/macro, prototype-pollution and ReDoS tests."

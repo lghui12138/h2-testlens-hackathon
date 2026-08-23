@@ -1,11 +1,29 @@
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { sites } from "@openai/sites-vite-plugin";
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
+
+const hostingConfigPath = fileURLToPath(new URL("./.openai/hosting.json", import.meta.url));
+const hostingConfig = existsSync(hostingConfigPath)
+  ? JSON.parse(readFileSync(hostingConfigPath, "utf8")) as { d1?: string | null; r2?: string | null }
+  : { d1: null, r2: null };
+const hasHostingConfig = existsSync(hostingConfigPath);
 
 const PLACEHOLDER_DATABASE_ID = "00000000-0000-4000-8000-000000000000";
 const { d1, r2 } = hostingConfig;
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
+
+function optionalSitesPlugin() {
+  const plugin = sites();
+  const originalCloseBundle = plugin.closeBundle;
+  plugin.closeBundle = async function (this: any, error?: Error) {
+    if (!existsSync(hostingConfigPath) || !originalCloseBundle) return;
+    if (typeof originalCloseBundle === "function") return originalCloseBundle.call(this, error);
+    return originalCloseBundle.handler.call(this, error);
+  };
+  return plugin;
+}
 
 export default defineConfig(async () => {
   process.env.WRANGLER_WRITE_LOGS ??= "false";
@@ -16,7 +34,7 @@ export default defineConfig(async () => {
     server: isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : undefined,
     plugins: [
       vinext(),
-      sites(),
+      ...(hasHostingConfig ? [optionalSitesPlugin()] : []),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         config: {

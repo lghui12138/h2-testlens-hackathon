@@ -8,7 +8,7 @@
 
 - User surface：CSV 上传、总览卡片、趋势图、风险清单、批次对比、报告下载。
 - System interface：本地静态服务器和浏览器 Blob 下载接口。
-- Information surface：CSV 字段、profile/阈值配置、判定枚举 `PASS/WARN/FAIL`。
+- Information surface：CSV 字段、profile/阈值配置、对象追溯字段、人工修改审计记录、判定枚举 `PASS/WARN/FAIL`。
 - Operational surface：README、路线、测试报告、企业标准边界说明、本地历史清除入口。
 - AI safety surface：证据最小化、模型可选、服务端 key、判定不可被草稿覆盖。
 
@@ -29,4 +29,6 @@
 - 接入企业提供的真实字段字典和设备类型模板，替换当前通用别名；
 - 对单位换算增加企业标准确认和异常单位阻断；
 - 支持 XLSX、时间戳缺失修复和批次版本审计；
-- 接入真实历史批次、异常相似案例检索和报告版本审计。
+- 接入真实历史批次、异常相似案例检索和报告版本审计；
+- 大文件浏览器导入使用模块化 Worker 分担分析，完整行仍由分析器处理，图表只做展示层采样。
+- 企业 profile 可声明对象追溯和人工修改审计合同；`src/analyzer.mjs` 是门控与脱敏摘要的唯一事实源，API/Markdown/Excel 只消费其结果，未提供证据的 approved profile 保持 `NOT_READY`。

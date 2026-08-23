@@ -43,14 +43,14 @@ export async function addNativeChartToWorkbook(arrayBuffer, dataset = {}) {
   const drawingIndex = maxIndex(names, /xl\/drawings\/drawing(\d+)\.xml$/) + 1;
   const chartIndex = maxIndex(names, /xl\/charts\/chart(\d+)\.xml$/) + 1;
   const kind = dataset.kind || 'stack';
-  const rows = kind === 'durability' ? (dataset.points || []) : kind === 'vehicle' ? (dataset.performancePoints || []) : (dataset.performancePoints || []);
+  const rows = kind === 'durability' ? (dataset.points || []) : kind === 'vehicle' ? ((dataset.performancePoints?.length ? dataset.performancePoints : dataset.inferredSegments) || []) : (dataset.performancePoints || []);
   if (!rows.length) return arrayBuffer;
   const categoryNumeric = kind !== 'vehicle' || rows.every((row) => Number.isFinite(row.averageCurrentDensity ?? row.averageCurrentA));
-  const categories = kind === 'durability' ? rows.map((row) => row.targetPowerKw) : rows.map((row) => row.averageCurrentDensity ?? row.averageCurrentA);
+  const categories = kind === 'durability' ? rows.map((row) => row.targetPowerKw) : kind === 'vehicle' && !dataset.performancePoints?.length ? rows.map((row) => row.averageCurrentA) : rows.map((row) => row.averageCurrentDensity ?? row.averageCurrentA);
   const values = kind === 'durability' ? rows.map((row) => row.averageCellVoltageMv) : rows.map((row) => row.averageCellVoltageV);
   const dataStart = 2; const dataEnd = dataStart + rows.length - 1;
   const catColumn = kind === 'durability' ? 'A' : 'C'; const valColumn = kind === 'durability' ? 'B' : 'D';
-  const title = kind === 'durability' ? '耐久功率点平均单体电压' : '极化曲线平均单体电压';
+  const title = kind === 'durability' ? '耐久功率点平均单体电压' : kind === 'vehicle' && !dataset.performancePoints?.length ? '车辆描述性候选区间平均单体电压' : '极化曲线平均单体电压';
   const chart = chartXml({ sheetName: '图表数据', title, catRef: `图表数据!$${catColumn}$${dataStart}:$${catColumn}$${dataEnd}`, valRef: `图表数据!$${valColumn}$${dataStart}:$${valColumn}$${dataEnd}`, categories, values, categoryNumeric });
   const drawingPath = `xl/drawings/drawing${drawingIndex}.xml`; const chartPath = `xl/charts/chart${chartIndex}.xml`;
   const drawingRelsPath = `xl/drawings/_rels/drawing${drawingIndex}.xml.rels`;

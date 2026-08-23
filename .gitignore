@@ -5,3 +5,13 @@ dist/
 .vinext/
 _site/
 .DS_Store
+*.tsbuildinfo
+
+# Local/private audit runs and historical version snapshots are not public app assets.
+.research/t02-six-agent-*/
+.research/ignite_t02_standards_20260821/t02_coverage_audit_v*.json
+.research/ignite_t02_standards_20260821/t02_reference_audit_v*.json
+.research/ignite_t02_standards_20260821/t02_integration_report_v*.md
+!.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.36.json
+!.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.36.json
+!.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.36.md

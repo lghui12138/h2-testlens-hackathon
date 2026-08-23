@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+
+const root = new URL('..', import.meta.url);
+const read = (path) => readFile(new URL(path, root), 'utf8');
+
+const renderedVinextMarkup = (source) => {
+  const withoutImports = source.split('\n').filter((line) => !line.startsWith('import ') && !line.startsWith('"use client"')).join('\n');
+  const end = withoutImports.indexOf('\nexport default function Home');
+  const script = `${withoutImports.slice(0, end)}\n__rendered = DISPLAY_HTML_WITH_ALL_AUDIT_FIELDS;`;
+  const context = {};
+  vm.createContext(context);
+  new vm.Script(script).runInContext(context);
+  return context.__rendered;
+};
+
+test('static and Vinext pages expose the same multi-format T02 input contract', async () => {
+  const [staticPage, vinextPage, app] = await Promise.all([
+    read('src/index.html'),
+    read('app/page.tsx'),
+    read('src/app.mjs')
+  ]);
+  for (const page of [staticPage, vinextPage]) {
+    assert.match(page, /multiple/);
+    assert.match(page, /\.csv/);
+    assert.match(page, /\.txt/);
+    assert.match(page, /\.xlsx/);
+    assert.match(page, /\.docx/);
+    assert.match(page, /\.pdf/);
+    assert.match(page, /batch-declaration-file/);
+    assert.match(page, /batch-observation-status/);
+    assert.match(page, /descriptive_only/);
+    for (const id of ['parameter-file', 'metadata-traceability', 'metadata-edit-log', 'metadata-formula-review', 'metadata-test-system', 'metadata-phase-results']) assert.match(page, new RegExp(id));
+  }
+  assert.match(app, /ensureBrowserEngines/);
+  assert.match(app, /setSpreadsheetEngine/);
+  assert.match(app, /setDocxEngine/);
+  assert.match(app, /reference_only/);
+  assert.match(app, /blocked_binary/);
+  assert.match(app, /validateBatchDeclaration/);
+  assert.match(app, /observeDeclaredBatch/);
+  assert.match(app, /publicBatchAggregation/);
+  assert.match(app, /BATCH_DATASET_TYPE_MISMATCH/);
+  assert.match(app, /SHA-256:\$\{contentHash\}/);
+  assert.doesNotMatch(app, /hashText: entries\.map\(\(\{ name, text, contentHash \}\)/);
+});
+
+test('static batch declaration example is available to both local browser surfaces', async () => {
+  const [source, publicCopy] = await Promise.all([
+    read('config/batch-declaration.example.json'),
+    read('public/config/batch-declaration.example.json')
+  ]);
+  assert.deepEqual(JSON.parse(publicCopy), JSON.parse(source));
+});
+
+test('Vinext rendered markup keeps the full enterprise evidence and standards contract', async () => {
+  const rendered = renderedVinextMarkup(await read('app/page.tsx'));
+  for (const id of ['parameter-file', 'metadata-acquisition-record', 'metadata-precheck-items', 'metadata-test-stages', 'metadata-test-system', 'metadata-test-conditions', 'metadata-environment-conditions', 'metadata-measurement-methods', 'metadata-efficiency-record', 'metadata-phase-results', 'metadata-traceability', 'metadata-edit-log', 'metadata-formula-review', 'batch-declaration-file']) assert.match(rendered, new RegExp(id));
+  assert.match(rendered, /PEM 性能流程映射/);
+  assert.match(rendered, /未执行安全验证/);
+  assert.match(rendered, /非原生 iOS\/Android 客户端/);
+});

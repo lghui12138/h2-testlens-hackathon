@@ -1,16 +1,21 @@
 {
   "name": "h2-testlens",
-  "version": "3.4.0",
+  "version": "3.5.36",
   "private": true,
   "type": "module",
   "description": "氢能设备测试数据分析与自动报告演示作品",
   "scripts": {
     "start": "node server.mjs",
+    "typecheck": "tsc --noEmit --pretty false",
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start:site": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "prepare:github-pages": "node scripts/prepare-github-pages.mjs",
     "profile:audit": "node scripts/profile-audit.mjs",
+    "t02:coverage": "node scripts/t02-coverage-audit.mjs",
+    "t02:reference": "node scripts/t02-reference-audit.mjs",
+    "t02:report": "node scripts/t02-report.mjs",
+    "t02:integrity": "node scripts/t02-source-integrity.mjs",
     "test": "node --test",
     "eval:ai": "node scripts/ai-eval.mjs",
     "check:submission": "node scripts/submission-check.mjs",
@@ -19,21 +24,20 @@
     "watch:batch": "node scripts/batch-watch.mjs"
   },
   "dependencies": {
-    "mammoth": "^1.9.0",
+    "mammoth": "^1.12.1",
     "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "xlsx": "^0.18.5"
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/vite-plugin": "^1.53.1",
     "@openai/sites-vite-plugin": "0.1.0",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-rsc": "0.5.26",
+    "@vitejs/plugin-rsc": "^0.5.34",
     "typescript": "5.9.3",
-    "vinext": "1.0.0-beta.2",
+    "vinext": "^1.0.0-beta.8",
     "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "wrangler": "^4.125.0"
   }
 }
