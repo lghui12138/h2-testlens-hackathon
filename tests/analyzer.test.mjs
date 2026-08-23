@@ -260,6 +260,20 @@ test('describes generic setpoint response events without inventing a limit', () 
   assert.match(reportMarkdown(result, 'dynamic.csv'), /动态功率事件/);
 });
 
+test('does not treat a target power setpoint as a measured power channel', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,功率设定值',
+    '0,10,2,30,10,6,1,100',
+    '60,10,2,30,10,6,1,200'
+  ].join('\n')));
+  assert.equal(result.schema.mapping.power_w, undefined);
+  assert.equal(result.schema.mapping.power_setpoint_w, '功率设定值');
+  assert.ok(result.schema.missingOptionalHeaders.includes('power_w'));
+  assert.equal(result.metrics.powerSource, 'derived_only');
+  assert.equal(result.metrics.energyConsumedWh, 1 / 3);
+  assert.equal(result.metrics.powerCrossCheck.rawPowerCount, 0);
+});
+
 test('compares current batch with baseline and identifies new/resolved risks', () => {
   const baseline = analyzeRows(parseCSV(baselineCsv));
   const current = analyzeRows(parseCSV(csv));

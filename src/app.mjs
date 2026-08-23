@@ -410,6 +410,32 @@ function renderMetrics(result) {
   $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
 }
 
+function renderCalculationSummary(result) {
+  const element = $('#calculation-summary');
+  if (!element) return;
+  const metrics = result.metrics || {};
+  const datasetMetrics = result.dataset?.metrics || {};
+  const quality = result.quality || {};
+  const powerSource = metrics.powerSource || datasetMetrics.powerSource || null;
+  const powerLabels = { checked: '原始功率 + 电压×电流交叉核算', raw_only: '原始功率通道（未交叉核算）', derived_only: '电压×电流派生功率', not_available: '当前数据集未提供功率口径' };
+  const powerEvidence = metrics.powerCrossCheck || datasetMetrics.powerCrossCheck || {};
+  const powerDetail = powerEvidence.maxRelativeDifferencePct !== null && powerEvidence.maxRelativeDifferencePct !== undefined
+    ? `最大交叉差异 ${fmt(powerEvidence.maxRelativeDifferencePct, 2)}%`
+    : powerEvidence.rawPowerCount ? `${powerEvidence.rawPowerCount} 条原始功率记录` : '未把设定值当作实测功率';
+  const timeDetail = quality.medianIntervalS !== undefined
+    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}`
+    : '企业适配器按源文件/会话分别统计';
+  const mappingDetail = result.schema
+    ? `${result.schema.mappedCount}/${result.schema.fieldCount} 核心字段 · 单位换算 ${Object.values(result.schema.conversions || {}).filter((item) => item.mode !== 'identity').length} 项`
+    : `${datasetMetrics.coverage?.analysisSignals ?? '—'} 列进入核心/交叉核对 · 其余保留目录`;
+  const uncertainty = result.uncertainty?.status === 'calculated'
+    ? `已传播 · k=${result.uncertainty.coverageFactor}`
+    : result.uncertainty?.status === 'invalid'
+      ? '模型无效，已阻断不确定度门控'
+      : '未配置；不代表不确定度为零';
+  element.innerHTML = `<div class="calculation-summary-head"><span>计算口径</span><small>结果可追溯，但仍需企业方法与人工复核</small></div><div class="calculation-strip"><span><b>功率</b>${powerLabels[powerSource] || '企业适配器源字段口径'}<small>${powerDetail}</small></span><span><b>时间轴</b>按原始时间戳计算<small>${timeDetail}</small></span><span><b>字段与单位</b>映射后再计算<small>${mappingDetail}</small></span><span><b>不确定度</b>${uncertainty}<small>需要企业批准模型才可进入正式门控</small></span></div>`;
+}
+
 function renderIssues(result) {
   const severityLabel = { critical: '高优先级', warn: '建议复核', info: '信息' };
   $('#issue-list').innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '!' : item.severity === 'warn' ? '~' : 'i'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span></div><p>${escapeHtml(item.evidence)}</p><small>建议动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
@@ -839,7 +865,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); renderBatchObservation();
+  renderMetrics(result); renderCalculationSummary(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); renderBatchObservation();
   renderComparison();
   renderHistory();
   renderSchema(result);

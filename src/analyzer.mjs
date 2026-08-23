@@ -166,6 +166,34 @@ const headerMatches = (header, alias) => {
   return normalizedHeader === normalizedAlias || (normalizedAlias.length >= 2 && normalizedHeader.includes(normalizedAlias));
 };
 
+const HEADER_ROLE_EXCLUSIONS = Object.freeze({
+  power_w: ['setpoint', 'target', 'command', '设定', '目标', '指令'],
+  power_setpoint_w: ['actual', 'measured', '实测', '实际', '输出'],
+  temperature_c: ['gas', 'hydrogen', 'ambient', 'environment', '出口', '产氢', '环境'],
+  gas_temperature_c: ['ambient', 'environment', '环境'],
+  ambient_temperature_c: ['gas', 'hydrogen', '出口', '产氢'],
+  pressure_bar: ['gas', 'hydrogen', 'ambient', 'environment', '出口', '产氢', '环境'],
+  gas_pressure_bar: ['ambient', 'environment', '环境'],
+  ambient_pressure_kpa: ['gas', 'hydrogen', '出口', '产氢']
+});
+
+function headerRoleCompatible(field, header) {
+  const raw = String(header ?? '').toLowerCase();
+  return !(HEADER_ROLE_EXCLUSIONS[field] || []).some((token) => raw.includes(token));
+}
+
+function schemaHeaderCandidates(field, headers, explicitHeader) {
+  const aliases = FIELD_ALIASES[field] || [field];
+  const eligible = headers.filter((header) => headerRoleCompatible(field, header));
+  const normalizedField = normalizeHeader(field);
+  const normalizedAliases = aliases.map(normalizeHeader);
+  const exactCanonical = eligible.filter((header) => normalizeHeader(header) === normalizedField);
+  if (exactCanonical.length) return exactCanonical;
+  const exactAlias = eligible.filter((header) => normalizedAliases.includes(normalizeHeader(header)));
+  if (exactAlias.length) return exactAlias;
+  return eligible.filter((header) => aliases.some((alias) => headerMatches(header, alias)));
+}
+
 function unitTransform(field, header) {
   const normalized = normalizeHeader(header);
   if (field === 'timestamp_s') {
@@ -208,14 +236,15 @@ function resolveSchema(inputRows, explicitMapping = {}) {
   for (const field of [...REQUIRED_FIELDS, ...ADDITIONAL_STANDARD_FIELDS]) {
     const explicitHeader = explicitMapping[field];
     if (explicitHeader && !headers.includes(explicitHeader)) mappingWarnings.push(`${field} 配置表头“${explicitHeader}”未在输入文件中找到，已尝试通用别名回退`);
-    const sourceHeader = explicitHeader && headers.includes(explicitHeader)
-      ? explicitHeader
-      : headers.find((header) => headerMatches(header, field))
-        ?? headers.find((header) => FIELD_ALIASES[field].some((alias) => headerMatches(header, alias)));
+    const candidates = explicitHeader && headers.includes(explicitHeader)
+      ? [explicitHeader]
+      : schemaHeaderCandidates(field, headers, explicitHeader);
+    const sourceHeader = candidates[0];
     if (!sourceHeader) {
       (OPTIONAL_FIELDS.includes(field) ? missingOptionalHeaders : missingHeaders).push(field);
       continue;
     }
+    if (candidates.length > 1) mappingWarnings.push(`${field} 存在多个候选表头（${candidates.join('、')}），已选择“${sourceHeader}”；请确认企业字段映射。`);
     mapping[field] = sourceHeader;
     conversions[field] = unitTransform(field, sourceHeader);
   }

@@ -40,6 +40,7 @@ const DASHBOARD_HTML = String.raw`
 
 const DISPLAY_HTML = DASHBOARD_HTML
   .replaceAll("ONLINE DEMO", "PUBLIC ANALYSIS")
+  .replace('<div id="metric-grid" class="metric-grid"></div>', '<div id="metric-grid" class="metric-grid"></div><div id="calculation-summary" class="calculation-summary" aria-label="计算口径摘要"></div>')
   .replace('<h2>判定阈值</h2>', '<h2>分析模式与规则</h2>')
   .replace('按设备模板加载阈值；内置模板仅用于演示，正式部署时应替换为企业标准。', 'profile 明确区分描述性统计、风险筛查和企业验收；描述性 profile 不携带或执行伪企业阈值。')
   .replace('<button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button>', '<button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button><button id="load-t02-profiles" class="quiet-button profile-demo-button">载入 T02 描述性 profiles</button><a class="template-link" href="./config/t02-profile.example.json" download>下载 T02 profile 示例包</a>')
