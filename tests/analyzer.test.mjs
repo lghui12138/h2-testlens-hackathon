@@ -1482,6 +1482,21 @@ test('applies an explicitly declared vehicle mV unit without guessing from magni
   assert.ok(Math.abs(result.metrics.steadyVoltageMeanV - 0.7405) < 1e-12);
 });
 
+test('splits vehicle insulation exclusions by status, value type, and valid minimum input', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const rows = parseCSV([header,
+    '0,4,10,320,3.2,0.7,3,0.74,8,12,500,1',
+    '1,0,10,320,3.2,0.7,3,0.74,8,12,500,1',
+    '2,4,10,320,3.2,0.7,3,0.74,8,12,10000,1',
+    '3,4,10,320,3.2,0.7,3,0.74,8,12,0,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, {});
+  assert.equal(result.dataset.insulation.excludedByStatus, 1);
+  assert.equal(result.dataset.insulation.censoredAboveRange, 1);
+  assert.equal(result.dataset.insulation.excludedByValue, 1);
+  assert.equal(result.dataset.insulation.validForMinimum, 1);
+});
+
 test('keeps vehicle sessions separate and exposes two independently scaled display signals', () => {
   const rows = [];
   const makeRow = (sessionId, sourceFile, timestamp, speed) => ({
@@ -2077,8 +2092,9 @@ test('summarizes multiple durability reports descriptively without turning the d
   assert.equal(summary.reportCount, 2);
   assert.equal(summary.orderingBasis, 'metadata.开始时间');
   assert.deepEqual(summary.resultCounts, { '未通过': 1, '通过': 1 });
-  assert.equal(summary.byTargetPower[0].averageCellVoltageDeltaMv, -1);
-  assert.equal(summary.byTargetPower[0].averageDeviationDeltaMv, 2);
+  assert.equal(summary.byTargetPower[0].averageCellVoltageDeltaMv, null);
+  assert.equal(summary.byTargetPower[0].averageDeviationDeltaMv, null);
+  assert.equal(summary.byTargetPower[0].deltaStatus, 'suppressed_not_comparable');
   assert.match(summary.boundary, /不产生标准符合性/);
   assert.equal(summary.comparabilityAudit.auditStatus, 'not_evaluable');
   assert.ok(summary.comparabilityAudit.issueCodes.includes('DURABILITY_COMPARABILITY_SYSTEM_NAME_EVIDENCE_MISSING'));

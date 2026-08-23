@@ -1411,7 +1411,12 @@ function buildVehicle(rows, config) {
   const requestedWindow = Number.isFinite(requestedStartS) || Number.isFinite(requestedEndS);
   const rowsForAnalysis = requestedWindow ? analysisRows : normalized;
   const stateCounts = Object.fromEntries([...new Set(rowsForAnalysis.map((row) => row.main_status).filter((value) => value !== null))].sort((a, b) => a - b).map((state) => [String(state), rowsForAnalysis.filter((row) => row.main_status === state).length]));
-  const isolationRows = rowsForAnalysis.filter((row) => [4, 8].includes(row.main_status) && row.isolation_kohm !== null && row.isolation_kohm > 0 && row.isolation_kohm < 9999 && row.isolation_kohm !== 65535);
+  const isolationStatusRows = rowsForAnalysis.filter((row) => [4, 8].includes(row.main_status));
+  const isolationRows = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm > 0 && row.isolation_kohm < 9999 && row.isolation_kohm !== 65535);
+  const isolationExcludedByStatus = rowsForAnalysis.length - isolationStatusRows.length;
+  const isolationCensoredAboveRange = isolationStatusRows.filter((row) => row.isolation_kohm !== null && (row.isolation_kohm >= 9999 || row.isolation_kohm === 65535)).length;
+  const isolationExcludedMissing = isolationStatusRows.filter((row) => row.isolation_kohm === null).length;
+  const isolationExcludedNonPositive = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm <= 0).length;
   const buckets = new Map();
   for (const row of isolationRows) {
     const bucket = Math.floor((row.session_timestamp_s ?? row.timestamp_s) / 600);
@@ -1469,8 +1474,8 @@ function buildVehicle(rows, config) {
   if (requestedWindow && !analysisRows.length) issues.push({ severity: 'warn', code: 'VEHICLE_WINDOW_EMPTY', title: '时间窗口没有记录', evidence: `请求窗口 ${windowStartS}–${windowEndS} s 未找到记录；本次不回退到全量数据，也不生成该窗口 KPI`, recommendation: '调整起止时间，或先确认时间戳转换和多文件拼接顺序。' });
   if (unresolvedUnitFields.size) issues.push({ severity: 'warn', code: 'VEHICLE_UNIT_UNRESOLVED', title: '车辆单体电压单位未确认', evidence: `${[...unresolvedUnitFields].join('、')} 的原始值超出 V 口径可直接解释的范围，已不进入单体电压均值/趋势；原始值保留在 raw 字段`, recommendation: '在企业 profile 中提供 vehicleSignalUnits.sourceUnit（V 或 mV）及证据后重新分析；不按数量级自动换算。' });
   if (Object.keys(invalidSentinelCounts).length) issues.push({ severity: 'info', code: 'VEHICLE_INVALID_SENTINEL_FILTERED', title: '车辆字段包含已识别无效哨兵值', evidence: Object.entries(invalidSentinelCounts).map(([field, count]) => `${field}=${count}`).join('；'), recommendation: '确认企业无效码表和状态定义；当前只排除明确的 65535 方差哨兵，不外推其他字段规则。' });
-  const invalidIsolation = normalized.filter((row) => row.isolation_kohm === null || row.isolation_kohm <= 0 || row.isolation_kohm >= 9999 || row.isolation_kohm === 65535).length;
-  if (invalidIsolation) issues.push({ severity: 'info', code: 'ISOLATION_FILTERED', title: '绝缘阻值已按企业规则过滤', evidence: `${invalidIsolation} 条记录未进入 10 分钟最小值统计`, recommendation: '正式报告中保留过滤规则，并核对传感器无效码定义。' });
+  const invalidIsolation = isolationExcludedMissing + isolationExcludedNonPositive + isolationCensoredAboveRange;
+  if (invalidIsolation || isolationExcludedByStatus) issues.push({ severity: 'info', code: 'ISOLATION_FILTERED', title: '绝缘阻值按状态/值类型分层过滤', evidence: `状态外 ${isolationExcludedByStatus} 条；状态4/8内缺失 ${isolationExcludedMissing} 条；非正值 ${isolationExcludedNonPositive} 条；量程上限/哨兵 ${isolationCensoredAboveRange} 条；有效进入10分钟最小值 ${isolationRows.length} 条`, recommendation: '正式报告中保留各类计数，并由企业 profile 确认 9999/10000/65535 的量程或无效码含义。' });
   if (signalDiagnostics.reviewSignalCount) issues.push({ severity: 'warn', code: 'SIGNAL_VALUE_SEMANTICS_REVIEW', title: '原始信号值分布需要语义复核', evidence: `${signalDiagnostics.reviewSignalCount} 个核心/交叉核对字段存在负值、零值集中、常量值或数值解析混合；示例：${signalDiagnostics.reviewSignals.slice(0, 4).map((item) => `${item.source}（${item.reasons.join('、')}）`).join('；')}`, recommendation: '先确认字段单位、设备状态和企业无效码表；系统不自动删除负值/零值，也不把该提示直接转为不合格。' });
   if (dynamicAnalysis.enabled && dynamicAnalysis.status === 'not_available') issues.push({ severity: 'info', code: 'VEHICLE_DYNAMIC_FIELDS_MISSING', title: '车辆动态事件分析未执行', evidence: dynamicAnalysis.evidence, recommendation: `补充 ${dynamicCommandSource} 设定信号或在企业 profile 中关闭该可选分析。` });
   if (dynamicAnalysis.enabled && dynamicAnalysis.dataGapCount > 0) issues.push({ severity: 'warn', code: 'VEHICLE_DYNAMIC_DATA_GAP', title: '车辆动态事件存在采样缺口', evidence: `识别 ${dynamicAnalysis.dataGapCount} 个超过配置上限的间隔；最大观测间隔 ${dynamicAnalysis.maximumIntervalS ?? '—'} s`, recommendation: '复核采集计划、时钟同步和文件边界；不以插值替代原始记录。' });
@@ -1527,7 +1532,7 @@ function buildVehicle(rows, config) {
     trendSelection: selectedTrendAxis,
     descriptiveCandidateConfig: { minimumDurationS: inferredAnalysis.minimumDurationS, binWidthA: inferredAnalysis.binWidthA, gapLimitS: inferredAnalysis.gapLimitS, decisionScope: 'descriptive_only' },
     descriptiveTrend,
-    insulation: { points: insulationPoints, forecast: insulationForecast, validCount: isolationRows.length, invalidCount: invalidIsolation },
+    insulation: { points: insulationPoints, forecast: insulationForecast, validCount: isolationRows.length, invalidCount: invalidIsolation, excludedByStatus: isolationExcludedByStatus, excludedByValue: isolationExcludedMissing + isolationExcludedNonPositive, excludedByWindow: 0, censoredAboveRange: isolationCensoredAboveRange, validForMinimum: isolationRows.length, boundary: '仅状态4/8且通过当前数值筛选的记录进入10分钟最小值统计；数值语义和量程上限仍需企业确认。' },
     signals: Object.fromEntries(VEHICLE_FIELDS.slice(1).map(([field]) => [field, { source: mapping[field], count: normalized.filter((row) => row[field] !== null).length }]))
   };
   const schema = commonSchema({ ...mapping, ...efficiencyFields }, VEHICLE_FIELDS.length + Object.keys(efficiencyFields).length);
@@ -1991,6 +1996,8 @@ function summarizeDurabilityReports(reports) {
       byPower.set(power, series);
     }
   });
+  const comparabilityAudit = durabilityComparabilityAudit(ordered);
+  const analysisEligible = comparabilityAudit.comparable === true;
   const summary = [...byPower.entries()].sort(([a], [b]) => a - b).map(([targetPowerKw, series]) => {
     const voltage = series.map((item) => item.averageCellVoltageMv).filter(Number.isFinite);
     const deviation = series.map((item) => item.averageDeviationMv).filter(Number.isFinite);
@@ -2003,12 +2010,13 @@ function summarizeDurabilityReports(reports) {
       lastReport: last?.reportLabel || null,
       firstAverageCellVoltageMv: first?.averageCellVoltageMv ?? null,
       lastAverageCellVoltageMv: last?.averageCellVoltageMv ?? null,
-      averageCellVoltageDeltaMv: numericDelta(first?.averageCellVoltageMv, last?.averageCellVoltageMv),
+      averageCellVoltageDeltaMv: analysisEligible ? numericDelta(first?.averageCellVoltageMv, last?.averageCellVoltageMv) : null,
       minimumAverageCellVoltageMv: voltage.length ? Math.min(...voltage) : null,
       maximumAverageCellVoltageMv: voltage.length ? Math.max(...voltage) : null,
       firstAverageDeviationMv: first?.averageDeviationMv ?? null,
       lastAverageDeviationMv: last?.averageDeviationMv ?? null,
-      averageDeviationDeltaMv: numericDelta(first?.averageDeviationMv, last?.averageDeviationMv),
+      averageDeviationDeltaMv: analysisEligible ? numericDelta(first?.averageDeviationMv, last?.averageDeviationMv) : null,
+      deltaStatus: analysisEligible ? 'eligible_descriptive_delta' : 'suppressed_not_comparable',
       maximumAverageDeviationMv: deviation.length ? Math.max(...deviation) : null,
       series
     };
@@ -2019,7 +2027,8 @@ function summarizeDurabilityReports(reports) {
     orderingBasis: hasCompleteStartTimes ? 'metadata.开始时间' : '输入报告顺序',
     completeStartTimeEvidence: hasCompleteStartTimes,
     resultCounts: Object.fromEntries([...new Set(ordered.map((item) => item.report.metadata?.测试结果 || '未标注'))].sort().map((result) => [result, ordered.filter((item) => (item.report.metadata?.测试结果 || '未标注') === result).length])),
-    comparabilityAudit: durabilityComparabilityAudit(ordered),
+    comparabilityAudit,
+    analysisEligible,
     byTargetPower: summary,
     boundary: '仅作跨报告描述性变化摘要；未验证耐久方法、循环等效性、统计显著性或企业验收限值，不产生标准符合性结论。'
   };
