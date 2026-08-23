@@ -83,6 +83,12 @@
 - Gate: malformed UTF-8 input-safety regression plus full test/submission/Pages gates must pass.
 - Residual: valid enterprise encodings still require an explicit/approved decoder; this guard prevents silent corruption but does not infer encoding.
 
+## 2026-08-24 current continuation evidence · Pages certificate status
+
+- Change: queried GitHub Pages configuration and attempted HTTPS enforcement; GitHub returned `certificate does not exist yet`, so deployment docs now state the external certificate dependency without changing DNS or local network state.
+- Gate: GitHub Actions/Pages deployment remains green and the repository/project Pages URL remains public; HTTPS enforcement is explicitly not claimed.
+- Residual: certificate provisioning requires GitHub/domain external state and cannot be closed by repository code alone.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
