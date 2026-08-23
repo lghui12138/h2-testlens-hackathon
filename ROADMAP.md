@@ -23,6 +23,12 @@
 - Gate: `node --test tests/analyzer.test.mjs` passed 104/104; full `npm test`, `npm run check:submission`, Pages preparation, cloud TypeScript/build and public deployment remain required before the commit closes this continuation.
 - Residual: profiles without an explicitly declared gap limit keep the previous descriptive integration behavior; formal enterprise acceptance still requires approved sampling rules, uncertainty budget and human review.
 
+## 2026-08-24 current continuation evidence · session-aware generic analysis
+
+- Change: generic quality, phase summaries, phase metrics, trapezoid integration and uncertainty propagation now respect `session_id`/`source_file` boundaries; a file reset is not treated as a negative interval or a continuous test.
+- Gate: `node --test tests/analyzer.test.mjs` passed 105/105 after adding the two-file reset regression; full suite and cloud Pages gate remain required for delivery.
+- Residual: enterprise adapters already preserve their own source-file/session contracts; formal cross-file aggregation still requires an enterprise batch declaration and remains descriptive_only without one.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.

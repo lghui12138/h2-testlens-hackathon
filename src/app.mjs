@@ -421,11 +421,12 @@ function renderCalculationSummary(result) {
   const powerEvidence = metrics.powerCrossCheck || datasetMetrics.powerCrossCheck || {};
   const integrationEvidence = metrics.integrationEvidence || {};
   const skippedIntegrationGaps = Math.max(Number(integrationEvidence.hydrogenVolume?.skippedGapCount || 0), Number(integrationEvidence.energyConsumed?.skippedGapCount || 0));
+  const skippedSessionBoundaries = Math.max(Number(integrationEvidence.hydrogenVolume?.skippedSessionBoundaryCount || 0), Number(integrationEvidence.energyConsumed?.skippedSessionBoundaryCount || 0));
   const powerDetail = powerEvidence.maxRelativeDifferencePct !== null && powerEvidence.maxRelativeDifferencePct !== undefined
     ? `最大交叉差异 ${fmt(powerEvidence.maxRelativeDifferencePct, 2)}%`
     : powerEvidence.rawPowerCount ? `${powerEvidence.rawPowerCount} 条原始功率记录` : '未把设定值当作实测功率';
   const timeDetail = quality.medianIntervalS !== undefined
-    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}${skippedIntegrationGaps ? ` · 积分跳过 ${skippedIntegrationGaps} 段` : ''}`
+    ? `中位 ${fmt(quality.medianIntervalS, 3)} s · 最大 ${fmt(quality.maximumIntervalS, 3)} s · ${quality.samplingGapCount === null ? '缺口上限未配置' : `缺口 ${quality.samplingGapCount} 个`}${skippedIntegrationGaps ? ` · 积分跳过 ${skippedIntegrationGaps} 段` : ''}${skippedSessionBoundaries ? ` · 文件边界 ${skippedSessionBoundaries} 个` : ''}`
     : '企业适配器按源文件/会话分别统计';
   const mappingDetail = result.schema
     ? `${result.schema.mappedCount}/${result.schema.fieldCount} 核心字段 · 单位换算 ${Object.values(result.schema.conversions || {}).filter((item) => item.mode !== 'identity').length} 项`

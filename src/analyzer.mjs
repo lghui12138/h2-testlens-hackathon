@@ -289,20 +289,32 @@ const slopePerMinute = (rows, field) => {
   return denominator ? (numerator / denominator) * 60 : 0;
 };
 
+function sessionKey(row) {
+  if (row?.session_id !== undefined && row?.session_id !== null) return `session:${row.session_id}`;
+  if (row?.source_file !== undefined && row?.source_file !== null) return `file:${row.source_file}`;
+  return '__single_session__';
+}
+
+function sameSession(previous, current) {
+  return sessionKey(previous) === sessionKey(current);
+}
+
 function phaseSummary(rows) {
   const groups = [];
   for (const row of rows) {
     const phase = row.phase || '未标注';
     const last = groups.at(-1);
-    if (!last || last.phase !== phase) groups.push({ phase, count: 1, start: row.timestamp_s, end: row.timestamp_s });
+    const currentSession = sessionKey(row);
+    if (!last || last.phase !== phase || last.sessionKey !== currentSession) groups.push({ phase, sessionKey: currentSession, count: 1, start: row.timestamp_s, end: row.timestamp_s });
     else { last.count += 1; last.end = row.timestamp_s; }
   }
   return groups.map((group) => ({
     phase: group.phase,
+    sessionId: group.sessionKey === '__single_session__' ? null : group.sessionKey,
     count: group.count,
     startS: group.start,
     endS: group.end,
-    durationS: group.start !== null && group.end !== null ? Math.abs(group.end - group.start) : 0
+    durationS: group.start !== null && group.end !== null ? Math.max(0, group.end - group.start) : 0
   }));
 }
 
@@ -322,9 +334,15 @@ function qualityReport(rows, schema, config = {}) {
   const invalidValueCounts = Object.fromEntries([
     'timestamp_s', ...ANALYZED_NUMERIC_FIELDS
   ].map((field) => [field, rows.filter((row) => row[field] === null).length]));
-  const timestamps = rows.map((row) => row.timestamp_s).filter((value) => value !== null);
-  const duplicateTimestampCount = timestamps.length - new Set(timestamps).size;
-  const timestampDeltas = timestamps.slice(1).map((timestamp, index) => timestamp - timestamps[index]);
+  const timestampEntries = rows.map((row) => ({ row, timestamp: row.timestamp_s })).filter(({ timestamp }) => timestamp !== null);
+  const duplicateTimestampCount = timestampEntries.length - new Set(timestampEntries.map(({ row, timestamp }) => `${sessionKey(row)}:${timestamp}`)).size;
+  const timestampDeltas = [];
+  for (let index = 1; index < rows.length; index += 1) {
+    const previous = rows[index - 1];
+    const current = rows[index];
+    if (!sameSession(previous, current) || previous.timestamp_s === null || current.timestamp_s === null) continue;
+    timestampDeltas.push(current.timestamp_s - previous.timestamp_s);
+  }
   const nonMonotonicCount = timestampDeltas.filter((delta) => delta < 0).length;
   const nonPositiveIntervalCount = timestampDeltas.filter((delta) => delta <= 0).length;
   const positiveIntervals = timestampDeltas.filter((delta) => delta > 0);
@@ -431,7 +449,7 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1) { interruptedSegmentCount += 1; continue; }
+      if (currentIndex !== previousIndex + 1 || !sameSession(rows[previousIndex], rows[currentIndex])) { interruptedSegmentCount += 1; continue; }
       const deltaS = rows[currentIndex].timestamp_s !== null && rows[previousIndex].timestamp_s !== null
         ? rows[currentIndex].timestamp_s - rows[previousIndex].timestamp_s
         : 0;
@@ -480,7 +498,7 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1) { interruptedSegmentCount += 1; continue; }
+      if (currentIndex !== previousIndex + 1 || !sameSession(rows[previousIndex], rows[currentIndex])) { interruptedSegmentCount += 1; continue; }
       const previous = rows[previousIndex];
       const current = rows[currentIndex];
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
@@ -831,6 +849,7 @@ function integrateTrapezoid(rows, field, divisor = 1, maxIntervalS = null, evide
   for (let index = 1; index < rows.length; index += 1) {
     const previous = rows[index - 1];
     const current = rows[index];
+    if (!sameSession(previous, current)) { evidence && (evidence.skippedSessionBoundaryCount += 1); continue; }
     const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
     if (deltaS <= 0) { evidence && (evidence.skippedNonPositiveCount += 1); continue; }
     if (maxIntervalS !== null && deltaS > maxIntervalS) { evidence && (evidence.skippedGapCount += 1); continue; }
@@ -879,6 +898,7 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
+      if (!sameSession(previous, current)) continue;
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
     }
@@ -889,6 +909,7 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
+      if (!sameSession(previous, current)) continue;
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       const previousU = powerU(previous);
       const currentU = powerU(current);
@@ -1193,8 +1214,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const minimumPurity = minimumWithTimes('hydrogen_purity_pct');
   const integrationEvidence = {
     maxIntervalS: quality.gapLimitS,
-    hydrogenVolume: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0 },
-    energyConsumed: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0 }
+    energyConsumed: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0, skippedSessionBoundaryCount: 0 },
+    hydrogenVolume: { segmentCount: 0, skippedGapCount: 0, skippedMissingCount: 0, skippedNonPositiveCount: 0, skippedSessionBoundaryCount: 0 }
   };
   const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
