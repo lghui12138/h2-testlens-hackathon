@@ -24,6 +24,8 @@
 
 标准实施边界矩阵见 [`docs/STANDARD_BOUNDARY_MATRIX.md`](docs/STANDARD_BOUNDARY_MATRIX.md)，逐项区分产品映射、缺失证据和不可宣称的结论。
 
+公开分享卡片与 OG 元数据已随 GitHub Pages 构建发布，便于从 GitHub 或聊天工具打开时识别项目定位；分享预览不代表标准符合性结论。
+
 每轮 GitHub 更新记录见 [`docs/GITHUB_ROUND_LOG.md`](docs/GITHUB_ROUND_LOG.md)。
 
 v3.5.37 证据：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.37.md`。

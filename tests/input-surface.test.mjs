@@ -75,3 +75,13 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
     assert.match(page, /标准实施边界矩阵/);
   }
 });
+
+test('public static page exposes share metadata and the Pages build copies its preview card', async () => {
+  const [source, prepared] = await Promise.all([read('src/index.html'), read('_site/index.html').catch(() => '')]);
+  assert.match(source, /property="og:image"/);
+  assert.match(source, /og-card\.svg/);
+  assert.match(source, /twitter:card|name="twitter:card"/);
+  if (prepared) {
+    assert.match(prepared, /og-card\.svg/);
+  }
+});

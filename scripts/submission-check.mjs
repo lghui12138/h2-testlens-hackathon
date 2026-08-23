@@ -78,6 +78,7 @@ const requiredFiles = [
   'public/config/t02-profile.example.json',
   'public/config/batch-declaration.example.json',
   'config/enterprise-parameter-template.xlsx',
+  'public/og-card.svg',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
   '.research/ignite_t02_standards_20260821/evidence.jsonl',
   '.research/ignite_t02_standards_20260821/claims.jsonl',

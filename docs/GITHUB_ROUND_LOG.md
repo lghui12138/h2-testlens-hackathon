@@ -76,6 +76,11 @@
 - GitHub Pages API 确认站点 public，但 HTTPS 强制开启因证书尚未配置返回 404；未修改 DNS、代理或网络设置。
 - 部署文档现在明确区分 GitHub Pages 项目地址、当前公开渲染域名和证书外部依赖，避免把 HTTP 路由写成已强制 HTTPS。
 
+## 2026-08-24 · GitHub 分享预览轮
+
+- 静态 Pages 和 Vinext App 新增 description、canonical、Open Graph、Twitter card 和 `og-card.svg` 分享图。
+- Pages 准备脚本复制分享图到 `_site/`，提交门和输入面测试确认公开资源存在；分享预览只说明项目用途，不生成标准符合性宣传。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。

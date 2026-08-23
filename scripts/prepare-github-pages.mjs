@@ -18,5 +18,6 @@ await cp(join(root, 'src'), join(site, 'src'), { recursive: true });
 await cp(join(root, 'sample-data'), join(site, 'sample-data'), { recursive: true });
 await cp(join(root, 'config'), join(site, 'config'), { recursive: true });
 await cp(join(root, 'public/favicon.svg'), join(site, 'favicon.svg'));
+await cp(join(root, 'public/og-card.svg'), join(site, 'og-card.svg'));
 await writeFile(join(site, '.nojekyll'), '', 'utf8');
 console.log(JSON.stringify({ site, entry: join(site, 'index.html'), assets: ['src', 'sample-data', 'config'] }, null, 2));

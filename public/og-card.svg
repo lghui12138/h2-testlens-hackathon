@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">H₂ TestLens · 氢能测试智报</title>
+  <desc id="desc">T02 氢能设备测试数据分析与自动报告原型</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06131c"/><stop offset="1" stop-color="#102f3d"/></linearGradient>
+    <linearGradient id="trace" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#68e5ca"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" fill="none" stroke="#68e5ca" stroke-opacity=".1"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <path d="M650 425 C740 330 760 500 845 390 S1000 345 1115 250" fill="none" stroke="url(#trace)" stroke-width="4" opacity=".8"/>
+  <path d="M650 455 C740 360 760 530 845 420 S1000 375 1115 280" fill="none" stroke="#68e5ca" stroke-width="1" opacity=".25"/>
+  <rect x="70" y="72" width="78" height="78" rx="18" fill="#68e5ca"/>
+  <text x="109" y="123" text-anchor="middle" fill="#052028" font-family="Arial, sans-serif" font-size="29" font-weight="800">H₂</text>
+  <text x="178" y="113" fill="#edfffa" font-family="Arial, sans-serif" font-size="34" font-weight="700">TestLens</text>
+  <text x="180" y="143" fill="#8ba9ad" font-family="Arial, sans-serif" font-size="17">氢能测试智报 · T02</text>
+  <text x="70" y="258" fill="#edfffa" font-family="Arial, sans-serif" font-size="55" font-weight="700">测试日志，形成</text>
+  <text x="70" y="325" fill="#68e5ca" font-family="Arial, sans-serif" font-size="55" font-weight="700">可复核的工程结论。</text>
+  <text x="74" y="377" fill="#b4cdcb" font-family="Arial, sans-serif" font-size="20">字段映射 · KPI 计算 · 异常证据 · 报告初稿</text>
+  <g font-family="Arial, sans-serif">
+    <text x="74" y="520" fill="#68e5ca" font-size="15" font-weight="700">T02 SOURCE COVERAGE</text>
+    <text x="74" y="558" fill="#edfffa" font-size="22" font-weight="700">198 文件</text>
+    <text x="230" y="558" fill="#edfffa" font-size="22" font-weight="700">190 processed</text>
+    <text x="440" y="558" fill="#edfffa" font-size="22" font-weight="700">0 formal claims</text>
+    <text x="74" y="590" fill="#8ba9ad" font-size="15">本地优先 · 原始数据不上传 · 不替代标准认证</text>
+  </g>
+</svg>

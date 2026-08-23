@@ -89,6 +89,12 @@
 - Gate: GitHub Actions/Pages deployment remains green and the repository/project Pages URL remains public; HTTPS enforcement is explicitly not claimed.
 - Residual: certificate provisioning requires GitHub/domain external state and cannot be closed by repository code alone.
 
+## 2026-08-24 current continuation evidence · public share metadata
+
+- Change: public static/App surfaces now carry project description, canonical/project URL, Open Graph/Twitter metadata and an instrument-themed `og-card.svg`; the Pages preparation step copies the card to `_site`.
+- Gate: static/App metadata parity test, submission gate, and Pages artifact check pass; metadata describes the prototype and its boundaries, not standard compliance.
+- Residual: social crawlers and custom-domain HTTPS behavior remain external platform concerns.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
