@@ -41,6 +41,12 @@
 - Gate: the two-file session regression passes with `sessionCount=2`, `durationS=2`, separate integrations, and the complete test/submission gates remain required.
 - Residual: duration is observed timestamp span, not proof of uninterrupted test execution; declared batch boundaries and enterprise test records remain necessary for formal interpretation.
 
+## 2026-08-24 current continuation evidence · standards boundary matrix
+
+- Change: added `docs/STANDARD_BOUNDARY_MATRIX.md` and linked it from both public browser surfaces; the matrix separates product mapping from missing method, safety, laboratory, and enterprise-acceptance evidence.
+- Gate: the matrix is required by `scripts/submission-check.mjs`; static/Vinext parity and the cloud Pages release gate must pass before delivery.
+- Residual: the matrix improves truthful disclosure; it does not close the external evidence needed for formal conformity or certification.
+
 ## v3.5.34 current continuation evidence
 
  - Added an explicit `evaluationMode` contract: `descriptive_only`, `risk_screening`, and `acceptance`. The three T02 example profiles are dataset-scoped, unapproved, `descriptive_only`, and carry `thresholds: null`; they cannot produce threshold, acceptance, safety or release decisions.
