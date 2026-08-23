@@ -1310,8 +1310,6 @@
         "sampleCount",
         "stackCurrentA",
         "steadySampleCount",
-        "steadyVoltageMeanV",
-        "steadyVoltageStdV",
         "targetPowerKw",
         "temperatureC",
         "voltageVariance"
@@ -20159,7 +20157,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -20181,8 +20178,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -20340,7 +20335,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 38,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -20414,8 +20409,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -20489,8 +20482,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -20648,7 +20639,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 5,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -20722,8 +20713,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -20797,8 +20786,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -20956,7 +20943,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 196,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -21030,8 +21017,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21084,7 +21069,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -21106,8 +21090,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21241,7 +21223,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 93,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -21315,8 +21297,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21390,8 +21370,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21513,7 +21491,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 6,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -21587,8 +21565,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21641,7 +21617,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -21662,8 +21638,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21821,7 +21795,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 57,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -21895,8 +21869,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -21949,7 +21921,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -21971,8 +21942,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22094,7 +22063,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 101,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -22168,8 +22137,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22222,7 +22189,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -22243,8 +22210,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22402,7 +22367,7 @@
           "descriptiveCandidateCount": 22,
           "dynamicEventCount": 293,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -22476,8 +22441,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22530,7 +22493,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -22552,8 +22514,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22675,7 +22635,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 135,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -22749,8 +22709,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -22824,8 +22782,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23010,7 +22966,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -23084,8 +23040,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23138,6 +23092,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -23158,8 +23113,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23317,7 +23270,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 120,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -23391,8 +23344,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23466,8 +23417,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23625,7 +23574,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 134,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -23699,8 +23648,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23774,8 +23721,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -23945,7 +23890,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 5,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -24019,8 +23964,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24094,8 +24037,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24217,7 +24158,7 @@
           "descriptiveCandidateCount": 14,
           "dynamicEventCount": 346,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -24291,8 +24232,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24345,7 +24284,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -24366,8 +24305,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24501,7 +24438,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 127,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -24575,8 +24512,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24629,7 +24564,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -24651,8 +24585,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24810,7 +24742,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 148,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -24884,8 +24816,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -24938,7 +24868,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -24960,8 +24889,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25095,7 +25022,7 @@
           "descriptiveCandidateCount": 16,
           "dynamicEventCount": 251,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -25169,8 +25096,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25244,8 +25169,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25430,7 +25353,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -25504,8 +25427,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25558,7 +25479,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -25580,8 +25500,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25739,7 +25657,7 @@
           "descriptiveCandidateCount": 19,
           "dynamicEventCount": 280,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -25813,8 +25731,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -25867,7 +25783,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -25888,8 +25804,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26011,7 +25925,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 149,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -26085,8 +25999,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26160,8 +26072,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26322,7 +26232,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -26396,8 +26306,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26470,8 +26378,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26632,7 +26538,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -26706,8 +26612,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26760,7 +26664,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -26782,8 +26685,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -26941,7 +26842,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 158,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -27015,8 +26916,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27069,7 +26968,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -27090,8 +26989,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27249,7 +27146,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 152,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -27323,8 +27220,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27377,7 +27272,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -27399,8 +27293,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27522,7 +27414,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 98,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -27596,8 +27488,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27650,7 +27540,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -27671,8 +27561,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27806,7 +27694,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 147,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -27880,8 +27768,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -27954,8 +27840,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28152,7 +28036,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -28226,8 +28110,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28280,7 +28162,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -28301,8 +28183,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28448,7 +28328,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 193,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -28522,8 +28402,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28576,7 +28454,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -28597,8 +28475,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28720,7 +28596,7 @@
           "descriptiveCandidateCount": 10,
           "dynamicEventCount": 94,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -28794,8 +28670,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28848,7 +28722,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -28869,8 +28743,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -28992,7 +28864,7 @@
           "descriptiveCandidateCount": 10,
           "dynamicEventCount": 160,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -29066,8 +28938,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29140,8 +29010,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29302,7 +29170,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -29376,8 +29244,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29430,7 +29296,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -29452,8 +29317,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29599,7 +29462,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 41,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -29673,8 +29536,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29727,7 +29588,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -29749,8 +29609,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -29872,7 +29730,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 143,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -29946,8 +29804,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30000,7 +29856,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -30022,8 +29877,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30145,7 +29998,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 171,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -30219,8 +30072,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30273,7 +30124,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -30295,8 +30145,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30418,7 +30266,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 214,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -30492,8 +30340,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30567,8 +30413,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30727,7 +30571,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 6,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -30801,8 +30645,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30855,7 +30697,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -30876,8 +30718,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -30999,7 +30839,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 62,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -31073,8 +30913,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31127,7 +30965,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -31148,8 +30986,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31271,7 +31107,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 103,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -31345,8 +31181,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31399,7 +31233,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -31420,8 +31254,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31543,7 +31375,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 13,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -31617,8 +31449,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31670,6 +31500,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -31691,8 +31522,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -31891,7 +31720,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -31965,8 +31794,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32019,7 +31846,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -32041,8 +31867,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32200,7 +32024,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 140,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -32274,8 +32098,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32328,7 +32150,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -32349,8 +32171,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32508,7 +32328,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 91,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -32582,8 +32402,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32657,8 +32475,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32816,7 +32632,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 127,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -32890,8 +32706,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -32944,7 +32758,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -32966,8 +32779,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33125,7 +32936,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 110,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -33199,8 +33010,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33253,7 +33062,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -33274,8 +33083,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33397,7 +33204,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 225,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -33471,8 +33278,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33525,6 +33330,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -33545,8 +33351,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33704,7 +33508,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 46,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -33778,8 +33582,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33832,7 +33634,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -33853,8 +33655,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -33988,7 +33788,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 92,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -34062,8 +33862,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34136,8 +33934,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34323,7 +34119,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -34397,8 +34193,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34451,7 +34245,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -34472,8 +34266,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34631,7 +34423,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 120,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -34705,8 +34497,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34758,6 +34548,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -34779,8 +34570,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -34954,7 +34743,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -35028,8 +34817,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35082,6 +34869,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -35102,8 +34890,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35287,7 +35073,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 17,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -35361,8 +35147,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35415,7 +35199,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -35436,8 +35220,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35595,7 +35377,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 68,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -35669,8 +35451,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35723,6 +35503,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -35743,8 +35524,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -35902,7 +35681,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 109,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -35976,8 +35755,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36029,6 +35806,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -36049,8 +35827,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36224,7 +36000,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -36298,8 +36074,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36352,7 +36126,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -36373,8 +36147,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36532,7 +36304,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 98,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -36606,8 +36378,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36660,7 +36430,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -36681,8 +36451,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36804,7 +36572,7 @@
           "descriptiveCandidateCount": 15,
           "dynamicEventCount": 234,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -36878,8 +36646,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -36932,7 +36698,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -36954,8 +36719,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37113,7 +36876,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 110,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -37187,8 +36950,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37241,7 +37002,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -37263,8 +37023,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37422,7 +37180,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 153,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -37496,8 +37254,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37571,8 +37327,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37771,7 +37525,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -37845,8 +37599,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -37898,6 +37650,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -37919,8 +37672,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38131,7 +37882,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -38205,8 +37956,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38259,7 +38008,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -38281,8 +38029,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38404,7 +38150,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 54,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -38478,8 +38224,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38532,7 +38276,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -38554,8 +38297,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38701,7 +38442,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 132,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -38775,8 +38516,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38829,7 +38568,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -38851,8 +38589,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -38998,7 +38734,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 198,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -39072,8 +38808,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -39430,6 +39164,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -39450,8 +39185,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -39609,7 +39342,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 10,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -39683,8 +39416,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -39736,6 +39467,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -39757,8 +39489,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -39933,7 +39663,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -40007,8 +39737,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40082,8 +39810,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40279,7 +40005,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 5,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -40353,8 +40079,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40407,7 +40131,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -40429,8 +40152,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40588,7 +40309,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 49,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -40662,8 +40383,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40716,7 +40435,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -40738,8 +40456,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -40897,7 +40613,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 148,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -40971,8 +40687,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41046,8 +40760,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41169,7 +40881,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 1,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -41243,8 +40955,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41297,6 +41007,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -41317,8 +41028,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41476,7 +41185,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 29,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -41550,8 +41259,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41604,7 +41311,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -41626,8 +41332,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41773,7 +41477,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 86,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -41847,8 +41551,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -41922,8 +41624,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42109,7 +41809,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -42183,8 +41883,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42258,8 +41956,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42417,7 +42113,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 33,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -42491,8 +42187,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42545,7 +42239,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -42567,8 +42260,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42726,7 +42417,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 92,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -42800,8 +42491,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -42854,7 +42543,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -42876,8 +42564,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43035,7 +42721,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 177,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -43109,8 +42795,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43184,8 +42868,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43331,7 +43013,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 34,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -43405,8 +43087,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43459,7 +43139,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -43481,8 +43160,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43604,7 +43281,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 58,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -43678,8 +43355,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43753,8 +43428,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -43912,7 +43585,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 44,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -43986,8 +43659,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44040,7 +43711,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -44062,8 +43732,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44197,7 +43865,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 131,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -44271,8 +43939,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44325,7 +43991,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -44346,8 +44012,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44505,7 +44169,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 8,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -44579,8 +44243,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44633,7 +44295,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -44655,8 +44316,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44814,7 +44473,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 156,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -44888,8 +44547,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -44963,8 +44620,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45122,7 +44777,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 132,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -45196,8 +44851,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45250,7 +44903,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -45272,8 +44924,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45431,7 +45081,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 40,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -45505,8 +45155,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45580,8 +45228,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45754,7 +45400,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -45828,8 +45474,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -45882,7 +45526,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -45904,8 +45547,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46063,7 +45704,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 31,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -46137,8 +45778,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46191,7 +45830,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -46213,8 +45851,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46360,7 +45996,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 158,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -46434,8 +46070,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46509,8 +46143,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46668,7 +46300,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 54,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -46742,8 +46374,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46796,7 +46426,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -46817,8 +46447,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -46964,7 +46592,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 76,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -47038,8 +46666,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47092,7 +46718,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -47114,8 +46739,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47237,7 +46860,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 54,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -47311,8 +46934,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47385,8 +47006,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47547,7 +47166,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -47621,8 +47240,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47695,8 +47312,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47869,7 +47484,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -47943,8 +47558,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -47997,7 +47610,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -48019,8 +47631,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48178,7 +47788,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 82,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -48252,8 +47862,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48306,7 +47914,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -48328,8 +47935,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48487,7 +48092,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 73,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -48561,8 +48166,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48615,7 +48218,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -48636,8 +48239,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48759,7 +48360,7 @@
           "descriptiveCandidateCount": 15,
           "dynamicEventCount": 193,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -48833,8 +48434,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -48908,8 +48507,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49031,7 +48628,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 97,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -49105,8 +48702,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49159,7 +48754,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -49181,8 +48775,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49340,7 +48932,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 69,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -49414,8 +49006,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49468,7 +49058,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -49490,8 +49079,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49649,7 +49236,7 @@
           "descriptiveCandidateCount": 7,
           "dynamicEventCount": 100,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -49723,8 +49310,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49797,8 +49382,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -49971,7 +49554,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -50045,8 +49628,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50120,8 +49701,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50294,7 +49873,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -50368,8 +49947,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50422,7 +49999,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -50443,8 +50020,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50566,7 +50141,7 @@
           "descriptiveCandidateCount": 14,
           "dynamicEventCount": 343,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -50640,8 +50215,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50694,7 +50267,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -50716,8 +50288,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50839,7 +50409,7 @@
           "descriptiveCandidateCount": 15,
           "dynamicEventCount": 257,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -50913,8 +50483,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -50967,7 +50535,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -50989,8 +50556,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -51112,7 +50677,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 144,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -51186,8 +50751,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -51240,6 +50803,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -51260,8 +50824,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -51383,7 +50945,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 8,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -51457,8 +51019,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -51511,6 +51071,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -51531,8 +51092,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -51654,7 +51213,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 139,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -51728,8 +51287,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52035,7 +51592,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -52057,8 +51613,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52180,7 +51734,7 @@
           "descriptiveCandidateCount": 15,
           "dynamicEventCount": 272,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -52254,8 +51808,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52308,7 +51860,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -52330,8 +51881,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52453,7 +52002,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 149,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -52527,8 +52076,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52581,7 +52128,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -52603,8 +52149,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52726,7 +52270,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 118,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -52800,8 +52344,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52854,6 +52396,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -52874,8 +52417,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -52997,7 +52538,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 239,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -53071,8 +52612,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -53145,8 +52684,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -53319,7 +52856,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -53393,8 +52930,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -53447,7 +52982,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -53469,8 +53003,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -53592,7 +53124,7 @@
           "descriptiveCandidateCount": 8,
           "dynamicEventCount": 103,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -53666,8 +53198,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -53973,7 +53503,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -53995,8 +53524,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54118,7 +53645,7 @@
           "descriptiveCandidateCount": 17,
           "dynamicEventCount": 269,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -54192,8 +53719,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54246,7 +53771,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -54267,8 +53792,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54390,7 +53913,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 169,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -54464,8 +53987,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54518,7 +54039,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -54539,8 +54060,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54662,7 +54181,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 25,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -54736,8 +54255,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54790,7 +54307,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -54812,8 +54328,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -54971,7 +54485,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 144,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -55045,8 +54559,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55099,7 +54611,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -55121,8 +54632,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55244,7 +54753,7 @@
           "descriptiveCandidateCount": 13,
           "dynamicEventCount": 114,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -55318,8 +54827,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55372,7 +54879,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -55393,8 +54900,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55516,7 +55021,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 182,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -55590,8 +55095,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55665,8 +55168,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55863,7 +55364,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -55937,8 +55438,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -55991,7 +55490,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -56013,8 +55511,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56136,7 +55632,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 208,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -56210,8 +55706,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56264,7 +55758,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -56286,8 +55779,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56409,7 +55900,7 @@
           "descriptiveCandidateCount": 10,
           "dynamicEventCount": 84,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -56483,8 +55974,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56537,7 +56026,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -56559,8 +56047,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56682,7 +56168,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 136,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -56756,8 +56242,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56810,7 +56294,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -56831,8 +56315,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -56954,7 +56436,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 163,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -57028,8 +56510,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57081,6 +56561,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -57102,8 +56583,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57301,7 +56780,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -57375,8 +56854,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57429,7 +56906,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -57450,8 +56927,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57573,7 +57048,7 @@
           "descriptiveCandidateCount": 10,
           "dynamicEventCount": 157,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -57647,8 +57122,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57701,7 +57174,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -57722,8 +57195,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57845,7 +57316,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 35,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -57919,8 +57390,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -57973,7 +57442,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -57994,8 +57463,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58117,7 +57584,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 250,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -58191,8 +57658,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58266,8 +57731,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58464,7 +57927,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -58538,8 +58001,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58613,8 +58074,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58772,7 +58231,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 60,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -58846,8 +58305,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -58900,6 +58357,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -58920,8 +58378,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59043,7 +58499,7 @@
           "descriptiveCandidateCount": 6,
           "dynamicEventCount": 90,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -59117,8 +58573,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59171,7 +58625,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -59192,8 +58646,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59315,7 +58767,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 29,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -59389,8 +58841,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59442,6 +58892,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -59463,8 +58914,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59650,7 +59099,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -59724,8 +59173,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59778,7 +59225,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -59799,8 +59246,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -59922,7 +59367,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 137,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -59996,8 +59441,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60050,7 +59493,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -60072,8 +59514,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60231,7 +59671,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 58,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -60305,8 +59745,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60359,7 +59797,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -60380,8 +59818,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60503,7 +59939,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 96,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -60577,8 +60013,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60631,7 +60065,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -60652,8 +60086,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -60775,7 +60207,7 @@
           "descriptiveCandidateCount": 3,
           "dynamicEventCount": 76,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -60849,8 +60281,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61176,8 +60606,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61299,7 +60727,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 1,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -61373,8 +60801,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61427,7 +60853,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -61449,8 +60874,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61584,7 +61007,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 54,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -61658,8 +61081,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61712,7 +61133,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -61734,8 +61154,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61857,7 +61275,7 @@
           "descriptiveCandidateCount": 5,
           "dynamicEventCount": 76,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -61931,8 +61349,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -61985,7 +61401,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -62006,8 +61422,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62129,7 +61543,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 145,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -62203,8 +61617,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62278,8 +61690,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62478,7 +61888,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -62552,8 +61962,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62606,7 +62014,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -62628,8 +62035,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62787,7 +62192,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 34,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -62861,8 +62266,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -62915,7 +62318,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -62936,8 +62339,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63059,7 +62460,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 146,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -63133,8 +62534,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63208,8 +62607,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63331,7 +62728,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 63,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -63405,8 +62802,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63459,7 +62854,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -63481,8 +62875,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63604,7 +62996,7 @@
           "descriptiveCandidateCount": 9,
           "dynamicEventCount": 189,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -63678,8 +63070,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63732,7 +63122,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -63754,8 +63143,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -63937,7 +63324,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 16,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -64011,8 +63398,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -64065,7 +63450,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -64087,8 +63471,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -64210,7 +63592,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 110,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -64284,8 +63666,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -64338,7 +63718,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -64359,8 +63739,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -64482,7 +63860,7 @@
           "descriptiveCandidateCount": 12,
           "dynamicEventCount": 100,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -64556,8 +63934,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -64863,7 +64239,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -64885,8 +64260,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65008,7 +64381,7 @@
           "descriptiveCandidateCount": 10,
           "dynamicEventCount": 124,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -65082,8 +64455,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65136,7 +64507,6 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -65158,8 +64528,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65305,7 +64673,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 34,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -65379,8 +64747,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65433,7 +64799,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -65454,8 +64820,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65577,7 +64941,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 201,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -65651,8 +65015,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -65979,8 +65341,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66102,7 +65462,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 6,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -66176,8 +65536,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66250,8 +65608,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66424,7 +65780,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -66498,8 +65854,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66572,8 +65926,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66747,7 +66099,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -66821,8 +66173,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -66875,6 +66225,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -66895,8 +66246,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67018,7 +66367,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 9,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -67092,8 +66441,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67167,8 +66514,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67369,7 +66714,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -67443,8 +66788,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67496,6 +66839,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
@@ -67517,8 +66861,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67706,7 +67048,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -67780,8 +67122,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -67833,6 +67173,7 @@
         ],
         "schemaFields": 12,
         "issueCodes": [
+          "VEHICLE_UNIT_UNRESOLVED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -67853,8 +67194,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68015,7 +67354,7 @@
           "descriptiveCandidateCount": 0,
           "dynamicEventCount": 0,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -68089,8 +67428,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68143,6 +67480,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -68163,8 +67501,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68286,7 +67622,7 @@
           "descriptiveCandidateCount": 2,
           "dynamicEventCount": 45,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -68360,8 +67696,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68435,8 +67769,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68558,7 +67890,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 107,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -68632,8 +67964,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68686,7 +68016,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -68707,8 +68037,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68830,7 +68158,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 39,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -68904,8 +68232,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -68958,7 +68284,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -68979,8 +68305,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69102,7 +68426,7 @@
           "descriptiveCandidateCount": 4,
           "dynamicEventCount": 39,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -69176,8 +68500,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69230,7 +68552,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -69251,8 +68573,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69374,7 +68694,7 @@
           "descriptiveCandidateCount": 13,
           "dynamicEventCount": 236,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -69448,8 +68768,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69502,7 +68820,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -69523,8 +68841,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69646,7 +68962,7 @@
           "descriptiveCandidateCount": 11,
           "dynamicEventCount": 189,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -69720,8 +69036,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69794,8 +69108,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -69917,7 +69229,7 @@
           "descriptiveCandidateCount": 1,
           "dynamicEventCount": 1,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -69991,8 +69303,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -70045,7 +69355,7 @@
         "schemaFields": 12,
         "issueCodes": [
           "VEHICLE_UNIT_UNRESOLVED",
-          "VEHICLE_INVALID_SENTINEL_FILTERED",
+          "ISOLATION_FILTERED",
           "SIGNAL_VALUE_SEMANTICS_REVIEW",
           "VEHICLE_TARGETS_MISSING"
         ],
@@ -70066,8 +69376,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],
@@ -70189,7 +69497,7 @@
           "descriptiveCandidateCount": 16,
           "dynamicEventCount": 176,
           "durabilityPointCount": 0,
-          "genericMetricCount": 8
+          "genericMetricCount": 6
         },
         "fieldUsage": {
           "sourceFieldCount": 46,
@@ -70263,8 +69571,6 @@
           "durationS",
           "completenessPct",
           "peakPowerW",
-          "steadyVoltageMeanV",
-          "steadyVoltageStdV",
           "pressureDriftBarPerMin",
           "steadySampleCount"
         ],

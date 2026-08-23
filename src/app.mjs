@@ -253,6 +253,7 @@ function configFromUI() {
     vehicleTrendXAxis: $('#vehicle-trend-x-axis')?.value || profile?.vehicleTrendXAxis || 'runtime_h',
     vehicleTrendModel: $('#vehicle-trend-model')?.value || profile?.vehicleTrendModel || 'linear',
     vehicleDynamicAnalysis: profile?.vehicleDynamicAnalysis ?? null,
+    vehicleUnitEvidenceRequired: profile?.vehicleUnitEvidenceRequired === true,
     vehicleSignal,
     ...(vehicleSignalSecondary !== undefined ? { vehicleSignalSecondary: vehicleSignalSecondary.trim() } : {}),
     vehicleStartS,

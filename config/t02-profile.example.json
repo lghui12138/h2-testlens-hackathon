@@ -24,6 +24,7 @@
       "vehicleTrendModel": "linear",
       "vehicleCurrentToleranceA": 5,
       "vehicleMinimumDurationS": 180,
+      "vehicleUnitEvidenceRequired": true,
       "vehicleDynamicAnalysis": {
         "enabled": true,
         "commandSource": "FC_SysLoadCurr",

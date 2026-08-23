@@ -1332,6 +1332,7 @@ function buildVehicle(rows, config) {
   const mapping = Object.fromEntries(VEHICLE_FIELDS.map(([field, source]) => [field, headers.includes(source) ? source : null]));
   const dynamicConfig = config.vehicleDynamicAnalysis && typeof config.vehicleDynamicAnalysis === 'object' ? config.vehicleDynamicAnalysis : {};
   const vehicleSignalUnits = config.vehicleSignalUnits && typeof config.vehicleSignalUnits === 'object' ? config.vehicleSignalUnits : {};
+  const vehicleUnitEvidenceRequired = config.vehicleUnitEvidenceRequired === true;
   const unresolvedUnitFields = new Set();
   const invalidSentinelCounts = {};
   const normalizeVehicleCellVoltage = (value, field) => {
@@ -1341,6 +1342,10 @@ function buildVehicle(rows, config) {
     const unit = typeof declared === 'string' ? declared : declared?.sourceUnit;
     if (unit === 'mV') return raw / 1000;
     if (unit === 'V') return raw;
+    if (vehicleUnitEvidenceRequired && ['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field)) {
+      unresolvedUnitFields.add(field);
+      return null;
+    }
     if (field === 'cell_voltage_variance' && raw === 65535) {
       invalidSentinelCounts[field] = (invalidSentinelCounts[field] || 0) + 1;
       return null;
@@ -1517,7 +1522,7 @@ function buildVehicle(rows, config) {
     sessionCount: sessionTime.sessions.length,
     signalCatalog,
     signalDiagnostics,
-    unitDiagnostics: { unresolvedFields: [...unresolvedUnitFields], invalidSentinelCounts, sourceUnits: vehicleSignalUnits, boundary: '未提供企业单位证据时，不按数量级自动换算；超出可解释范围的单体电压不进入 V KPI，原始值保留。' },
+    unitDiagnostics: { required: vehicleUnitEvidenceRequired, unresolvedFields: [...unresolvedUnitFields], invalidSentinelCounts, sourceUnits: vehicleSignalUnits, boundary: '未提供企业单位证据时，不按数量级自动换算；超出可解释范围或 profile 要求单位却未声明时，单体电压不进入 V KPI，原始值保留。' },
     coverage: coverageSummary(signalCatalog),
     contextSignals,
     crossChecks: vehicleCrossChecks,

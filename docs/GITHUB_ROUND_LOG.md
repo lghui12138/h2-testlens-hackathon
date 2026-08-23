@@ -1,5 +1,20 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · T02 车辆单位强制门轮
+
+- T02 车辆描述性 profile 新增 `vehicleUnitEvidenceRequired: true`；没有企业明确的 `V/mV` 字典时，单体电压和方差不进入电压 KPI/趋势，原始值和复核计数仍保留。
+- 浏览器、API、`batch-watch` 和 source/public T02 profile parity 同步该门控；显式声明单位的 profile 仍可换算并进入描述性 KPI。
+
+## 2026-08-24 · T02 车辆单位强制门轮
+
+- T02 车辆描述性 profile 新增 `vehicleUnitEvidenceRequired: true`；没有企业明确的 `V/mV` 字典时，单体电压和方差不进入电压 KPI/趋势，原始值和复核计数仍保留。
+- 浏览器、API、`batch-watch` 和 source/public T02 profile parity 同步该门控；显式声明单位的 profile 仍可换算并进入描述性 KPI。
+
+## 2026-08-24 · T02 车辆单位强制门轮
+
+- T02 车辆描述性 profile 新增 `vehicleUnitEvidenceRequired: true`；没有企业明确的 `V/mV` 字典时，FC 单体电压、方差不进入电压 KPI/趋势，原始值和复核计数仍保留。
+- 浏览器、API、`batch-watch` 和 source/public T02 profile parity 同步该门控；明确声明单位的 profile 仍可换算并进入描述性 KPI。
+
 ## 2026-08-24 · 车辆绝缘与耐久不可比趋势门控轮
 
 - 车辆绝缘结果拆分状态外记录、状态内缺失、非正值、量程上限/哨兵和有效进入 10 分钟最小值统计的数量，避免把不同排除原因混成一个“无效值”计数。

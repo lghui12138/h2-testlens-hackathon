@@ -341,6 +341,7 @@ export const DEVICE_PROFILES = Object.freeze([
     vehicleTrendModel: 'linear',
     vehicleCurrentToleranceA: 5,
     vehicleMinimumDurationS: 180,
+    vehicleUnitEvidenceRequired: true,
     thresholds: null
   },
   {
@@ -950,6 +951,7 @@ export function validateProfilePackage(payload) {
         if (!['V', 'mV'].includes(sourceUnit)) errors.push(`${profile.id || '未知'} vehicleSignalUnits.${field}.sourceUnit 必须为 V 或 mV`);
       }
     }
+    if (profile.vehicleUnitEvidenceRequired !== undefined && typeof profile.vehicleUnitEvidenceRequired !== 'boolean') errors.push(`${profile.id || '未知'} vehicleUnitEvidenceRequired 必须是布尔值`);
     for (const field of ['vehicleCurrentToleranceA', 'vehicleMinimumDurationS']) if (profile[field] !== undefined && (!Number.isFinite(Number(profile[field])) || Number(profile[field]) <= 0)) errors.push(`${profile.id || '未知'} ${field} 必须为正数`);
     if (profile.vehicleTrendXAxis !== undefined && !['runtime_h', 'timestamp'].includes(profile.vehicleTrendXAxis)) errors.push(`${profile.id || '未知'} vehicleTrendXAxis 必须为 runtime_h 或 timestamp`);
     if (profile.vehicleTrendModel !== undefined && !['linear', 'quadratic'].includes(profile.vehicleTrendModel)) errors.push(`${profile.id || '未知'} vehicleTrendModel 必须为 linear 或 quadratic`);
@@ -1043,6 +1045,7 @@ export function profilesFromPackage(payload) {
       vehicleMinimumDurationS: profile.vehicleMinimumDurationS || null,
       vehicleDynamicAnalysis: profile.vehicleDynamicAnalysis || null,
       vehicleSignalUnits: profile.vehicleSignalUnits || {},
+      vehicleUnitEvidenceRequired: profile.vehicleUnitEvidenceRequired === true,
       vehicleTrendXAxis: profile.vehicleTrendXAxis || 'runtime_h',
       vehicleTrendModel: profile.vehicleTrendModel || 'linear',
       durabilityRules: profile.durabilityRules || {},

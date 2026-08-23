@@ -16,6 +16,19 @@ test('T02 descriptive profiles are dataset-scoped and do not require thresholds'
   });
   assert.equal(imported.ok, true, imported.errors?.join('；'));
   assert.ok(imported.profiles.every((profile) => profile.thresholds === null));
+  assert.equal(imported.profiles.find((profile) => profile.id === 't02-vehicle-descriptive').vehicleUnitEvidenceRequired, true);
+});
+
+test('T02 vehicle profile blocks unitless cell-voltage KPI instead of guessing V or mV', () => {
+  const rows = parseCSV([
+    'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours',
+    '0,4,10,320,3.2,700,3,740,8,12,500,1',
+    '1,4,10,320,3.2,701,3,741,8,12,500,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, { evaluationMode: 'descriptive_only', profileId: 't02-vehicle-descriptive', vehicleUnitEvidenceRequired: true });
+  assert.equal(result.metrics.steadyVoltageMeanV, null);
+  assert.ok(result.issues.some((issue) => issue.code === 'VEHICLE_UNIT_UNRESOLVED'));
+  assert.equal(result.dataset.unitDiagnostics.required, true);
 });
 
 test('standard workflow templates remain risk-screening profiles', () => {
