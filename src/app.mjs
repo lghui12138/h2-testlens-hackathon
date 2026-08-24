@@ -1123,6 +1123,105 @@ function downloadCoverageReview() {
   if (status) status.textContent = '已下载 ' + Math.min(fields.length, 5) + ' 个字段复核重点；仅含聚合计数，不含原始数据。';
 }
 
+function buildEnhancedMarkdown(result, fileName, schema) {
+  const schemaNote = schema?.note || '完整 Python/Excel 报告引擎已开源，见 t02-equipment-test-report-assistant 仓库。';
+  const labels = schema?.kpiLabels || {};
+  const parts = [
+    '# 氢能设备测试增强报告',
+    '',
+    `- 数据文件：${fileName}`,
+    `- 自动判定：**${result.verdict}**`,
+    `- 生成时间：${new Date().toISOString()}`,
+    `- 来源：${schema?.source || 'h2-testlens-hackathon 前端模拟 + ' + schemaNote}`,
+    '',
+    '## 结论摘要',
+    '',
+    result.narrative || '本次测试完成，未见明确异常。',
+    '',
+    '## 数据质量',
+    '',
+    `- 记录数：${result.quality?.rowCount ?? 'N/A'}`,
+    `- 关键字段完整率：${result.quality?.completenessPct ?? 'N/A'}%`,
+    `- 缺失字段：${(result.quality?.missingHeaders || []).join('、') || '无'}`,
+    `- 重复时间戳：${result.quality?.duplicateTimestampCount ?? 'N/A'} 条`,
+    '',
+    '## KPI 摘要',
+    '',
+    '| 指标 | 数值 |',
+    '|---|---:|'
+  ];
+  const metrics = result.metrics || {};
+  const kpiEntries = [
+    ['durationS', '测试时长', ' s'],
+    ['peakPowerW', '峰值功率', ' W'],
+    ['steadyVoltageMeanV', '稳态平均电压', ' V'],
+    ['steadyVoltageStdV', '稳态电压标准差', ' V'],
+    ['peakTemperatureC', '峰值温度', ' °C'],
+    ['peakPressureBar', '峰值压力', ' bar'],
+    ['peakLeakPpm', '峰值泄漏监测', ' ppm'],
+    ['pressureDriftBarPerMin', '压力漂移', ' bar/min'],
+    ['hydrogenVolumeNl', '产氢量', ' NL'],
+    ['specificEnergyKWhPerNm3', '单位制氢电耗', ' kWh/Nm³'],
+    ['minimumHydrogenPurityPct', '最低氢气纯度', '%']
+  ];
+  for (const [key, label, unit] of kpiEntries) {
+    if (metrics[key] !== undefined && metrics[key] !== null) {
+      parts.push(`| ${labels[key] || label} | ${metrics[key]}${unit} |`);
+    }
+  }
+  parts.push('');
+  parts.push('## 异常与建议', '');
+  if (!(result.issues || []).length) {
+    parts.push('- 无异常');
+  }
+  for (const issue of result.issues || []) {
+    parts.push(`- **${issue.severity}｜${issue.title}**：${issue.evidence}。建议：${issue.recommendation}`);
+  }
+  parts.push('');
+  parts.push('## 工况分段', '');
+  if (!(result.phases || []).length) {
+    parts.push('- 无分段信息');
+  }
+  for (const phase of result.phases || []) {
+    parts.push(`- ${phase.phase}：${phase.count} 个样本，${phase.durationS} s`);
+  }
+  parts.push('');
+  parts.push('## 当前判定阈值', '');
+  const thresholdMap = [
+    ['maxTemperatureC', '温度', ' °C'],
+    ['maxPressureBar', '压力', ' bar'],
+    ['maxLeakPpm', '泄漏监测', ' ppm'],
+    ['maxVoltageStdV', '稳态电压标准差', ' V'],
+    ['maxPressureDriftBarPerMin', '压力漂移绝对值', ' bar/min']
+  ];
+  for (const [key, label, unit] of thresholdMap) {
+    const value = result.config?.[key];
+    if (value !== undefined && value !== null) parts.push(`- ${label} ≤ ${value}${unit}`);
+  }
+  parts.push('');
+  parts.push('## 报告说明', '');
+  parts.push(schemaNote);
+  return parts.join('\n');
+}
+
+async function exportEnhancedReport(result, fileName) {
+  if (!result) return;
+  let schema = null;
+  try {
+    const response = await fetch(assetUrl('config/enhanced-report-schema.json'));
+    if (response.ok) schema = await response.json();
+  } catch {
+    // 静态 JSON 不可用时继续生成本地增强报告
+  }
+  const markdown = buildEnhancedMarkdown(result, fileName, schema);
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${fileName.replace(/\.(csv|txt|tsv)$/i, '')}-增强报告.md`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 async function loadReleaseSummary() {
   const element = $('#release-summary');
   if (!element) return;
@@ -1348,6 +1447,7 @@ $('#download-xlsx').addEventListener('click', async () => {
   }
 });
 $('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 ensureExtendedMetadataFields();

@@ -1,0 +1,28 @@
+{
+  "reportTitle": "氢能设备测试增强报告",
+  "source": "t02-equipment-test-report-assistant",
+  "sections": [
+    "header",
+    "conclusion_summary",
+    "data_quality",
+    "kpi_summary",
+    "issues_and_recommendations",
+    "phase_segments",
+    "thresholds",
+    "python_engine_note"
+  ],
+  "kpiLabels": {
+    "durationS": "测试时长",
+    "peakPowerW": "峰值功率",
+    "steadyVoltageMeanV": "稳态平均电压",
+    "steadyVoltageStdV": "稳态电压标准差",
+    "peakTemperatureC": "峰值温度",
+    "peakPressureBar": "峰值压力",
+    "peakLeakPpm": "峰值泄漏监测",
+    "pressureDriftBarPerMin": "压力漂移",
+    "hydrogenVolumeNl": "产氢量",
+    "specificEnergyKWhPerNm3": "单位制氢电耗",
+    "minimumHydrogenPurityPct": "最低氢气纯度"
+  },
+  "note": "完整 Python/Excel 报告引擎已开源，见 t02-equipment-test-report-assistant 仓库。"
+}
