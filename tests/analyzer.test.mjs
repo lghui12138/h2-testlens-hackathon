@@ -2431,6 +2431,32 @@ test('screens durability report comparability and flags a stack-model change wit
   assert.equal(JSON.stringify(publicAnalysis(result)).includes('H3300B'), false);
 });
 
+test('parses inline 青川-style 127-column stack sample and produces candidate platforms with descriptive boundary', () => {
+  const header = '测试时间,实际电流（A）,平均电压（V）,总电压（V）,功率（kW),最大电压（V）,最小电压（V）,极差（mV）,标准差（mV）,电流密度（mA/cm2）,单片电压1（V）,单片电压2（V）,单片电压3（V）,单片电压4（V）,单片电压5（V）,单片电压6（V）,单片电压7（V）,单片电压8（V）,阳极入堆压力（kPa）,阳极出堆压力（kPa）,阴极入堆压力（kPa）,阴极出堆压力（kPa）,循环水入堆温度（℃）,循环水出堆温度（℃）,循环水流量（L/min）,循环水入堆压力（kPa）,循环水出堆压力（kPa）,柜内氢气浓度（ppm）,测试区氢气浓度（ppm）,氢气流量（SLPM）,空气流量（SLPM）,氢气入口压力（kPa）,氢气出口压力（kPa）,空气入口压力（kPa）,空气出口压力（kPa）,冷却液入口压力（kPa）,冷却液出口压力（kPa）';
+  const row = (second, current, voltage, power, avgCell, cell1, cell2, cell3, cell4, h2Flow, airFlow, h2InPress, h2OutPress, airInPress, airOutPress, coolInPress, coolOutPress, h2Conc) => [
+    `2026/6/23 14:${String(Math.floor(second / 60)).padStart(2, '0')}:${String(second % 60).padStart(2, '0')}`, current, voltage, power * 3.6, voltage * current, cell1, cell1, 2, 0.005, current * 4.382, cell1, cell2, cell3, cell4, cell1, cell1, cell1, cell1, h2InPress, h2OutPress, airInPress, airOutPress, 55, 65, 5.8, coolInPress, coolOutPress, h2Conc, 0, h2Flow, airFlow, h2InPress, h2OutPress, airInPress, airOutPress, coolInPress, coolOutPress
+  ].join(',');
+  const rows = parseCSV([header, ...Array.from({ length: 120 }, (_, i) => row(i * 2, 14.7, 0.601, 4.64, 0.601, 0.561, 0.596, 0.593, 0.601, 84.5, 187.75, 159.8, 148.5, 149.6, 113.8, 150.2, 134.6, 0.7))].join('\n'));
+  const result = analyzeRows(rows, { sourceHash: 'SHA-256:inline-stack', evaluationMode: 'descriptive_only' });
+  assert.equal(result.verdict, 'DESCRIPTIVE');
+  assert.equal(result.datasetType, 'stack');
+  assert.ok(Array.isArray(result.dataset.platforms), 'platforms should be an array');
+  assert.ok(result.dataset.platforms.length > 0, 'expected candidate current platforms');
+  assert.ok(result.issues.some((item) => item.code === 'STACK_TARGET_PARAMETERS_MISSING'), true);
+});
+
+test('maps inline vehicle FC_* sample to canonical fields and computes insulation summary', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const row = (second, status, current, power, isolation) => `2026-07-07 18:20:${String(second).padStart(2, '0')},${status},${current},320,${power},0.60,3,0.68,8,12,${isolation},1`;
+  const rows = parseCSV([header, row(0, 8, 0, 0, 500), row(60, 4, 95, 30, 480), row(120, 4, 95, 31, 350), row(180, 4, 95, 31, 240), row(240, 8, 0, 0, 65535)].join('\n'));
+  const result = analyzeRows(rows, { sourceHash: 'SHA-256:inline-vehicle', evaluationMode: 'descriptive_only' });
+  assert.equal(result.datasetType, 'vehicle');
+  assert.ok(Array.isArray(result.dataset.insulation.points), 'insulation points should be array');
+  assert.ok(result.dataset.insulation.points.length >= 1, 'expected at least one insulation window');
+  assert.ok(result.dataset.insulation.invalidCount >= 1, 'expected invalid insulation values to be filtered');
+  assert.ok(result.issues.some((item) => item.code === 'VEHICLE_TARGETS_MISSING'), true);
+});
+
 test('Feishu durability alert stays dry-run by default and sends only an approved webhook payload', async () => {
   const result = { verdict: 'FAIL', dataset: { points: [{ targetPowerKw: 195 }], targetPowers: [195] }, issues: [{ severity: 'critical', title: '耐久异常', evidence: '离均差 55 mV' }], rows: [{ secret: 'raw-row-must-not-enter-alert' }] };
   const payload = durabilityAlertPayload(result, 'durability.docx');
