@@ -1764,14 +1764,8 @@ function resetBatchProgress() {
 function applyEnterpriseConfig(vendor) {
   const profileSelect = $('#profile-select');
   if (!profileSelect) return;
-  let profileId = 'electrolyzer-demo';
-  if (vendor === 'qingchuan') {
-    profileId = 'qingchuan-demo';
-  } else if (vendor === 'qingzhihuli') {
-    profileId = 'qingzhihuli-demo';
-  } else if (vendor === 'hypu') {
-    profileId = 'hypu-demo';
-  }
+  const profileMap = { qingchuan: 'qingchuan-stack', qingzhihuli: 'qingzhihuli-vehicle', hypu: 'hypu-durability' };
+  const profileId = profileMap[vendor] || 'electrolyzer-demo';
   profileSelect.value = profileId;
   applyProfile(profileId);
   if (state.rows.length) void analyzeCurrent(`应用${vendor}配置`);
