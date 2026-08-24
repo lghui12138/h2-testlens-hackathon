@@ -42,6 +42,8 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     assert.match(page, /coverage-unuploaded/);
     assert.match(page, /trend-chart-summary/);
     assert.match(page, /enterprise-performance-chart-summary/);
+    assert.match(page, /metric-trace-details/);
+    assert.match(page, /metric-trace/);
     assert.match(page, /result-announcement/);
   }
   assert.match(app, /ensureBrowserEngines/);
@@ -56,6 +58,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /loadReleaseSummary/);
   assert.match(app, /updateAccessibleSummaries/);
   assert.match(app, /enterprise-performance-chart-summary/);
+  assert.match(app, /renderMetricTrace/);
   assert.match(styles, /.mobile-nav a { min-height: 44px/);
   assert.equal(publicApp, app);
   assert.match(server, /invalid_path_encoding/);
@@ -141,6 +144,7 @@ test('Vinext App public runtime exposes the browser engines and analysis worker 
     'public/src/analysis-worker.mjs',
     'public/src/analyzer.mjs',
     'public/src/enterprise-adapters.mjs',
+    'public/src/metric-trace.mjs',
     'public/src/browser-engines.mjs',
     'public/src/vendor/xlsx.full.min.js',
     'public/src/vendor/jszip.min.js',

@@ -66,6 +66,24 @@ test('computes a deterministic SHA-256 provenance hash without uploading content
   assert.equal(await sha256Hex('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
 });
 
+test('public analysis exposes versioned metricTrace without raw rows or file names', () => {
+  const result = analyzeRows(parseCSV(csv), { sourceHash: 'SHA-256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' });
+  const safe = publicAnalysis(result);
+  assert.equal(safe.metricTrace.schemaVersion, 'h2-testlens.metric-trace.v1');
+  assert.equal(safe.metricTrace.sourceHash, 'SHA-256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+  assert.ok(safe.metricTrace.metrics.peakPressureBar);
+  assert.equal(safe.metricTrace.metrics.peakPressureBar.sourceFields.includes('pressure_bar'), true);
+  assert.equal(safe.metricTrace.metrics.peakPressureBar.sourceHashStatus, 'bound');
+  assert.equal('rows' in safe, false);
+  assert.equal(JSON.stringify(safe.metricTrace).includes('test_run_001.csv'), false);
+  const workbook = buildEnterpriseWorkbook(result, 'trace.csv');
+  assert.ok(workbook.SheetNames.includes('KPI证据定位'));
+  assert.match(reportMarkdown(result, 'trace.csv'), /字段级 KPI trace/);
+  const unbound = publicAnalysis(analyzeRows(parseCSV(csv), { sourceHash: 'not-a-sha256' }));
+  assert.equal(unbound.metricTrace.sourceHashStatus, 'not_bound');
+  assert.equal(unbound.metricTrace.sourceHash, null);
+});
+
 test('integrates hydrogen volume and electrical energy from timestamped flow data', () => {
   const result = analyzeRows(parseCSV(baselineCsv));
   assert.ok(result.metrics.hydrogenVolumeNl > 0);
@@ -347,6 +365,7 @@ test('enterprise stack converts explicit mA/mV/W and timestamp units before KPI 
   assert.ok(Math.abs(result.metrics.peakPowerW - 1.8) < 1e-12);
   assert.equal(result.schema.conversions.power_w.label, 'W→W');
   assert.equal(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED'), false);
+  assert.ok(publicAnalysis(result).metricTrace.metrics.peakPowerKw);
 });
 
 test('phase is optional and uses an explicit fallback window', () => {
@@ -517,8 +536,10 @@ test('public analysis removes raw rows before integration responses', () => {
   assert.equal(withSensitiveMetadata.config.testMetadata.calibrationRefs, true);
   assert.equal(JSON.stringify(withSensitiveMetadata).includes('operator-secret'), false);
   assert.equal(reportMarkdown(withSensitiveMetadata, 'public.json').includes('operator-secret'), false);
-  const datasetSafe = publicAnalysis({ rows: [], config: {}, dataset: { reports: [{ metadata: { 当前用户: 'secret-user' }, points: [{ targetPowerKw: 195 }] }], points: [{ targetPowerKw: 195 }] }, verdict: 'WARN', issues: [], quality: {}, schema: {}, metrics: {}, phases: [], workflow: {}, compliance: {}, uncertainty: {}, narrative: '', source: {} });
+  const datasetSafe = publicAnalysis({ rows: [], config: {}, datasetType: 'durability', dataset: { reports: [{ metadata: { 当前用户: 'secret-user' }, points: [{ targetPowerKw: 195 }] }], points: [{ targetPowerKw: 195, sourceFile: 'secret-file.csv' }] }, verdict: 'WARN', issues: [{ severity: 'warn', code: 'SECRET_TEST', title: '边界', evidence: 'secret-issue-evidence', recommendation: '复核' }], quality: {}, schema: {}, metrics: {}, phases: [], workflow: {}, compliance: {}, uncertainty: {}, narrative: '', source: {} });
   assert.equal(JSON.stringify(datasetSafe).includes('secret-user'), false);
+  assert.equal(JSON.stringify(datasetSafe).includes('secret-issue-evidence'), false);
+  assert.equal(JSON.stringify(datasetSafe).includes('secret-file.csv'), false);
   assert.equal(datasetSafe.dataset.reports[0].metadataPresent['当前用户'], true);
 });
 

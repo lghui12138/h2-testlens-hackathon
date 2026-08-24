@@ -1,5 +1,13 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · metricTrace 字段级复核链与公共脱敏轮
+
+- 六智能体审查确认：原有 198 文件使用台账不等于每个 KPI 可复核；本轮新增 h2-testlens.metric-trace.v1，绑定 canonical 字段、metric evidenceId、source hash 状态、证据类别和脱敏文件 token/行范围。
+- metricTrace 已接入 analyzer、publicAnalysis、API analyze、batch/compare、AI evidence、Markdown、XLSX 的 KPI证据定位 sheet、JSON 下载和 App 折叠证据表；hash 缺失或格式错误保持 unbound，不猜输入来源。
+- 公共 enterprise issue/report 响应不再携带原始证据文本；API smoke 增加 enterprise includeReport 敏感值回归。
+- 回归门：npm test 170/170、npm run check:submission 129/129、typecheck、Vinext build 5/5、API smoke、package smoke 全通过。
+- GitHub Pages workflow/CNAME 仍保持真实边界：部署可成功但自定义域仍 502，公共 receipt 仍 unbound；本轮不伪造标准符合性或线上 artifact 绑定。
+
 ## 2026-08-24 · 六智能体数值安全与 AI 边界修复轮
 
 - 六智能体 fan-in 发现并核实两个 critical 风险：企业电堆显式 mA/mV 表头可能被当作 A/V；AI draft route 缺少服务端 endpoint allowlist、超时和上游响应大小边界。

@@ -126,6 +126,7 @@ export function evidenceBundle(result, comparison = null) {
     quality: sanitizeEvidenceValue(result?.quality),
     schema: sanitizeEvidenceValue(result?.schema),
     metrics: sanitizeEvidenceValue(result?.metrics),
+    metricTrace: sanitizeEvidenceValue(result?.metricTrace),
     phases: sanitizeEvidenceValue(result?.phases),
     issues: sanitizeEvidenceValue(result?.issues),
     workflow: sanitizeEvidenceValue(result?.workflow),

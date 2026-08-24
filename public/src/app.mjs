@@ -263,6 +263,7 @@ function configFromUI() {
     uncertaintyModelRequired: profile?.uncertaintyModelRequired ?? false,
     uncertaintyModel: profile?.uncertaintyModel ?? null,
     fieldMapping: state.fieldMapping,
+    sourceHash: state.rawDataHash ? 'SHA-256:' + state.rawDataHash : null,
     parameterConfig: state.parameterConfig,
     workbookEvidence: state.workbookEvidence,
     stackSelectionOverrides: state.stackSelectionOverrides,
@@ -443,6 +444,24 @@ function renderCalculationSummary(result) {
       ? '模型无效，已阻断不确定度门控'
       : '未配置；不代表不确定度为零';
   element.innerHTML = `<div class="calculation-summary-head"><span>计算口径</span><small>结果可追溯，但仍需企业方法与人工复核</small></div><div class="calculation-strip"><span><b>功率</b>${powerLabels[powerSource] || '企业适配器源字段口径'}<small>${powerDetail}</small></span><span><b>时间轴</b>按原始时间戳计算<small>${timeDetail}</small></span><span><b>字段与单位</b>映射后再计算<small>${mappingDetail}</small></span><span><b>不确定度</b>${uncertainty}<small>需要企业批准模型才可进入正式门控</small></span></div>`;
+}
+
+function renderMetricTrace(result) {
+  const element = $('#metric-trace');
+  if (!element) return;
+  const entries = Object.values(result.metricTrace?.metrics || {});
+  if (!entries.length) {
+    element.innerHTML = '<p class="metric-trace-empty">当前分析没有可展示的字段级 trace；不据此声称已绑定原始证据。</p>';
+    return;
+  }
+  const text = (value) => escapeHtml(value === null || value === undefined || value === '' ? '—' : String(value));
+  const locatorText = (locator) => (locator?.groups || []).map((group) => {
+    const rows = group.rowStart === null ? '行未绑定' : '行 ' + group.rowStart + '–' + group.rowEnd;
+    const time = group.timeStartS === null ? '' : '；t ' + fmt(group.timeStartS, 3) + '–' + fmt(group.timeEndS, 3) + ' s';
+    return group.fileToken + ' · ' + rows + time;
+  }).join('；') || '未绑定';
+  const body = entries.map((item) => '<tr><th scope="row">' + text(item.metricName) + '</th><td>' + text(item.sourceFieldLabels?.join('；')) + '</td><td><code>' + text(item.evidenceId) + '</code></td><td>' + text(item.sourceHashStatus) + '</td><td>' + text(locatorText(item.locator)) + '</td><td>' + text(item.derivation) + '</td><td>' + text(item.status) + '</td></tr>').join('');
+  element.innerHTML = '<p class="metric-trace-note">trace 只显示 canonical 字段、证据 ID、输入 hash 状态和脱敏定位；它用于工程复核，不等于标准符合性或企业放行证据。</p><div class="metric-trace-scroll"><table><thead><tr><th>指标</th><th>来源字段</th><th>evidenceId</th><th>hash</th><th>定位</th><th>关系</th><th>状态</th></tr></thead><tbody>' + body + '</tbody></table></div>';
 }
 
 function renderIssues(result) {
@@ -910,7 +929,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderCalculationSummary(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
+  renderMetrics(result); renderCalculationSummary(result); renderMetricTrace(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
   renderSchema(result);

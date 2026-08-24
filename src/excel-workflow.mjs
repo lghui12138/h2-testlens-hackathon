@@ -827,6 +827,22 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
     ['生成时间', result.generatedAt, '系统时间'],
     ['边界', result.narrative, '需要企业批准规则和人工签核']
   ]);
+  const traceRows = Object.values(result.metricTrace?.metrics || {}).map((item) => [
+    item.metricName || '',
+    item.value ?? '',
+    (item.sourceFieldLabels || []).join('；'),
+    item.evidenceId || '',
+    item.sourceHashStatus || 'not_bound',
+    item.evidenceClass || result.metricTrace?.evidenceClass || 'unknown',
+    (item.locator?.groups || []).map((group) => (group.fileToken || 'file-unknown') + '：' + (group.rowStart === null ? '行未绑定' : '行' + group.rowStart + '–' + group.rowEnd)).join('；') || '未绑定',
+    item.derivation || '',
+    item.status || 'partial'
+  ]);
+  addSheet(book, 'KPI证据定位', [
+    ['指标', '结果值', '来源字段', 'evidenceId', '输入hash状态', '证据类别', '脱敏行定位', '关系', '状态'],
+    ...(traceRows.length ? traceRows : [['—', '', '', '', 'not_bound', result.metricTrace?.evidenceClass || 'unknown', '未绑定', '', 'partial']]),
+    ['边界', '', '', '', result.metricTrace?.sourceHashStatus || 'not_bound', result.metricTrace?.evidenceClass || 'unknown', '文件名和原始值不写入此表；trace 不等于标准符合性或企业放行证据。', '', '']
+  ]);
   const uncertainty = result.uncertainty || {};
   const traceability = result.compliance?.traceability || {};
   const editLog = result.compliance?.editLog || {};

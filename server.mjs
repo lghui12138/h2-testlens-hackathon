@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,10 +77,11 @@ const server = createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'csv_required' }));
         return;
       }
-      const result = analyzeRows(parseCSV(payload.csv), resolveApiConfig(payload));
+      const config = { ...resolveApiConfig(payload), sourceHash: 'SHA-256:' + createHash('sha256').update(payload.csv, 'utf8').digest('hex') };
+      const result = analyzeRows(parseCSV(payload.csv), config);
       const response = publicAnalysis(result);
       if (payload.fileName) response.source = { ...response.source, fileNamePresent: true };
-      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...result, config: response.config }, 'uploaded-test-run.csv');
+      if (payload.includeReport) response.reportMarkdown = reportMarkdown(response, 'uploaded-test-run.csv');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
     } catch (error) { writeApiError(res, error); }
@@ -93,7 +95,7 @@ const server = createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'files_name_and_csv_required' }));
         return;
       }
-      const entries = payload.files.map((file) => { const rows = parseCSV(file.csv); return { name: file.name, rows, status: 'processed', rowCount: rows.length }; });
+      const entries = payload.files.map((file) => { const rows = parseCSV(file.csv); return { name: file.name, csv: file.csv, rows, status: 'processed', rowCount: rows.length }; });
       const validation = validateBatchDeclaration(payload.declaration, entries);
       if (!validation.ok) {
         res.writeHead(422, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -104,7 +106,9 @@ const server = createServer(async (req, res) => {
       const groups = [];
       for (const group of validation.groups) {
         const groupEntries = group.fileOrder.map((name) => entries.find((entry) => entry.name.replaceAll('\\', '/') === name));
-        const fileResults = groupEntries.map((entry) => ({ name: entry.name, result: analyzeRows(entry.rows, config) }));
+        const groupCsv = groupEntries.map((entry) => entry.csv).join('\n---FILE-BOUNDARY---\n');
+        const groupConfig = { ...config, sourceHash: 'SHA-256:' + createHash('sha256').update(groupCsv, 'utf8').digest('hex') };
+        const fileResults = groupEntries.map((entry) => ({ name: entry.name, result: analyzeRows(entry.rows, groupConfig) }));
         const datasetTypes = [...new Set(fileResults.map((item) => item.result.datasetType).filter(Boolean))];
         if (datasetTypes.length > 1) {
           res.writeHead(422, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -112,11 +116,11 @@ const server = createServer(async (req, res) => {
           return;
         }
         const observation = observeDeclaredBatch(group, fileResults);
-        const combined = analyzeRows(annotateDeclaredBatchRows(group, groupEntries), config);
+        const combined = analyzeRows(annotateDeclaredBatchRows(group, groupEntries), groupConfig);
         const summary = summarizeDeclaredBatch(group, groupEntries, fileResults, combined, observation);
         const publicSummary = publicBatchAggregation(summary);
         const responseGroup = { batchAggregation: publicSummary, analysis: publicAnalysis(combined) };
-        if (payload.includeReport) responseGroup.reportMarkdown = `${batchAggregationMarkdown(publicSummary)}\n${reportMarkdown({ ...combined, config: responseGroup.analysis.config }, 'uploaded-batch.csv')}`;
+        if (payload.includeReport) responseGroup.reportMarkdown = `${batchAggregationMarkdown(publicSummary)}\n${reportMarkdown(responseGroup.analysis, 'uploaded-batch.csv')}`;
         groups.push(responseGroup);
       }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -133,11 +137,11 @@ const server = createServer(async (req, res) => {
         return;
       }
       const config = resolveApiConfig(payload);
-      const baseline = analyzeRows(parseCSV(payload.baselineCsv), config);
-      const current = analyzeRows(parseCSV(payload.currentCsv), config);
+      const baseline = analyzeRows(parseCSV(payload.baselineCsv), { ...config, sourceHash: 'SHA-256:' + createHash('sha256').update(payload.baselineCsv, 'utf8').digest('hex') });
+      const current = analyzeRows(parseCSV(payload.currentCsv), { ...config, sourceHash: 'SHA-256:' + createHash('sha256').update(payload.currentCsv, 'utf8').digest('hex') });
       const comparison = compareResults(baseline, current, { baselineName: payload.baselineFileName || 'baseline.csv', currentName: payload.currentFileName || 'current.csv' });
       const response = { baseline: publicAnalysis(baseline), current: publicAnalysis(current), comparison };
-      if (payload.includeReport) response.reportMarkdown = reportMarkdown({ ...current, config: response.current.config }, 'uploaded-current-test-run.csv', { comparison });
+      if (payload.includeReport) response.reportMarkdown = reportMarkdown(response.current, 'uploaded-current-test-run.csv', { comparison });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
     } catch (error) { writeApiError(res, error); }

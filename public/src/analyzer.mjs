@@ -3,6 +3,7 @@ import { analyzeEnterpriseRows } from './enterprise-adapters.mjs';
 import { analyzeSetpointEvents } from './dynamic-events.mjs';
 import { EVALUATION_MODES, approvalEvidenceReadiness, fullMethodProfileReadiness, methodImplementationEvidenceReadiness } from './profiles.mjs';
 import { efficiencyReadiness, environmentConditionReadiness, measurementMethodReadiness, phaseResultReadiness, testConditionReadiness, testStageReadiness, testStageReadinessForId, testSystemReadiness } from './structured-evidence.mjs';
+import { buildMetricTrace, publicMetricTrace } from './metric-trace.mjs';
 
 export const DEFAULT_CONFIG = Object.freeze({
   maxTemperatureC: 80,
@@ -1220,6 +1221,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
       enterpriseResult.workflow = { ...enterpriseResult.workflow, status: 'BLOCKED_PROFILE_SCOPE', nextAction: '更换适用的数据集 profile 后重新分析。', steps: (enterpriseResult.workflow?.steps || []).map((step) => step.id === 'dataset' ? { ...step, status: 'blocked', evidence: `profile 仅允许 ${supported.join('、')}，当前为 ${enterpriseResult.datasetType}` } : step) };
     }
     const evaluatedResult = applyEvaluationMode(enterpriseResult);
+    evaluatedResult.metricTrace = buildMetricTrace({ metrics: evaluatedResult.metrics, rows: evaluatedResult.rows, schema: evaluatedResult.schema, source: { ...evaluatedResult.source, sourceHash: suppliedConfig.sourceHash || null }, dataset: evaluatedResult.dataset, config: evaluatedResult.config || suppliedConfig });
     evaluatedResult.releaseGate = releaseGate(evaluatedResult);
     return evaluatedResult;
   }
@@ -1432,8 +1434,9 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     issues,
     verdict,
     narrative,
-    source: { type: 'csv', rowCount: rows.length, requiredFields: REQUIRED_FIELDS }
+    source: { type: 'csv', rowCount: rows.length, requiredFields: REQUIRED_FIELDS, sourceHash: suppliedConfig.sourceHash || null }
   };
+  result.metricTrace = buildMetricTrace({ metrics, rows, schema, source: result.source, dataset: result.dataset, config });
   const evaluatedResult = applyEvaluationMode(result);
   evaluatedResult.releaseGate = releaseGate(evaluatedResult);
   return evaluatedResult;
@@ -1523,6 +1526,14 @@ function publicWorkbookEvidence(evidence = null) {
   };
 }
 
+const PUBLIC_DATASET_REDACTED_KEYS = new Set(['rows', 'rawRows', 'csv', 'content', 'metadata', 'sourceFile', 'source_file', 'sessionId', 'session_id', 'reportLabel', 'fileName', 'file_name']);
+
+function redactPublicDatasetValue(value, depth = 0) {
+  if (depth > 8 || value === null || value === undefined || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((item) => redactPublicDatasetValue(item, depth + 1));
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !PUBLIC_DATASET_REDACTED_KEYS.has(key)).map(([key, item]) => [key, redactPublicDatasetValue(item, depth + 1)]));
+}
+
 export function publicDataset(dataset = null) {
   if (!dataset || typeof dataset !== 'object') return dataset;
   const { reports, crossReportSummary, workbookEvidence, ...safeDataset } = dataset;
@@ -1534,7 +1545,7 @@ export function publicDataset(dataset = null) {
         : []
     }
     : crossReportSummary;
-  return {
+  return redactPublicDatasetValue({
     ...safeDataset,
     crossReportSummary: publicCrossReportSummary,
     workbookEvidence: publicWorkbookEvidence(workbookEvidence),
@@ -1543,7 +1554,7 @@ export function publicDataset(dataset = null) {
       pointCount: Array.isArray(report?.points) ? report.points.length : 0,
       warningCount: Array.isArray(report?.warnings) ? report.warnings.length : 0
     })) : []
-  };
+  });
 }
 
 function publicCompliance(compliance = {}) {
@@ -1564,9 +1575,21 @@ function publicCompliance(compliance = {}) {
   return safe;
 }
 
+function publicIssues(issues = [], datasetType = null) {
+  return (Array.isArray(issues) ? issues : []).map((item) => ({
+    severity: item?.severity || 'info',
+    code: item?.code || 'UNSPECIFIED',
+    category: item?.category || null,
+    title: item?.title || '未命名问题',
+    evidence: datasetType ? '企业适配证据已保留在本地分析上下文；公共响应仅显示状态与计数。' : String(item?.evidence || '').slice(0, 1000),
+    evidencePresent: Boolean(item?.evidence),
+    recommendation: String(item?.recommendation || '').slice(0, 1000)
+  }));
+}
+
 export function publicAnalysis(result) {
-  const { rows, config, dataset, ...safeResult } = result;
-  return { ...safeResult, compliance: publicCompliance(safeResult.compliance), config: publicConfig(config), dataset: publicDataset(dataset) };
+  const { rows, config, dataset, metricTrace, ...safeResult } = result;
+  return { ...safeResult, issues: publicIssues(safeResult.issues, safeResult.datasetType || dataset?.kind || null), compliance: publicCompliance(safeResult.compliance), config: publicConfig(config), dataset: publicDataset(dataset), metricTrace: publicMetricTrace(metricTrace) };
 }
 
 function enterpriseReportMarkdown(inputResult, fileName, options = {}) {
@@ -1646,6 +1669,16 @@ function addStackEngineeringSection(result, markdown) {
   return markdown.replace('\n## 字段覆盖边界\n', `${section}\n## 字段覆盖边界\n`);
 }
 
+function metricTraceMarkdown(result) {
+  const trace = publicMetricTrace(result.metricTrace);
+  if (!trace) return '';
+  const rows = Object.values(trace.metrics || {}).map((item) => {
+    const locator = (item.locator?.groups || []).map((group) => group.fileToken + ' ' + (group.rowStart === null ? '行未绑定' : '行' + group.rowStart + '–' + group.rowEnd)).join('；') || '未绑定';
+    return '| ' + item.metricName + ' | ' + (item.sourceFieldLabels || []).join('；') + ' | ' + (item.evidenceId || '—') + ' | ' + (item.sourceHashStatus || 'not_bound') + ' | ' + locator + ' | ' + (item.derivation || '—') + ' |';
+  }).join('\n');
+  return '\n\n## 字段级 KPI trace（复核定位，不是标准结论）\n\n- Schema：' + trace.schemaVersion + '\n- 输入 hash：' + (trace.sourceHashStatus || 'not_bound') + '\n- 边界：' + (trace.boundary || '字段级 trace 不等于标准符合性或企业放行证据。') + '\n\n| 指标 | 来源字段 | evidenceId | hash | 脱敏定位 | 关系 |\n|---|---|---|---|---|---|\n' + (rows || '| — | — | — | — | — | — |');
+}
+
 export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) {
   if (result.config?.evaluationMode === 'descriptive_only' && !options.__descriptiveRendered) {
     const rendered = reportMarkdown({ ...result, config: { ...result.config, evaluationMode: 'risk_screening' } }, fileName, { ...options, __descriptiveRendered: true });
@@ -1653,7 +1686,7 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
       .replace('本报告使用可配置的演示阈值，不替代企业正式安全标准。', '当前 profile 为 descriptive_only：本报告只输出描述性统计和证据，未执行阈值/验收判定。')
       .replace(/\n## 当前判定阈值\n\n[\s\S]*?(?=\n## 标准适用性与符合性门控)/, '\n## 分析模式\n\n- 当前为 **descriptive_only**。\n- 已输出统计、趋势、字段映射和证据；未执行温度、压力、泄漏、稳定性或企业验收阈值判定。\n- 如需风险筛查或正式验收，必须导入企业批准 profile。\n');
   }
-  if (result.datasetType) return addStackEngineeringSection(result, addDynamicVehicleSection(result, enterpriseReportMarkdown(result, fileName, options)));
+  if (result.datasetType) return addStackEngineeringSection(result, addDynamicVehicleSection(result, enterpriseReportMarkdown(result, fileName, options))) + metricTraceMarkdown(result);
   const { metrics, quality, schema, issues, phases, verdict, config, narrative } = result;
   const status = verdict === 'PASS' ? '通过' : verdict === 'WARN' ? '需复核' : verdict === 'DESCRIPTIVE' ? '仅描述' : '未通过';
   const mappings = Object.entries(schema.mapping).map(([field, source]) => `${field}←${source}`).join('；');
@@ -1673,5 +1706,5 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
   const comparisonSection = `${complianceSection}${releaseGateSection}${workflowSection}${performanceSection}${dynamicPowerSection}${structuredEvidenceSection}${metadataSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n\n- 生成路径：${options.aiDraft.mode === 'remote-llm' ? '已配置的企业模型服务' : '本地规则回退'}\n\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
   const profileName = config.profileName ?? '未指定设备模板';
   const profileSource = config.profileSource ?? '当前分析配置';
-  return `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 自动判定：**${status}（${verdict}）**\n- 生成时间：${result.generatedAt}\n- 说明：本报告使用可配置的演示阈值，不替代企业正式安全标准。\n\n## 结论摘要\n\n${narrative}\n\n## 数据质量与字段映射\n\n- 记录数：${quality.rowCount}\n- 关键字段完整率：${quality.completenessPct.toFixed(1)}%\n- 缺失字段：${quality.missingHeaders.length ? quality.missingHeaders.join('、') : '无'}\n- 可选缺失字段：${quality.missingOptionalHeaders.length ? quality.missingOptionalHeaders.join('、') : '无'}\n- 字段映射：${mappings || '无'}\n- 单位换算：${conversions}\n- 重复时间戳：${quality.duplicateTimestampCount} 条；逆序跳变：${quality.nonMonotonicCount} 次\n\n## KPI 摘要\n\n| 指标 | 数值 |\n|---|---:|\n| 测试时长 | ${metrics.durationS.toFixed(0)} s |\n| 峰值功率 | ${metrics.peakPowerW?.toFixed(1) ?? '—'} W |\n| 稳态窗口 | ${metrics.steadyWindow}（${metrics.steadySampleCount} 条） |\n| 稳态平均电压 | ${metrics.steadyVoltageMeanV?.toFixed(3) ?? '—'} V |\n| 稳态电压标准差 | ${metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V |\n| 峰值温度 | ${metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C |\n| 峰值压力 | ${metrics.peakPressureBar?.toFixed(1) ?? '—'} bar |\n| 峰值泄漏监测 | ${metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm |\n| 压力漂移 | ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min |\n\n## 异常与建议\n\n${issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n\n## 工况分段\n\n${phases.map((phase) => `- ${phase.phase}：${phase.count} 个样本，${phase.durationS.toFixed(0)} s`).join('\n')}\n\n## 当前判定阈值\n\n- 设备模板：${profileName}\n- 阈值来源：${profileSource}\n- 温度 ≤ ${config.maxTemperatureC} °C\n- 压力 ≤ ${config.maxPressureBar} bar\n- 泄漏监测 ≤ ${config.maxLeakPpm} ppm\n- 稳态电压标准差 ≤ ${config.maxVoltageStdV} V\n- 压力漂移绝对值 ≤ ${config.maxPressureDriftBarPerMin} bar/min\n${comparisonSection}`;
+  return `# 氢能设备测试自动报告\n\n- 数据文件：${fileName}\n- 自动判定：**${status}（${verdict}）**\n- 生成时间：${result.generatedAt}\n- 说明：本报告使用可配置的演示阈值，不替代企业正式安全标准。\n\n## 结论摘要\n\n${narrative}\n\n## 数据质量与字段映射\n\n- 记录数：${quality.rowCount}\n- 关键字段完整率：${quality.completenessPct.toFixed(1)}%\n- 缺失字段：${quality.missingHeaders.length ? quality.missingHeaders.join('、') : '无'}\n- 可选缺失字段：${quality.missingOptionalHeaders.length ? quality.missingOptionalHeaders.join('、') : '无'}\n- 字段映射：${mappings || '无'}\n- 单位换算：${conversions}\n- 重复时间戳：${quality.duplicateTimestampCount} 条；逆序跳变：${quality.nonMonotonicCount} 次\n\n## KPI 摘要\n\n| 指标 | 数值 |\n|---|---:|\n| 测试时长 | ${metrics.durationS.toFixed(0)} s |\n| 峰值功率 | ${metrics.peakPowerW?.toFixed(1) ?? '—'} W |\n| 稳态窗口 | ${metrics.steadyWindow}（${metrics.steadySampleCount} 条） |\n| 稳态平均电压 | ${metrics.steadyVoltageMeanV?.toFixed(3) ?? '—'} V |\n| 稳态电压标准差 | ${metrics.steadyVoltageStdV?.toFixed(3) ?? '—'} V |\n| 峰值温度 | ${metrics.peakTemperatureC?.toFixed(1) ?? '—'} °C |\n| 峰值压力 | ${metrics.peakPressureBar?.toFixed(1) ?? '—'} bar |\n| 峰值泄漏监测 | ${metrics.peakLeakPpm?.toFixed(1) ?? '—'} ppm |\n| 压力漂移 | ${metrics.pressureDriftBarPerMin.toFixed(2)} bar/min |\n\n## 异常与建议\n\n${issues.map((item) => `- **${item.severity.toUpperCase()}｜${item.title}**：${item.evidence}。建议：${item.recommendation}`).join('\n')}\n\n## 工况分段\n\n${phases.map((phase) => `- ${phase.phase}：${phase.count} 个样本，${phase.durationS.toFixed(0)} s`).join('\n')}\n\n## 当前判定阈值\n\n- 设备模板：${profileName}\n- 阈值来源：${profileSource}\n- 温度 ≤ ${config.maxTemperatureC} °C\n- 压力 ≤ ${config.maxPressureBar} bar\n- 泄漏监测 ≤ ${config.maxLeakPpm} ppm\n- 稳态电压标准差 ≤ ${config.maxVoltageStdV} V\n- 压力漂移绝对值 ≤ ${config.maxPressureDriftBarPerMin} bar/min\n${comparisonSection}` + metricTraceMarkdown(result);
 }
