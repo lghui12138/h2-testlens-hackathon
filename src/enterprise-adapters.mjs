@@ -60,7 +60,7 @@ const UNIT_DEFINITIONS = Object.freeze({
   timestamp_s: { s: 1, sec: 1, second: 1, seconds: 1, ms: 0.001, millisecond: 0.001, milliseconds: 0.001, min: 60, minute: 60, minutes: 60, h: 3600, hr: 3600, hour: 3600 },
   current_a: { a: 1, amp: 1, amps: 1, 安: 1, ma: 0.001, 毫安: 0.001 },
   voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001 },
-  power_kw: { kw: 1, mw: 0.001, w: 0.001, 瓦: 0.001 },
+  power_kw: { kw: 1, mw: 1000, w: 0.001, 瓦: 0.001 },
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
   flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
   temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
