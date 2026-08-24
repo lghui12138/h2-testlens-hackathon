@@ -8,7 +8,7 @@
 
 直接打开：[H₂ TestLens GitHub Pages](https://lghui12138.github.io/h2-testlens-hackathon/)
 
-项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。GitHub 官方 Pages 地址会按仓库配置跳转到公开渲染域名：[lghui.top/h2-testlens-hackathon](http://lghui.top/h2-testlens-hackathon/)。当前自定义域名 HTTPS 证书尚未由 GitHub 配置完成，稳定代码入口仍是 GitHub 仓库。
+项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。GitHub 官方 Pages 地址会按仓库配置跳转到公开渲染域名：[lghui.top/h2-testlens-hackathon](https://lghui.top/h2-testlens-hackathon/)。当前自定义域名 HTTPS 证书尚未由 GitHub 配置完成，稳定代码入口仍是 GitHub 仓库。
 
 Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.com/lghui12138/t02-equipment-test-report-assistant) — FastAPI + Python 骨架，含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
 
@@ -39,11 +39,11 @@ npm test
 npm start
 ```
 
-然后打开 <http://127.0.0.1:4173>。本地分析不依赖外部服务；托管构建依赖仓库锁定的 Node 包。演示数据位于 `sample-data/`：标准样本、中文单位样本和基线样本分别覆盖单次分析、字段适配和批次对比。
+然后打开 <https://127.0.0.1:4173>。本地分析不依赖外部服务；托管构建依赖仓库锁定的 Node 包。演示数据位于 `sample-data/`：标准样本、中文单位样本和基线样本分别覆盖单次分析、字段适配和批次对比。
 
 ## GitHub Pages 独立部署
 
-GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #101）成功构建/部署；部署 job 返回公开渲染地址 `http://lghui.top/h2-testlens-hackathon/`，自定义域 HTTPS/可达性仍属于外部配置状态。Pages workflow 已固定到官方 Node24 action SHA。
+GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #101）成功构建/部署；部署 job 返回公开渲染地址 `https://lghui.top/h2-testlens-hackathon/`，自定义域 HTTPS/可达性仍属于外部配置状态。Pages workflow 已固定到官方 Node24 action SHA。
 
 独立 GitHub 仓库为 `lghui12138/h2-testlens-hackathon`。`.github/workflows/deploy-pages.yml` 会在 `main` 推送后运行提交检查，并把 `_site/` 静态产物发布到 GitHub Pages；静态页面使用相对资源路径，适配项目站点 URL。Pages 准备阶段优先携带完整 release receipt；在 GitHub Actions 且缺少 receipt 时会自动执行 `npm run package:submission`，package smoke、ZIP 完整性或 SHA-256 任一失败都会阻断 Pages 准备。只有本地预览或非 Actions 模拟才使用 unbound/`not_run` 回退，不伪造云端 artifact 或正式标准证据。GitHub Pages 版本使用本地证据草稿回退，不依赖 ChatGPT API。
 
