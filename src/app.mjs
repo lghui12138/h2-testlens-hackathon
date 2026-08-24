@@ -1073,10 +1073,11 @@ async function loadReleaseSummary() {
     if (!response.ok) throw new Error('release_summary_unavailable');
     const summary = await response.json();
     const shortCommit = summary.commit ? String(summary.commit).slice(0, 12) : '未绑定 commit';
-    const gateStatus = Object.values(summary.gates || {}).every((gate) => gate?.status === 'passed') ? '门控已回读' : '门控未绑定';
+    const allGatesPassed = Object.values(summary.gates || {}).every((gate) => gate?.status === 'passed');
+    const gateStatus = allGatesPassed ? '门控已回读' : summary.commit ? 'commit 已绑定 · package 未执行' : '门控未绑定';
     const t02 = summary.t02 || {};
     element.textContent = `公开版本 v${summary.version || '—'} · ${summary.releaseStatus || 'DEMO_ONLY'} · ${gateStatus} · commit ${shortCommit} · T02 ${t02.totalFiles || 0} 文件 / ${t02.formalConformityClaims || 0} 项正式符合性声明`;
-    element.dataset.tone = summary.commit && gateStatus === '门控已回读' ? 'ready' : 'neutral';
+    element.dataset.tone = summary.commit && allGatesPassed ? 'ready' : 'neutral';
   } catch {
     element.textContent = '公开版本状态：未绑定发布 receipt · DEMO_ONLY';
     element.dataset.tone = 'neutral';

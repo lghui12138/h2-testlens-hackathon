@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · Pages 静态部署回执绑定轮
+
+- Pages 准备脚本现在在云端没有本地 ZIP receipt 时，使用 `GITHUB_SHA`/`GITHUB_RUN_ID` 生成静态部署 receipt；页面会显示 `commit 已绑定 · package 未执行`，不再把 commit 绑定误显示成“门控已回读”。
+- 回执明确区分 `check:submission`、测试、typecheck 的部署子门与未执行的 build/package smoke；artifact SHA、archive integrity 和正式标准符合性仍不虚构。
+- 新增输入面回归，验证脚本保留 `github-actions-static-deploy` 与 `packageSmoke: not_run` 语义；本轮完整门控将在提交前重跑。
+- 外部残余保持不变：GitHub Pages 项目地址仍跳转自定义域，当前自定义域返回 502；workflow 文件不改动，因 OAuth token 缺少 `workflow` scope，`package:submission` 尚未接入云端。
+
 ## 2026-08-24 · 运行时标准 evidence ledger 绑定轮
 
 - 六智能体确认：离线 profile-audit 已能绑定 evidenceIds，但 browser/API/batch-watch 运行时仍可能结构完整即通过；本轮新增 repository-backed standard-evidence-ledger.v1，并在所有 runtime profile import 路径启用绑定。

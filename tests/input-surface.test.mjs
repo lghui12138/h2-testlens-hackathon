@@ -131,7 +131,7 @@ test('Next metadata and initialization failure state remain aligned with the sta
 });
 
 test('public static page exposes share metadata and the Pages build copies its preview card', async () => {
-  const [source, prepared] = await Promise.all([read('src/index.html'), read('_site/index.html').catch(() => '')]);
+  const [source, prepared, prepareScript] = await Promise.all([read('src/index.html'), read('_site/index.html').catch(() => ''), read('scripts/prepare-github-pages.mjs')]);
   assert.match(source, /property="og:image"/);
   assert.match(source, /og-card\.svg/);
   assert.match(source, /raw\.githubusercontent\.com\/lghui12138\/h2-testlens-hackathon/);
@@ -139,6 +139,8 @@ test('public static page exposes share metadata and the Pages build copies its p
   if (prepared) {
     assert.match(prepared, /og-card\.svg/);
   }
+  assert.match(prepareScript, /github-actions-static-deploy/);
+  assert.match(prepareScript, /packageSmoke: \{ command: 'npm run package:submission', status: 'not_run' \}/);
 });
 
 test('Vinext App public runtime exposes the browser engines and analysis worker used by app/page.tsx', async () => {

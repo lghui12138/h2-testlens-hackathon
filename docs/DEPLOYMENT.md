@@ -24,3 +24,5 @@ Normal registration requires an approved external identity provider such as emai
 ## Release gate
 
 Every push to `main` runs `npm run check:submission`, builds `_site/`, uploads a GitHub Pages artifact, and deploys it. A green Actions run proves build/deployment integrity; it does not prove enterprise standards approval or user-authentication readiness.
+
+The public `config/release-summary.json` has two truthful modes. A local checkout keeps the checked-in `unbound-local-fallback`. During a GitHub Actions static deployment, when no package receipt is available, `scripts/prepare-github-pages.mjs` binds `GITHUB_SHA` and `GITHUB_RUN_ID` and marks the static subgates as observed; `build` and `packageSmoke` remain `not_run`, and the artifact remains unbound. A package receipt is only used when `npm run package:submission` has actually produced and verified it.

@@ -41,7 +41,7 @@ npm start
 
 ## GitHub Pages 独立部署
 
-独立 GitHub 仓库为 `lghui12138/h2-testlens-hackathon`。`.github/workflows/deploy-pages.yml` 会在 `main` 推送后运行完整提交检查，并把 `_site/` 静态产物发布到 GitHub Pages；静态页面使用相对资源路径，适配项目站点 URL。GitHub Pages 版本使用本地证据草稿回退，不依赖 ChatGPT API。
+独立 GitHub 仓库为 `lghui12138/h2-testlens-hackathon`。`.github/workflows/deploy-pages.yml` 会在 `main` 推送后运行提交检查，并把 `_site/` 静态产物发布到 GitHub Pages；静态页面使用相对资源路径，适配项目站点 URL。Pages 准备阶段会优先携带本地完整 release receipt；若云端工作流没有提交包 receipt，则生成仅绑定 `GITHUB_SHA`/`GITHUB_RUN_ID` 的静态部署 receipt，并把 `build`、`packageSmoke` 明确标为 `not_run`，不伪造 ZIP 或正式标准证据。GitHub Pages 版本使用本地证据草稿回退，不依赖 ChatGPT API。
 
 ## 当前输入约定
 
