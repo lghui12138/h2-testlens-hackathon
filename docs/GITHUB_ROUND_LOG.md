@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 效率范围与批准覆盖门修复轮
+
+- 实测效率增加 0–100% 物理范围校验；approved profile 默认要求效率记录覆盖全部输入行，避免用两条样本平均整段测试。
+- 新增负值、超过 100%、部分覆盖三类效率回归；保留企业批准公式记录路径，不自行发明效率公式或标准限值。
+- 回归门：`npm test` 165/165、`npm run check:submission` 127/127、typecheck、Vinext build 5/5、package smoke 全通过。
+
 ## 2026-08-24 · 跨会话 steady 与 phase alias 门修复轮
 
 - approved 稳态 KPI 只接受同一会话内连续的 `steady`/中文稳态/显式 alias 窗口；跨会话各一条、无 steady 阶段和不足窗口不再回退活动数据。

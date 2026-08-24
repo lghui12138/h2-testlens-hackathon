@@ -1105,6 +1105,22 @@ test('enterprise adapters pass measured efficiency evidence through their normal
   assert.equal(result.compliance.efficiency.valuePct, 71);
 });
 
+test('approved measured efficiency rejects out-of-range and partial coverage values', () => {
+  const base = { profileId: 'approved-efficiency-range', approvalStatus: 'approved', efficiencyRequirement: { required: true, formulaRefRequired: true, dataSource: 'measured_or_approved_formula_record' }, testMetadata: { formulaRefs: 'EFF-001' } };
+  const outOfRange = analyzeRows([
+    { '测试时间': '0', '实际电流（A）': '10', '实际电压（V）': '20', efficiency_pct: '-1' },
+    { '测试时间': '1', '实际电流（A）': '10', '实际电压（V）': '20', efficiency_pct: '101' }
+  ], base);
+  assert.equal(outOfRange.compliance.efficiency.ready, false);
+  const partial = analyzeRows([
+    { '测试时间': '0', '实际电流（A）': '10', '实际电压（V）': '20', efficiency_pct: '70' },
+    { '测试时间': '1', '实际电流（A）': '10', '实际电压（V）': '20', efficiency_pct: '72' },
+    { '测试时间': '2', '实际电流（A）': '10', '实际电压（V）': '20' }
+  ], base);
+  assert.equal(partial.compliance.efficiency.ready, false);
+  assert.ok(partial.compliance.efficiency.missing.some((item) => item.includes('覆盖率')));
+});
+
 test('enterprise adapter reports preserve standard provenance and non-certification boundaries', () => {
   const rows = [
     { '测试时间': '0', '实际电流（A）': '10', '实际电压（V）': '20', '功率（kW）': '0.20', CELL1: '0.69', CELL2: '0.71' },
