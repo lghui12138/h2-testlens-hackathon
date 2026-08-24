@@ -238,10 +238,12 @@ async function analyzeCurrent(reason = '重新分析') {
     const sampled = result.source?.chartSampling ? ` · 图表显示 ${result.source.displayRowCount.toLocaleString('zh-CN')} 点` : '';
     const engine = result.source?.analysisEngine === 'worker' ? ' · Worker' : result.source?.analysisEngine === 'main-thread-fallback' ? ' · 主线程回退' : '';
     setAnalysisStatus(`分析完成：${result.metrics.sampleCount.toLocaleString('zh-CN')} 条记录${sampled}${engine}`, 'ready');
+    resetBatchProgress();
     if (state.batchDeclarationInput) void evaluateDeclaredBatch();
   } catch (error) {
     if (token !== state.analysisToken) return;
     const message = error.message || '未知错误';
+    resetBatchProgress();
     setAnalysisStatus(`分析失败：${message}`, 'error');
     const notice = $('#schema-notice');
     if (notice) notice.textContent = `分析失败：${message}；请检查数据格式，或点击“重试”再次分析。`;
@@ -1087,6 +1089,7 @@ async function readSelectedDataFiles(files) {
     const file = files[fileIndex];
     const name = file.webkitRelativePath || file.name;
     setAnalysisStatus(`读取文件 ${fileIndex + 1}/${files.length}：${file.name}`, 'busy');
+    setBatchProgress(fileIndex, files.length, '读取中');
     await yieldToBrowser();
     if (/\.pdf$/i.test(name) || (/\.docx$/i.test(name) && !/耐久原始数据处理/.test(name))) {
       const buffer = await file.arrayBuffer();
@@ -1129,6 +1132,7 @@ async function readSelectedDataFiles(files) {
       inputSummary.referenceOnly += 1;
     }
   }
+  setBatchProgress(files.length, files.length, '整理来源边界');
   setAnalysisStatus(`整理 ${entries.length} 个文件的来源边界…`, 'busy');
   await yieldToBrowser();
   const rows = entries.flatMap((entry) => entry.rows.map((row, sourceRowIndex) => ({
@@ -1353,6 +1357,7 @@ $('#file-input').addEventListener('change', async (event) => {
   const input = event.currentTarget;
   const files = [...event.target.files];
   if (!files.length) return;
+  updateDropZoneFileCount(files);
   try {
     const loaded = await withLoading(readSelectedDataFiles(files), `读取 ${files.length} 个文件…`);
     await bindRawDataHash(loaded.hashText);
@@ -1623,6 +1628,7 @@ if (dropZone) {
     const files = [...event.dataTransfer.files];
     if (!files.length) return;
     const input = $('#file-input');
+    updateDropZoneFileCount(files);
     try {
       const loaded = await withLoading(readSelectedDataFiles(files), `读取 ${files.length} 个文件…`);
       await bindRawDataHash(loaded.hashText);
@@ -1687,6 +1693,93 @@ readSelectedDataFiles = async function(files) {
     throw new Error(`${error.message}；${hint}`);
   }
 };
+
+// Keyboard shortcuts for power users.
+function showKeyboardShortcuts() {
+  const overlay = $('#keyboard-shortcuts-overlay');
+  if (overlay) overlay.hidden = false;
+}
+function dismissKeyboardShortcuts() {
+  const overlay = $('#keyboard-shortcuts-overlay');
+  if (overlay) overlay.hidden = true;
+}
+document.addEventListener('keydown', (event) => {
+  const active = document.activeElement;
+  const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+    event.preventDefault();
+    $('#file-input').click();
+  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    if (state.result) $('#save-history').click();
+  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+    event.preventDefault();
+    if (!isInput) $('#undo-result').click();
+  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+    event.preventDefault();
+    if (!isInput) $('#redo-result').click();
+  } else if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+    event.preventDefault();
+    showKeyboardShortcuts();
+  } else if (event.key === 'Escape') {
+    dismissKeyboardShortcuts();
+    dismissQuickStart();
+  }
+});
+
+// Batch progress indicator.
+function setBatchProgress(current, total, message) {
+  const bar = $('#batch-progress-fill');
+  const text = $('#batch-progress-text');
+  if (!bar || !text) return;
+  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  bar.style.width = `${pct}%`;
+  text.textContent = `${message} ${current}/${total}`;
+}
+function resetBatchProgress() {
+  const bar = $('#batch-progress-fill');
+  const text = $('#batch-progress-text');
+  if (bar) bar.style.width = '0%';
+  if (text) text.textContent = '';
+}
+
+// Enterprise quick-config buttons.
+function applyEnterpriseConfig(vendor) {
+  const profileSelect = $('#profile-select');
+  if (!profileSelect) return;
+  let profileId = 'electrolyzer-demo';
+  if (vendor === 'qingchuan') {
+    profileId = 'qingchuan-demo';
+  } else if (vendor === 'qingzhihuli') {
+    profileId = 'qingzhihuli-demo';
+  } else if (vendor === 'hypu') {
+    profileId = 'hypu-demo';
+  }
+  profileSelect.value = profileId;
+  applyProfile(profileId);
+  if (state.rows.length) void analyzeCurrent(`应用${vendor}配置`);
+  else setAnalysisStatus(`已切换至 ${vendor} 配置模板，导入数据后将自动应用。`, 'neutral');
+}
+
+// Improved drag-and-drop feedback.
+function updateDropZoneFileCount(files) {
+  const notice = $('#schema-notice');
+  if (!notice) return;
+  const csvCount = files.filter((f) => /\.(csv|txt|tsv)$/i.test(f.name)).length;
+  const xlsxCount = files.filter((f) => /\.(xlsx|xlsm)$/i.test(f.name)).length;
+  const docxCount = files.filter((f) => /\.docx$/i.test(f.name)).length;
+  const parts = [];
+  if (csvCount) parts.push(`${csvCount} 个文本表格`);
+  if (xlsxCount) parts.push(`${xlsxCount} 个 Excel`);
+  if (docxCount) parts.push(`${docxCount} 个 DOCX`);
+  notice.textContent = parts.length ? `准备导入：${parts.join('、')}` : '等待字段映射';
+}
+
+$('#close-shortcuts')?.addEventListener('click', dismissKeyboardShortcuts);
+$('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) dismissKeyboardShortcuts(); });
+$('#enterprise-qingchuan')?.addEventListener('click', () => { void applyEnterpriseConfig('qingchuan'); });
+$('#enterprise-qingzhihuli')?.addEventListener('click', () => { void applyEnterpriseConfig('qingzhihuli'); });
+$('#enterprise-hypu')?.addEventListener('click', () => { void applyEnterpriseConfig('hypu'); });
 
 ensureExtendedMetadataFields();
 renderProfileOptions();
