@@ -2680,6 +2680,19 @@ test('regression: zero pressure temperature and leak do not collapse to null', (
   assert.equal(result.metrics.peakLeakPpm, 0);
 });
 
+test('generic analyzeRows preserves dataset on all-zero input without throwing', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,0,0,0,0,0,0',
+    '60,0,0,0,0,0,0'
+  ].join('\n')));
+  assert.equal(result.dataset, null);
+  assert.equal(result.metrics.peakPowerW, 0);
+  assert.equal(result.metrics.peakTemperatureC, 0);
+  assert.equal(result.metrics.peakPressureBar, 0);
+  assert.equal(result.metrics.peakLeakPpm, 0);
+});
+
 test('regression: validates real qingchuan enterprise data against manual computation', async () => {
   const text = await readFile('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv', 'utf8');
   const parsed = analyzeRows(parseCSV(text.split(/\r?\n/).filter((line) => line.trim()).slice(0, 101).join('\n')));

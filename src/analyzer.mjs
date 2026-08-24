@@ -1447,6 +1447,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     uncertainty,
     workflow,
     workbookFormulaReview,
+    dataset: null,
     phases: phaseSummary(rows),
     phaseCoverage,
     phaseMetrics,
