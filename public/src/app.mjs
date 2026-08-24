@@ -958,7 +958,8 @@ function render(result) {
   const phaseFallback = result.schema.missingOptionalHeaders.includes('phase') ? ' · 工况字段缺失，使用活动窗口' : '';
   const purityNotice = result.schema.missingOptionalHeaders.includes('hydrogen_purity_pct') ? ' · 纯度字段未提供' : '';
   const incrementalNotice = state.incrementalDiff ? ` · 批次 +${state.incrementalDiff.added.length}/变${state.incrementalDiff.changed.length}/未变${state.incrementalDiff.unchanged.length}` : '';
-  $('#schema-notice').textContent = result.dataset ? `${result.dataset.label} · 字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${incrementalNotice}` : `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}${incrementalNotice}`;
+  const schemaMissingWarning = (result.issues || []).some((issue) => issue.code === 'SCHEMA_MISSING') ? ' · 未识别到关键字段，请确认文件包含表头和测试数据列' : '';
+  $('#schema-notice').textContent = result.dataset ? `${result.dataset.label} · 字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${incrementalNotice}${schemaMissingWarning}` : `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}${incrementalNotice}${schemaMissingWarning}`;
   $('#verdict-chip').textContent = verdictLabel(result.verdict);
   $('#verdict-chip').className = `verdict-chip ${result.verdict.toLowerCase()}`;
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
@@ -1030,8 +1031,15 @@ async function readSelectedDataFiles(files) {
         entries.push({ name, size: file.size, rows: [], status: 'blocked_binary', binaryReason: decoded.binaryReason || 'unknown', contentHash, hashType: 'binary', text: `BLOCKED_BINARY:${name}` });
         inputSummary.blockedBinary += 1;
       } else {
-        entries.push({ name, size: file.size, rows: parseCSV(decoded.text), status: 'processed', contentHash, hashType: 'binary', text: decoded.text });
-        inputSummary.processed += 1;
+        const parsedRows = parseCSV(decoded.text);
+        const isEmpty = !decoded.text.trim();
+        const isHeaderOnly = !isEmpty && parsedRows.length === 0 && /[,\t]/.test(decoded.text.trim());
+        const status = parsedRows.length ? 'processed' : 'parser_error';
+        const entry = { name, size: file.size, rows: parsedRows, status, contentHash, hashType: 'binary', text: decoded.text };
+        if (isEmpty) entry.parseHint = '文件为空';
+        else if (isHeaderOnly) entry.parseHint = '文件只有表头，缺少数据行';
+        entries.push(entry);
+        inputSummary[status === 'processed' ? 'processed' : 'parserErrors'] += 1;
       }
     } else {
       const buffer = await file.arrayBuffer();
@@ -1264,7 +1272,7 @@ $('#file-input').addEventListener('change', async (event) => {
   const files = [...event.target.files];
   if (!files.length) return;
   try {
-    const loaded = await readSelectedDataFiles(files);
+    const loaded = await withLoading(readSelectedDataFiles(files), `读取 ${files.length} 个文件…`);
     await bindRawDataHash(loaded.hashText);
     state.durabilityReports = loaded.durabilityReports;
     state.currentManifest = loaded.manifest;
@@ -1279,7 +1287,9 @@ $('#file-input').addEventListener('change', async (event) => {
     state.stackSelectionOverrides = {};
     state.rows = loaded.rows; state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
     if (!state.rows.length) {
-      setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；参考资料已保留，二进制文本已阻断。`, 'error');
+      const emptyFiles = loaded.entries.filter((entry) => entry.parseHint).map((entry) => `${entry.name}（${entry.parseHint}）`).join('、') || 'none';
+      const emptyMessage = emptyFiles !== 'none' ? `其中 ${emptyFiles}；` : '';
+      setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；${emptyMessage}参考资料已保留，二进制文本已阻断。`, 'error');
       const blockedReasons = loaded.entries.filter((entry) => entry.status === 'blocked_binary').map((entry) => entry.binaryReason || 'unknown');
       $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
       return;
@@ -1461,6 +1471,11 @@ function hideLoading() {
   const overlay = $('#loading-overlay');
   if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
 }
+async function withLoading(promise, message = '处理中…') {
+  showLoading(message);
+  try { return await promise; }
+  finally { hideLoading(); }
+}
 function showQuickStart() {
   const overlay = $('#quick-start-overlay');
   if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; }
@@ -1487,7 +1502,7 @@ if (dropZone) {
     if (!files.length) return;
     const input = $('#file-input');
     try {
-      const loaded = await readSelectedDataFiles(files);
+      const loaded = await withLoading(readSelectedDataFiles(files), `读取 ${files.length} 个文件…`);
       await bindRawDataHash(loaded.hashText);
       state.durabilityReports = loaded.durabilityReports;
       state.currentManifest = loaded.manifest;
@@ -1503,7 +1518,9 @@ if (dropZone) {
       state.rows = loaded.rows;
       state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
       if (!state.rows.length) {
-        setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；参考资料已保留，二进制文本已阻断。`, 'error');
+        const emptyFiles = loaded.entries.filter((entry) => entry.parseHint).map((entry) => `${entry.name}（${entry.parseHint}）`).join('、') || 'none';
+        const emptyMessage = emptyFiles !== 'none' ? `其中 ${emptyFiles}；` : '';
+        setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；${emptyMessage}参考资料已保留，二进制文本已阻断。`, 'error');
         const blockedReasons = loaded.entries.filter((entry) => entry.status === 'blocked_binary').map((entry) => entry.binaryReason || 'unknown');
         $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
         return;
@@ -1546,3 +1563,4 @@ void loadCoverageSummary();
 void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
 void loadSampleSafely();
+void showQuickStart();

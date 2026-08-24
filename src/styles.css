@@ -98,5 +98,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 .loading-message { margin: 0; color: var(--muted-strong); font-size: 13px; }
 .spinner { width: 32px; height: 32px; border: 3px solid #28515b; border-top-color: var(--mint); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-#drop-zone.drag-over { outline: 2px dashed var(--mint); outline-offset: -8px; background: rgba(104,229,202,.06); }
+#drop-zone.drag-over { outline: 2px dashed var(--mint); outline-offset: -8px; background: rgba(104,229,202,.1); }
+#drop-zone.drag-over .upload-button { background: #a4f4df; transform: translateY(-1px); }
+#drop-zone.drag-over .quiet-button { color: var(--mint); }
 .upload-button, .primary-button, .quiet-button, .outline-button, .icon-button, .ai-button { min-height: 44px; }
