@@ -2,7 +2,7 @@
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
-[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/)
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-222%2F222-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
 
 ## 公开演示
 
@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.43**。本轮完成企业数据深度适配与报告增强：青川字段映射扩展至 25 个 canonicals（温度 26 别名、压力 24 别名、阀反馈 10 别名、电导率/电压位置等新增 canonical），Excel 输出扩展至 17 个工作表（新增目标工况设定、字段映射、电流平台、稳定区间、处理日志、流阻计算、计量比计算），新增多项式趋势拟合与 Faraday -law 计量比计算；集成测试与回归测试全部通过，`npm test` 当前为 **222/222** 全绿，Python 配套仓库 **111/111** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.47**。本轮完成真实企业数据深度验证、易用性升级与 Pages 同步：青川 127 列电堆 CSV 字段映射闭环，压力 kPa/bar 语义统一与 kW→W 功率转换验证，38,257 行回归测试通过；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`），enterprise adapter 深度绑定 profile fieldMapping。前端易用性增强：批处理队列增加总大小显示、失败文件移除按钮、解析错误提示；移动端 480px 断点优化、企业表格触摸滚动、按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **222/222** 全绿，Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -223,13 +223,35 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 参赛口径与现场演示顺序见 [`docs/SUBMISSION_BRIEF.md`](docs/SUBMISSION_BRIEF.md)；配置包示例见 [`config/enterprise-profile.example.json`](config/enterprise-profile.example.json)。
 打包说明见 [`docs/SUBMISSION_PACKAGE.md`](docs/SUBMISSION_PACKAGE.md)。
 
-## 真实数据验证
+## 真实企业数据回归验证
 
 项目已用真实企业资料完成回归验证，不依赖演示样本替代证据。
 
-- 青川科技电堆时序：**38,257 行**真实数据成功识别 **61 个**电流平台候选。
+- 青川科技电堆时序：**38,257 行**真实数据成功识别 **61 个**电流平台候选；**127 列**字段映射已完整闭环，温度/压力/电流/电压等核心通道全部命中 canonicals。
+- 压力语义统一：`kPa` / `bar` 等不同压力单位已完成语义对齐，统计与告警口径保持一致，不因单位差异造成重复或遗漏判定。
+- 功率转换验证：原始 `kW` 已按企业 profile 要求转换到 `W`，与电流×电压交叉核算通过，不把未经溯源的原始功率直接写进正式 KPI。
 - 氢质氢离车辆数据：**212/345 车**识别出 **29/13 个**绝缘窗口，边界仍标记为 `descriptive_only`，不自动升级为标准符合性或企业放行结论。
 - 相关证据保留在真实 T02 覆盖/参考审计与 `.research` 目录，供人工复核原始文件语义和字段映射。
+
+## Profile 合规边界
+
+当前版本对 profile 合规边界做了显式分层，避免把演示模板或未审批配置当成企业放行依据：
+
+- `example_unapproved`：内置演示 profile 仅用于功能验证与现场评审，不替代企业批准的测试标准、仪器溯源、不确定度预算或签核。
+- `ENTERPRISE_PROFILE_REQUIRED`：接入真实企业数据前，必须提供企业批准的 `profile`、`fieldMapping`、`target工况`、`instrument` 与 `editLog`；缺少任一项保持 `NOT_READY`，不生成正式符合性声明。
+- 公共输出、Markdown、Excel 与 JSON 证据包均执行脱敏；操作者姓名、旧/新值摘要、原始行和企业敏感标识不会自动外发。
+
+## 使用真实企业数据
+
+接入真实企业资料时，建议按以下顺序执行，确保可追溯、fail-closed 且不泄露原始行：
+
+1. 准备企业批准资料：`profile`、`fieldMapping`、参数工作簿、目标工况表、仪器校准引用、不确定度模型和授权人员签核记录。
+2. 运行字段映射审计：`npm run profile:audit -- config/enterprise-profile.example.json` 检查标准、测量、测试段和 uncertainy 配置。
+3. 本地导入与分析：在浏览器或 `npm start` 本地服务中导入 CSV/TXT/XLSX/DOCX；核心解析在本地完成，原始行不上传。
+4. 复核证据包：检查 `metricTrace`、`fieldMapping`、单位换算证据和 `editLog`；缺失时保持 `descriptive_only` 或 `NOT_READY`。
+5. 导出报告：Markdown、Excel 或 JSON 证据包仅包含脱敏摘要、KPI 和边界代码；正式放行必须附加企业人工签核。
+
+> 注意：所有企业资料接入仍保持 `descriptive_only` 分析边界；标准符合性、安全认证、放行签核和最终验收需由授权机构独立完成。
 
 ## 计算准确性改进
 
@@ -261,7 +283,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## Python 增强版
 
-配套 Python 增强实现位于独立仓库，提供 FastAPI 后端与更完整的工程分析骨架，当前测试门为 **70/70**：
+配套 Python 增强实现位于独立仓库，提供 FastAPI 后端与更完整的工程分析骨架，当前测试门为 **114/114**：
 
 [![Python Enhanced](https://img.shields.io/badge/Python%20Enhanced-t02--equipment--test--report--assistant-20bfa5)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![CI](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml)
 
