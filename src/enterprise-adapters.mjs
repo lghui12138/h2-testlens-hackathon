@@ -1410,9 +1410,12 @@ function buildVehicle(rows, config) {
     const raw = num(value);
     if (raw === null) return null;
     const declared = vehicleSignalUnits[field];
-    const unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
+    let unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
     const varianceField = field === 'cell_voltage_variance';
     const allowedUnits = varianceField ? ['mV²', 'V²'] : ['mV', 'V'];
+    if (varianceField && !unit && raw >= 0 && raw <= 1_000_000) {
+      unit = 'mV²';
+    }
     if (unit && !allowedUnits.includes(unit)) {
       unresolvedUnitFields.add(field);
       return null;
