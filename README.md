@@ -49,6 +49,8 @@ npm start
 
 ## 当前已实现
 
+- 演示样本资源失败会显示可行动错误；电堆显式 mV 单片通道会先转换到 V，单位不明或不支持时保持空值并阻断相关统计。
+
 - 本地 CSV 导入和演示样本加载
 - 企业资料结构适配：车辆 `FC_*` CSV、中文电堆 CSV、GB18030/带明确 BOM 的 UTF-16 制表符 TXT 和原始时序 XLSX；支持多文件 CSV/TXT 批次导入；原始企业数据不进入仓库
 - T02 实际解析覆盖审计：`npm run t02:coverage` 默认写入当前版本 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`，也支持显式输入/输出参数；对 198 个资料文件输出 SHA-256、实际原始数据解析器、参考审计要求和逐文件使用台账（当前 190 processed / 6 reference_only / 1 blocked_binary / 1 declared_no_upload）；新增证据深度分层为 143 `descriptive_interval`、13 `dynamic_event_only`、34 `generic_metrics_only`、8 `reference_boundary`、0 `formal_kpi`；7 个参考边界文件与独立参考审计逐文件交叉链接；车辆 46 列、电堆 127/422 列以“分析输入/交叉核对/目录保留”分层，并验证未分类字段与多角色冲突字段；耐久 8 份报告的跨报告筛查发现电堆型号不一致；真实 XLSX 公式 6,572/6,572 有缓存值，正式验收仍需人工公式复核证据；缺少企业目标参数时还输出 `inferred/descriptive_only` 候选区间，但不把候选、文件扫描或规则原型误写成标准符合
@@ -96,7 +98,7 @@ npm start
 - v3.5.26：新增源资料完整性核对器，逐文件重新计算当前资料目录的大小和 SHA-256，并对新增、缺失、变更文件 fail-closed；这证明版本化审计仍对应当前目录，但不改变原始数据、参考资料和标准符合性边界。
 - v3.5.27：源资料完整性核对器新增审计根目录、记录总数和重复路径 fail-closed 校验，并补齐三类审计形状回归；T02 原始资料、参考内容和标准符合性边界不变。
 - v3.5.37 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
-- 2026-08-24 继续轮：六智能体进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门将在本轮重跑，Run 86 云端 package smoke 已闭环，Pages 自定义域仍不可达。
+- 2026-08-24 继续轮：六智能体进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **180/180**、`npm run check:submission` **132/132**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已闭环，Pages 自定义域仍不可达。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
 - 企业专用图：车辆绝缘阻值与 350/250 kΩ 报警线、电堆有效极化点与短稳定点标记

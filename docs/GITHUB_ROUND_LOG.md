@@ -5,6 +5,7 @@
 - `prepare-github-pages.mjs` 在 GitHub Actions 缺少本地 receipt 时自动执行 `npm run package:submission`；package smoke、ZIP 完整性或 SHA-256 失败会直接阻断 Pages 准备。
 - 隔离验证已确认模拟 Actions 会生成 `source: github-actions`、`packageSmoke: passed` 和 artifact SHA；本地/非 Actions 预览仍保留 unbound/`not_run` 回退。
 - Run 86 已成功，耗时约 1 分钟；本轮云端 package smoke、ZIP 完整性和 artifact SHA 门已实际执行。自定义域可达性仍是外部残余。
+- 演示样本加载现在捕获资源 404/网络失败，显示错误原因和手动导入恢复建议；电堆 `CELL1(mV)` 等单片通道先换算到 V，避免 700 mV 被当成 700 V。
 - GitHub Pages T02 卡片现在直接显示前 5 个高风险字段的文件数、负值数和零值数；这些是字段语义/无效码复核提示，不是异常或标准判定。
 - 车辆正式目标电流性能点现在默认只接受 `FC_MainSts=4` 活动状态；状态 8 等非活动记录保留作描述性/绝缘统计，并输出排除证据。
 
