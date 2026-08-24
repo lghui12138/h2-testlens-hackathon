@@ -10,6 +10,8 @@
 
 项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。GitHub 官方 Pages 地址会按仓库配置跳转到公开渲染域名：[lghui.top/h2-testlens-hackathon](http://lghui.top/h2-testlens-hackathon/)。当前自定义域名 HTTPS 证书尚未由 GitHub 配置完成，稳定代码入口仍是 GitHub 仓库。
 
+Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.com/lghui12138/t02-equipment-test-report-assistant) — FastAPI + Python 骨架，含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
+
 这是浏览器网页原型：不需要登录，不上传原始 CSV；可以直接载入演示样本，也可以在浏览器内导入 CSV/TXT/Excel/DOCX。公开页面只提供工程分析和报告初稿，不替代标准认证、安全验证或企业放行签核。
 
 ## 一句话
