@@ -26,6 +26,12 @@
 - 车辆非正单体电压 raw 保留、物理 KPI 排除；公共 quality 深层脱敏来源文件名；`excel-workflow.mjs` 纳入 source/public parity。
 - 研究证据图补齐 18/18 runtime `standard_id`，提交门新增 `t02:standard-id-reconciliation`；本轮门控为 `npm test` 188/188、`npm run check:submission` 139/139，T02 coverage 重放仍 198/198 unchanged。
 
+## 2026-08-24 · GitHub Actions Run 101 回读轮
+
+- `c00e582` 已由 Run `32712931265` 成功构建/部署；`build` 46 秒、`deploy` 16 秒，Pages artifact 715 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- 云端门控覆盖 188/188 测试、139/139 提交检查、T02 coverage 198/198 unchanged、18/18 standard-id reconciliation、无单位流量阻断、public quality 脱敏和 Excel parity。
+- 当前仍不宣称标准认证、企业放行或自定义域 HTTPS；六智能体分片已全部收齐，下一轮继续处理方差单位建模、输入前大小门和 outbound redirect 关闭等残余。
+
 ## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
 
 - 运行时对完整 profile package 做确定性 SHA-256：`approvalStatus` 与 `approvalEvidence` 均纳入绑定，只排除运行时生成的 `trustedApprovalBinding`；API、浏览器 profile 导入和 `batch-watch` 统一传入受控哈希，审批包被改写时 trusted ledger fail-closed。
