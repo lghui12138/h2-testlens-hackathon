@@ -1088,6 +1088,11 @@ function render(result, pushHistory = true) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
+  const complianceBoundary = $('#compliance-boundary');
+  if (complianceBoundary) {
+    complianceBoundary.textContent = result.compliance.boundary || '';
+    complianceBoundary.hidden = !result.compliance.boundary;
+  }
   renderMetrics(result); renderCalculationSummary(result); renderMetricTrace(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
