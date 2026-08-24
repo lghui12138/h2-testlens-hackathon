@@ -1785,33 +1785,6 @@ $('#enterprise-hypu')?.addEventListener('click', () => { void applyEnterpriseCon
 
 // Batch queue management
 function renderBatchQueue(entries) {
-  const container = ;
-  if (!container) return;
-  if (!entries || !entries.length) { container.hidden = true; return; }
-  container.hidden = false;
-  container.innerHTML = entries.map((entry, index) => {
-    const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
-    const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
-    const size = entry.size ?  : '—';
-    const hint = entry.parseHint ?  : '';
-    const actions = entry.status === 'parser_error' ?  : (entry.status === 'pending' ?  : '');
-    return <span class=muted></span>;
-  }).join('');
-}
-function updateBatchQueueItem(entries, index, updates) {
-  const item = document.querySelector();
-  if (!item) return;
-  const entry = entries[index];
-  if (!entry) return;
-  Object.assign(entry, updates);
-  const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
-  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
-  const chip = item.querySelector('.status-chip');
-  if (chip) { chip.className = ; chip.textContent = statusLabel; }
-}
-
-// Batch queue management
-function renderBatchQueue(entries) {
   const container = $('#batch-queue');
   if (!container) return;
   if (!entries || !entries.length) { container.hidden = true; return; }
