@@ -97,7 +97,7 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
-    methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
     publicationDate: '2025-08-29',
     effectiveDate: '2025-12-01',
@@ -258,7 +258,7 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
-    methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
     publicationDate: '2025-03-28',
     effectiveDate: '2025-07-01',

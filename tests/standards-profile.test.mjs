@@ -7,7 +7,7 @@ const profileByMethod = (methodId) => DEVICE_PROFILES.find((profile) => profile.
 test('GB/T 46104 profile covers every publicly declared measurement family and test phase', () => {
   const profile = profileByMethod('GB/T 46104-2025');
   assert.ok(profile, 'built-in GB/T 46104 profile is present');
-  assert.equal(profile.methodExecutionStatus, 'PUBLIC_SCOPE_MAPPING');
+  assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED');
 
   const channelFields = new Set((profile.acquisitionRequirements?.requiredChannels || []).map((channel) => channel.field));
   assert.deepEqual([...channelFields].sort(), [
@@ -40,10 +40,10 @@ test('GB/T 46104 profile covers every publicly declared measurement family and t
   ]);
 });
 
-test('GB/T 45541 profile remains a public-scope mapping and does not invent acceptance limits', () => {
+test('GB/T 45541 profile remains an enterprise-profile-required mapping and does not invent acceptance limits', () => {
   const profile = profileByMethod('GB/T 45541-2025');
   assert.ok(profile, 'built-in GB/T 45541 profile is present');
-  assert.equal(profile.methodExecutionStatus, 'PUBLIC_SCOPE_MAPPING');
+  assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED');
   assert.equal(profile.acceptanceRules.length, 0);
   assert.deepEqual(profile.acceptanceCriteria, {});
   assert.equal(profile.scopeRules.maxRatedHydrogenPressureMpa, 10);

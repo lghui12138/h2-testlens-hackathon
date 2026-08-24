@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { analyzeRows, parseCSV, reportMarkdown, publicAnalysis } from '../src/analyzer.mjs';
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
-import { getProfile, profilesFromPackage } from '../src/profiles.mjs';
+import { DEVICE_PROFILES, getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { sampleRowsForDisplay } from '../src/display-sampling.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -330,4 +330,63 @@ test('display sampling preserves session boundaries for long time series', () =>
   assert.ok(sampled.rows.some((row) => row.session_id === 'file:a.csv'));
   assert.ok(sampled.rows.some((row) => row.session_id === 'file:b.csv'));
   assert.ok(sampled.rows.length <= 6000 + 2);
+});
+
+// ---------------------------------------------------------------------------
+// 7. Real T02 enterprise profile mapping validation
+// ---------------------------------------------------------------------------
+
+test('qingchuan-stack profile fieldMapping matches real Qingchuan T02 headers', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  assert.ok(rows.length >= 1, 'fixture should have data rows');
+  const headers = Object.keys(rows[0]);
+  const profile = getProfile('qingchuan-stack');
+  assert.ok(profile, 'qingchuan-stack profile must exist');
+  const mappedSources = Object.values(profile.fieldMapping || {}).filter(Boolean);
+  const missing = mappedSources.filter((source) => !headers.includes(source));
+  assert.deepEqual(missing, [], `qingchuan-stack mapped headers missing from real data: ${missing.join('、')}`);
+});
+
+test('qingzhihuli-vehicle profile fieldMapping matches real 氢质氢离 T02 headers', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  assert.ok(rows.length >= 1, 'fixture should have data rows');
+  const headers = Object.keys(rows[0]);
+  const profile = getProfile('qingzhihuli-vehicle');
+  assert.ok(profile, 'qingzhihuli-vehicle profile must exist');
+  const mappedSources = Object.values(profile.fieldMapping || {}).filter(Boolean);
+  const missing = mappedSources.filter((source) => !headers.includes(source));
+  assert.deepEqual(missing, [], `qingzhihuli-vehicle mapped headers missing from real data: ${missing.join('、')}`);
+});
+
+test('qingchuan-stack adapter accepts real Qingchuan T02 fixture without missing mapping errors', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const profile = getProfile('qingchuan-stack');
+  const result = analyzeEnterpriseRows(rows, profile);
+  assert.ok(result, 'analyzeEnterpriseRows should return a result for real Qingchuan data');
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.quality.missingHeaders.length, 0, 'real Qingchuan fixture should have no missing mapped headers');
+});
+
+test('qingzhihuli-vehicle adapter accepts real 氢质氢离 T02 fixture without missing mapping errors', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const profile = getProfile('qingzhihuli-vehicle');
+  const result = analyzeEnterpriseRows(rows, profile);
+  assert.ok(result, 'analyzeEnterpriseRows should return a result for real vehicle data');
+  assert.equal(result.datasetType, 'vehicle');
+  assert.equal(result.quality.missingHeaders.length, 0, 'real vehicle fixture should have no missing mapped headers');
+});
+
+test('enterprise T02 profiles stay example_unapproved with ENTERPRISE_PROFILE_REQUIRED status', () => {
+  const enterpriseProfiles = DEVICE_PROFILES.filter((profile) =>
+    ['qingchuan-stack', 'qingzhihuli-vehicle', 'hypu-durability'].includes(profile.id)
+  );
+  assert.ok(enterpriseProfiles.length, 'enterprise T02 profiles should be present');
+  for (const profile of enterpriseProfiles) {
+    assert.equal(profile.approvalStatus, 'example_unapproved', `${profile.id} must stay example_unapproved`);
+    assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED', `${profile.id} must keep ENTERPRISE_PROFILE_REQUIRED`);
+  }
 });
