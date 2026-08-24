@@ -143,6 +143,8 @@ test('public static page exposes share metadata and the Pages build copies its p
   }
   assert.match(prepareScript, /github-actions-static-deploy/);
   assert.match(prepareScript, /packageSmoke: \{ command: 'npm run package:submission', status: 'not_run' \}/);
+  assert.match(prepareScript, /GITHUB_ACTIONS === 'true'/);
+  assert.match(prepareScript, /exec\('npm', \['run', 'package:submission'\]/);
 });
 
 test('release receipt display fails closed on empty or incomplete gate maps', async () => {
