@@ -1531,6 +1531,21 @@ $('#generate-ai').addEventListener('click', async () => {
     button.textContent = '生成报告初稿';
   }
 });
+$('#copy-report').addEventListener('click', async () => {
+  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
+  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制'; }
+});
+$('#print-report').addEventListener('click', () => {
+  const preview = $('#report-preview');
+  if (!preview || !state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  const win = window.open('', '_blank');
+  if (!win) { $('#report-status').textContent = '弹窗被拦截，请允许打印窗口'; return; }
+  win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
+  win.document.close();
+  win.focus();
+  win.print();
+});
 $('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-xlsx').addEventListener('click', async () => {
   if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
