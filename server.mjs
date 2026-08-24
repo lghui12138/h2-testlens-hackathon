@@ -19,6 +19,7 @@ const mime = {
   '.csv': 'text/csv; charset=utf-8',
   '.json': 'application/json; charset=utf-8'
 };
+const publicRelativeRoots = ['src/', 'sample-data/', 'config/'];
 
 // Enterprise CSV/stack samples are several MB; keep a bounded request size while
 // allowing the vehicle and 127-column sample contracts through the local API.
@@ -60,7 +61,13 @@ function writeApiError(res, error) {
 }
 
 const server = createServer(async (req, res) => {
-  const requestPath = decodeURIComponent((req.url || '/').split('?')[0]);
+  let requestPath;
+  try { requestPath = decodeURIComponent((req.url || '/').split('?')[0]); }
+  catch {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'invalid_path_encoding' }));
+    return;
+  }
   if (req.method === 'POST' && requestPath === '/api/analyze') {
     try {
       const payload = JSON.parse(await readBody(req));
@@ -184,6 +191,10 @@ const server = createServer(async (req, res) => {
   const filePath = normalize(join(root, relative));
   if (!filePath.startsWith(root + sep) && filePath !== root) {
     res.writeHead(403).end('Forbidden');
+    return;
+  }
+  if (!publicRelativeRoots.some((prefix) => relative.startsWith(prefix))) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Not found');
     return;
   }
   try {

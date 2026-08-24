@@ -50,6 +50,7 @@ h1 em { color: var(--mint); font-style: normal; }
 .hero-actions, .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
 .hero-actions { max-width: 860px; }
 .analysis-status { min-height: 17px; margin-top: 12px; color: var(--muted); font-size: 10px; }
+.release-summary { margin-top: 8px; color: var(--muted); font-size: 10px; line-height: 1.45; }.release-summary[data-tone="ready"] { color: var(--mint); }
 .analysis-status[data-tone="busy"] { color: var(--amber); }.analysis-status[data-tone="ready"] { color: var(--mint); }.analysis-status[data-tone="error"] { color: var(--danger); }
 .hero-note { flex-wrap: wrap; margin-top: 25px; letter-spacing: 0; }.muted { color: #67858a; }.schema-notice { color: var(--mint); }
 .signal-bars { display: flex; align-items: end; gap: 2px; height: 13px; margin-right: 2px; }.signal-bars i { display: block; width: 3px; background: var(--mint); }.signal-bars i:nth-child(1) { height: 4px; }.signal-bars i:nth-child(2) { height: 7px; }.signal-bars i:nth-child(3) { height: 10px; }.signal-bars i:nth-child(4) { height: 13px; }

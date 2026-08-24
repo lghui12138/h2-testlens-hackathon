@@ -22,6 +22,9 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     read('app/page.tsx'),
     read('src/app.mjs')
   ]);
+  const server = await read('server.mjs');
+  const [releaseSource, releasePublic] = await Promise.all([read('config/release-summary.json'), read('public/config/release-summary.json')]);
+  assert.deepEqual(JSON.parse(releasePublic), JSON.parse(releaseSource));
   for (const page of [staticPage, vinextPage]) {
     assert.match(page, /multiple/);
     assert.match(page, /\.csv/);
@@ -45,6 +48,12 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /observeDeclaredBatch/);
   assert.match(app, /publicBatchAggregation/);
   assert.match(app, /escapeHtml\(profile\.name\)/);
+  assert.match(app, /loadReleaseSummary/);
+  assert.match(server, /invalid_path_encoding/);
+  assert.match(server, /publicRelativeRoots/);
+  assert.match(app, /loadReleaseSummary/);
+  assert.match(server, /invalid_path_encoding/);
+  assert.match(server, /publicRelativeRoots/);
   assert.match(app, /BATCH_DATASET_TYPE_MISMATCH/);
   assert.match(app, /SHA-256:\$\{contentHash\}/);
   assert.doesNotMatch(app, /hashText: entries\.map\(\(\{ name, text, contentHash \}\)/);
@@ -102,6 +111,8 @@ test('Next metadata and initialization failure state remain aligned with the sta
   assert.match(page, /href="#workflow">流程/);
   assert.match(page, /status\.setAttribute\("data-tone", "error"\)/);
   assert.match(staticPage, /href="#workflow">流程/);
+  assert.match(staticPage, /release-summary/);
+  assert.match(page, /release-summary/);
 });
 
 test('public static page exposes share metadata and the Pages build copies its preview card', async () => {

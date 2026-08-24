@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown } from '../src/analyzer.mjs';
-import { generateDraft, validateRemoteDraft } from '../src/ai-draft.mjs';
+import { evidenceBundle, generateDraft, validateRemoteDraft } from '../src/ai-draft.mjs';
 import { compareResults } from '../src/compare.mjs';
 import { DEVICE_PROFILES, getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
@@ -235,6 +235,14 @@ test('remote AI adapter receives structured evidence only', async () => {
   assert.equal('testMetadata' in evidence.thresholds, false);
   assert.equal(evidence.thresholds.metadataPresent.operator, true);
   assert.equal(request.messages[1].content.includes('operator-secret-name'), false);
+});
+
+test('versioned caller-supplied evidence is rebuilt and strips raw rows and secrets before drafting', () => {
+  const evidence = evidenceBundle({ evidenceVersion: 'attacker-version', verdict: 'WARN', rows: [{ secret: 'do-not-forward' }], source: { csv: 'raw,csv', content: 'private' }, quality: { rowCount: 1 }, metrics: { completenessPct: 100 }, thresholds: { profileName: 'caller-profile' } });
+  assert.equal(evidence.evidenceVersion, 'h2-testlens.v1');
+  assert.equal('rows' in evidence, false);
+  assert.equal(JSON.stringify(evidence).includes('do-not-forward'), false);
+  assert.equal(JSON.stringify(evidence).includes('raw,csv'), false);
 });
 
 test('remote AI output fails closed when it conflicts with verdict or lacks evidence anchors', async () => {

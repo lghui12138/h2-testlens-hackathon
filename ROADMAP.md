@@ -18,6 +18,13 @@
 - Enterprise Markdown reports and the browser report preview expose standard references, method execution status and release-gate status; they do not declare standard conformity.
 - Verification artifacts: v3.5.37 T02 coverage/reference/integration reports; new per-cell, excluded-interval and parameter-formula regressions; full submission gates remain required before packaging.
 
+## 2026-08-24 current continuation evidence · unit energy, session coverage and release receipt
+
+- Corrected the 1,000x specific-energy conversion error; `Wh/NL` and `kWh/Nm³` are numerically equal after simultaneous 1,000 scaling.
+- Phase coverage now sums per-session spans; added a two-file reset regression. Added receipt generation, package gate in Pages workflow, fixed Node 22.23.2, and first-screen release status.
+- Gate: `npm test` **161/161**, `npm run check:submission` **127/127**, typecheck, build 5/5, package smoke and static preparation pass; the adjacent versioned release receipt contains the final artifact SHA-256.
+- Residual: receipt is local-package/unbound until the commit and Pages artifact are publicly read back.
+
 ## 2026-08-24 current continuation evidence · mixed-source and public parity hardening
 
 - Change: partial raw-power coverage now reports `mixed`, raw/derived/missing counts and coverage percentage; any missing analytical numeric cell produces a `DATA_GAP` review warning instead of silently looking complete.

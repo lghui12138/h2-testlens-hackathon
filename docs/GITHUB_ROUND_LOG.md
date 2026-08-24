@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 单位电耗、多会话覆盖与发布 receipt 轮
+
+- 修复单位制氢电耗 1000 倍错误：`Wh/NL` 与 `kWh/Nm³` 数值等价；两点样例锁定 `1/18`。
+- 阶段覆盖率按各独立会话的时间跨度求和，避免文件时间从 0 重置后生成虚假的 200% 覆盖率。
+- 新增版本化 release receipt：包含 gate 状态、T02 198 文件边界、提交包 SHA-256；Pages/App 首屏显示 receipt 是否已绑定公开 commit。
+- 回归门：`npm test` 161/161、`npm run check:submission` 127/127、typecheck、Vinext build 5/5、package smoke 和 Pages 静态准备通过。
+
 ## 2026-08-24 · 混合功率与公开页面边界修复轮
 
 - 部分原始功率通道不再显示为完整的“原始功率 + 交叉核算”；分析输出 `mixed`、原始/派生/缺失计数和覆盖率，并给出 `POWER_SOURCE_MIXED` 复核提示。

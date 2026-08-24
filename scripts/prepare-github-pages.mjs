@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const site = join(root, '_site');
+const version = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
 
 await rm(site, { recursive: true, force: true });
 await mkdir(site, { recursive: true });
@@ -17,6 +18,11 @@ await writeFile(join(site, 'index.html'), pagesHtml, 'utf8');
 await cp(join(root, 'src'), join(site, 'src'), { recursive: true });
 await cp(join(root, 'sample-data'), join(site, 'sample-data'), { recursive: true });
 await cp(join(root, 'config'), join(site, 'config'), { recursive: true });
+const receiptPath = join(root, 'dist', `h2-testlens-release-receipt-v${version}.json`);
+try {
+  const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
+  await writeFile(join(site, 'config/release-summary.json'), `${JSON.stringify({ ...receipt, pagesSourceCommit: process.env.GITHUB_SHA || receipt.commit || null }, null, 2)}\n`, 'utf8');
+} catch { /* Keep the checked-in unbound fallback for local previews. */ }
 await cp(join(root, 'public/favicon.svg'), join(site, 'favicon.svg'));
 await cp(join(root, 'public/og-card.svg'), join(site, 'og-card.svg'));
 await writeFile(join(site, '.nojekyll'), '', 'utf8');

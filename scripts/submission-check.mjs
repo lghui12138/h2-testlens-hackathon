@@ -81,6 +81,8 @@ const requiredFiles = [
   'public/og-card.svg',
   'config/t02-coverage-summary.json',
   'public/config/t02-coverage-summary.json',
+  'config/release-summary.json',
+  'public/config/release-summary.json',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
   '.research/ignite_t02_standards_20260821/evidence.jsonl',
   '.research/ignite_t02_standards_20260821/claims.jsonl',
@@ -112,6 +114,8 @@ const batchDeclaration = await readFile(join(root, 'config/batch-declaration.exa
 const publicBatchDeclaration = await readFile(join(root, 'public/config/batch-declaration.example.json'), 'utf8');
 const coverageSummary = await readFile(join(root, 'config/t02-coverage-summary.json'), 'utf8');
 const publicCoverageSummary = await readFile(join(root, 'public/config/t02-coverage-summary.json'), 'utf8');
+const releaseSummary = await readFile(join(root, 'config/release-summary.json'), 'utf8');
+const publicReleaseSummary = await readFile(join(root, 'public/config/release-summary.json'), 'utf8');
 const completionReport = await readFile(join(root, 'docs/COMPLETION_REPORT.md'), 'utf8');
 const roadmap = await readFile(join(root, 'ROADMAP.md'), 'utf8');
 const apiDoc = await readFile(join(root, 'docs/API.md'), 'utf8');
@@ -140,6 +144,7 @@ const t02ProfilePayload = JSON.parse(t02ProfileConfig);
 checks.push({ id: 'profile:t02-descriptive-package', pass: t02ProfilePayload.profiles?.length === 3 && t02ProfilePayload.profiles.every((profile) => profile.evaluationMode === 'descriptive_only' && profile.thresholds === null && profile.supportedDatasetTypes?.length === 1) });
 checks.push({ id: 'config:public-batch-declaration-parity', pass: batchDeclaration === publicBatchDeclaration });
 checks.push({ id: 'config:public-coverage-summary-parity', pass: coverageSummary === publicCoverageSummary });
+checks.push({ id: 'config:public-release-summary-parity', pass: releaseSummary === publicReleaseSummary && JSON.parse(releaseSummary).schemaVersion === 'h2-testlens.release-summary.v1' });
 const coverageEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_coverage_audit_v${packageJson.version}.json`);
 const referenceEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_reference_audit_v${packageJson.version}.json`);
 const integrationReportPath = join(root, '.research/ignite_t02_standards_20260821', `t02_integration_report_v${packageJson.version}.md`);
