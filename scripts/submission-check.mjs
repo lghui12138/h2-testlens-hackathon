@@ -142,6 +142,7 @@ const excelWorkflow = await readFile(join(root, 'src/excel-workflow.mjs'), 'utf8
 const securityBoundaries = await readFile(join(root, 'docs/SECURITY_BOUNDARIES.md'), 'utf8');
 const viteConfig = await readFile(join(root, 'vite.config.ts'), 'utf8');
 const profileSource = await readFile(join(root, 'src/profiles.mjs'), 'utf8');
+const pagesWorkflow = await readFile(join(root, '.github/workflows/deploy-pages.yml'), 'utf8');
 const sourcesLedgerParsed = parseJsonlLedger(await readFile(join(root, '.research/ignite_t02_standards_20260821/sources.jsonl'), 'utf8'), 'sources');
 const evidenceLedgerParsed = parseJsonlLedger(await readFile(join(root, '.research/ignite_t02_standards_20260821/evidence.jsonl'), 'utf8'), 'evidence');
 const claimsLedgerParsed = parseJsonlLedger(await readFile(join(root, '.research/ignite_t02_standards_20260821/claims.jsonl'), 'utf8'), 'claims');
@@ -189,6 +190,14 @@ checks.push({ id: 'profile:method-source-evidence-binding', pass: profileEvidenc
 checks.push({ id: 'security:workbook-size-boundary', pass: excelWorkflow.includes('MAX_WORKBOOK_BYTES') && excelWorkflow.includes('workbookInputSafety') && excelWorkflow.includes('超过 ${MAX_WORKBOOK_BYTES / 1024 / 1024} MiB') && securityBoundaries.includes('64 MiB 压缩输入') && securityBoundaries.includes('不是 GB/T、ISO 或企业验收限值') });
 checks.push({ id: 'security:workbook-zip-preflight', pass: excelWorkflow.includes('MAX_WORKBOOK_UNCOMPRESSED_BYTES') && excelWorkflow.includes('MAX_WORKBOOK_ZIP_ENTRIES') && excelWorkflow.includes('MAX_WORKBOOK_COMPRESSION_RATIO') && excelWorkflow.includes('ZIP64') && excelWorkflow.includes('中央目录') && securityBoundaries.includes('256 MiB 声明展开大小') && securityBoundaries.includes('2048 个 ZIP 条目') && securityBoundaries.includes('200:1 压缩比') });
 checks.push({ id: 'build:optional-hosting-config', pass: viteConfig.includes('optionalSitesPlugin') && viteConfig.includes('existsSync(hostingConfigPath)') && viteConfig.includes('hasHostingConfig ? [optionalSitesPlugin()]') });
+checks.push({ id: 'security:actions-pinned', pass: [
+  'actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803',
+  'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38',
+  'actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d',
+  'actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9',
+  'actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128'
+].every((ref) => pagesWorkflow.includes(ref)) && !/uses:\s*actions\/(?:checkout|setup-node|configure-pages|upload-pages-artifact|deploy-pages)@v\d+\b/.test(pagesWorkflow) });
+checks.push({ id: 'security:actions-node24', pass: pagesWorkflow.includes('configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d') && pagesWorkflow.includes('upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9') && pagesWorkflow.includes('deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128') });
 try {
   const coverageEvidence = JSON.parse(await readFile(coverageEvidencePath, 'utf8'));
   checks.push({ id: 't02:coverage-evidence', pass: coverageEvidence.auditVersion === packageJson.version && coverageEvidence.totalFiles === 198 && coverageEvidence.counts?.processed === 190 && coverageEvidence.counts?.reference_only === 6 && coverageEvidence.counts?.blocked_binary === 1 && coverageEvidence.counts?.declared_no_upload === 1 && coverageEvidence.duplicateProcessedHashes?.length === 0 });
