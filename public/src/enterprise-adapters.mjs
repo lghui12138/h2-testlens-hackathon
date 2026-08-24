@@ -60,11 +60,12 @@ const UNIT_DEFINITIONS = Object.freeze({
   timestamp_s: { s: 1, sec: 1, second: 1, seconds: 1, ms: 0.001, millisecond: 0.001, milliseconds: 0.001, min: 60, minute: 60, minutes: 60, h: 3600, hr: 3600, hour: 3600 },
   current_a: { a: 1, amp: 1, amps: 1, 安: 1, ma: 0.001, 毫安: 0.001 },
   voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001 },
-  power_kw: { kw: 1, mw: 0.001, w: 0.001, 瓦: 0.001 },
+  power_kw: { kw: 1, mw: 1000, w: 0.001, 瓦: 0.001 },
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
   flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
   temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
-  leak_ppm: { ppm: 1, ppb: 0.001 }
+  leak_ppm: { ppm: 1, ppb: 0.001 },
+  conductivity_us_cm: { 'μs/cm': 1, 'us/cm': 1 }
 });
 const UNIT_DISPLAY = Object.freeze({ kw: 'kW', mw: 'MW', w: 'W', kpa: 'kPa', pa: 'Pa', mpa: 'MPa', bar: 'bar', mbar: 'mbar', ma: 'mA', mv: 'mV', a: 'A', v: 'V', ms: 'ms', s: 's', slpm: 'SLPM', ppm: 'ppm', ppb: 'ppb' });
 
@@ -885,6 +886,7 @@ function enterprisePhaseMetricReadiness(config, rows) {
 
 function profileGateIssues(complianceResult) {
   const issues = [];
+  if (complianceResult.approvalStatus === 'example_unapproved') issues.push({ severity: 'critical', code: 'STANDARD_COMPLIANCE_BOUNDARY', title: '企业未审批 profile 不构成标准符合性判定', evidence: '当前使用企业未审批 profile，不构成标准符合性判定或放行依据', recommendation: '请先完成企业审批、修订控制和完整方法实施证据，再进入标准符合性复核。' });
   if (complianceResult.approvalEvidence?.required && !complianceResult.approvalEvidence.ready) issues.push({ severity: 'critical', code: 'APPROVAL_EVIDENCE_MISSING', title: 'approved profile 缺少有效审批与修订证据', evidence: complianceResult.approvalEvidence.evidence, recommendation: '补充审批人标识、审批日期、批准依据/工单号、当前 profile 修订号和修订证据引用后再进入人工符合性复核。' });
   if (complianceResult.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED' && !complianceResult.methodImplementationEvidence?.ready) issues.push({ severity: 'critical', code: 'METHOD_IMPLEMENTATION_EVIDENCE_MISSING', title: '完整方法执行声明缺少结构化实施证据', evidence: complianceResult.methodImplementationEvidence?.evidence || '未提供 methodImplementationEvidence', recommendation: '补充标准来源、条款/步骤覆盖、每项实施证据、验证人、验证日期、验证引用，并清空未关闭缺口后再声明 FULL_METHOD_IMPLEMENTED。' });
   if (complianceResult.measurements?.missing?.length) issues.push({ severity: 'critical', code: 'PROFILE_MEASUREMENT_MISSING', title: 'profile 要求的测量字段未形成有效数据', evidence: complianceResult.measurements.evidence, recommendation: '补充对应原始通道或选择适用的数据集 profile；不要用其他字段替代。' });
@@ -984,7 +986,25 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
   const standardEvidenceBindingRequired = Boolean(config.standardRefs?.length && config.methodSource);
   const formalBlockers = missingProfileFields.length || missingMetadata.length || !approvalEvidence.ready || !standardReferenceEvidence.ready || (standardEvidenceBindingRequired && config.standardEvidenceBinding?.ready !== true) || !methodImplementationEvidence.ready || !fullMethodProfile.ready || !scope.ready || !instruments.ready || !acceptance.ready || !report.ready || !testStages.ready || !testSystem.ready || !testConditions.ready || !environmentConditions.ready || !measurementMethods.ready || !efficiency.ready || !phaseResults.ready || !acquisition.ready || !preCheck.ready || !dataQuality.ready || phaseMetrics.missing.length || !measurements.ready || !phases.ready || (uncertaintyModelRequired && !uncertaintyModelConfigured);
   const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : formalBlockers ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
-  return { status, label: status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? `${datasetLabel} · 标准化资料不完整` : `${datasetLabel} · 可进入人工符合性复核`, approvalStatus: config.approvalStatus || 'pending', approvalEvidence, standardReferenceEvidence, methodExecutionStatus, methodImplementationEvidence, fullMethodProfile, standardRefs: config.standardRefs || [], standardEvidenceBinding: config.standardEvidenceBinding || { ready: !config.standardRefs?.length, status: config.standardRefs?.length ? 'missing' : 'not_configured' }, methodId: config.methodId || null, revision: config.revision || null, methodSource: config.methodSource || null, standardStatus: config.status || null, publicationDate: config.publicationDate || null, effectiveDate: config.effectiveDate || null, scopeEvidence: config.scopeEvidence || null, workflowEvidence: config.workflowEvidence || null, applicationScope: config.applicationScope || datasetLabel, intendedUse: config.intendedUse || '企业资料结构适配与人工复核前处理', missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: measurements.required, missingMeasurements: measurements.missing, requiredPhases: phases.required, missingPhases: phases.missing, requiredPhaseMetrics: config.requiredPhaseMetrics || {}, missingPhaseMetrics: phases.missingMetrics, phaseMetrics, requiredTestStages: config.requiredTestStages || [], testSystemRequirements: config.testSystemRequirements || [], testConditionRequirements: config.testConditionRequirements || null, environmentConditionRequirements: config.environmentConditionRequirements || null, phaseResultRequirements: config.phaseResultRequirements || [], measurementMethodRequirements: config.measurementMethodRequirements || [], efficiencyRequirement: config.efficiencyRequirement || null, acquisition, preCheck, dataQuality, testStages, testSystem, testConditions, environmentConditions, measurementMethods, phaseResults, efficiency, measurements, phases, acceptanceCriteria: config.acceptanceCriteria || {}, acceptanceRules: config.acceptanceRules || [], scope, instruments, acceptance, report, uncertaintyModelRequired, uncertaintyModelConfigured, uncertainty: uncertaintyModelConfigured ? { status: 'configured_pending_calculation' } : { status: 'not_configured' } };
+  const missingSummary = [...missingProfileFields, ...missingMetadata, ...measurements.missing, ...phases.missing, ...phaseMetrics.missing, ...(dataQuality.missing || [])].filter(Boolean);
+  const boundary = config.approvalStatus !== 'approved'
+    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}，方法执行状态为 ${methodExecutionStatus || '未声明'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不构成标准符合性判定或放行依据。`
+    : formalBlockers
+      ? `已使用 approved profile，但仍有 ${missingSummary.length} 项标准化资料未完成（${missingSummary.slice(0, 6).join('、')}${missingSummary.length > 6 ? ' 等' : ''}）；当前仅作人工复核前处理，不自动声明符合性。`
+      : '已使用企业 approved profile，标准化资料已齐备；仍需工程师人工复核与签核后方可进入正式放行。';
+  const auditTrail = {
+    evaluatedAt: new Date().toISOString(),
+    datasetLabel,
+    approvalStatus: config.approvalStatus || 'pending',
+    methodExecutionStatus: methodExecutionStatus || null,
+    formalBlockers: Boolean(formalBlockers),
+    missingSummary: missingSummary.slice(0, 12),
+    blockerCount: missingSummary.length,
+    dataQuality: { rowCount: quality.rowCount, completenessPct: quality.completenessPct, usable: quality.usable },
+    evidenceReadyCount: [approvalEvidence.ready, standardReferenceEvidence.ready, methodImplementationEvidence.ready, fullMethodProfile.ready, scope.ready, instruments.ready, acceptance.ready, report.ready, testStages.ready, testSystem.ready, testConditions.ready, environmentConditions.ready, measurementMethods.ready, efficiency.ready, phaseResults.ready, acquisition.ready, preCheck.ready, dataQuality.ready, measurements.ready, phases.ready].filter(Boolean).length,
+    evidenceTotalCount: 20
+  };
+  return { status, label: status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? `${datasetLabel} · 标准化资料不完整` : `${datasetLabel} · 可进入人工符合性复核`, boundary, auditTrail, approvalStatus: config.approvalStatus || 'pending', approvalEvidence, standardReferenceEvidence, methodExecutionStatus, methodImplementationEvidence, fullMethodProfile, standardRefs: config.standardRefs || [], standardEvidenceBinding: config.standardEvidenceBinding || { ready: !config.standardRefs?.length, status: config.standardRefs?.length ? 'missing' : 'not_configured' }, methodId: config.methodId || null, revision: config.revision || null, methodSource: config.methodSource || null, standardStatus: config.status || null, publicationDate: config.publicationDate || null, effectiveDate: config.effectiveDate || null, scopeEvidence: config.scopeEvidence || null, workflowEvidence: config.workflowEvidence || null, applicationScope: config.applicationScope || datasetLabel, intendedUse: config.intendedUse || '企业资料结构适配与人工复核前处理', missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: measurements.required, missingMeasurements: measurements.missing, requiredPhases: phases.required, missingPhases: phases.missing, requiredPhaseMetrics: config.requiredPhaseMetrics || {}, missingPhaseMetrics: phases.missingMetrics, phaseMetrics, requiredTestStages: config.requiredTestStages || [], testSystemRequirements: config.testSystemRequirements || [], testConditionRequirements: config.testConditionRequirements || null, environmentConditionRequirements: config.environmentConditionRequirements || null, phaseResultRequirements: config.phaseResultRequirements || [], measurementMethodRequirements: config.measurementMethodRequirements || [], efficiencyRequirement: config.efficiencyRequirement || null, acquisition, preCheck, dataQuality, testStages, testSystem, testConditions, environmentConditions, measurementMethods, phaseResults, efficiency, measurements, phases, acceptanceCriteria: config.acceptanceCriteria || {}, acceptanceRules: config.acceptanceRules || [], scope, instruments, acceptance, report, uncertaintyModelRequired, uncertaintyModelConfigured, uncertainty: uncertaintyModelConfigured ? { status: 'configured_pending_calculation' } : { status: 'not_configured' } };
 }
 
 function commonSchema(mapping, fieldCount = Object.keys(mapping).length, conversionOverrides = {}) {
@@ -2554,9 +2574,9 @@ function buildStack(rows, config) {
     powerCrossCheck,
     steadyVoltageMeanV: mean(averageCellValues),
     steadyVoltageStdV: std(averageCellValues),
-    peakTemperatureC: Math.max(...normalized.map((row) => row.temperature_c).filter((value) => value !== null), 0) || null,
-    peakPressureBar: Math.max(...normalized.map((row) => row.pressure_kpa).filter((value) => value !== null), 0) / 100 || null,
-    peakLeakPpm: Math.max(...normalized.map((row) => row.leak_ppm).filter((value) => value !== null), 0) || null,
+    peakTemperatureC: (() => { const values = normalized.map((row) => row.temperature_c).filter((value) => value !== null); return values.length ? Math.max(...values) : null; })(),
+    peakPressureBar: (() => { const values = normalized.map((row) => row.pressure_kpa).filter((value) => value !== null); return values.length ? Math.max(...values) / 100 : null; })(),
+    peakLeakPpm: (() => { const values = normalized.map((row) => row.leak_ppm).filter((value) => value !== null); return values.length ? Math.max(...values) : null; })(),
     hydrogenVolumeNl: null,
     energyConsumedWh: null,
     specificEnergyKWhPerNm3: null,
@@ -2637,3 +2657,4 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
+export { compliance };

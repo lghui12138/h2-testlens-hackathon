@@ -97,7 +97,7 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
-    methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
     publicationDate: '2025-08-29',
     effectiveDate: '2025-12-01',
@@ -258,7 +258,7 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
-    methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
     publicationDate: '2025-03-28',
     effectiveDate: '2025-07-01',
@@ -476,11 +476,8 @@ export const DEVICE_PROFILES = Object.freeze([
       coolant_out_pressure_kpa: '循环水出堆压力（kPa）',
       h2_humidifier_water_temp_c: '阳极增湿罐水温度（℃）',
       air_humidifier_water_temp_c: '阴极增湿罐水温度（℃）',
-      h2_stoich: '氢气计量比',
-      air_stoich: '空气计量比',
       coolant_flow_lpm: '循环水流量（L/min）',
       coolant_conductivity_us_cm: '循环水电导率（μS/cm）',
-      internal_resistance: '内阻（mΩ）'
     }
   },
   {

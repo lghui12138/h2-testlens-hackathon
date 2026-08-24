@@ -14,6 +14,18 @@ const roleCounts = (fieldUsage = {}) => Object.entries(fieldUsage.roleCounts || 
   .map(([role, value]) => `${role}=${count(value)}`)
   .join('；') || '—';
 
+const fieldRoleSummary = (fieldUsage = null) => {
+  if (!fieldUsage?.sourceFieldCount) return '未进入适配器';
+  const counts = fieldUsage.roleCounts || {};
+  return [
+    `analysis_input=${count(counts.analysis_input ?? 0)}`,
+    `context_or_cross_check=${count(counts.context_or_cross_check ?? 0)}`,
+    `catalog_only=${count(counts.catalog_only ?? 0)}`,
+    `未分类=${count(fieldUsage.unclassifiedSourceFieldCount ?? 0)}`,
+    `冲突=${count(fieldUsage.overlappingSourceFieldCount ?? 0)}`
+  ].join('；');
+};
+
 const statusLabel = (status) => ({
   processed: 'processed · 已进入适配器',
   reference_only: 'reference_only · 仅参考',
@@ -92,6 +104,8 @@ const fieldValueDiagnosticRows = (packages) => packages.flatMap(([name, summary]
   return [`| ${cell(name)} | ${count(diagnostics.fileCount)} | ${count(diagnostics.reviewSignalFileCount)} | ${count(diagnostics.reviewSignalOccurrenceCount)} | ${count(diagnostics.negativeSignalFileCount)} | ${count(diagnostics.zeroDominantSignalFileCount)} | ${count(diagnostics.constantSignalFileCount)} | ${count(diagnostics.parseIssueSignalFileCount)} |`];
 });
 
+const topFieldDiagnosticRows = (coverage) => (coverage.fieldValueDiagnostics?.topObservedReviewFields || []).map((item) => `| ${cell(item.source)} | ${count(item.fileCount)} | ${count(item.negativeCount)} | ${count(item.zeroCount)} | ${count(item.parseInvalidCount)} | ${cell(item.reasons?.join('；') || '需确认字段语义')} |`).join('\n') || '| — | — | — | — | — | — |';
+
 const evidenceDepthRows = (packages) => packages.flatMap(([name, summary]) => {
   const counts = summary.evidenceDepthCounts || {};
   if (!Object.keys(counts).length) return [];
@@ -123,7 +137,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     const referenceRecord = referenceByPath.get(record.path);
     const referenceAuditStatus = referenceRecord ? `${referenceRecord.status} · ${referenceRecord.parser}` : record.usageLedger?.referenceAudit?.required ? '未关联' : '不适用';
     const referenceClaimCount = referenceRecord ? referenceRecord.claims?.length : null;
-    return `| ${index + 1} | ${cell(record.package)} | ${cell(record.path)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${count(record.rowCount)} | ${cell(record.usageLedger?.evidenceDepth)} | ${cell(dispositionLabel(record.usageLedger?.disposition))} | ${boolLabel(record.usageLedger?.parserExecuted)} | ${count(record.usageLedger?.rowsEnteredAdapter)} | ${cell(referenceAuditStatus)} | ${count(referenceClaimCount)} | ${boolLabel(record.usageLedger?.formalConformityClaim)} |`;
+    return `| ${index + 1} | ${cell(record.package)} | ${cell(record.path)} | ${cell(record.sha256)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${count(record.rowCount)} | ${cell(record.usageLedger?.evidenceDepth)} | ${cell(dispositionLabel(record.usageLedger?.disposition))} | ${cell(fieldRoleSummary(record.usageLedger?.fieldUsage))} | ${boolLabel(record.usageLedger?.parserExecuted)} | ${count(record.usageLedger?.rowsEnteredAdapter)} | ${cell(referenceAuditStatus)} | ${count(referenceClaimCount)} | ${boolLabel(record.usageLedger?.formalConformityClaim)} |`;
   }).join('\n');
   const blockedRows = blocked.map((record) => `| ${cell(record.path)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${cell(record.usageLedger?.boundary || record.note)} |`).join('\n') || '| — | — | — | — |';
   const claims = referenceClaimRows(referenceRecords).join('\n') || '| — | — | — | — | — |';
@@ -173,6 +187,14 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     '',
     `全包汇总：${count(coverage.fieldValueDiagnostics?.reviewSignalFileCount)} 个文件出现字段值复核提示，${count(coverage.fieldValueDiagnostics?.reviewSignalOccurrenceCount)} 次字段级提示；${cell(coverage.fieldValueDiagnostics?.boundary || '不替代企业字段语义、无效码表、单位、校准或标准验收限值。')}`,
     '',
+    '### 高风险字段明细（前 20 项）',
+    '',
+    '以下是原始值分布中最常见的字段级复核信号；它们不自动判定为错误，也不直接进入正式符合性结论。字段是否为停机态、无效码、单位错误或真实异常，仍需企业字段字典和工程师复核。',
+    '',
+    '| 字段 | 涉及文件 | 负值数 | 零值数 | 非数值数 | 复核原因 |',
+    '|---|---:|---:|---:|---:|---|',
+    topFieldDiagnosticRows(coverage),
+    '',
     '## 证据深度分层',
     '',
     '`formal_kpi` 表示形成了正式性能点（仍受 profile/标准证据门控）；`descriptive_interval` 表示只形成描述性候选区间或耐久功率点；`dynamic_event_only` 表示只形成动态设定变化事件；`generic_metrics_only` 表示进入适配器并有通用统计，但没有上述业务证据；`reference_boundary` 表示未进入原始时序适配器。',
@@ -213,9 +235,9 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     '',
     '## 全文件使用台账',
     '',
-    '| # | 资料包 | 文件 | 状态 | 原始数据解析器 | 行/功率点 | 证据深度 | 用途层级 | 执行原始解析器 | 进入适配器 | 参考内容审计 | 参考声明数 | 正式符合性声明 |',
-    '|---:|---|---|---|---|---:|---|---|---|---:|---|---:|---|',
-    fileRows || '| — | — | — | — | — | — | — | — | — | — | — | — | — |',
+    '| # | 资料包 | 文件 | 源 SHA-256 | 状态 | 原始数据解析器 | 行/功率点 | 证据深度 | 用途层级 | 字段使用角色（计数） | 执行原始解析器 | 进入适配器 | 参考内容审计 | 参考声明数 | 正式符合性声明 |',
+    '|---:|---|---|---|---|---|---:|---|---|---|---|---:|---|---:|---|',
+    fileRows || '| — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |',
     '',
     '## 未进入时序适配器的文件',
     '',
