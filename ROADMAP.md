@@ -22,6 +22,7 @@
 - Standard evidence rows now carry canonical `standard_id`; a self-declared `evidenceSourceId` cannot bind a listed standard to another standard's ledger row.
 - XLSX export now reports the same empty-result action as Markdown/JSON; formal direct configurations with `standardRefs + methodSource` cannot reach readiness without runtime evidence binding.
 - Public T02 coverage now shows the top five field-value review signals (file count, negative count, zero count) while retaining the non-conformity boundary; it does not delete or reinterpret raw values.
+- Vehicle target-current performance points now require the configured active state (default `FC_MainSts=4`); non-active state rows remain descriptive/insulation evidence only.
 - File, batch-declaration, profile and parameter imports clear their file input after processing, so mobile users can select the same corrected filename again; release receipt display also fails closed on an empty gate map.
 - The compact ledger contains only evidence metadata (18 rows, no raw enterprise data or evidence text), is source/public byte-parity checked, and is included in the package/static Pages asset set. Formal readiness includes the binding status; missing/unknown bindings fail closed.
 - When a GitHub Actions run has `GITHUB_SHA` but no local package receipt, `prepare-github-pages` now writes a commit/run-bound static deployment receipt; it records `check:submission`, tests and typecheck as passed subgates while keeping `build` and `packageSmoke` as `not_run` and the artifact unbound.
