@@ -2264,7 +2264,7 @@ function buildStack(rows, config) {
     // `总电压` channel and an electrical `实际电压` channel are exported.
     // The raw power channel is checked against the electrical measurement,
     // not against a diagnostic total that may use a different convention.
-    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压', '电压（kV）', '电压(kV)']),
+    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压', '电压（kV）', '电压(kV)', '电压']),
     power_kw: resolveProfileMapping(config, 'power_kw') || findHeader(headers, ['功率（kW）', '功率（kW)', '功率(kW)', '电堆功率']),
     avg_cell_voltage_v: findHeader(headers, ['平均电压', '平均单片电压']),
     min_cell_voltage_v: findHeader(headers, ['最小电压（V）', '最小电压(V)', '单片电压最小值']),
