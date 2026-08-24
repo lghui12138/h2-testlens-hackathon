@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.42**。本轮完成企业数据深度适配与报告增强：青川字段映射扩展至 25 个 canonicals（温度 26 别名、压力 24 别名、阀反馈 10 别名、电导率/电压位置等新增 canonical），Excel 输出扩展至 17 个工作表（新增目标工况设定、字段映射、电流平台、稳定区间、处理日志、流阻计算、计量比计算），新增多项式趋势拟合与 Faraday -law 计量比计算；集成测试与回归测试全部通过，`npm test` 当前为 **222/222** 全绿，Python 配套仓库 **90/90** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.43**。本轮完成企业数据深度适配与报告增强：青川字段映射扩展至 25 个 canonicals（温度 26 别名、压力 24 别名、阀反馈 10 别名、电导率/电压位置等新增 canonical），Excel 输出扩展至 17 个工作表（新增目标工况设定、字段映射、电流平台、稳定区间、处理日志、流阻计算、计量比计算），新增多项式趋势拟合与 Faraday -law 计量比计算；集成测试与回归测试全部通过，`npm test` 当前为 **222/222** 全绿，Python 配套仓库 **111/111** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
