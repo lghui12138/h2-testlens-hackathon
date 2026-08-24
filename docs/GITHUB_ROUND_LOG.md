@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · T02 字段复核清单导出轮
+
+- T02 coverage card 新增“下载字段复核清单”：导出当前版本前 5 个高风险字段的字段名、文件数、负值数、零值数、解析无效值数和复核原因；CSV 不含原始数据、不修改分析结果、不生成不合格或标准结论。
+- 静态 Pages 与 Vinext App 共用同一 `src/app.mjs`/`public/src/app.mjs` handler；source/public runtime parity、输入面和现有 coverage summary parity 均通过。
+- 本地门控：`npm test` 184/184、`npm run check:submission` 138/138、定向输入面 10/10、Node syntax、`git diff --check` 通过；T02 198/198 unchanged，现有字段诊断为 176 个文件/2,759 次复核提示。
+- 六智能体本轮再次尝试仍返回 `agent thread limit reached`；不把未启动的分片算作审计结果，继续保留真实边界。
+
 ## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
 
 - 运行时对完整 profile package 做确定性 SHA-256：`approvalStatus` 与 `approvalEvidence` 均纳入绑定，只排除运行时生成的 `trustedApprovalBinding`；API、浏览器 profile 导入和 `batch-watch` 统一传入受控哈希，审批包被改写时 trusted ledger fail-closed。

@@ -16,7 +16,7 @@ import { decodeTextBuffer } from './input-safety.mjs';
 import { observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration, annotateDeclaredBatchRows } from './batch-aggregation.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0 };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, coverageSummary: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0 };
 const assetUrl = (relativePath) => /\/src\/index\.html$/.test(window.location.pathname) ? `../${relativePath}` : `./${relativePath}`;
 let standardEvidencePromise = null;
 let trustedApprovalPromise = null;
@@ -53,6 +53,7 @@ const analysisWorkerState = { worker: null, nextId: 0, pending: new Map() };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+const csvCell = (value) => '"' + String(value ?? '').replaceAll('"', '""') + '"';
 
 function setAnalysisStatus(message, tone = 'neutral') {
   const element = $('#analysis-status');
@@ -1067,6 +1068,7 @@ async function loadCoverageSummary() {
     const response = await fetch(assetUrl('config/t02-coverage-summary.json'));
     if (!response.ok) return;
     const summary = await response.json();
+    state.coverageSummary = summary;
     const counts = summary.counts || {};
     const total = Number(summary.totalFiles || 0);
     const processed = Number(counts.processed || 0);
@@ -1099,6 +1101,26 @@ async function loadCoverageSummary() {
   } catch {
     // The hard-coded markup remains a safe fallback for offline/local previews.
   }
+}
+
+function downloadCoverageReview() {
+  const status = $('#coverage-review-status');
+  const fields = state.coverageSummary?.fieldDiagnostics?.topObservedReviewFields;
+  if (!Array.isArray(fields) || !fields.length) {
+    if (status) status.textContent = '当前版本没有可导出的字段复核重点。';
+    return;
+  }
+  const rows = [
+    ['字段', '文件数', '负值数', '零值数', '解析无效值数', '复核原因'],
+    ...fields.slice(0, 5).map((item) => [item.source, item.fileCount || 0, item.negativeCount || 0, item.zeroCount || 0, item.parseInvalidCount || 0, (item.reasons || []).join('；')])
+  ];
+  const csv = '\uFEFF' + rows.map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  link.download = 'T02-v' + (state.coverageSummary.auditVersion || 'current') + '-字段值复核重点.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  if (status) status.textContent = '已下载 ' + Math.min(fields.length, 5) + ' 个字段复核重点；仅含聚合计数，不含原始数据。';
 }
 
 async function loadReleaseSummary() {
@@ -1320,6 +1342,7 @@ $('#download-xlsx').addEventListener('click', async () => {
   }
 });
 $('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 ensureExtendedMetadataFields();
 renderProfileOptions();
