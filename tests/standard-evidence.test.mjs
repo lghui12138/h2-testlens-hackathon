@@ -74,3 +74,14 @@ test('approval package canonicalization binds self-declared approval fields but 
   changed.profiles[0].thresholds.maxTemperatureC = 81;
   assert.notEqual(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
 });
+
+test('trusted approval ledger accepts the exact package hash and blocks a mismatch', () => {
+  const payload = { profiles: [{ id: 'approved-pkg', approvalStatus: 'approved', revision: 'r1', methodId: 'M1' }] };
+  const packageHash = 'a'.repeat(64);
+  const row = { profileId: 'approved-pkg', revision: 'r1', methodId: 'M1', status: 'approved', approvalId: 'APR-1', packageSha256: packageHash, validUntil: '2026-12-31', revoked: false };
+  const accepted = validateTrustedApprovalBinding(payload, [row], { now: '2026-08-24', packageHashes: { 'approved-pkg': packageHash } });
+  assert.equal(accepted.ready, true);
+  const rejected = validateTrustedApprovalBinding(payload, [row], { now: '2026-08-24', packageHashes: { 'approved-pkg': 'b'.repeat(64) } });
+  assert.equal(rejected.ready, false);
+  assert.ok(rejected.checks[0].malformed.includes('trustedApprovalLedger.packageHashMismatch'));
+});
