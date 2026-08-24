@@ -14,6 +14,18 @@ const roleCounts = (fieldUsage = {}) => Object.entries(fieldUsage.roleCounts || 
   .map(([role, value]) => `${role}=${count(value)}`)
   .join('；') || '—';
 
+const fieldRoleSummary = (fieldUsage = null) => {
+  if (!fieldUsage?.sourceFieldCount) return '未进入适配器';
+  const counts = fieldUsage.roleCounts || {};
+  return [
+    `analysis_input=${count(counts.analysis_input ?? 0)}`,
+    `context_or_cross_check=${count(counts.context_or_cross_check ?? 0)}`,
+    `catalog_only=${count(counts.catalog_only ?? 0)}`,
+    `未分类=${count(fieldUsage.unclassifiedSourceFieldCount ?? 0)}`,
+    `冲突=${count(fieldUsage.overlappingSourceFieldCount ?? 0)}`
+  ].join('；');
+};
+
 const statusLabel = (status) => ({
   processed: 'processed · 已进入适配器',
   reference_only: 'reference_only · 仅参考',
@@ -123,7 +135,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     const referenceRecord = referenceByPath.get(record.path);
     const referenceAuditStatus = referenceRecord ? `${referenceRecord.status} · ${referenceRecord.parser}` : record.usageLedger?.referenceAudit?.required ? '未关联' : '不适用';
     const referenceClaimCount = referenceRecord ? referenceRecord.claims?.length : null;
-    return `| ${index + 1} | ${cell(record.package)} | ${cell(record.path)} | ${cell(record.sha256)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${count(record.rowCount)} | ${cell(record.usageLedger?.evidenceDepth)} | ${cell(dispositionLabel(record.usageLedger?.disposition))} | ${boolLabel(record.usageLedger?.parserExecuted)} | ${count(record.usageLedger?.rowsEnteredAdapter)} | ${cell(referenceAuditStatus)} | ${count(referenceClaimCount)} | ${boolLabel(record.usageLedger?.formalConformityClaim)} |`;
+    return `| ${index + 1} | ${cell(record.package)} | ${cell(record.path)} | ${cell(record.sha256)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${count(record.rowCount)} | ${cell(record.usageLedger?.evidenceDepth)} | ${cell(dispositionLabel(record.usageLedger?.disposition))} | ${cell(fieldRoleSummary(record.usageLedger?.fieldUsage))} | ${boolLabel(record.usageLedger?.parserExecuted)} | ${count(record.usageLedger?.rowsEnteredAdapter)} | ${cell(referenceAuditStatus)} | ${count(referenceClaimCount)} | ${boolLabel(record.usageLedger?.formalConformityClaim)} |`;
   }).join('\n');
   const blockedRows = blocked.map((record) => `| ${cell(record.path)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${cell(record.usageLedger?.boundary || record.note)} |`).join('\n') || '| — | — | — | — |';
   const claims = referenceClaimRows(referenceRecords).join('\n') || '| — | — | — | — | — |';
@@ -213,9 +225,9 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     '',
     '## 全文件使用台账',
     '',
-    '| # | 资料包 | 文件 | 源 SHA-256 | 状态 | 原始数据解析器 | 行/功率点 | 证据深度 | 用途层级 | 执行原始解析器 | 进入适配器 | 参考内容审计 | 参考声明数 | 正式符合性声明 |',
-    '|---:|---|---|---|---|---|---:|---|---|---|---:|---|---:|---|',
-    fileRows || '| — | — | — | — | — | — | — | — | — | — | — | — | — | — |',
+    '| # | 资料包 | 文件 | 源 SHA-256 | 状态 | 原始数据解析器 | 行/功率点 | 证据深度 | 用途层级 | 字段使用角色（计数） | 执行原始解析器 | 进入适配器 | 参考内容审计 | 参考声明数 | 正式符合性声明 |',
+    '|---:|---|---|---|---|---|---:|---|---|---|---|---:|---|---:|---|',
+    fileRows || '| — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |',
     '',
     '## 未进入时序适配器的文件',
     '',

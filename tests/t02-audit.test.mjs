@@ -161,6 +161,9 @@ test('T02 integration report exposes every file ledger and preserves non-conform
   assert.equal((report.match(/^\| \d+ \| /gm) || []).length, coverage.totalFiles);
   assert.match(report, /全文件使用台账/);
   assert.match(report, /源 SHA-256/);
+  assert.match(report, /字段使用角色（计数）/);
+  assert.match(report, /analysis_input=323/);
+  assert.match(report, /未分类=0/);
   assert.equal((report.match(/\| [0-9a-f]{64} \|/g) || []).length, coverage.totalFiles);
   assert.match(report, /blocked_binary/);
   assert.match(report, /declared_no_upload/);
