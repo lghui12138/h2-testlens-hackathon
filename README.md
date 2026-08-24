@@ -41,6 +41,77 @@ npm start
 
 然后打开 <https://127.0.0.1:4173>。本地分析不依赖外部服务；托管构建依赖仓库锁定的 Node 包。演示数据位于 `sample-data/`：标准样本、中文单位样本和基线样本分别覆盖单次分析、字段适配和批次对比。
 
+## 使用示例
+
+### 1. 分析单个 CSV 文件
+
+启动本地服务器后，在浏览器打开 `http://127.0.0.1:4173`，将 CSV 拖入上传区域，或点击“载入演示样本”使用 `sample-data/test_run_001.csv`。页面会自动识别 `timestamp_s / phase / current_a / voltage_v / temperature_c / pressure_bar / flow_slpm / leak_ppm` 等标准字段，并计算电流平台、稳态窗口、极化统计和异常证据。
+
+```bash
+# 启动本地分析服务器
+npm start
+# 然后访问 https://127.0.0.1:4173
+```
+
+### 2. 解读分析结果
+
+分析完成后，页面会展示以下核心证据：
+
+- **工况分段**：`idle / ramp / steady / cooldown` 等阶段的起止时间、持续时长和样本数。
+- **电流平台**：每个平台的目标电流、实际电流均值/极值/标准差、持续时间和样本数。
+- **稳态窗口**：平台内满足容差要求的连续区间，默认自动选择最后一个合格区间，工程师可在界面中人工改选。
+- **KPI 与风险**：峰值功率、稳态电压均值/标准差、峰值温度/压力、泄漏监测、压力漂移、绝缘阻值趋势和单片电压异常。
+- **证据溯源**：每个 KPI 都绑定 `metricTrace`，包含 canonical 字段、 derivation 标签和行范围定位，原始行不上传。
+
+> 注意：`descriptive_only` 模式下，所有数值均为描述性证据，不自动判定为安全阈值、标准符合性或企业放行结论。
+
+### 3. 使用批次对比功能
+
+批次对比用于将当前测试与基线或上一批次进行差异分析。通过本地 API 或浏览器批次面板均可触发：
+
+```bash
+# 方式一：浏览器批次面板
+# 在多文件导入后，上传 config/batch-declaration.example.json 形状的企业批次声明，
+# 页面会展示每文件的 READY/NOT_READY、实际中位采样间隔、声明偏差和边界问题代码。
+
+# 方式二：本地 API 批次对比
+curl -X POST http://127.0.0.1:4173/api/compare \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "baselineCsv": "'"$(cat sample-data/test_run_baseline.csv)'"",
+    "currentCsv": "'"$(cat sample-data/test_run_001.csv)'"",
+    "baselineFileName": "baseline.csv",
+    "currentFileName": "current.csv",
+    "includeReport": true
+  }'
+```
+
+响应中的 `comparison` 对象包含：
+
+- `verdictTransition`：基线判定 → 当前判定
+- `kpiDeltas`：关键指标差值
+- `newRisks` / `resolvedRisks`：新增与消除的风险项
+- `reportMarkdown`：可下载的对比报告 Markdown
+
+### 4. 导出报告
+
+支持三种导出方式：
+
+- **Markdown 报告**：点击页面中的“下载报告”或调用 API `POST /api/analyze?includeReport=true`，响应中的 `reportMarkdown` 字段即为完整中文报告，可直接保存为 `.md`。
+- **Excel 报告**：企业资料解析后，页面会生成包含 14 个工作表的 Excel 文件（测试信息、参数、目标工况、质量检查、平台、稳定区间、极化数据、异常清单、处理日志等）。
+- **JSON 证据包**：API 返回的 `metricTrace` 和结构化 `quality / issues / platforms` 可用于二次开发或存档。
+
+```bash
+# 导出 Markdown 报告（通过本地 API）
+curl -X POST http://127.0.0.1:4173/api/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "csv": "'"$(cat sample-data/test_run_001.csv)'"",
+    "fileName": "demo-run.csv",
+    "includeReport": true
+  }' | jq -r '.reportMarkdown' > demo-report.md
+```
+
 ## GitHub Pages 独立部署
 
 GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #101）成功构建/部署；部署 job 返回公开渲染地址 `https://lghui.top/h2-testlens-hackathon/`，自定义域 HTTPS/可达性仍属于外部配置状态。Pages workflow 已固定到官方 Node24 action SHA。
