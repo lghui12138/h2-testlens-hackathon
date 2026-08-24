@@ -202,26 +202,32 @@ function unitTransform(field, header) {
     if (normalized.includes('min') || normalized.includes('分钟')) return { mode: 'scale', factor: 60, label: 'min→s' };
   }
   if (field === 'power_w' || field === 'power_setpoint_w') {
+    if (/\bmw\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
     if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
     if (normalized.includes('mw') || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
   }
+  if (field === 'current_a' && (/\bua\b/i.test(String(header ?? '')) || /\bµa\b/i.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µA→A' };
   if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };
   if (field === 'current_a' && (normalized.includes('ka') || normalized.includes('千安'))) return { mode: 'scale', factor: 1000, label: 'kA→A' };
+  if (field === 'voltage_v' && (/\buv\b/i.test(String(header ?? '')) || /\bµv\b/i.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µV→V' };
   if (field === 'voltage_v' && (normalized.includes('mv') || normalized.includes('毫伏'))) return { mode: 'scale', factor: 0.001, label: 'mV→V' };
   if (field === 'voltage_v' && (normalized.includes('kv') || normalized.includes('千伏'))) return { mode: 'scale', factor: 1000, label: 'kV→V' };
   if (field === 'pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'gas_pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'ambient_pressure_kpa') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 1, label: 'kPa→kPa' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 1000, label: 'MPa→kPa' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.1, label: 'mbar→kPa' };
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
