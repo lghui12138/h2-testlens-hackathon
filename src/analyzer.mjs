@@ -201,11 +201,14 @@ function unitTransform(field, header) {
     if (normalized.includes('ms') || normalized.includes('毫秒')) return { mode: 'scale', factor: 0.001, label: 'ms→s' };
     if (normalized.includes('min') || normalized.includes('分钟')) return { mode: 'scale', factor: 60, label: 'min→s' };
   }
-  if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };
-  if (field === 'voltage_v' && (normalized.includes('mv') || normalized.includes('毫伏'))) return { mode: 'scale', factor: 0.001, label: 'mV→V' };
   if (field === 'power_w' || field === 'power_setpoint_w') {
     if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
+    if (normalized.includes('mw') || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
   }
+  if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };
+  if (field === 'current_a' && (normalized.includes('ka') || normalized.includes('千安'))) return { mode: 'scale', factor: 1000, label: 'kA→A' };
+  if (field === 'voltage_v' && (normalized.includes('mv') || normalized.includes('毫伏'))) return { mode: 'scale', factor: 0.001, label: 'mV→V' };
+  if (field === 'voltage_v' && (normalized.includes('kv') || normalized.includes('千伏'))) return { mode: 'scale', factor: 1000, label: 'kV→V' };
   if (field === 'pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };

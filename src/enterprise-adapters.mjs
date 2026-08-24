@@ -2656,3 +2656,4 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
+export { compliance };

@@ -978,6 +978,21 @@ function generateHistoryThumbnail(result) {
 }
 
 function renderReport(result, draft = state.aiDraft) {
+
+function renderComplianceHistory() {
+  const container = $('#compliance-history-list');
+  if (!container) return;
+  const history = state.complianceHistory || [];
+  if (!history.length) {
+    container.innerHTML = '<div class="compliance-history-empty">暂无标准符合性历史记录；重新分析将追加审计快照。</div>';
+    return;
+  }
+  container.innerHTML = history.map((item, index) => {
+    const statusClass = String(item.status || '').toLowerCase().replaceAll('_', '-');
+    const time = new Date(item.savedAt || item.evaluatedAt).toLocaleString('zh-CN');
+    return `<div class="compliance-history-row"><span class="compliance-history-time">${escapeHtml(time)}</span><span class="compliance-history-status ${statusClass}">${escapeHtml(item.label || item.status || '未评估')}</span><small>审批 ${escapeHtml(item.approvalStatus || '未指定')} · 方法 ${escapeHtml(item.methodExecutionStatus || '未声明')} · 证据 ${item.evidenceReadyCount || 0}/${item.evidenceTotalCount || 0}</small>${item.missingSummary?.length ? `<small>缺失：${escapeHtml(item.missingSummary.slice(0, 6).join('、'))}${item.missingSummary.length > 6 ? '…' : ''}</small>` : ''}</div>`;
+  }).join('');
+}
   const status = verdictLabel(result.verdict);
   const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析草稿';
   const compliance = result.compliance || {};
@@ -990,7 +1005,10 @@ function renderReport(result, draft = state.aiDraft) {
     ...(compliance.missingPhaseMetrics || []),
     ...(compliance.missingMetadata || [])
   ];
-  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span></div>${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
+  const approvalDetail = compliance.approvalEvidence?.ready ? '审批证据已形成' : (compliance.approvalEvidence?.evidence || '审批证据未形成');
+  const standardDetail = compliance.standardReferenceEvidence?.ready ? '标准引用证据已形成' : (compliance.standardReferenceEvidence?.evidence || '标准引用证据未形成');
+  const methodDetail = compliance.methodImplementationEvidence?.ready ? '方法实施证据已形成' : (compliance.methodImplementationEvidence?.evidence || '方法实施证据未形成');
+  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span></div>${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
