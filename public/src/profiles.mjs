@@ -951,7 +951,8 @@ export function validateProfilePackage(payload) {
       else for (const [field, unitSpec] of Object.entries(profile.vehicleSignalUnits)) {
         if (!['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field)) errors.push(`${profile.id || '未知'} vehicleSignalUnits 含未知字段：${field}`);
         const sourceUnit = typeof unitSpec === 'string' ? unitSpec : unitSpec?.sourceUnit;
-        if (!['V', 'mV'].includes(sourceUnit)) errors.push(`${profile.id || '未知'} vehicleSignalUnits.${field}.sourceUnit 必须为 V 或 mV`);
+        const allowedSourceUnits = field === 'cell_voltage_variance' ? ['V²', 'mV²', 'V2', 'mV2', 'V^2', 'mV^2'] : ['V', 'mV'];
+        if (!allowedSourceUnits.includes(sourceUnit)) errors.push(`${profile.id || '未知'} vehicleSignalUnits.${field}.sourceUnit 必须为 ${field === 'cell_voltage_variance' ? 'V² 或 mV²' : 'V 或 mV'}`);
       }
     }
     if (profile.vehicleUnitEvidenceRequired !== undefined && typeof profile.vehicleUnitEvidenceRequired !== 'boolean') errors.push(`${profile.id || '未知'} vehicleUnitEvidenceRequired 必须是布尔值`);

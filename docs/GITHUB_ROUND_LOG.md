@@ -32,6 +32,11 @@
 - 云端门控覆盖 188/188 测试、139/139 提交检查、T02 coverage 198/198 unchanged、18/18 standard-id reconciliation、无单位流量阻断、public quality 脱敏和 Excel parity。
 - 当前仍不宣称标准认证、企业放行或自定义域 HTTPS；六智能体分片已全部收齐，下一轮继续处理方差单位建模、输入前大小门和 outbound redirect 关闭等残余。
 
+## 2026-08-24 · FC_VARVoltage 方差单位建模轮
+
+- `FC_VARVoltage` 不再与一次方电压共用 V/mV 换算；需要单位证据的 profile 现在要求 `V²` 或 `mV²`，`mV²` 按 `1e-6` 转为 `V²`，普通 V/mV 直接阻断。
+- 该修正与非正单体电压过滤、无单位流量阻断、public quality 脱敏和 Excel parity 一并进入 source/public runtime；现有 T02 descriptive profile 未提供这些批准单位，因此仍保持 fail-closed/DEMO_ONLY。
+
 ## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
 
 - 运行时对完整 profile package 做确定性 SHA-256：`approvalStatus` 与 `approvalEvidence` 均纳入绑定，只排除运行时生成的 `trustedApprovalBinding`；API、浏览器 profile 导入和 `batch-watch` 统一传入受控哈希，审批包被改写时 trusted ledger fail-closed。

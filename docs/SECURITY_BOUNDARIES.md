@@ -7,6 +7,7 @@
 - CSV/TXT 入口在进入文本解析器前执行 BOM、控制字节和二进制检测；二进制或无法确认编码的文件进入 `blocked_binary`。
 - 文件哈希、文件大小、记录数和批次边界进入 provenance/manifest；历史只保存摘要，不保存原始测试行。
 - 公共 analysis projection 会递归移除 `sourceFile/source_file/sessionId/session_id` 等质量与数据集来源标识；本地 manifest/历史仍可能保存用户选择的文件名，Feishu 外发前仍需企业批准的脱敏策略。
+- 需要 profile 单位证据的车辆 `cell_voltage_variance` 单独接受 `V²/mV²`，避免把方差当一次方电压换算；未声明或使用 V/mV 时保持 `NOT_READY`/不进入该物理 KPI。
 - `descriptive_only` T02 profile 不执行阈值、验收、安全、符合性或放行结论。
 - 服务端 API 仅提供显式 JSON/CSV 分析入口；没有把原始 XLSX 自动上传到远程模型的路径。
 - 原始时序/参数 XLSX 在进入 SheetJS 前统一执行 ZIP 容器预检：64 MiB 压缩输入、256 MiB 声明展开大小、2048 个 ZIP 条目和 200:1 压缩比上限；损坏目录、ZIP64、加密条目和不支持的压缩方法均阻断，不进入解析器。这些是资源保护参数，不是 GB/T、ISO 或企业验收限值。

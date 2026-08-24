@@ -90,6 +90,7 @@ constraints:
   - "Enterprise stack anode/cathode flow mappings must reject missing standard-state units and actual-volume L/min before stoichiometry; implicit flow values must never be treated as SLPM."
   - "Public analysis quality projections must recursively redact source_file/sourceFile/session identifiers while retaining bounded quality counts; Excel runtime source/public copies must remain byte-parity checked."
   - "Every runtime evidence row carrying standard_id must reconcile to the research evidence JSONL by evidence_id; this metadata reconciliation must not create claims or enterprise approval records."
+  - "Vehicle variance fields must use an independent squared-voltage unit contract (V²/mV²); ordinary V/mV declarations cannot silently scale cell_voltage_variance."
 evidence:
   automated: [tests/analyzer.test.mjs, tests/input-surface.test.mjs, tests/input-safety.test.mjs, tests/batch-aggregation.test.mjs, tests/batch-watch-cli.test.mjs, tests/evaluation-mode.test.mjs, tests/t02-audit.test.mjs, tests/t02-source-integrity.test.mjs, tests/standards-profile.test.mjs, scripts/ai-eval.mjs, scripts/submission-check.mjs, scripts/package-submission.mjs, scripts/profile-audit.mjs, scripts/t02-source-integrity.mjs, src/t02-report.mjs, scripts/t02-report.mjs, .research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.38.json, .research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.38.json, .research/ignite_t02_standards_20260821/t02_integration_report_v3.5.38.md]
   api_smoke: [/api/ai-draft]

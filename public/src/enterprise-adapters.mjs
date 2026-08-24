@@ -1400,12 +1400,24 @@ function buildVehicle(rows, config) {
   const unresolvedUnitFields = new Set();
   const invalidSentinelCounts = {};
   const nonPositiveCellVoltageCounts = {};
+  const normalizeVehicleUnit = (value) => {
+    const raw = String(value ?? '').trim().replaceAll(' ', '');
+    if (['V²', 'V2', 'V^2'].includes(raw)) return 'V²';
+    if (['mV²', 'mV2', 'mV^2'].includes(raw)) return 'mV²';
+    return raw;
+  };
   const normalizeVehicleCellVoltage = (value, field) => {
     const raw = num(value);
     if (raw === null) return null;
     const declared = vehicleSignalUnits[field];
-    const unit = typeof declared === 'string' ? declared : declared?.sourceUnit;
-    if (vehicleUnitEvidenceRequired && ['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field) && !['mV', 'V'].includes(unit)) {
+    const unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
+    const varianceField = field === 'cell_voltage_variance';
+    const allowedUnits = varianceField ? ['mV²', 'V²'] : ['mV', 'V'];
+    if (unit && !allowedUnits.includes(unit)) {
+      unresolvedUnitFields.add(field);
+      return null;
+    }
+    if (vehicleUnitEvidenceRequired && ['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field) && !allowedUnits.includes(unit)) {
       unresolvedUnitFields.add(field);
       return null;
     }
@@ -1413,7 +1425,7 @@ function buildVehicle(rows, config) {
       invalidSentinelCounts[field] = (invalidSentinelCounts[field] || 0) + 1;
       return null;
     }
-    const normalized = unit === 'mV' ? raw / 1000 : raw;
+    const normalized = varianceField ? (unit === 'mV²' ? raw / 1_000_000 : raw) : unit === 'mV' ? raw / 1000 : raw;
     if (!['mV', 'V'].includes(unit) && ['min_cell_voltage_v', 'avg_cell_voltage_v'].includes(field) && (raw < -2.5 || raw > 2.5)) {
       unresolvedUnitFields.add(field);
       return null;

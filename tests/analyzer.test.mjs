@@ -1721,9 +1721,10 @@ test('applies an explicitly declared vehicle mV unit without guessing from magni
     '0,4,10,320,3.2,700,3,740,8,12,500,1',
     '1,4,10,320,3.2,701,3,741,8,12,500,1'
   ].join('\n'));
-  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'mV' }, avg_cell_voltage_v: { sourceUnit: 'mV' }, cell_voltage_variance: { sourceUnit: 'mV' } } });
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'mV' }, avg_cell_voltage_v: { sourceUnit: 'mV' }, cell_voltage_variance: { sourceUnit: 'mV²' } } });
   assert.equal(result.dataset.unitDiagnostics.unresolvedFields.length, 0);
   assert.equal(result.rows[0].avg_cell_voltage_v, 0.74);
+  assert.equal(result.rows[0].cell_voltage_variance, 0.000012);
   assert.ok(Math.abs(result.metrics.steadyVoltageMeanV - 0.7405) < 1e-12);
 });
 
@@ -1734,7 +1735,7 @@ test('keeps positive cell voltage in KPI while filtering nonpositive raw values'
     '1,4,10,320,3.2,0,3,0,8,1,500,1',
     '2,4,10,320,3.2,0.70,3,0.72,8,1,500,1'
   ].join('\n'));
-  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V' } } });
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V²' } } });
   assert.equal(result.metrics.steadyVoltageMeanV, 0.72);
   assert.equal(result.rows[0].avg_cell_voltage_raw, 0);
   assert.equal(result.rows[0].avg_cell_voltage_v, null);
@@ -1747,7 +1748,7 @@ test('accepts explicitly declared vehicle V units when unit evidence is required
     '0,4,10,320,3.2,0.70,3,0.72,8,1,500,1',
     '1,4,10,320,3.2,0.71,3,0.73,8,1,500,1'
   ].join('\n'));
-  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V' } } });
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V²' } } });
   assert.deepEqual(result.dataset.unitDiagnostics.unresolvedFields, []);
   assert.equal(result.metrics.steadyVoltageMeanV, 0.725);
 });
