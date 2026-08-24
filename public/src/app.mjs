@@ -438,6 +438,10 @@ function applyProfile(profileId) {
     $('#max-leak').value = profile.thresholds?.maxLeakPpm ?? DEFAULT_CONFIG.maxLeakPpm;
     $('#max-voltage-std').value = profile.thresholds?.maxVoltageStdV ?? DEFAULT_CONFIG.maxVoltageStdV;
     $('#max-pressure-drift').value = profile.thresholds?.maxPressureDriftBarPerMin ?? DEFAULT_CONFIG.maxPressureDriftBarPerMin;
+    if (profile.fieldMapping && Object.keys(profile.fieldMapping).length) {
+      state.fieldMapping = profile.fieldMapping;
+      renderSchema({ mapping: state.fieldMapping, conversions: {}, mappingWarnings: [], sourceFieldMap: state.fieldMapping });
+    }
     const references = profile.standardRefs?.length ? ` · 标准 ${profile.standardRefs.map((reference) => reference.id).join('、')}` : '';
     const approvalEvidence = profile.approvalStatus === 'approved' ? (profile.approvalEvidence ? '审批证据已提供' : '审批证据缺失') : '非 approved 路径';
     $('#profile-note').textContent = `${state.profileOrganization} · ${profile.source} · ${profile.approvalStatus || '未指定审批状态'} · ${approvalEvidence}${references} · 模式 ${evaluationMode}${thresholdNote} · ${profile.description}`;
@@ -640,7 +644,7 @@ function renderComparison(comparison = state.comparison) {
 
 function renderHistory(history = state.history) {
   $('#history-status').textContent = `${history.length} 条摘要`;
-  $('#history-list').innerHTML = history.length ? history.map((item) => `<div class="history-row"><span><b>${escapeHtml(item.fileName)}</b><small>${new Date(item.savedAt).toLocaleString('zh-CN')} · ${escapeHtml(item.config?.profileName ?? '未指定模板')}</small></span><strong class="${String(item.verdict).toLowerCase()}">${verdictLabel(item.verdict)}</strong></div>`).join('') : '<div class="history-empty">还没有保存批次。保存后只保留摘要，不保留原始行。</div>';
+  $('#history-list').innerHTML = history.length ? history.map((item) => `<div class="history-row"><img class="history-thumb" src="${item.thumbnail || ''}" alt="" width="120" height="72" /><span><b>${escapeHtml(item.fileName)}</b><small>${new Date(item.savedAt).toLocaleString('zh-CN')} · ${escapeHtml(item.config?.profileName ?? '未指定模板')}</small></span><strong class="${String(item.verdict).toLowerCase()}">${verdictLabel(item.verdict)}</strong></div>`).join('') : '<div class="history-empty">还没有保存批次。保存后只保留摘要，不保留原始行。</div>';
 }
 
 function renderSchema(result) {
@@ -878,6 +882,42 @@ function drawEnterprisePerformanceChart(result) {
   points.forEach((point) => { ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(x(point.trendX), y(point.averageCellVoltageV), 4, 0, Math.PI * 2); ctx.fill(); });
   const axisLabel = result.dataset.trendXAxis === 'timestamp' ? '实际日期/时间' : '运行时长（h）'; const modelLabel = trend?.model === 'quadratic' ? '二次多项式' : '线性'; const fitLabel = trend?.status === 'fitted' ? `R² ${fmt(trend.rSquared, 3)}` : '点数不足'; const startLabel = result.dataset.trendXAxis === 'timestamp' ? new Date(xMin * 86400000).toISOString().slice(0, 10) : `${fmt(xMin, 1)} h`; const endLabel = result.dataset.trendXAxis === 'timestamp' ? new Date(xMax * 86400000).toISOString().slice(0, 10) : `${fmt(xMax, 1)} h`;
   ctx.fillStyle = '#13262d'; ctx.fillText(formal ? '平均单体电压（V）' : '描述性候选区间 · 平均单体电压（V）', pad.left, 12); ctx.fillText(`${axisLabel} · ${modelLabel} · ${fitLabel}`, pad.left, height - 20); ctx.textAlign = 'right'; ctx.fillText(endLabel, width - pad.right, height - 8); ctx.textAlign = 'left'; ctx.fillText(startLabel, pad.left, height - 8);
+}
+
+function generateHistoryThumbnail(result) {
+  try {
+    const width = 200; const height = 120;
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0b1a1d'; ctx.fillRect(0, 0, width, height);
+    const pad = { left: 26, right: 10, top: 14, bottom: 18 };
+    const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom;
+    const grid = () => { ctx.strokeStyle = 'rgba(154,172,184,.12)'; ctx.lineWidth = 1; for (let i = 0; i < 3; i += 1) { const y = pad.top + i * plotH / 2; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke(); } };
+    const series = (() => {
+      if (!result || !Array.isArray(result.rows) || !result.rows.length) return null;
+      if (result.datasetType === 'durability') {
+        const points = (result.dataset?.points || []).filter((point) => Number.isFinite(point.averageCellVoltageMv));
+        if (!points.length) return null;
+        const values = points.map((point) => point.averageCellVoltageMv);
+        const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW;
+        const y = (value) => { const min = Math.min(...values); const max = Math.max(...values); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
+        grid();
+        ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.6; ctx.beginPath(); points.forEach((point, index) => { const px = x(index); const py = y(point.averageCellVoltageMv); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+        return { label: '平均单体 mV', color: '#5bd4c0' };
+      }
+      const values = result.rows.map((row) => num(row.current_a)).filter(Number.isFinite);
+      if (!values.length) return null;
+      const x = (index) => pad.left + index / Math.max(result.rows.length - 1, 1) * plotW;
+      const y = (value) => { const min = Math.min(...values); const max = Math.max(...values); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
+      grid();
+      ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.6; ctx.beginPath(); values.forEach((value, index) => { const px = x(index); const py = y(value); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+      return { label: '电流 A', color: '#5bd4c0' };
+    })();
+    if (!series) { ctx.fillStyle = '#71838a'; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillText('暂无时序数据', pad.left, pad.top + 14); }
+    ctx.fillStyle = '#a4b5bd'; ctx.font = '9px Avenir Next, sans-serif'; ctx.fillText(series?.label || '', pad.left, height - 4);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
 }
 
 function renderReport(result, draft = state.aiDraft) {
@@ -1485,7 +1525,8 @@ $('#load-t02-profiles')?.addEventListener('click', async () => {
 $('#save-history').addEventListener('click', () => {
   if (!state.result) return;
   const previous = state.history[0];
-  state.history = appendHistory(window.localStorage, state.result, state.fileName, undefined, state.currentManifest);
+  const thumbnail = generateHistoryThumbnail(state.result);
+  state.history = appendHistory(window.localStorage, state.result, state.fileName, undefined, state.currentManifest, thumbnail);
   writeBatchManifest(window.localStorage, state.currentManifest);
   if (previous) state.comparison = compareResults(previous, state.result, { baselineName: previous.fileName, currentName: state.fileName });
   renderHistory();
