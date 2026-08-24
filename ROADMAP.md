@@ -33,6 +33,7 @@
 - Both static and Vinext surfaces now expose a live analysis result announcement, text summaries for trend/enterprise/performance canvases, and 44px mobile navigation targets; the chart layout reserves space for the readable summaries.
 - Gate: `npm test` **180/180**, `npm run check:submission` **132/132**, typecheck, Vinext build 5/5 and package smoke install/test/typecheck/build/start/HTTP pass. API smoke now exercises AI client-parameter isolation, metricTrace, runtime method-source binding and per-standard-reference evidence binding. The package receipt remains the source of truth for the final artifact SHA-256.
 - Residual: GitHub Actions Run 86 successfully executed the package-smoke hook and deployed the Pages artifact; cloud package/ZIP verification is now closed in the repository path. Final live receipt readback remains pending while the custom domain is unreachable.
+- Latest readback: Actions Run 88 successfully deployed `b648db9`; cloud package verification remains closed, while custom-domain live readback is still pending.
 
 - Enterprise adapter compliance now preserves standard-reference readiness, method source, standard dates, full-method prerequisites and the same non-certification boundary already used by the generic analyzer.
 - Vehicle fractional time-only rollover and cross-session pseudo-duration defects are closed; stack target points now fail closed on invalid timestamp quality, repeated current conditions use enabled target fields for disambiguation, and formal power acceptance requires an original power channel.

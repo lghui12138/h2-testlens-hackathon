@@ -1,5 +1,10 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · Run 88 回读轮
+
+- 提交 `b648db9` 已推送；Actions Run 88 成功，`build`/`deploy` 通过，云端 package smoke hook 继续生效。
+- 本轮公开内容包含 cell mV→V 单位门、演示样本失败恢复和车辆非活动状态性能点排除；自定义域仍不可达。
+
 ## 2026-08-24 · Run 86 云端 package smoke 回读轮
 
 - `prepare-github-pages.mjs` 在 GitHub Actions 缺少本地 receipt 时自动执行 `npm run package:submission`；package smoke、ZIP 完整性或 SHA-256 失败会直接阻断 Pages 准备。

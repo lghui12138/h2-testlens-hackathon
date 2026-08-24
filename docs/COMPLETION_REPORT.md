@@ -1,5 +1,7 @@
 # Completion Report
 
+Latest GitHub deployment readback: commit `b648db9`, Actions Run 88 completed successfully; the custom-domain live surface remains externally unreachable.
+
 ## Delivered
 
 Current revision: **v3.5.37**. Enterprise adapter compliance and report surfaces preserve standard-reference provenance and the explicit non-certification boundary; vehicle/session timing, profile-required unit evidence, stack quality gates, actual-voltage power cross-check, per-row cell-count filtering, unresolved-unit handling, evidence-depth audit, rendered web/App runtime parity, accessible result summaries, public-runtime module parity, canonical enterprise unit conversion, phase-session fail-closed behavior and AI route security controls are closed by regression tests; versioned metricTrace is now carried through public/API/report/XLSX/App surfaces with raw-data redaction; runtime standard profile imports now bind the repository-backed evidence ledger per `methodSource` and per `standardRefs[]`, including canonical `standard_id` identity, while ambiguous actual-volume flow units fail closed in generic and stack stoichiometry paths. The T02 integration report now exposes each source file SHA-256 in its full ledger.
