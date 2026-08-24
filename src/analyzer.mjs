@@ -643,9 +643,10 @@ function dataQualityReadiness(config, quality, phaseCoverage = { required: [] })
   return { required: configured, status, ready: status === 'ready' || status === 'not_configured', missing, failed, requirements, evidence };
 }
 
-function selectSteadyRows(rows) {
+function selectSteadyRows(rows, config = {}) {
   const explicit = rows.filter((row) => isSteadyPhase(row.phase));
   if (explicit.length >= 2) return { rows: explicit, source: 'phase=steady' };
+  if (explicit.length && config.approvalStatus === 'approved') return { rows: [], source: 'phase=steady（样本不足，阻断）' };
   const active = rows.filter((row) => row.current_a !== null && row.current_a > 0 && row.voltage_v !== null);
   const fallback = active.slice(Math.floor(active.length * 0.4));
   return { rows: fallback.length >= 2 ? fallback : rows, source: explicit.length ? 'phase=steady（样本不足，回退活动窗口）' : '活动窗口回退' };
@@ -895,7 +896,7 @@ function missingPerformanceMeasurements(config, rows, schema) {
   const required = Array.isArray(config.requiredMeasurements) ? config.requiredMeasurements : [];
   return required.filter((field) => {
     if (field === 'energy_derived') return rows.filter((row) => row.timestamp_s !== null && row.current_a !== null && row.voltage_v !== null).length < 2;
-    if (field === 'power_w') return !schema.mapping[field] || rows.filter((row) => row[field] !== null).length < 2;
+    if (field === 'power_w') return !schema.mapping[field] || rows.length < 2 || rows.some((row) => row[field] === null);
     return !schema.mapping[field] || rows.filter((row) => row[field] !== null).length < 2;
   });
 }
@@ -1254,7 +1255,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     powerUnit: dynamicPowerConfig.powerUnit || 'W'
   });
   const valueList = (field, selectedRows = rows) => selectedRows.map((row) => row[field]).filter((value) => value !== null);
-  const steadySelection = selectSteadyRows(rows);
+  const steadySelection = selectSteadyRows(rows, config);
   const steadyRows = steadySelection.rows;
   const timestamps = valueList('timestamp_s');
   const temperatures = valueList('temperature_c');

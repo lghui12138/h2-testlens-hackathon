@@ -197,6 +197,17 @@ test('uses valid steady rows without index-shifting around a missing voltage', (
   assert.equal(result.metrics.steadyVoltageMeanV, 1.85);
 });
 
+test('approved analysis blocks a one-row explicit steady phase instead of falling back to activity', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,phase,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,ramp,10,2,30,10,3,1',
+    '1,steady,10,2,30,10,3,1',
+    '2,ramp,10,2,30,10,3,1'
+  ].join('\n')), { approvalStatus: 'approved' });
+  assert.equal(result.metrics.steadySampleCount, 0);
+  assert.match(result.metrics.steadyWindow, /样本不足/);
+});
+
 test('surfaces a warning for any missing analytical numeric cell instead of allowing a silent clear result', () => {
   const rows = parseCSV([
     'timestamp_s,current_a,voltage_v,power_w,temperature_c,pressure_bar,flow_slpm,leak_ppm',
@@ -1191,6 +1202,17 @@ test('enterprise stack keeps derived power available for KPI while preserving th
   assert.deepEqual(gated.compliance.missingMeasurements, ['power_w']);
   assert.match(gated.compliance.measurements.evidence, /派生电流×电压功率/);
   assert.equal(gated.compliance.status, 'NOT_READY');
+});
+
+test('approved original-power requirements reject partial raw-channel coverage', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,power_w,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,20,200,30,10,3,1',
+    '1,10,20,,30,10,3,1',
+    '2,10,20,200,30,10,3,1'
+  ].join('\n')), { approvalStatus: 'approved', requiredMeasurements: ['power_w'] });
+  assert.deepEqual(result.compliance.missingMeasurements, ['power_w']);
+  assert.ok(result.issues.some((item) => item.code === 'PERFORMANCE_FIELD_MISSING'));
 });
 
 test('formal power acceptance cannot consume derived voltage-current power', () => {

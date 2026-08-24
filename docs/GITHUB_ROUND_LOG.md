@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 批准功率与稳态样本门修复轮
+
+- approved profile 要求原始 `power_w` 时，部分记录缺失不再通过“至少两条非空”门；新增 partial raw-power regression。
+- approved analysis 遇到只有一条显式稳态样本时不再回退活动窗口，返回阻断状态；多会话阶段覆盖按各会话跨度求和。
+- 回归门：`npm test` 163/163、`npm run check:submission` 127/127、typecheck、Vinext build 5/5、package smoke 全通过。
+
 ## 2026-08-24 · 单位电耗、多会话覆盖与发布 receipt 轮
 
 - 修复单位制氢电耗 1000 倍错误：`Wh/NL` 与 `kWh/Nm³` 数值等价；两点样例锁定 `1/18`。
