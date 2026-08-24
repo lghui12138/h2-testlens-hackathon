@@ -449,7 +449,18 @@ export const DEVICE_PROFILES = Object.freeze([
       maxPressureBar: 50,
       description: '青川科技电堆时序测试覆盖；具体限值以企业批准资料为准。'
     },
-    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: '测试时间',
+      current_a: '实际电流（A）',
+      voltage_v: '实际电压（V）',
+      temperature_c: '阳极入堆温度（℃）',
+      pressure_bar: '阳极入堆压力（kPa）',
+      flow_slpm: '阳极流量（SLPM）',
+      leak_ppm: '柜内氢气浓度（ppm）',
+      hydrogen_purity_pct: '氢气体积浓度（ppm）',
+      power_w: '功率（kW)'
+    }
   },
   {
     id: 'qingzhihuli-vehicle',
@@ -513,7 +524,13 @@ export const DEVICE_PROFILES = Object.freeze([
       maxPressureBar: 50,
       description: '氢质氢离车辆运行数据覆盖；具体限值以企业批准资料为准。'
     },
-    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: 'Timestamp',
+      current_a: 'FC_CurrOut',
+      voltage_v: 'FC_VoltOut',
+      power_w: 'FC_NetPwrOut'
+    }
   },
   {
     id: 'hypu-durability',
@@ -572,7 +589,13 @@ export const DEVICE_PROFILES = Object.freeze([
       enablePowerTracking: true,
       warningThresholdPct: 10
     },
-    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: '时间',
+      current_a: '电流',
+      voltage_v: '电压',
+      power_w: '功率'
+    }
   }
 ]);
 
