@@ -41,7 +41,7 @@ npm start
 
 ## GitHub Pages 独立部署
 
-GitHub `main` 当前提交 `be607cb` 已由 Actions Run `32706813818`（页面 #94）成功构建/部署；部署 job 返回公开渲染地址 `http://lghui.top/h2-testlens-hackathon/`，自定义域 HTTPS/可达性仍属于外部配置状态。
+GitHub `main` 当前提交 `c991286` 已由 Actions Run `32708603239`（页面 #98）成功构建/部署；部署 job 返回公开渲染地址 `http://lghui.top/h2-testlens-hackathon/`，自定义域 HTTPS/可达性仍属于外部配置状态。Pages workflow 已固定到官方 Node24 action SHA。
 
 独立 GitHub 仓库为 `lghui12138/h2-testlens-hackathon`。`.github/workflows/deploy-pages.yml` 会在 `main` 推送后运行提交检查，并把 `_site/` 静态产物发布到 GitHub Pages；静态页面使用相对资源路径，适配项目站点 URL。Pages 准备阶段优先携带完整 release receipt；在 GitHub Actions 且缺少 receipt 时会自动执行 `npm run package:submission`，package smoke、ZIP 完整性或 SHA-256 任一失败都会阻断 Pages 准备。只有本地预览或非 Actions 模拟才使用 unbound/`not_run` 回退，不伪造云端 artifact 或正式标准证据。GitHub Pages 版本使用本地证据草稿回退，不依赖 ChatGPT API。
 
