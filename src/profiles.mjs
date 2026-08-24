@@ -458,7 +458,8 @@ export const DEVICE_PROFILES = Object.freeze([
       pressure_bar: '阳极入堆压力（kPa）',
       flow_slpm: '阳极流量（SLPM）',
       leak_ppm: '柜内氢气浓度（ppm）',
-      power_w: '功率（kW)'
+      power_w: '功率（kW)',
+      cell_count: '片数'
     }
   },
   {

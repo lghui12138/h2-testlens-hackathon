@@ -1093,6 +1093,16 @@ function render(result, pushHistory = true) {
     complianceBoundary.textContent = result.compliance.boundary || '';
     complianceBoundary.hidden = !result.compliance.boundary;
   }
+  const verdictTooltip = $('#verdict-tooltip');
+  if (verdictTooltip) {
+    const qualityNote = result.quality?.usable === false && result.quality?.completenessPct === 100
+      ? '数据完整率 100%，但时间轴存在重复/非正间隔，已按原始时序做描述性统计，不生成正式稳定区间。'
+      : result.quality?.usable
+        ? '数据质量通过，已进入正式统计与候选区间生成。'
+        : '数据质量未通过，请检查时间轴和关键字段。';
+    verdictTooltip.textContent = qualityNote;
+    verdictTooltip.hidden = false;
+  }
   renderMetrics(result); renderCalculationSummary(result); renderMetricTrace(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
