@@ -104,6 +104,8 @@ const fieldValueDiagnosticRows = (packages) => packages.flatMap(([name, summary]
   return [`| ${cell(name)} | ${count(diagnostics.fileCount)} | ${count(diagnostics.reviewSignalFileCount)} | ${count(diagnostics.reviewSignalOccurrenceCount)} | ${count(diagnostics.negativeSignalFileCount)} | ${count(diagnostics.zeroDominantSignalFileCount)} | ${count(diagnostics.constantSignalFileCount)} | ${count(diagnostics.parseIssueSignalFileCount)} |`];
 });
 
+const topFieldDiagnosticRows = (coverage) => (coverage.fieldValueDiagnostics?.topObservedReviewFields || []).map((item) => `| ${cell(item.source)} | ${count(item.fileCount)} | ${count(item.negativeCount)} | ${count(item.zeroCount)} | ${count(item.parseInvalidCount)} | ${cell(item.reasons?.join('；') || '需确认字段语义')} |`).join('\n') || '| — | — | — | — | — | — |';
+
 const evidenceDepthRows = (packages) => packages.flatMap(([name, summary]) => {
   const counts = summary.evidenceDepthCounts || {};
   if (!Object.keys(counts).length) return [];
@@ -184,6 +186,14 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     fieldValueDiagnostics,
     '',
     `全包汇总：${count(coverage.fieldValueDiagnostics?.reviewSignalFileCount)} 个文件出现字段值复核提示，${count(coverage.fieldValueDiagnostics?.reviewSignalOccurrenceCount)} 次字段级提示；${cell(coverage.fieldValueDiagnostics?.boundary || '不替代企业字段语义、无效码表、单位、校准或标准验收限值。')}`,
+    '',
+    '### 高风险字段明细（前 20 项）',
+    '',
+    '以下是原始值分布中最常见的字段级复核信号；它们不自动判定为错误，也不直接进入正式符合性结论。字段是否为停机态、无效码、单位错误或真实异常，仍需企业字段字典和工程师复核。',
+    '',
+    '| 字段 | 涉及文件 | 负值数 | 零值数 | 非数值数 | 复核原因 |',
+    '|---|---:|---:|---:|---:|---|',
+    topFieldDiagnosticRows(coverage),
     '',
     '## 证据深度分层',
     '',

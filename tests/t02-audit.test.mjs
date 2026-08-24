@@ -176,6 +176,9 @@ test('T02 integration report exposes every file ledger and preserves non-conform
   assert.match(report, /仅作跨报告元数据、功率集合和时间关系筛查/);
   assert.match(report, /字段用途明细（不是每个字段都进入 KPI）/);
   assert.match(report, /证据深度分层/);
+  assert.match(report, /高风险字段明细/);
+  assert.match(report, /FC_MinCellVoltage/);
+  assert.match(report, /692,561/);
   assert.match(report, /generic_metrics_only/);
   assert.match(report, /formal_kpi/);
   assert.match(report, /动态设定变化事件（描述性）/);

@@ -1056,11 +1056,18 @@ async function loadCoverageSummary() {
     const fill = $('#coverage-meter-fill');
     if (fill) fill.style.width = `${total > 0 ? Math.min(100, (processed / total) * 100) : 0}%`;
     const note = $('#coverage-note');
+    const riskFields = $('#coverage-risk-fields');
     const diagnostics = summary.fieldDiagnostics || {};
     const depth = summary.evidenceDepthCounts || {};
     const diagnosticText = Number.isFinite(Number(diagnostics.reviewSignalFileCount))
       ? `<br>全包字段复核：${Number(diagnostics.reviewSignalFileCount).toLocaleString('zh-CN')} 个文件、${Number(diagnostics.reviewSignalOccurrenceCount || 0).toLocaleString('zh-CN')} 次提示；不自动删除负值/零值<br>证据深度：描述区间 ${Number(depth.descriptive_interval || 0)} · 动态事件 ${Number(depth.dynamic_event_only || 0)} · 通用统计 ${Number(depth.generic_metrics_only || 0)} · 正式性能点 ${Number(depth.formal_kpi || 0)}`
       : '';
+    if (riskFields) {
+      const topFields = Array.isArray(diagnostics.topObservedReviewFields) ? diagnostics.topObservedReviewFields.slice(0, 5) : [];
+      riskFields.innerHTML = topFields.length
+        ? `<b>字段值复核重点：</b><br>${topFields.map((item) => `${escapeHtml(item.source)}：${Number(item.fileCount || 0).toLocaleString('zh-CN')} 文件，负值 ${Number(item.negativeCount || 0).toLocaleString('zh-CN')}，零值 ${Number(item.zeroCount || 0).toLocaleString('zh-CN')}`).join('<br>')}<br><span class="muted">仅作字段语义/无效码复核提示，不自动判定异常。</span>`
+        : '当前版本未提供字段级复核重点。';
+    }
     if (note) note.innerHTML = `处理数据进入适配器：${Number(summary.processedRowsEnteredAdapters || 0).toLocaleString('zh-CN')} 行/功率点 · 正式符合性声明：${Number(summary.formalConformityClaims || 0)}<br>阻断项：${escapeHtml((summary.blockedReasons || ['unknown']).join('、'))}；${escapeHtml(summary.boundary || '保留哈希，不生成测试结论。')}${diagnosticText}`;
   } catch {
     // The hard-coded markup remains a safe fallback for offline/local previews.

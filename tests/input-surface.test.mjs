@@ -60,6 +60,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /escapeHtml\(profile\.name\)/);
   assert.match(app, /loadReleaseSummary/);
   assert.match(app, /解析错误/);
+  assert.match(app, /topObservedReviewFields/);
   assert.match(app, /#compare-status.*请先载入并分析数据/);
   assert.match(app, /#report-status.*请先载入并分析数据/);
   assert.match(app, /updateAccessibleSummaries/);
@@ -112,7 +113,7 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
   const rendered = renderedVinextMarkup(appSource);
   for (const page of [staticPage, rendered]) {
     assert.match(page, /T02 资料接入范围/);
-    for (const id of ['coverage-audit-version', 'coverage-total-files', 'coverage-processed', 'coverage-reference', 'coverage-blocked', 'coverage-unuploaded', 'coverage-meter-fill', 'coverage-note']) assert.match(page, new RegExp(id));
+    for (const id of ['coverage-audit-version', 'coverage-total-files', 'coverage-processed', 'coverage-reference', 'coverage-blocked', 'coverage-unuploaded', 'coverage-meter-fill', 'coverage-note', 'coverage-risk-fields']) assert.match(page, new RegExp(id));
     assert.match(page, /190/);
     assert.match(page, /2,262,283/);
     assert.match(page, /正式符合性声明：0/);
