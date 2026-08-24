@@ -146,3 +146,18 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 
 /* Drop zone file count feedback */
 #schema-notice.count-mode { color: var(--mint); }
+
+/* Batch queue management */
+.batch-queue { display: grid; gap: 6px; margin-top: 10px; }
+.batch-queue-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: #071c26; }
+.batch-queue-item .file-info { min-width: 0; }
+.batch-queue-item .file-name { display: block; font-size: 11px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batch-queue-item .file-meta { display: flex; gap: 8px; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.batch-queue-item .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+.status-pending { background: #123743; color: var(--muted-strong); }
+.status-processing { background: #1a3a4a; color: var(--mint); }
+.status-done { background: #123743; color: var(--mint); }
+.status-error { background: #3a1f23; color: var(--danger); }
+.batch-queue-actions { display: flex; gap: 6px; }
+.batch-queue-actions button { min-height: 28px; padding: 0 8px; border-radius: 7px; border: 0; background: #123743; color: var(--muted-strong); font-size: 10px; cursor: pointer; }
+.batch-queue-actions button:hover { background: #1a5360; color: var(--ink); }

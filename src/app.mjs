@@ -1085,11 +1085,13 @@ async function readUserFile(file) {
 async function readSelectedDataFiles(files) {
   const entries = [];
   const inputSummary = { totalFiles: files.length, processed: 0, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 };
+  renderBatchQueue(files.map((file, idx) => ({ name: file.webkitRelativePath || file.name, size: file.size, status: idx === 0 ? 'processing' : 'pending' })));
   for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
     const file = files[fileIndex];
     const name = file.webkitRelativePath || file.name;
     setAnalysisStatus(`读取文件 ${fileIndex + 1}/${files.length}：${file.name}`, 'busy');
     setBatchProgress(fileIndex, files.length, '读取中');
+    updateBatchQueueItem(files.map((file, idx) => ({ name: file.webkitRelativePath || file.name, size: file.size, status: idx < fileIndex ? 'processed' : idx === fileIndex ? 'processing' : 'pending' })), fileIndex, { status: 'processing' });
     await yieldToBrowser();
     if (/\.pdf$/i.test(name) || (/\.docx$/i.test(name) && !/耐久原始数据处理/.test(name))) {
       const buffer = await file.arrayBuffer();
@@ -1780,6 +1782,77 @@ $('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (eve
 $('#enterprise-qingchuan')?.addEventListener('click', () => { void applyEnterpriseConfig('qingchuan'); });
 $('#enterprise-qingzhihuli')?.addEventListener('click', () => { void applyEnterpriseConfig('qingzhihuli'); });
 $('#enterprise-hypu')?.addEventListener('click', () => { void applyEnterpriseConfig('hypu'); });
+
+// Batch queue management
+function renderBatchQueue(entries) {
+  const container = ;
+  if (!container) return;
+  if (!entries || !entries.length) { container.hidden = true; return; }
+  container.hidden = false;
+  container.innerHTML = entries.map((entry, index) => {
+    const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
+    const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+    const size = entry.size ?  : '—';
+    const hint = entry.parseHint ?  : '';
+    const actions = entry.status === 'parser_error' ?  : (entry.status === 'pending' ?  : '');
+    return <span class=muted></span>;
+  }).join('');
+}
+function updateBatchQueueItem(entries, index, updates) {
+  const item = document.querySelector();
+  if (!item) return;
+  const entry = entries[index];
+  if (!entry) return;
+  Object.assign(entry, updates);
+  const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
+  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+  const chip = item.querySelector('.status-chip');
+  if (chip) { chip.className = ; chip.textContent = statusLabel; }
+}
+
+// Batch queue management
+function renderBatchQueue(entries) {
+  const container = $('#batch-queue');
+  if (!container) return;
+  if (!entries || !entries.length) { container.hidden = true; return; }
+  container.hidden = false;
+  container.innerHTML = entries.map((entry, index) => {
+    const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
+    const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+    const size = entry.size ? `${(entry.size / 1024).toFixed(1)} KB` : '—';
+    const hint = entry.parseHint ? ` · ${escapeHtml(entry.parseHint)}` : '';
+    const actions = entry.status === 'parser_error' ? `<button data-retry="${index}" aria-label="重试">重试</button>` : (entry.status === 'pending' ? `<button data-remove="${index}" aria-label="移除">移除</button>` : '');
+    return `<div class="batch-queue-item" data-index="${index}"><div class="file-info"><span class="file-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</span><div class="file-meta"><span>${size}</span><span class="status-chip ${statusClass}">${statusLabel}</span>${hint ? `<span class="muted">${hint}</span>` : ''}</div></div><div class="batch-queue-actions">${actions}</div></div>`;
+  }).join('');
+}
+function updateBatchQueueItem(entries, index, updates) {
+  const item = document.querySelector(`.batch-queue-item[data-index="${index}"]`);
+  if (!item) return;
+  const entry = entries[index];
+  if (!entry) return;
+  Object.assign(entry, updates);
+  const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
+  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+  const chip = item.querySelector('.status-chip');
+  if (chip) { chip.className = `status-chip ${statusClass}`; chip.textContent = statusLabel; }
+}
+
+// Batch queue event delegation.
+?.addEventListener('click', async (event) => {
+  const retryButton = event.target.closest('button[data-retry]');
+  const removeButton = event.target.closest('button[data-remove]');
+  if (retryButton) {
+    const index = Number(retryButton.dataset.retry);
+    const fileInput = ;
+    if (fileInput && state.inputEntries && state.inputEntries[index]) {
+      setAnalysisStatus('请重新选择该文件进行导入。', 'neutral');
+    }
+  } else if (removeButton) {
+    const index = Number(removeButton.dataset.remove);
+    const item = document.querySelector();
+    if (item) item.remove();
+  }
+});
 
 ensureExtendedMetadataFields();
 renderProfileOptions();

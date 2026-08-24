@@ -16,6 +16,7 @@ const DASHBOARD_HTML = String.raw`
       <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
       <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
       <div class="hero-actions" id="drop-zone"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button" aria-label="载入演示样本">载入演示样本</button><button id="load-legacy" class="quiet-button" aria-label="载入中文单位样本">中文/单位样本</button></div>
+      <div id="batch-queue" class="batch-queue" hidden></div>
       <div id="batch-progress" class="batch-progress" hidden><div id="batch-progress-fill" class="batch-progress-fill"></div><div id="batch-progress-text" class="batch-progress-text"></div></div>
       <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
       <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：加载中 · DEMO_ONLY</div>
