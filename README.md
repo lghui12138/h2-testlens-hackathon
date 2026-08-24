@@ -152,6 +152,52 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 参赛口径与现场演示顺序见 [`docs/SUBMISSION_BRIEF.md`](docs/SUBMISSION_BRIEF.md)；配置包示例见 [`config/enterprise-profile.example.json`](config/enterprise-profile.example.json)。
 打包说明见 [`docs/SUBMISSION_PACKAGE.md`](docs/SUBMISSION_PACKAGE.md)。
 
+## 真实数据验证
+
+项目已用真实企业资料完成回归验证，不依赖演示样本替代证据。
+
+- 青川科技电堆时序：**38,257 行**真实数据成功识别 **61 个**电流平台候选。
+- 氢质氢离车辆数据：**212/345 车**识别出 **29/13 个**绝缘窗口，边界仍标记为 `descriptive_only`，不自动升级为标准符合性或企业放行结论。
+- 相关证据保留在真实 T02 覆盖/参考审计与 `.research` 目录，供人工复核原始文件语义和字段映射。
+
+## 计算准确性改进
+
+本轮重点修复了数值鲁棒性和边界容差问题，降低浮点噪声和异常分段误判：
+
+- 电流平台识别加入分箱容差，减少微小抖动造成的伪平台。
+- 稳定窗口加入浮点容差，避免相邻候选在数值边界反复切换。
+- 绝缘阻值过滤改为显式谓词，确保边界条件一致可解释。
+- 性能趋势升级为 **Theil-Sen 鲁棒回归**，对异常点不敏感，斜率估计更稳定。
+- 回归测试同步扩展，覆盖异常点、零值边界、单点区间和跨会话隔离场景。
+
+## 边界测试覆盖
+
+- 当前测试套件共 **203 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 运行方式：`npm test`。
+- 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
+
+## Python 增强版
+
+配套 Python 增强实现位于独立仓库，提供 FastAPI 后端与更完整的工程分析骨架：
+
+[![Python Enhanced](https://img.shields.io/badge/Python%20Enhanced-t02--equipment--test--report--assistant-20bfa5)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![CI](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml)
+
+- 仓库地址：`https://github.com/lghui12138/t02-equipment-test-report-assistant`
+- 包含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
+
+## 贡献指南
+
+欢迎以 issue、PR 或文档补遗的方式参与。建议流程：
+
+1. 先阅读 [`docs/STANDARD_BOUNDARY_MATRIX.md`](docs/STANDARD_BOUNDARY_MATRIX.md) 和 [`docs/SUBMISSION_BRIEF.md`](docs/SUBMISSION_BRIEF.md)，确认边界口径。
+2. 提交前运行 `npm test`、`npm run check:submission` 和 `npm run eval:ai`。
+3. 若涉及企业资料、真实数据或测试门槛，请同步更新 `.research` 证据与 README 验证结果。
+4. 标准/法规引用、企业 profile 配置或阈值变更，需要附上来源文件、版本号和审计记录。
+
+## 许可证
+
+本仓库当前未检出 `LICENSE` 文件；如后续补充开源协议，建议在根目录添加 `LICENSE` 并在本段引用文件名与适用范围。
+
 ## 标准化工作流边界
 
 界面中的流程清单把公开标准资料转成可审计的输入/复核顺序，但不复制标准全文，也不自动宣称符合标准。只有企业批准的 profile、明确的方法版本、仪器/校准记录、计算引用和授权人员签核齐全后，系统才允许进入 `READY_FOR_HUMAN_REVIEW`；异常数据仍然需要工程师处置和必要的复测。
