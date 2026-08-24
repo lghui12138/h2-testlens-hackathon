@@ -1091,6 +1091,8 @@ function render(result, pushHistory = true) {
   renderMetrics(result); renderCalculationSummary(result); renderMetricTrace(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
+  const saveHistoryTop = $('#save-history-top');
+  if (saveHistoryTop) saveHistoryTop.hidden = !state.result;
   renderSchema(result);
   $('#last-run').textContent = `最近分析 ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
 }
@@ -1733,6 +1735,10 @@ $('#quick-start-overlay')?.addEventListener('click', (event) => { if (event.targ
 $('#theme-toggle')?.addEventListener('click', toggleTheme);
 $('#undo-result')?.addEventListener('click', undoResult);
 $('#redo-result')?.addEventListener('click', redoResult);
+$('#save-history-top')?.addEventListener('click', () => {
+  if (!state.result) return;
+  $('#save-history').click();
+});
 $('#retry-analysis')?.addEventListener('click', () => { void analyzeCurrent('重试'); });
 $('#recent-files-list')?.addEventListener('click', (event) => {
   const chip = event.target.closest('.recent-file-chip');
@@ -1745,9 +1751,12 @@ const originalReadSelectedDataFiles = readSelectedDataFiles;
 readSelectedDataFiles = async function(files) {
   try { return await originalReadSelectedDataFiles(files); }
   catch (error) {
-    const hint = files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name) && file.size < 200)
+    const hasCsv = files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name));
+    const baseHint = hasCsv && files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name) && file.size < 200)
       ? '文件过小或为空，请确认包含表头和时序数据。'
       : '请确认文件未加密、未损坏，且格式与示例一致。';
+    const missingHeaders = hasCsv ? '常见缺失表头：timestamp、current_a、avg_cell_voltage_v、power_kw、temperature_c、pressure_bar。' : '';
+    const hint = missingHeaders ? `${baseHint} ${missingHeaders}` : baseHint;
     throw new Error(`${error.message}；${hint}`);
   }
 };

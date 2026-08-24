@@ -885,6 +885,7 @@ function enterprisePhaseMetricReadiness(config, rows) {
 
 function profileGateIssues(complianceResult) {
   const issues = [];
+  if (complianceResult.approvalStatus === 'example_unapproved') issues.push({ severity: 'critical', code: 'STANDARD_COMPLIANCE_BOUNDARY', title: '企业未审批 profile 不构成标准符合性判定', evidence: '当前使用企业未审批 profile，不构成标准符合性判定或放行依据', recommendation: '请先完成企业审批、修订控制和完整方法实施证据，再进入标准符合性复核。' });
   if (complianceResult.approvalEvidence?.required && !complianceResult.approvalEvidence.ready) issues.push({ severity: 'critical', code: 'APPROVAL_EVIDENCE_MISSING', title: 'approved profile 缺少有效审批与修订证据', evidence: complianceResult.approvalEvidence.evidence, recommendation: '补充审批人标识、审批日期、批准依据/工单号、当前 profile 修订号和修订证据引用后再进入人工符合性复核。' });
   if (complianceResult.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED' && !complianceResult.methodImplementationEvidence?.ready) issues.push({ severity: 'critical', code: 'METHOD_IMPLEMENTATION_EVIDENCE_MISSING', title: '完整方法执行声明缺少结构化实施证据', evidence: complianceResult.methodImplementationEvidence?.evidence || '未提供 methodImplementationEvidence', recommendation: '补充标准来源、条款/步骤覆盖、每项实施证据、验证人、验证日期、验证引用，并清空未关闭缺口后再声明 FULL_METHOD_IMPLEMENTED。' });
   if (complianceResult.measurements?.missing?.length) issues.push({ severity: 'critical', code: 'PROFILE_MEASUREMENT_MISSING', title: 'profile 要求的测量字段未形成有效数据', evidence: complianceResult.measurements.evidence, recommendation: '补充对应原始通道或选择适用的数据集 profile；不要用其他字段替代。' });
