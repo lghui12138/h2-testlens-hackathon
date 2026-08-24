@@ -5,6 +5,7 @@ import "../src/styles.css";
 
 const DASHBOARD_HTML = String.raw`
 <div class="shell">
+  <a class="skip-link" href="#top">跳转到主内容</a>
   <header class="topbar">
     <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试智报</small></span></a>
     <div class="topbar-meta"><span class="live-dot"></span><span>PUBLIC ANALYSIS</span><span class="divider"></span><span id="last-run">等待数据</span></div>
@@ -15,7 +16,7 @@ const DASHBOARD_HTML = String.raw`
       <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
       <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
       <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
-      <div class="hero-actions" id="drop-zone"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button" aria-label="载入演示样本">载入演示样本</button><button id="load-legacy" class="quiet-button" aria-label="载入中文单位样本">中文/单位样本</button></div>
+      <div class="hero-actions" id="drop-zone" role="region" aria-label="拖放区域，可点击按钮或拖放文件到此处"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" aria-label="选择测试数据文件"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button" aria-label="载入演示样本">载入演示样本</button><button id="load-legacy" class="quiet-button" aria-label="载入中文单位样本">中文/单位样本</button></div>
       <div id="batch-queue" class="batch-queue" hidden></div>
       <div id="batch-progress" class="batch-progress" hidden><div id="batch-progress-fill" class="batch-progress-fill"></div><div id="batch-progress-text" class="batch-progress-text"></div></div>
       <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
@@ -42,7 +43,7 @@ const DASHBOARD_HTML = String.raw`
   <footer><span>H₂ TestLens · T02 browser web prototype</span><span>非原生 iOS/Android 客户端 · 原始数据留在当前浏览器 · 结果可追溯 · 人工签核保留</span></footer>
    <div id="loading-overlay" class="overlay" hidden aria-hidden="true"><div class="overlay-backdrop"></div><div class="overlay-content loading-content"><div class="spinner" aria-hidden="true"></div><p id="loading-message" class="loading-message">分析中…</p></div></div>
    <div id="quick-start-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-label="快速开始指南"><div class="overlay-backdrop"></div><div class="overlay-content"><h2>快速开始</h2><ol><li>导入测试数据文件（CSV、TXT、Excel、DOCX）</li><li>查看自动分析结果和字段映射</li><li>使用企业模板或自定义阈值</li><li>导出报告或保存本地批次</li></ol><button id="close-quick-start" class="primary-button" aria-label="关闭快速开始指南并开始使用">开始使用</button></div></div>
-   <div id="keyboard-shortcuts-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-label="键盘快捷键"><div class="overlay-backdrop"></div><div class="overlay-content"><h2>键盘快捷键</h2><ul><li><kbd>Ctrl</kbd>+<kbd>O</kbd> 打开文件</li><li><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存批次</li><li><kbd>Ctrl</kbd>+<kbd>Z</kbd> 撤销</li><li><kbd>Ctrl</kbd>+<kbd>Y</kbd> 重做</li><li><kbd>Ctrl</kbd>+<kbd>/</kbd> 快捷键帮助</li><li><kbd>Esc</kbd> 关闭弹层</li></ul><button id="close-shortcuts" class="primary-button" aria-label="关闭快捷键帮助">知道了</button></div></div>
+   <div id="keyboard-shortcuts-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-label="键盘快捷键"><div class="overlay-backdrop"></div><div class="overlay-content"><h2>键盘快捷键</h2><ul><li><kbd>Ctrl</kbd>+<kbd>O</kbd> 打开文件</li><li><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存批次</li><li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> 重新分析</li><li><kbd>Ctrl</kbd>+<kbd>L</kbd> 载入演示</li><li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> 对比基线</li><li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> 强制重分析</li><li><kbd>Ctrl</kbd>+<kbd>1</kbd>~<kbd>4</kbd> 跳转到区块</li><li><kbd>F2</kbd> 保存批次</li><li><kbd>Ctrl</kbd>+<kbd>/</kbd> 快捷键帮助</li><li><kbd>Esc</kbd> 关闭弹层</li></ul><button id="close-shortcuts" class="primary-button" aria-label="关闭快捷键帮助">知道了</button></div></div>
  </div>`;
 
 const DISPLAY_HTML = DASHBOARD_HTML

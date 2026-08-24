@@ -224,6 +224,7 @@ async function analyzeCurrent(reason = '重新分析') {
   setAnalysisStatus(`${reason}：准备中…`, 'busy');
   await yieldToBrowser();
   try {
+    showMetricSkeletons();
     const result = await analyzeRowsAsync(state.rows, configFromUI(), (stage, rowCount, detail) => {
       if (token !== state.analysisToken) return;
       if (stage === 'worker') setAnalysisStatus(`后台分析中：${rowCount.toLocaleString('zh-CN')} 条记录，页面仍可响应…`, 'busy');
@@ -464,6 +465,19 @@ function verdictLabel(verdict) {
   return verdict === 'PASS' ? '通过' : verdict === 'WARN' ? '需复核' : verdict === 'DESCRIPTIVE' ? '仅描述' : '未通过';
 }
 
+function qualityMeter(completenessPct) {
+  const pct = Number.isFinite(completenessPct) ? Math.max(0, Math.min(100, completenessPct)) : null;
+  const width = pct === null ? '0%' : `${pct}%`;
+  const badge = pct === null ? '' : pct >= 98 ? '<span class="quality-badge good" aria-hidden="true">完整</span>' : pct >= 90 ? '<span class="quality-badge warn" aria-hidden="true">缺口</span>' : '<span class="quality-badge danger" aria-hidden="true">缺口</span>';
+  return `<div class="quality-meter" role="progressbar" aria-valuenow="${pct === null ? 0 : pct}" aria-valuemin="0" aria-valuemax="100" aria-label="数据完整率">${badge}<span style="width:${width}"></span></div>`;
+}
+
+function showMetricSkeletons() {
+  const grid = $('#metric-grid');
+  if (!grid) return;
+  grid.innerHTML = Array.from({ length: 8 }).map(() => `<article class="metric-card skeleton skeleton-card"><div class="skeleton-text short"></div><div class="skeleton-text"></div><div class="skeleton-text"></div></article>`).join('');
+}
+
 function renderMetrics(result) {
   const { metrics } = result;
   if (result.datasetType === 'vehicle') {
@@ -480,7 +494,7 @@ function renderMetrics(result) {
       ['低于 350 kΩ', `${low350}`, low350 ? 'warn' : 'good', '10 分钟窗口最小值'],
       ['低于 250 kΩ', `${low250}`, low250 ? 'danger' : 'good', '10 分钟窗口最小值']
     ];
-    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}${label === '数据完整率' ? qualityMeter(metrics.completenessPct) : ''}</strong><small>${note}</small></article>`).join('');
     return;
   }
   if (result.datasetType === 'stack') {
@@ -495,7 +509,7 @@ function renderMetrics(result) {
       ['单片通道', `${dataset.cellChannelCount}`, dataset.configuredCellCount && dataset.configuredCellCount !== dataset.cellChannelCount ? 'warn' : 'good', `片数参数 ${dataset.configuredCellCount || '—'}`],
       ['时间戳重复', `${result.quality.duplicateTimestampCount}`, result.quality.duplicateTimestampCount ? 'warn' : 'good', '采样分辨率复核']
     ];
-    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}${label === '数据完整率' ? qualityMeter(metrics.completenessPct) : ''}</strong><small>${note}</small></article>`).join('');
     if (dataset.dynamicAnalysis?.enabled) {
       const dynamic = dataset.dynamicAnalysis;
       $('#enterprise-summary').insertAdjacentHTML('afterbegin', `<div class="enterprise-facts"><span><b>${dynamic.eventCount}</b> 个动态负载事件</span><span><b>${dynamic.settledEventCount}</b> 个进入响应带</span><span><b>${dynamic.unsettledEventCount}</b> 个未稳定事件</span><span><b>${dynamic.dataGapCount}</b> 个动态数据缺口</span></div><div class="enterprise-note">动态信号：${escapeHtml(dynamic.commandField)} → ${escapeHtml(dynamic.actualField)}；指标仅作描述性响应统计，不含标准限值。</div>`);
@@ -514,7 +528,7 @@ function renderMetrics(result) {
       ['最大离均差', `${fmt(Math.max(...dataset.points.map((point) => point.averageDeviationMv).filter((value) => value !== null), 0), 0)} mV`, highDeviation ? 'warn' : 'good', dataset.rules.maxDeviationMv === null ? '阈值未配置' : `阈值 ${dataset.rules.maxDeviationMv} mV`],
       ['原始报告', `${dataset.reports.length}`, 'neutral', dataset.reports.some((report) => String(report.metadata?.测试结果 || '').includes('未通过')) ? '含未通过报告' : '未发现未通过标记']
     ];
-    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+    $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}${label === '数据完整率' ? qualityMeter(metrics.completenessPct) : ''}</strong><small>${note}</small></article>`).join('');
     return;
   }
   const cards = [
@@ -530,7 +544,7 @@ function renderMetrics(result) {
     ['峰值泄漏监测', `${fmt(metrics.peakLeakPpm)} ppm`, metrics.peakLeakPpm <= result.config.maxLeakPpm ? 'good' : 'danger', `阈值 ${result.config.maxLeakPpm} ppm`],
     ['压力漂移', `${fmt(metrics.pressureDriftBarPerMin, 2)} bar/min`, Math.abs(metrics.pressureDriftBarPerMin) <= result.config.maxPressureDriftBarPerMin ? 'good' : 'warn', '线性趋势']
   ];
-  $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`).join('');
+  $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}${label === '数据完整率' ? qualityMeter(metrics.completenessPct) : ''}</strong><small>${note}</small></article>`).join('');
 }
 
 function renderCalculationSummary(result) {
@@ -583,7 +597,14 @@ function renderMetricTrace(result) {
 
 function renderIssues(result) {
   const severityLabel = { critical: '高优先级', warn: '建议复核', info: '信息' };
-  $('#issue-list').innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '!' : item.severity === 'warn' ? '~' : 'i'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span></div><p>${escapeHtml(item.evidence)}</p><small>建议动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
+  const list = $('#issue-list');
+  if (!list) return;
+  if (!result.issues.length) {
+    list.innerHTML = '<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或建议复核项；正式结论仍需工程师签核。</p><small>建议动作：继续执行企业复核流程，或调整阈值后重新分析。</small></div></div>';
+    $('#issue-count').textContent = '0 项需要关注';
+    return;
+  }
+  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '!' : item.severity === 'warn' ? '~' : 'i'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span></div><p>${escapeHtml(item.evidence)}</p><small>建议动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
   $('#issue-count').textContent = `${result.issues.filter((item) => item.severity !== 'info').length} 项需要关注`;
 }
 
@@ -612,7 +633,7 @@ function renderPhases(result) {
   const missingMetrics = result.compliance?.missingPhaseMetrics || [];
   const rows = result.phases || [];
   if (!rows.length) {
-    $('#phase-list').innerHTML = '<div class="phase-empty">未识别到可展示的工况分段。</div>';
+    $('#phase-list').innerHTML = '<div class="phase-empty">未识别到可展示的工况分段。导入含 phase 或时间戳清晰的稳态/动态数据后，系统会自动分段并显示指标。</div>';
     return;
   }
   $('#phase-list').innerHTML = rows.map((phase) => {
@@ -1789,21 +1810,39 @@ function dismissKeyboardShortcuts() {
 document.addEventListener('keydown', (event) => {
   const active = document.activeElement;
   const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+  const ctrl = event.ctrlKey || event.metaKey;
+  if (ctrl && event.key.toLowerCase() === 'o') {
     event.preventDefault();
     $('#file-input').click();
-  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+  } else if (ctrl && event.key.toLowerCase() === 's') {
     event.preventDefault();
     if (state.result) $('#save-history').click();
-  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+  } else if (ctrl && event.key.toLowerCase() === 'z') {
     event.preventDefault();
     if (!isInput) $('#undo-result').click();
-  } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+  } else if (ctrl && event.key.toLowerCase() === 'y') {
     event.preventDefault();
     if (!isInput) $('#redo-result').click();
-  } else if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+  } else if (ctrl && event.key === '/') {
     event.preventDefault();
     showKeyboardShortcuts();
+  } else if (ctrl && event.shiftKey && event.key.toLowerCase() === 'r') {
+    event.preventDefault();
+    void analyzeCurrent('重分析');
+  } else if (ctrl && event.shiftKey && event.key.toLowerCase() === 'l') {
+    event.preventDefault();
+    void loadSampleSafely();
+  } else if (ctrl && event.shiftKey && event.key.toLowerCase() === 'o') {
+    event.preventDefault();
+    if (state.result) $('#compare-demo').click();
+  } else if (event.key === 'F2') {
+    event.preventDefault();
+    if (state.result) $('#save-history').click();
+  } else if (ctrl && /^[1-4]$/.test(event.key)) {
+    event.preventDefault();
+    const targets = { '1': '#metric-grid', '2': '#trend-chart', '3': '#enterprise-panel', '4': '#issue-list' };
+    const el = $(targets[event.key]);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (event.key === 'Escape') {
     dismissKeyboardShortcuts();
     dismissQuickStart();
@@ -1814,10 +1853,18 @@ document.addEventListener('keydown', (event) => {
 function setBatchProgress(current, total, message) {
   const bar = $('#batch-progress-fill');
   const text = $('#batch-progress-text');
+  const container = $('#batch-progress');
   if (!bar || !text) return;
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   bar.style.width = `${pct}%`;
   text.textContent = `${message} ${current}/${total}`;
+  if (container) {
+    container.setAttribute('role', 'progressbar');
+    container.setAttribute('aria-valuenow', String(pct));
+    container.setAttribute('aria-valuemin', '0');
+    container.setAttribute('aria-valuemax', '100');
+    container.setAttribute('aria-label', message || '批量处理进度');
+  }
 }
 function resetBatchProgress() {
   const bar = $('#batch-progress-fill');
@@ -1874,8 +1921,9 @@ function renderBatchQueue(entries) {
     const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
     const size = entry.size ? `${(entry.size / 1024).toFixed(1)} KB` : '—';
     const hint = entry.parseHint ? ` · ${escapeHtml(entry.parseHint)}` : '';
-    const actions = entry.status === 'parser_error' ? `<button data-retry="${index}" aria-label="重试">重试</button>` : (entry.status === 'pending' ? `<button data-remove="${index}" aria-label="移除">移除</button>` : '');
-    return `<div class="batch-queue-item" data-index="${index}"><div class="file-info"><span class="file-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</span><div class="file-meta"><span>${size}</span><span class="status-chip ${statusClass}">${statusLabel}</span>${hint ? `<span class="muted">${hint}</span>` : ''}</div></div><div class="batch-queue-actions">${actions}</div></div>`;
+    const retryHint = (entry.status === 'parser_error' || entry.status === 'blocked_binary') ? '<div class="batch-retry-hint">点击“重试”后，请在弹出的文件选择框中重新选择该文件；也可点击“移除所有失败”清空列表。</div>' : '';
+    const actions = entry.status === 'parser_error' || entry.status === 'blocked_binary' ? `<button data-retry="${index}" aria-label="重试">重试</button><button data-remove="${index}" aria-label="移除">移除</button>` : (entry.status === 'pending' ? `<button data-remove="${index}" aria-label="移除">移除</button>` : '');
+    return `<div class="batch-queue-item ${entry.status === 'pending' || entry.status === 'processing' ? 'processing' : ''}" data-index="${index}"><div class="file-info"><span class="file-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</span><div class="file-meta"><span>${size}</span><span class="status-chip ${statusClass}">${statusLabel}</span>${hint ? `<span class="muted">${hint}</span>` : ''}</div>${retryHint}</div><div class="batch-queue-actions">${actions}</div></div>`;
   }).join('');
 }
 function updateBatchQueueItem(entries, index, updates) {
@@ -1896,11 +1944,18 @@ $('#batch-queue')?.addEventListener('click', async (event) => {
   const removeButton = event.target.closest('button[data-remove]');
   if (retryButton) {
     const index = Number(retryButton.dataset.retry);
-    setAnalysisStatus('请重新选择该文件进行导入。', 'neutral');
+    const entry = state.inputEntries?.[index];
+    const name = entry?.name || '该文件';
+    setAnalysisStatus(`请重新选择 ${name} 进行导入；失败条目已保留在列表中，移除后需手动清空。`, 'neutral');
+    $('#file-input').click();
   } else if (removeButton) {
     const index = Number(removeButton.dataset.remove);
     const item = document.querySelector(`.batch-queue-item[data-index="${index}"]`);
-    if (item) item.remove();
+    if (item) {
+      item.remove();
+      const hint = item.querySelector('.batch-retry-hint');
+      if (hint) hint.remove();
+    }
   }
 });
 $('#clear-completed')?.addEventListener('click', () => {
@@ -1914,7 +1969,8 @@ $('#clear-completed')?.addEventListener('click', () => {
   if (!remaining.length) { const container = $('#batch-queue'); if (container) container.hidden = true; }
 });
 $('#retry-all-failed')?.addEventListener('click', () => {
-  setAnalysisStatus('请重新选择失败的文件进行导入。', 'neutral');
+  setAnalysisStatus('请重新选择所有失败的文件进行导入；也可单独点击各条目右侧的“重试”。', 'neutral');
+  $('#file-input').click();
 });
 $('#remove-all-failed')?.addEventListener('click', () => {
   const items = document.querySelectorAll('.batch-queue-item');

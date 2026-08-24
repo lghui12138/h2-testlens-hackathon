@@ -247,6 +247,34 @@ button, .icon-button, .quiet-button, .outline-button, .primary-button, .upload-b
 .overlay:focus-within { outline: none; }
 .overlay-content:focus { outline: none; }
 
+/* Small mobile improvements */
+@media (max-width: 480px) {
+  .metric-grid { grid-template-columns: 1fr; gap: 8px; }
+  .signal-diagnostic-grid { grid-template-columns: 1fr; }
+  .batch-queue-item { padding: 10px; }
+  .batch-queue-actions button { min-height: 40px; padding: 0 12px; font-size: 11px; }
+  .enterprise-table { -webkit-overflow-scrolling: touch; overflow-x: auto; }
+}
+
+@media (max-width: 420px) {
+  .shell { padding: 0 12px; }
+  .hero { padding: 28px 16px 24px; border-radius: 14px; }
+  .hero h1 { font-size: 30px; }
+  .hero-copy { font-size: 12px; }
+  .hero-actions { gap: 8px; }
+  .upload-button { width: 100%; min-width: 0; padding: 10px 12px; }
+  .section-block, .side-card { padding: 14px; border-radius: 11px; }
+  .metric-grid { grid-template-columns: 1fr; gap: 8px; }
+  .side-column { grid-template-columns: 1fr; }
+  .enterprise-quick-configs { flex-direction: column; }
+  .enterprise-quick-configs .quiet-button { width: 100%; }
+  .batch-queue-item { padding: 10px; }
+  .history-thumb { width: 80px; height: 48px; }
+  .enterprise-facts { grid-template-columns: 1fr; }
+  .enterprise-controls { flex-direction: column; }
+  .enterprise-controls input, .enterprise-controls select { min-width: 0; width: 100%; }
+}
+
 /* New mobile breakpoints */
 @media (max-width: 640px) {
   .shell { padding: 0 18px; }

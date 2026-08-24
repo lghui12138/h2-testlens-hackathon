@@ -459,7 +459,28 @@ export const DEVICE_PROFILES = Object.freeze([
       flow_slpm: '阳极流量（SLPM）',
       leak_ppm: '柜内氢气浓度（ppm）',
       power_w: '功率（kW)',
-      cell_count: '片数'
+      cell_count: '片数',
+      avg_cell_voltage_v: '平均电压（V）',
+      min_cell_voltage_v: '最小电压（V）',
+      max_cell_voltage_v: '最大电压（V）',
+      current_density_mAcm2: '电流密度（mA/cm2）',
+      anode_out_temp_c: '阳极出堆温度（℃）',
+      cathode_in_temp_c: '阴极入堆温度（℃）',
+      cathode_out_temp_c: '阴极出堆温度（℃）',
+      coolant_in_temp_c: '循环水入堆温度（℃）',
+      coolant_out_temp_c: '循环水出堆温度（℃）',
+      anode_out_pressure_kpa: '阳极出堆压力（kPa）',
+      cathode_in_pressure_kpa: '阴极入堆压力（kPa）',
+      cathode_out_pressure_kpa: '阴极出堆压力（kPa）',
+      coolant_in_pressure_kpa: '循环水入堆压力（kPa）',
+      coolant_out_pressure_kpa: '循环水出堆压力（kPa）',
+      h2_humidifier_water_temp_c: '阳极增湿罐水温度（℃）',
+      air_humidifier_water_temp_c: '阴极增湿罐水温度（℃）',
+      h2_stoich: '氢气计量比',
+      air_stoich: '空气计量比',
+      coolant_flow_lpm: '循环水流量（L/min）',
+      coolant_conductivity_us_cm: '循环水电导率（μS/cm）',
+      internal_resistance: '内阻（mΩ）'
     }
   },
   {
@@ -527,7 +548,15 @@ export const DEVICE_PROFILES = Object.freeze([
       timestamp_s: 'Timestamp',
       current_a: 'FC_CurrOut',
       voltage_v: 'FC_VoltOut',
-      net_power_kw: 'FC_NetPwrOut'
+      net_power_kw: 'FC_NetPwrOut',
+      main_status: 'FC_MainSts',
+      min_cell_voltage_v: 'FC_MinCellVoltage',
+      min_cell_channel: 'FC_MinVoltageChannel',
+      avg_cell_voltage_v: 'FC_AvgCellVoltage',
+      avg_cell_dev_mv: 'FC_AvgCellDev',
+      cell_voltage_variance: 'FC_VARVoltage',
+      isolation_kohm: 'FC_VehicleIsolationR',
+      runtime_h: 'FC_RunTime_Hours'
     }
   },
   {

@@ -2609,3 +2609,87 @@ test('qingchuan profile pressure_bar maps to kPa source correctly', () => {
   assert.equal(result.schema.mapping.pressure_kpa, '阳极入堆压力（kPa）');
   assert.equal(result.schema.mapping.power_kw, '功率（kW)');
 });
+
+test('regression: power kW->W conversion preserves MW and W inputs', () => {
+  const rows = [
+    { timestamp_s: 0, current_a: 10, voltage_v: 2, temperature_c: 25, pressure_bar: 1, flow_slpm: 1, leak_ppm: 1, power_kw: '0.002' },
+    { timestamp_s: 60, current_a: 10, voltage_v: 2, temperature_c: 25, pressure_bar: 1, flow_slpm: 1, leak_ppm: 1, power_kw: '0.002' }
+  ];
+  const result = analyzeRows(rows);
+  assert.equal(result.metrics.peakPowerW, 2);
+  assert.equal(result.rows[0].power_kw, '0.002');
+  assert.equal(result.rows[0].power_w, 2);
+});
+
+test('regression: pressure kPa/bar semantic reconciliation in enterprise stack', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极入堆压力（kPa）,阳极出堆压力（kPa）,循环水入堆温度（℃）,循环水出堆温度（℃）,阳极流量（SLPM）,阴极流量（SLPM）,片数',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,150,140,60,65,2,4,2',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,151,141,60,65,2,4,2'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.rows[0].pressure_kpa, 150);
+  assert.equal(result.metrics.peakPressureBar, 1.51);
+});
+
+test('regression: stoichiometry uses Faraday constant, molar volume, and cell count', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极流量（SLPM）,阴极流量（SLPM）,片数',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,0.14,0.33,2',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,0.14,0.33,2'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.dataset.stoich.status, 'calculated_or_raw');
+  assert.ok(Math.abs(result.dataset.metrics.hydrogenStoich.mean - 1.004) < 0.002);
+  assert.ok(Math.abs(result.dataset.metrics.airStoich.mean - 0.992) < 0.002);
+  assert.equal(result.dataset.stoich.cellCount, 2);
+  assert.equal(result.dataset.stoich.faradayConstantCPerMol, 96485.33212);
+});
+
+test('regression: flow resistance equals inlet minus outlet in kPa', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极入堆压力（kPa）,阳极出堆压力（kPa）,阴极入堆压力（kPa）,阴极出堆压力（kPa）,循环水入堆压力（kPa）,循环水出堆压力（kPa）,循环水入堆温度（℃）,循环水出堆温度（℃）',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,150,140,160,150,120,110,60,65',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,151,141,161,151,121,111,60,65'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.dataset.metrics.anodeFlowResistanceKpa.mean, 10);
+  assert.equal(result.dataset.metrics.cathodeFlowResistanceKpa.mean, 10);
+  assert.equal(result.dataset.metrics.coolantFlowResistanceKpa.mean, 10);
+});
+
+test('regression: coolant temperature difference equals outlet minus inlet', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,循环水入堆温度（℃）,循环水出堆温度（℃）',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,60,65',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,61,66'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.dataset.metrics.coolantTemperatureDifferenceC.mean, 5);
+});
+
+test('regression: zero pressure temperature and leak do not collapse to null', () => {
+  const rows = parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,CELL2,阳极入堆压力（kPa）,阳极出堆压力（kPa）,循环水入堆温度（℃）,循环水出堆温度（℃）,柜内氢气浓度（ppm）,测试区氢气浓度（ppm）,阳极流量（SLPM）,阴极流量（SLPM）,片数',
+    '00:00:00,1.4,10,0.014,0.7,0.69,0.71,0,0,0,0,0,0,2,4,2',
+    '00:00:01,1.4,10,0.014,0.7,0.69,0.71,0,0,0,0,0,0,2,4,2'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.metrics.peakPressureBar, 0);
+  assert.equal(result.metrics.peakTemperatureC, 0);
+  assert.equal(result.metrics.peakLeakPpm, 0);
+});
+
+test('regression: validates real qingchuan enterprise data against manual computation', async () => {
+  const text = await readFile('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv', 'utf8');
+  const parsed = analyzeRows(parseCSV(text.split(/\r?\n/).filter((line) => line.trim()).slice(0, 101).join('\n')));
+  const first = parsed.rows[0];
+  assert.equal(first.power_kw, 4.382);
+  assert.equal(first.power_w, 4382);
+  assert.equal(first.pressure_kpa, 159.8);
+  assert.equal(first.anode_flow_resistance_kpa, 11.3);
+  assert.equal(first.coolant_temperature_difference_c, 10.6);
+  assert.ok(Math.abs(first.h2_stoich - 1.6061) < 0.001);
+  assert.ok(Math.abs(first.air_stoich - 1.4915) < 0.001);
+  assert.equal(parsed.metrics.peakPressureBar, 1.641);
+});
