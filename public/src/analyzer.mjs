@@ -902,7 +902,8 @@ function complianceReadiness(config, missingMeasurements = [], missingPhases = [
   });
   const traceability = traceabilityReadiness(config);
   const editLog = editLogReadiness(config);
-  const standardEvidenceBindingReady = !config.standardRefs?.length || config.standardEvidenceBinding === undefined || config.standardEvidenceBinding?.ready === true;
+  const standardEvidenceBindingRequired = Boolean(config.standardRefs?.length && config.methodSource);
+  const standardEvidenceBindingReady = !standardEvidenceBindingRequired || config.standardEvidenceBinding?.ready === true;
   const formalBlockers = missingProfileFields.length || missingMetadata.length || missingMeasurements.length || missingPhases.length || phaseMetrics.missing.length || !approvalEvidence.ready || !methodImplementationEvidence.ready || !standardEvidenceBindingReady || !methodImplementationEvidence.ready || !scope.ready || !instruments.ready || !acceptance.ready || !report.ready || !acquisition.ready || !preCheck.ready || !testStages.ready || !testConditions.ready || !measurementMethods.ready || !efficiency.ready || !testSystem.ready || !environmentConditions.ready || !phaseResults.ready || !dataQuality.ready || !traceability.ready || !editLog.ready;
   const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : formalBlockers ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
   const label = status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? '标准符合性资料不完整' : '可进入人工符合性复核';

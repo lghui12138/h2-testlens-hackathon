@@ -902,6 +902,7 @@ test('maps the official power-fluctuation workflow phase aliases and reaches a r
     approvalEvidence: APPROVAL_EVIDENCE,
     methodExecutionStatus: 'FULL_METHOD_IMPLEMENTED',
     methodImplementationEvidence: methodEvidenceFor(profile.methodId, profile.revision),
+    standardEvidenceBinding: { ready: true, status: 'ready', matchedEvidenceIds: ['ev_gbt46104_scope'] },
     uncertaintyModelRequired: true,
     uncertaintyModel: FULL_METHOD_UNCERTAINTY_MODEL,
     acceptanceRules: [{ metric: 'specificEnergyKWhPerNm3', operator: '<=', value: 1e9, sourceRef: 'enterprise-acceptance-001' }],
@@ -963,6 +964,21 @@ test('standard references with complete evidence remain a standard evidence pack
   assert.equal(result.compliance.methodExecutionStatus, 'PUBLIC_SCOPE_MAPPING');
   assert.equal(result.releaseGate.status, 'STANDARD_EVIDENCE_PACKAGE');
   assert.equal(result.releaseGate.ready, true);
+});
+
+test('formal standard profiles fail closed when runtime standard evidence binding is absent', () => {
+  const result = analyzeRows(parseCSV(baselineCsv), {
+    profileId: 'missing-runtime-ledger',
+    approvalStatus: 'approved',
+    approvalEvidence: APPROVAL_EVIDENCE,
+    standardRefs: [{ id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current' }],
+    methodId: 'GB/T 45541-2025',
+    revision: '2025',
+    methodSource: { sourceId: 'gbt_45541_2025', locator: 'standard detail page: title/status/basic information', evidenceType: 'official_registry_fact', evidenceIds: ['ev_gbt45541_test_method'] },
+    thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+  });
+  assert.equal(result.compliance.standardEvidenceBinding.ready, false);
+  assert.equal(result.compliance.status, 'NOT_READY');
 });
 
 test('profile data quality gates expose actual sampling intervals and block a configured gap', () => {
