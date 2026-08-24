@@ -178,6 +178,13 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 }
 
 /* Small mobile improvements */
+@media (max-width: 480px) {
+  .metric-grid { grid-template-columns: 1fr; gap: 8px; }
+  .signal-diagnostic-grid { grid-template-columns: 1fr; }
+  .batch-queue-item { padding: 10px; }
+  .batch-queue-actions button { min-height: 40px; padding: 0 12px; font-size: 11px; }
+  .enterprise-table { -webkit-overflow-scrolling: touch; }
+}
 @media (max-width: 420px) {
   .shell { padding: 0 12px; }
   .hero { padding: 28px 16px 24px; border-radius: 14px; }

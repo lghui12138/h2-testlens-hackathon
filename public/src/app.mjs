@@ -1841,8 +1841,10 @@ function renderBatchQueue(entries) {
   container.hidden = false;
   const processed = entries.filter((e) => e.status === 'processed').length;
   const failed = entries.filter((e) => e.status === 'parser_error' || e.status === 'blocked_binary').length;
-  const batchActions = failed ? `<button id="retry-all-failed" aria-label="重试所有失败">重试所有失败 (${failed})</button>` : '';
-  container.innerHTML = `<div class="batch-queue-header"><span class="batch-summary">${entries.length} 个文件 · ${processed} 已处理${failed ? ` · ${failed} 失败` : ''}</span><div class="batch-queue-actions">${batchActions}<button id="clear-completed" aria-label="清除已完成">清除已完成</button></div></div>` + entries.map((entry, index) => {
+  const totalSize = entries.reduce((sum, e) => sum + (e.size || 0), 0);
+  const sizeLabel = totalSize >= 1024 * 1024 ? `${(totalSize / (1024 * 1024)).toFixed(1)} MB` : `${(totalSize / 1024).toFixed(1)} KB`;
+  const batchActions = failed ? `<button id="retry-all-failed" aria-label="重试所有失败">重试所有失败 (${failed})</button><button id="remove-all-failed" aria-label="移除所有失败">移除所有失败</button>` : '';
+  container.innerHTML = `<div class="batch-queue-header"><span class="batch-summary">${entries.length} 个文件 · ${sizeLabel} · ${processed} 已处理${failed ? ` · ${failed} 失败` : ''}</span><div class="batch-queue-actions">${batchActions}<button id="clear-completed" aria-label="清除已完成">清除已完成</button></div></div>` + entries.map((entry, index) => {
     const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
     const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
     const size = entry.size ? `${(entry.size / 1024).toFixed(1)} KB` : '—';
@@ -1888,6 +1890,16 @@ $('#clear-completed')?.addEventListener('click', () => {
 });
 $('#retry-all-failed')?.addEventListener('click', () => {
   setAnalysisStatus('请重新选择失败的文件进行导入。', 'neutral');
+});
+$('#remove-all-failed')?.addEventListener('click', () => {
+  const items = document.querySelectorAll('.batch-queue-item');
+  items.forEach((item) => {
+    const index = Number(item.dataset.index);
+    const entry = state.inputEntries?.[index];
+    if (entry && (entry.status === 'parser_error' || entry.status === 'blocked_binary')) item.remove();
+  });
+  const remaining = document.querySelectorAll('.batch-queue-item');
+  if (!remaining.length) { const container = $('#batch-queue'); if (container) container.hidden = true; }
 });
 
 ensureExtendedMetadataFields();
