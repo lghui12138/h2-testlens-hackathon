@@ -1727,6 +1727,31 @@ test('applies an explicitly declared vehicle mV unit without guessing from magni
   assert.ok(Math.abs(result.metrics.steadyVoltageMeanV - 0.7405) < 1e-12);
 });
 
+test('keeps positive cell voltage in KPI while filtering nonpositive raw values', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const rows = parseCSV([header,
+    '0,4,10,320,3.2,-1,3,0,8,1,500,1',
+    '1,4,10,320,3.2,0,3,0,8,1,500,1',
+    '2,4,10,320,3.2,0.70,3,0.72,8,1,500,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V' } } });
+  assert.equal(result.metrics.steadyVoltageMeanV, 0.72);
+  assert.equal(result.rows[0].avg_cell_voltage_raw, 0);
+  assert.equal(result.rows[0].avg_cell_voltage_v, null);
+  assert.equal(result.rows[2].avg_cell_voltage_v, 0.72);
+});
+
+test('accepts explicitly declared vehicle V units when unit evidence is required', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const rows = parseCSV([header,
+    '0,4,10,320,3.2,0.70,3,0.72,8,1,500,1',
+    '1,4,10,320,3.2,0.71,3,0.73,8,1,500,1'
+  ].join('\n'));
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'V' }, avg_cell_voltage_v: { sourceUnit: 'V' }, cell_voltage_variance: { sourceUnit: 'V' } } });
+  assert.deepEqual(result.dataset.unitDiagnostics.unresolvedFields, []);
+  assert.equal(result.metrics.steadyVoltageMeanV, 0.725);
+});
+
 test('splits vehicle insulation exclusions by status, value type, and valid minimum input', () => {
   const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
   const rows = parseCSV([header,

@@ -179,6 +179,7 @@ test('Vinext App public runtime exposes the browser engines and analysis worker 
     'public/src/analysis-worker.mjs',
     'public/src/analyzer.mjs',
     'public/src/enterprise-adapters.mjs',
+    'public/src/excel-workflow.mjs',
     'public/src/metric-trace.mjs',
     'public/src/profiles.mjs',
     'public/src/standard-evidence.mjs',

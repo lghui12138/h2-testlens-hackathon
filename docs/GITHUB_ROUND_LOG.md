@@ -24,7 +24,7 @@
 
 - 电堆无单位阳极/阴极气体流量现在 fail-closed，不再以 implicit SLPM 计算计量比；明确标准状态单位才可进入流量/计量比路径。
 - 车辆非正单体电压 raw 保留、物理 KPI 排除；公共 quality 深层脱敏来源文件名；`excel-workflow.mjs` 纳入 source/public parity。
-- 研究证据图补齐 18/18 runtime `standard_id`，提交门新增 `t02:standard-id-reconciliation`；本轮门控为 `npm test` 186/186、`npm run check:submission` 139/139，T02 coverage 重放仍 198/198 unchanged。
+- 研究证据图补齐 18/18 runtime `standard_id`，提交门新增 `t02:standard-id-reconciliation`；本轮门控为 `npm test` 188/188、`npm run check:submission` 139/139，T02 coverage 重放仍 198/198 unchanged。
 
 ## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
 
