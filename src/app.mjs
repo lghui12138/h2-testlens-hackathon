@@ -81,6 +81,36 @@ function updateThemeButton() {
   button.setAttribute('aria-label', getTheme() === 'dark' ? '切换到浅色模式' : '切换到深色模式');
 }
 
+function showInitialLoadingState() {
+  showMetricSkeletons();
+  const issueList = $('#issue-list');
+  if (issueList && !issueList.children.length) {
+    issueList.innerHTML = Array.from({ length: 3 }).map(() => `<div class="issue"><div class="issue-mark skeleton" style="width:25px;height:25px;border-radius:7px;"></div><div><div class="skeleton-text short" style="width:40%"></div><div class="skeleton-text"></div><div class="skeleton-text" style="width:80%"></div></div></div>`).join('');
+  }
+}
+function hideInitialLoadingState() {
+  const metricGrid = $('#metric-grid');
+  if (metricGrid?.querySelector('.skeleton')) metricGrid.innerHTML = '';
+  ['trend-chart', 'enterprise-chart', 'enterprise-performance-chart'].forEach((id) => {
+    const wrap = $(`#${id}`)?.parentElement;
+    if (wrap) { wrap.classList.remove('chart-loading'); const msg = wrap.querySelector('.chart-skeleton-message'); if (msg) msg.remove(); }
+  });
+  const issueList = $('#issue-list');
+  if (issueList?.querySelector('.issue-mark.skeleton')) issueList.innerHTML = '';
+}
+function trapFocus(container) {
+  if (!container) return;
+  const focusable = container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  container.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    if (event.shiftKey) { if (document.activeElement === first) { event.preventDefault(); last.focus(); } }
+    else { if (document.activeElement === last) { event.preventDefault(); first.focus(); } }
+  });
+}
+
 function getRecentFiles() {
   try {
     const raw = window.localStorage.getItem('h2-testlens-recent-files');
@@ -222,6 +252,7 @@ async function analyzeCurrent(reason = '重新分析') {
   if (!state.rows.length) return;
   const token = ++state.analysisToken;
   setAnalysisStatus(`${reason}：准备中…`, 'busy');
+  document.body.setAttribute('aria-busy', 'true');
   await yieldToBrowser();
   try {
     showMetricSkeletons();
@@ -240,6 +271,7 @@ async function analyzeCurrent(reason = '重新分析') {
     const engine = result.source?.analysisEngine === 'worker' ? ' · Worker' : result.source?.analysisEngine === 'main-thread-fallback' ? ' · 主线程回退' : '';
     setAnalysisStatus(`分析完成：${result.metrics.sampleCount.toLocaleString('zh-CN')} 条记录${sampled}${engine}`, 'ready');
     resetBatchProgress();
+    document.body.removeAttribute('aria-busy');
     if (state.batchDeclarationInput) void evaluateDeclaredBatch();
   } catch (error) {
     if (token !== state.analysisToken) return;
@@ -250,6 +282,7 @@ async function analyzeCurrent(reason = '重新分析') {
     if (notice) notice.textContent = `分析失败：${message}；请检查数据格式，或点击“重试”再次分析。`;
     const retryButton = $('#retry-analysis');
     if (retryButton) retryButton.hidden = false;
+    document.body.removeAttribute('aria-busy');
     return null;
   }
 }
@@ -1187,6 +1220,7 @@ function updateAccessibleSummaries(result) {
 }
 
 function render(result, pushHistory = true) {
+  hideInitialLoadingState();
   if (pushHistory) {
     pushResultHistory(result);
   }
@@ -2108,5 +2142,39 @@ renderRecentFiles();
 void loadCoverageSummary();
 void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
+showInitialLoadingState();
 void loadSampleSafely();
 void showQuickStart();
+
+function initChartTooltip() {
+  const canvas = $('#trend-chart');
+  const tooltip = $('#chart-tooltip');
+  if (!canvas || !tooltip) return;
+  const showTooltip = (clientX, clientY) => {
+    if (!state.result?.rows?.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+    const plotWidth = rect.width - pad.left - pad.right;
+    const ratio = Math.max(0, Math.min(1, (x - pad.left) / plotWidth));
+    const rows = state.result.rows.filter((row) => row.timestamp_s !== null);
+    const index = Math.round(ratio * (rows.length - 1));
+    const row = rows[index];
+    if (!row) return;
+    const temp = row.temperature_c !== null ? `${fmt(row.temperature_c, 2)} °C` : '—';
+    const pressure = row.pressure_bar !== null ? `${fmt(row.pressure_bar, 2)} bar` : '—';
+    const time = row.timestamp_s !== null ? `${fmt(row.timestamp_s, 1)} s` : '—';
+    tooltip.innerHTML = `<div><b>${escapeHtml(time)}</b></div><div>温度：${temp}</div><div>压力：${pressure}</div>`;
+    tooltip.hidden = false;
+    tooltip.style.left = `${clientX + 12}px`;
+    tooltip.style.top = `${clientY - 48}px`;
+  };
+  canvas.addEventListener('mousemove', (event) => showTooltip(event.clientX, event.clientY));
+  canvas.addEventListener('mouseleave', () => { tooltip.hidden = true; });
+  canvas.addEventListener('touchstart', (event) => {
+    if (!state.result?.rows?.length || !event.touches.length) return;
+    showTooltip(event.touches[0].clientX, event.touches[0].clientY);
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => { tooltip.hidden = true; });
+}
+void initChartTooltip();

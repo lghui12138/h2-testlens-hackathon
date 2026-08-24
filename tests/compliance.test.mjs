@@ -81,3 +81,61 @@ test('compliance history tracks snapshots with approval and method status', () =
   assert.equal(result.auditTrail.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED');
   assert.ok(result.auditTrail.datasetLabel === 'vehicle');
 });
+
+test('compliance boundary is specific for example_unapproved profiles', () => {
+  const result = compliance({
+    approvalStatus: 'example_unapproved',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    standardRefs: [],
+    requiredMetadata: [],
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    testMetadata: {}
+  }, 'demo', {}, { rowCount: 0, completenessPct: 0, usable: false }, [], {});
+  assert.ok(result.boundary.includes('企业未审批演示 profile'));
+  assert.ok(result.boundary.includes('不构成标准符合性判定或放行依据'));
+  assert.ok(result.boundary.includes('不得用于标准符合性声明'));
+});
+
+test('compliance auditTrail includes detailed evidence and method metadata', () => {
+  const result = compliance({
+    approvalStatus: 'example_unapproved',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    methodId: 'GB/T 46104-2025',
+    revision: '2025',
+    standardRefs: [{ id: 'GB/T 46104-2025', title: 'test', uri: 'https://example.com', status: 'current' }],
+    requiredMetadata: [],
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    testMetadata: {}
+  }, 'stack', {}, { rowCount: 10, completenessPct: 100, usable: true }, [], {});
+  assert.ok(result.auditTrail);
+  assert.equal(result.auditTrail.methodId, 'GB/T 46104-2025');
+  assert.equal(result.auditTrail.revision, '2025');
+  assert.equal(result.auditTrail.standardRefsCount, 1);
+  assert.equal(result.auditTrail.datasetRowCount, 10);
+  assert.ok(Array.isArray(result.auditTrail.evidenceDetails));
+  assert.ok(result.auditTrail.evidenceDetails.length >= 20);
+  assert.ok(result.auditTrail.evidenceDetails.some((item) => item.id === 'methodImplementation'));
+  assert.ok(result.auditTrail.evidenceDetails.every((item) => 'ready' in item && 'evidence' in item && 'label' in item));
+});
+
+test('compliance history snapshot captures enriched fields for UI rendering', () => {
+  const result = compliance({
+    approvalStatus: 'example_unapproved',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    methodId: 'GB/T 46104-2025',
+    revision: '2025',
+    standardRefs: [{ id: 'GB/T 46104-2025', title: 'test', uri: 'https://example.com', status: 'current' }],
+    requiredMetadata: [],
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    testMetadata: {}
+  }, 'stack', {}, { rowCount: 10, completenessPct: 100, usable: true }, [], {});
+  const snapshot = { ...result.auditTrail, savedAt: new Date().toISOString() };
+  assert.ok(snapshot.methodId === 'GB/T 46104-2025');
+  assert.ok(snapshot.revision === '2025');
+  assert.ok(snapshot.standardRefsCount === 1);
+  assert.ok(snapshot.datasetRowCount === 10);
+  assert.ok(snapshot.evaluationMode === null);
+});
