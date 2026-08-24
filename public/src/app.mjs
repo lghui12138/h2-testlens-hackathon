@@ -16,7 +16,7 @@ import { decodeTextBuffer } from './input-safety.mjs';
 import { observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration, annotateDeclaredBatchRows } from './batch-aggregation.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, coverageSummary: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0 };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, coverageSummary: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0, resultHistory: [], resultHistoryIndex: -1, recentFiles: [], theme: 'dark' };
 const assetUrl = (relativePath) => /\/src\/index\.html$/.test(window.location.pathname) ? `../${relativePath}` : `./${relativePath}`;
 let standardEvidencePromise = null;
 let trustedApprovalPromise = null;
@@ -60,6 +60,78 @@ function setAnalysisStatus(message, tone = 'neutral') {
   if (!element) return;
   element.textContent = message;
   element.dataset.tone = tone;
+}
+
+function getTheme() {
+  return state.theme || 'dark';
+}
+function applyTheme(theme) {
+  state.theme = theme;
+  document.documentElement.dataset.theme = theme;
+  try { window.localStorage.setItem('h2-testlens-theme', theme); } catch {}
+  updateThemeButton();
+}
+function toggleTheme() {
+  applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
+function updateThemeButton() {
+  const button = $('#theme-toggle');
+  if (!button) return;
+  button.textContent = getTheme() === 'dark' ? '🌙' : '☀️';
+  button.setAttribute('aria-label', getTheme() === 'dark' ? '切换到浅色模式' : '切换到深色模式');
+}
+
+function getRecentFiles() {
+  try {
+    const raw = window.localStorage.getItem('h2-testlens-recent-files');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function saveRecentFile(name, hash) {
+  const recent = getRecentFiles().filter((item) => item.name !== name && (hash ? item.hash !== hash : true));
+  recent.unshift({ name, hash, loadedAt: new Date().toISOString() });
+  const trimmed = recent.slice(0, 10);
+  try { window.localStorage.setItem('h2-testlens-recent-files', JSON.stringify(trimmed)); } catch {}
+  state.recentFiles = trimmed;
+  renderRecentFiles();
+}
+function renderRecentFiles() {
+  const container = $('#recent-files-list');
+  if (!container) return;
+  const recent = getRecentFiles();
+  if (!recent.length) {
+    container.innerHTML = '<div class="recent-empty">暂无最近文件</div>';
+    return;
+  }
+  container.innerHTML = recent.map((item) => `<button class="recent-file-chip" data-name="${escapeHtml(item.name)}" data-hash="${escapeHtml(item.hash || '')}" type="button"><span>${escapeHtml(item.name)}</span><small>${new Date(item.loadedAt).toLocaleDateString('zh-CN')}</small></button>`).join('');
+}
+
+function pushResultHistory(result) {
+  state.resultHistory = state.resultHistory.slice(0, state.resultHistoryIndex + 1);
+  state.resultHistory.push(result);
+  if (state.resultHistory.length > 5) state.resultHistory.shift();
+  state.resultHistoryIndex = state.resultHistory.length - 1;
+  updateUndoRedoButtons();
+}
+function undoResult() {
+  if (state.resultHistoryIndex <= 0) return;
+  state.resultHistoryIndex -= 1;
+  state.result = state.resultHistory[state.resultHistoryIndex];
+  render(state.result, false);
+  updateUndoRedoButtons();
+}
+function redoResult() {
+  if (state.resultHistoryIndex >= state.resultHistory.length - 1) return;
+  state.resultHistoryIndex += 1;
+  state.result = state.resultHistory[state.resultHistoryIndex];
+  render(state.result, false);
+  updateUndoRedoButtons();
+}
+function updateUndoRedoButtons() {
+  const undoButton = $('#undo-result');
+  const redoButton = $('#redo-result');
+  if (undoButton) undoButton.disabled = state.resultHistoryIndex <= 0;
+  if (redoButton) redoButton.disabled = state.resultHistoryIndex >= state.resultHistory.length - 1;
 }
 
 function yieldToBrowser() {
@@ -160,6 +232,8 @@ async function analyzeCurrent(reason = '重新分析') {
     });
     if (token !== state.analysisToken) return;
     result.source = { ...result.source, inputSummary: state.inputSummary };
+    const retryButton = $('#retry-analysis');
+    if (retryButton) retryButton.hidden = true;
     render(result);
     const sampled = result.source?.chartSampling ? ` · 图表显示 ${result.source.displayRowCount.toLocaleString('zh-CN')} 点` : '';
     const engine = result.source?.analysisEngine === 'worker' ? ' · Worker' : result.source?.analysisEngine === 'main-thread-fallback' ? ' · 主线程回退' : '';
@@ -167,8 +241,12 @@ async function analyzeCurrent(reason = '重新分析') {
     if (state.batchDeclarationInput) void evaluateDeclaredBatch();
   } catch (error) {
     if (token !== state.analysisToken) return;
-    setAnalysisStatus(`分析失败：${error.message}`, 'error');
-    $('#schema-notice').textContent = `分析失败：${error.message}`;
+    const message = error.message || '未知错误';
+    setAnalysisStatus(`分析失败：${message}`, 'error');
+    const notice = $('#schema-notice');
+    if (notice) notice.textContent = `分析失败：${message}；请检查数据格式，或点击“重试”再次分析。`;
+    const retryButton = $('#retry-analysis');
+    if (retryButton) retryButton.hidden = false;
     return null;
   }
 }
@@ -941,7 +1019,10 @@ function updateAccessibleSummaries(result) {
   if (announcement) announcement.textContent = `分析完成：${verdictLabel(result.verdict)}；${result.metrics.sampleCount || 0} 条记录；${result.issues?.length || 0} 项风险或提示；正式符合性声明未执行。`;
 }
 
-function render(result) {
+function render(result, pushHistory = true) {
+  if (pushHistory) {
+    pushResultHistory(result);
+  }
   state.result = result;
   state.aiDraft = null;
   state.baselineResult = null;
