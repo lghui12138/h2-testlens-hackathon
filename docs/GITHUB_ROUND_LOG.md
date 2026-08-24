@@ -1,5 +1,14 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 标准逐项 provenance 与流量单位安全轮
+
+- 六智能体审查发现：运行时只绑定 `methodSource` 仍可能让一个 profile 列出多个标准却只证明一个来源；现在每个 `standardRefs[]` 都要求独立 `evidenceSourceId/evidenceIds`，source/public profile 与 compact ledger 同步。
+- 数值安全修复：显式实际 `L/min`、`m³/h` 不再静默当成 `SLPM`；缺少标准状态或温压基准时进入 `UNIT_UNSUPPORTED` 并阻断对应流量积分，`Nm³/h`、`NL/min` 和 `SLPM` 保持可追溯转换。
+- 易用性修复：四类文件导入完成后清空 input，允许重新选择同名文件；release receipt 空门控映射不再误显示“门控已回读”。
+- 针对性回归通过：标准证据/profile 8/8、analyzer 128/128、静态输入面 10/10；完整测试、打包和 T02 完整性将在提交前重跑。
+- 最终门控：`npm test` **175/175**、`npm run check:submission` **132/132**、typecheck、Vinext build 5/5、API smoke、AI grounding 4/4、T02 源完整性 198/198 unchanged、package smoke 全通过；ZIP SHA-256 以相邻版本化 release receipt/`.sha256` sidecar 为准，避免文档自引用。
+- GitHub 外部残余：本地提交尚未推送；Pages 项目地址仍跳转自定义域且当前不可达，workflow 权限限制仍未改变。
+
 ## 2026-08-24 · Pages 静态部署回执绑定轮
 
 - Pages 准备脚本现在在云端没有本地 ZIP receipt 时，使用 `GITHUB_SHA`/`GITHUB_RUN_ID` 生成静态部署 receipt；页面会显示 `commit 已绑定 · package 未执行`，不再把 commit 绑定误显示成“门控已回读”。

@@ -92,9 +92,9 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'GB/T 46104-2025',
     revision: '2025',
     standardRefs: [
-      { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current' },
-      { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current' },
-      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published' }
+      { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
+      { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
     methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
     status: 'current',
@@ -253,9 +253,9 @@ export const DEVICE_PROFILES = Object.freeze([
     methodId: 'GB/T 45541-2025',
     revision: '2025',
     standardRefs: [
-      { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current' },
-      { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current' },
-      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published' }
+      { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
+      { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
     methodExecutionStatus: 'PUBLIC_SCOPE_MAPPING',
     status: 'current',
@@ -998,7 +998,13 @@ export function profilesFromPackage(payload, options = {}) {
   const standardEvidenceBinding = requiresLedger
     ? evidenceRows.length ? validateProfileEvidenceBindings(payload, evidenceRows, { requireEvidenceIds: true }) : { ready: false, checks: [], error: 'standardEvidenceLedger 缺失' }
     : { ready: true, checks: [], status: 'not_configured' };
-  if (requiresLedger && !standardEvidenceBinding.ready) return { ok: false, errors: ['运行时标准 evidence ledger 绑定失败：' + (standardEvidenceBinding.error || standardEvidenceBinding.checks?.flatMap((check) => check.binding?.missing || []).join('、') || '未知错误')], standardEvidenceBinding };
+  if (requiresLedger && !standardEvidenceBinding.ready) {
+    const bindingErrors = standardEvidenceBinding.checks?.flatMap((check) => [
+      ...(check.binding?.missing || []), ...(check.binding?.malformed || []),
+      ...(check.standardReferences || []).flatMap((binding) => [...(binding.missing || []), ...(binding.malformed || [])])
+    ]) || [];
+    return { ok: false, errors: ['运行时标准 evidence ledger 绑定失败：' + (standardEvidenceBinding.error || bindingErrors.join('、') || '未知错误')], standardEvidenceBinding };
+  }
   return {
     ok: true,
     errors: [],

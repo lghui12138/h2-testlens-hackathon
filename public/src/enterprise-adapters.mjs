@@ -62,7 +62,7 @@ const UNIT_DEFINITIONS = Object.freeze({
   voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001 },
   power_kw: { kw: 1, mw: 0.001, w: 0.001, 瓦: 0.001 },
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
-  flow_slpm: { slpm: 1, lpm: 1, 'l/min': 1, 'l·min-1': 1, 'm3/h': 1000 / 60, 'm³/h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
+  flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
   temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
   leak_ppm: { ppm: 1, ppb: 0.001 }
 });

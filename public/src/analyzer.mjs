@@ -221,7 +221,10 @@ function unitTransform(field, header) {
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
-  if (field === 'flow_slpm' && (normalized.includes('m3h') || normalized.includes('nm3h') || normalized.includes('立方米每小时'))) return { mode: 'scale', factor: 1000 / 60, label: 'm³/h→SLPM' };
+  if (field === 'flow_slpm' && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
+  if (field === 'flow_slpm' && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
+  if (field === 'flow_slpm' && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
+  if (field === 'flow_slpm' && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
   if (field === 'leak_ppm' && (normalized.includes('ppb') || normalized.includes('十亿'))) return { mode: 'scale', factor: 0.001, label: 'ppb→ppm' };
   if (['temperature_c', 'gas_temperature_c', 'ambient_temperature_c'].includes(field) && (normalized.includes('fahrenheit') || normalized.includes('华氏') || normalized.endsWith('f'))) return { mode: 'fahrenheit_to_c', factor: 1, label: '°F→°C' };
   return { mode: 'identity', factor: 1, label: '原单位' };
@@ -274,6 +277,7 @@ function resolveSchema(inputRows, explicitMapping = {}) {
 function convertValue(rawValue, transform) {
   const value = number(rawValue);
   if (value === null) return null;
+  if (transform?.mode === 'unsupported') return null;
   if (transform?.mode === 'fahrenheit_to_c') return (value - 32) * (5 / 9);
   return value * (transform?.factor ?? 1);
 }
@@ -1366,7 +1370,9 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (config.approvalStatus === 'approved' && compliance.editLog?.required && !compliance.editLog.ready) issues.push(issue('critical', 'EDIT_LOG_EVIDENCE_MISSING', '人工修改审计记录不完整', compliance.editLog.evidence, '补充字段、旧值摘要、新值摘要、操作者、时间、原因和证据引用；不要用未记录的覆盖操作替代审计记录。'));
   if (config.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED' && !compliance.methodImplementationEvidence?.ready) issues.push(issue('critical', 'METHOD_IMPLEMENTATION_EVIDENCE_MISSING', '完整方法执行声明缺少结构化实施证据', compliance.methodImplementationEvidence?.evidence || '未提供 methodImplementationEvidence', '补充标准来源、条款/步骤覆盖、每项实施证据、验证人、验证日期、验证引用，并清空未关闭缺口后再声明 FULL_METHOD_IMPLEMENTED。'));
   if (config.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED' && !compliance.fullMethodProfile?.ready) issues.push(issue('critical', 'FULL_METHOD_PROFILE_EVIDENCE_MISSING', '完整方法 profile 缺少验收、仪器或不确定度前置证据', compliance.fullMethodProfile?.evidence || '未提供完整方法 profile 前置证据', '补充企业批准验收规则、仪器类别要求和有效不确定度模型；在证据齐全前保持分析草稿。'));
-  const convertedFields = Object.entries(schema.conversions).filter(([, transform]) => transform.mode !== 'identity');
+  const unsupportedFields = Object.entries(schema.conversions).filter(([, transform]) => transform.mode === 'unsupported');
+  if (unsupportedFields.length) issues.push(issue('critical', 'UNIT_UNSUPPORTED', '输入单位无法安全换算到分析标准单位', unsupportedFields.map(([field, transform]) => `${field}：${transform.label}`).join('；'), '补充标准状态/温度/压力基准，或将原始通道导出为 canonical 单位后再分析；系统不会猜测实际体积流量与标准体积流量的等价关系。'));
+  const convertedFields = Object.entries(schema.conversions).filter(([, transform]) => transform.mode === 'scale' || transform.mode === 'fahrenheit_to_c');
   if (convertedFields.length) issues.push(issue('info', 'UNIT_CONVERTED', '已自动换算输入单位', convertedFields.map(([field, transform]) => `${field} ${transform.label}`).join('；'), '正式归档前确认原始表头和单位定义。'));
   if (quality.invalidValueCounts.timestamp_s > 0) issues.push(issue('critical', 'TIMESTAMP_INVALID', '时间轴存在无效值', `有 ${quality.invalidValueCounts.timestamp_s} 条记录无法解析 timestamp_s`, '修复时间列格式，避免趋势和漂移计算失真。'));
   if (quality.duplicateTimestampCount > 0 || quality.nonMonotonicCount > 0) issues.push(issue('warn', 'TIME_SEQUENCE', '时间轴需要复核', `重复时间戳 ${quality.duplicateTimestampCount} 条，逆序跳变 ${quality.nonMonotonicCount} 次`, '确认采样时钟、合并文件和排序方式。'));

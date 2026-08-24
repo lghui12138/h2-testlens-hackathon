@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseJsonlLedger, validateEvidenceLedger, validateMethodSourceBinding } from '../src/standard-evidence.mjs';
+import { parseJsonlLedger, validateEvidenceLedger, validateMethodSourceBinding, validateStandardReferenceBinding } from '../src/standard-evidence.mjs';
 
 test('standards evidence ledger closes source, evidence, and claim references', () => {
   const sources = parseJsonlLedger('{"source_id":"std-1"}\n', 'sources');
@@ -29,4 +29,21 @@ test('method source binding rejects cross-source evidence ids', () => {
   const result = validateMethodSourceBinding({ sourceId: 'std-1', locator: 'scope', evidenceType: 'official', evidenceIds: ['ev-2'] }, rows);
   assert.equal(result.ready, false);
   assert.ok(result.malformed.some((item) => item.includes('sourceMismatch')));
+});
+
+test('each declared standard reference requires its own ledger source and evidence ids', () => {
+  const rows = [
+    { evidence_id: 'ev-std-1', source_id: 'std-1', evidence_type: 'official', locator: 'scope' },
+    { evidence_id: 'ev-std-2', source_id: 'std-2', evidence_type: 'official', locator: 'status' }
+  ];
+  const ready = validateStandardReferenceBinding({ id: 'STD-1', evidenceSourceId: 'std-1', evidenceIds: ['ev-std-1'] }, 0, rows);
+  assert.equal(ready.ready, true);
+  assert.deepEqual(ready.matchedEvidenceIds, ['ev-std-1']);
+  const blocked = validateStandardReferenceBinding({ id: 'STD-1', evidenceSourceId: 'std-1', evidenceIds: ['ev-std-2'] }, 0, rows);
+  assert.equal(blocked.ready, false);
+  assert.ok(blocked.malformed.some((item) => item.includes('sourceMismatch')));
+  const missing = validateStandardReferenceBinding({ id: 'STD-1' }, 0, rows);
+  assert.equal(missing.ready, false);
+  assert.ok(missing.missing.includes('standardRefs[0].evidenceSourceId'));
+  assert.ok(missing.missing.includes('standardRefs[0].evidenceIds'));
 });

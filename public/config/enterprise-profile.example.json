@@ -31,9 +31,9 @@
       "methodId": "GB/T 45541-2025",
       "revision": "2025",
       "standardRefs": [
-        { "id": "GB/T 45541-2025", "title": "PEM电解槽性能测试方法", "uri": "https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB", "status": "current" },
-        { "id": "GB/T 29729-2022", "title": "氢系统安全的基本要求", "uri": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9", "status": "current" },
-        { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published" }
+        { "id": "GB/T 45541-2025", "title": "PEM电解槽性能测试方法", "uri": "https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB", "status": "current", "evidenceSourceId": "gbt_45541_2025", "evidenceIds": ["ev_gbt45541_test_method"] },
+        { "id": "GB/T 29729-2022", "title": "氢系统安全的基本要求", "uri": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9", "status": "current", "evidenceSourceId": "gbt_29729_2022", "evidenceIds": ["ev_gbt29729_current"] },
+        { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published", "evidenceSourceId": "iso_22734_1_2025", "evidenceIds": ["ev_iso22734_1_scope"] }
       ],
       "methodSource": { "sourceId": "gbt_45541_interpretation_2025", "locator": "课程简介", "evidenceType": "official_interpretation_paraphrase", "evidenceIds": ["ev_gbt45541_interpretation"] },
       "methodExecutionStatus": "PUBLIC_SCOPE_MAPPING",

@@ -1073,8 +1073,16 @@ async function loadReleaseSummary() {
     if (!response.ok) throw new Error('release_summary_unavailable');
     const summary = await response.json();
     const shortCommit = summary.commit ? String(summary.commit).slice(0, 12) : '未绑定 commit';
-    const allGatesPassed = Object.values(summary.gates || {}).every((gate) => gate?.status === 'passed');
-    const gateStatus = allGatesPassed ? '门控已回读' : summary.commit ? 'commit 已绑定 · package 未执行' : '门控未绑定';
+    const gateEntries = Object.values(summary.gates || {});
+    const allGatesPassed = gateEntries.length > 0 && gateEntries.every((gate) => gate?.status === 'passed');
+    const hasPackageNotRun = summary.gates?.packageSmoke?.status === 'not_run';
+    const gateStatus = allGatesPassed
+      ? '门控已回读'
+      : summary.commit && hasPackageNotRun
+        ? 'commit 已绑定 · package 未执行'
+        : summary.commit && gateEntries.length > 0
+          ? 'commit 已绑定 · 门控未全通过'
+          : '门控未绑定';
     const t02 = summary.t02 || {};
     element.textContent = `公开版本 v${summary.version || '—'} · ${summary.releaseStatus || 'DEMO_ONLY'} · ${gateStatus} · commit ${shortCommit} · T02 ${t02.totalFiles || 0} 文件 / ${t02.formalConformityClaims || 0} 项正式符合性声明`;
     element.dataset.tone = summary.commit && allGatesPassed ? 'ready' : 'neutral';
@@ -1089,6 +1097,7 @@ async function loadLegacySample() {
 }
 
 $('#file-input').addEventListener('change', async (event) => {
+  const input = event.currentTarget;
   const files = [...event.target.files];
   if (!files.length) return;
   try {
@@ -1116,9 +1125,12 @@ $('#file-input').addEventListener('change', async (event) => {
   } catch (error) {
     setAnalysisStatus(`导入失败：${error.message}`, 'error');
     $('#schema-notice').textContent = `导入失败：${error.message}`;
+  } finally {
+    input.value = '';
   }
 });
 $('#batch-declaration-file').addEventListener('change', async (event) => {
+  const input = event.currentTarget;
   const file = event.target.files[0];
   if (!file) return;
   try {
@@ -1131,6 +1143,8 @@ $('#batch-declaration-file').addEventListener('change', async (event) => {
     state.batchSummaries = [];
     renderBatchObservation();
     $('#batch-observation-file-status').textContent = '声明 JSON 读取失败';
+  } finally {
+    input.value = '';
   }
 });
 $('#reanalyze').addEventListener('click', () => { void analyzeCurrent('重新分析'); });
@@ -1139,6 +1153,7 @@ $('#profile-select').addEventListener('change', () => { applyProfile($('#profile
 $('#load-demo').addEventListener('click', loadSample);
 $('#load-legacy').addEventListener('click', loadLegacySample);
 $('#profile-file').addEventListener('change', async (event) => {
+  const input = event.currentTarget;
   const file = event.target.files[0];
   if (!file) return;
   try {
@@ -1147,9 +1162,12 @@ $('#profile-file').addEventListener('change', async (event) => {
     applyProfilePackage(packageResult);
   } catch (error) {
     $('#profile-import-status').textContent = `导入失败：${error.message}`;
+  } finally {
+    input.value = '';
   }
 });
 $('#parameter-file').addEventListener('change', async (event) => {
+  const input = event.currentTarget;
   const file = event.target.files[0];
   if (!file) return;
   try {
@@ -1162,6 +1180,8 @@ $('#parameter-file').addEventListener('change', async (event) => {
   } catch (error) {
     state.parameterConfig = null;
     $('#parameter-import-status').textContent = `导入失败：${error.message}`;
+  } finally {
+    input.value = '';
   }
 });
 $('#metadata-raw-ref').addEventListener('input', (event) => { event.target.dataset.generated = 'false'; });

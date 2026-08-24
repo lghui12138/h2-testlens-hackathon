@@ -81,8 +81,51 @@ export function validateMethodSourceBinding(methodSource, evidenceRows = [], { r
   return { ready: status === 'ready', status, missing: [...new Set(missing)], malformed: [...new Set(malformed)], matchedEvidenceIds: matched.map((row) => row.evidence_id), evidenceSourceId: source.sourceId || null, evidence: status === 'ready' ? `methodSource 已绑定 evidence ledger：${matched.map((row) => row.evidence_id).join('、')}` : `methodSource 证据引用${status === 'malformed' ? '格式非法' : '缺失'}：${[...new Set([...malformed, ...missing])].join('、')}` };
 }
 
+export function validateStandardReferenceBinding(reference, index, evidenceRows = [], { requireEvidenceIds = true } = {}) {
+  const label = `standardRefs[${index}]`;
+  const ref = reference && typeof reference === 'object' && !Array.isArray(reference) ? reference : null;
+  if (!ref) return { ready: false, status: 'malformed', missing: [], malformed: [label], matchedEvidenceIds: [], evidenceSourceId: null, evidence: `${label} 必须是对象` };
+  const missing = [];
+  const malformed = [];
+  const evidenceSourceId = text(ref.evidenceSourceId) ? ref.evidenceSourceId.trim() : '';
+  const evidenceIds = Array.isArray(ref.evidenceIds) ? ref.evidenceIds.filter(text) : [];
+  if (requireEvidenceIds && !evidenceSourceId) missing.push(`${label}.evidenceSourceId`);
+  if (requireEvidenceIds && !evidenceIds.length) missing.push(`${label}.evidenceIds`);
+  if (ref.evidenceIds !== undefined && !Array.isArray(ref.evidenceIds)) malformed.push(`${label}.evidenceIds`);
+  if (new Set(evidenceIds).size !== evidenceIds.length) malformed.push(`${label}.evidenceIds_duplicate`);
+  const candidates = evidenceRows.filter((row) => row?.source_id === evidenceSourceId);
+  if (requireEvidenceIds && evidenceSourceId && !candidates.length) missing.push(`${label}.evidenceSourceId.evidenceLedger`);
+  const matched = [];
+  for (const evidenceId of evidenceIds) {
+    const row = evidenceRows.find((item) => item?.evidence_id === evidenceId);
+    if (!row) missing.push(`${label}.evidenceIds.unknown:${evidenceId}`);
+    else if (evidenceSourceId && row.source_id !== evidenceSourceId) malformed.push(`${label}.evidenceIds.sourceMismatch:${evidenceId}`);
+    else matched.push(row);
+  }
+  const status = malformed.length ? 'malformed' : missing.length ? 'missing' : 'ready';
+  return {
+    ready: status === 'ready',
+    status,
+    missing: [...new Set(missing)],
+    malformed: [...new Set(malformed)],
+    matchedEvidenceIds: matched.map((row) => row.evidence_id),
+    evidenceSourceId: evidenceSourceId || null,
+    evidence: status === 'ready'
+      ? `${label} 已绑定标准证据 ledger：${matched.map((row) => row.evidence_id).join('、')}`
+      : `${label} 标准证据引用${status === 'malformed' ? '格式非法' : '缺失'}：${[...new Set([...malformed, ...missing])].join('、')}`
+  };
+}
+
 export function validateProfileEvidenceBindings(payload, evidenceRows = [], options = {}) {
   const profiles = Array.isArray(payload?.profiles) ? payload.profiles : [];
-  const checks = profiles.map((profile) => ({ profileId: profile?.id || null, methodId: profile?.methodId || null, binding: profile?.methodSource ? validateMethodSourceBinding(profile.methodSource, evidenceRows, options) : { ready: true, status: 'not_configured', missing: [], malformed: [], matchedEvidenceIds: [], evidenceSourceId: null, evidence: 'profile 未声明 methodSource' } }));
-  return { ready: checks.every((check) => check.binding.ready), checks };
+  const checks = profiles.map((profile) => {
+    const binding = profile?.methodSource
+      ? validateMethodSourceBinding(profile.methodSource, evidenceRows, options)
+      : { ready: true, status: 'not_configured', missing: [], malformed: [], matchedEvidenceIds: [], evidenceSourceId: null, evidence: 'profile 未声明 methodSource' };
+    const standardReferences = Array.isArray(profile?.standardRefs)
+      ? profile.standardRefs.map((reference, index) => validateStandardReferenceBinding(reference, index, evidenceRows, options))
+      : [];
+    return { profileId: profile?.id || null, methodId: profile?.methodId || null, binding, standardReferences };
+  });
+  return { ready: checks.every((check) => check.binding.ready && check.standardReferences.every((binding) => binding.ready)), checks };
 }

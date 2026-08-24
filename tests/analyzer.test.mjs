@@ -433,7 +433,7 @@ test('compares current batch with baseline and identifies new/resolved risks', (
 
 test('maps gas and environmental measurements with common engineering units', () => {
   const result = analyzeRows(parseCSV([
-    '时间(s),工况,电流(A),电压(V),温度(°F),压力(kPa),流量(m³/h),泄漏(ppb),氢气纯度(%),出口气体温度(°F),出口压力(kPa),环境温度(°F),环境湿度(%),环境压力(bar)',
+    '时间(s),工况,电流(A),电压(V),温度(°F),压力(kPa),流量(Nm³/h),泄漏(ppb),氢气纯度(%),出口气体温度(°F),出口压力(kPa),环境温度(°F),环境湿度(%),环境压力(bar)',
     '0,稳态,1,1.8,86,200,0.06,1000,99.9,95,250,77,50,1.01325',
     '60,稳态,1,1.8,86,200,0.06,1000,99.9,95,250,77,50,1.01325'
   ].join('\n')));
@@ -445,7 +445,20 @@ test('maps gas and environmental measurements with common engineering units', ()
   assert.equal(result.rows[0].hydrogen_purity_pct, 99.9);
   assert.ok(result.schema.mapping.gas_temperature_c);
   assert.ok(result.schema.mapping.ambient_humidity_pct);
-  assert.ok(result.schema.conversions.flow_slpm.label.includes('m³/h'));
+  assert.ok(result.schema.conversions.flow_slpm.label.includes('Nm³/h'));
+});
+
+test('blocks actual volumetric flow units instead of treating them as standard flow', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,phase,current_a,voltage_v,temperature_c,pressure_bar,流量(L/min),leak_ppm',
+    '0,steady,1,1.8,25,1,60,0',
+    '60,steady,1,1.8,25,1,60,0'
+  ].join('\n')));
+  assert.equal(result.schema.conversions.flow_slpm.mode, 'unsupported');
+  assert.equal(result.rows[0].flow_slpm, null);
+  assert.equal(result.metrics.hydrogenVolumeNl, null);
+  assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED'));
+  assert.match(result.issues.find((item) => item.code === 'UNIT_UNSUPPORTED').evidence, /L\/min/);
 });
 
 test('profile thresholds are carried into analysis and report provenance', () => {

@@ -143,6 +143,22 @@ test('public static page exposes share metadata and the Pages build copies its p
   assert.match(prepareScript, /packageSmoke: \{ command: 'npm run package:submission', status: 'not_run' \}/);
 });
 
+test('release receipt display fails closed on empty or incomplete gate maps', async () => {
+  const [source, publicRuntime] = await Promise.all([read('src/app.mjs'), read('public/src/app.mjs')]);
+  for (const runtime of [source, publicRuntime]) {
+    assert.match(runtime, /const gateEntries = Object\.values\(summary\.gates \|\| \{\}\);/);
+    assert.match(runtime, /gateEntries\.length > 0 && gateEntries\.every/);
+    assert.match(runtime, /hasPackageNotRun = summary\.gates\?\.packageSmoke\?\.status === 'not_run'/);
+  }
+});
+
+test('file import controls reset after processing so the same file can be selected again', async () => {
+  const [source, publicRuntime] = await Promise.all([read('src/app.mjs'), read('public/src/app.mjs')]);
+  for (const runtime of [source, publicRuntime]) {
+    assert.equal((runtime.match(/input\.value = '';/g) || []).length, 4);
+  }
+});
+
 test('Vinext App public runtime exposes the browser engines and analysis worker used by app/page.tsx', async () => {
   const required = [
     'public/src/app.mjs',
