@@ -988,21 +988,51 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
   const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : formalBlockers ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
   const missingSummary = [...missingProfileFields, ...missingMetadata, ...measurements.missing, ...phases.missing, ...phaseMetrics.missing, ...(dataQuality.missing || [])].filter(Boolean);
   const boundary = config.approvalStatus !== 'approved'
-    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}，方法执行状态为 ${methodExecutionStatus || '未声明'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不构成标准符合性判定或放行依据。`
+    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非 approved 路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
     : formalBlockers
       ? `已使用 approved profile，但仍有 ${missingSummary.length} 项标准化资料未完成（${missingSummary.slice(0, 6).join('、')}${missingSummary.length > 6 ? ' 等' : ''}）；当前仅作人工复核前处理，不自动声明符合性。`
       : '已使用企业 approved profile，标准化资料已齐备；仍需工程师人工复核与签核后方可进入正式放行。';
+  const evidenceDetails = [
+    { id: 'approval', label: 'profile 审批与修订证据', ready: approvalEvidence.ready, evidence: approvalEvidence.evidence },
+    { id: 'standardReference', label: '标准引用证据', ready: standardReferenceEvidence.ready, evidence: standardReferenceEvidence.evidence },
+    { id: 'methodImplementation', label: '完整方法实施证据', ready: methodImplementationEvidence.ready, evidence: methodImplementationEvidence.evidence },
+    { id: 'fullMethodProfile', label: '全方法 profile 证据', ready: fullMethodProfile.ready, evidence: fullMethodProfile.evidence },
+    { id: 'scope', label: '设备适用范围', ready: scope.ready, evidence: scope.evidence },
+    { id: 'instruments', label: '仪器精度与校准溯源', ready: instruments.ready, evidence: instruments.evidence },
+    { id: 'acceptance', label: '企业验收规则', ready: acceptance.ready, evidence: acceptance.evidence },
+    { id: 'report', label: '报告字段与结论', ready: report.ready, evidence: report.evidence },
+    { id: 'testStages', label: '标准测试阶段证据', ready: testStages.ready, evidence: testStages.evidence },
+    { id: 'testSystem', label: '测试系统组成证据', ready: testSystem.ready, evidence: testSystem.evidence },
+    { id: 'testConditions', label: '测试条件与异常处置', ready: testConditions.ready, evidence: testConditions.evidence },
+    { id: 'environmentConditions', label: '环境条件证据', ready: environmentConditions.ready, evidence: environmentConditions.evidence },
+    { id: 'measurementMethods', label: '测量方法与证据引用', ready: measurementMethods.ready, evidence: measurementMethods.evidence },
+    { id: 'efficiency', label: '效率结果与批准公式', ready: efficiency.ready, evidence: efficiency.evidence },
+    { id: 'phaseResults', label: '方法阶段结果证据', ready: phaseResults.ready, evidence: phaseResults.evidence },
+    { id: 'acquisition', label: '结构化数据采集证据', ready: acquisition.ready, evidence: acquisition.evidence },
+    { id: 'preCheck', label: '逐项试验前检查状态', ready: preCheck.ready, evidence: preCheck.evidence },
+    { id: 'dataQuality', label: '时间轴与阶段数据质量', ready: dataQuality.ready, evidence: dataQuality.evidence },
+    { id: 'measurements', label: 'profile 要求测量字段', ready: measurements.ready, evidence: measurements.evidence },
+    { id: 'phases', label: 'profile 要求测试段', ready: phases.ready, evidence: phases.evidence }
+  ];
   const auditTrail = {
     evaluatedAt: new Date().toISOString(),
     datasetLabel,
     approvalStatus: config.approvalStatus || 'pending',
     methodExecutionStatus: methodExecutionStatus || null,
+    methodId: config.methodId || null,
+    revision: config.revision || null,
+    standardRefsCount: (config.standardRefs || []).length,
+    datasetRowCount: quality.rowCount,
+    evaluationMode: config.evaluationMode || null,
+    profileSource: config.source || '内置演示配置',
+    profileName: config.profileName || config.name || datasetLabel,
     formalBlockers: Boolean(formalBlockers),
     missingSummary: missingSummary.slice(0, 12),
     blockerCount: missingSummary.length,
     dataQuality: { rowCount: quality.rowCount, completenessPct: quality.completenessPct, usable: quality.usable },
-    evidenceReadyCount: [approvalEvidence.ready, standardReferenceEvidence.ready, methodImplementationEvidence.ready, fullMethodProfile.ready, scope.ready, instruments.ready, acceptance.ready, report.ready, testStages.ready, testSystem.ready, testConditions.ready, environmentConditions.ready, measurementMethods.ready, efficiency.ready, phaseResults.ready, acquisition.ready, preCheck.ready, dataQuality.ready, measurements.ready, phases.ready].filter(Boolean).length,
-    evidenceTotalCount: 20
+    evidenceReadyCount: evidenceDetails.filter((item) => item.ready).length,
+    evidenceTotalCount: evidenceDetails.length,
+    evidenceDetails
   };
   return { status, label: status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? `${datasetLabel} · 标准化资料不完整` : `${datasetLabel} · 可进入人工符合性复核`, boundary, auditTrail, approvalStatus: config.approvalStatus || 'pending', approvalEvidence, standardReferenceEvidence, methodExecutionStatus, methodImplementationEvidence, fullMethodProfile, standardRefs: config.standardRefs || [], standardEvidenceBinding: config.standardEvidenceBinding || { ready: !config.standardRefs?.length, status: config.standardRefs?.length ? 'missing' : 'not_configured' }, methodId: config.methodId || null, revision: config.revision || null, methodSource: config.methodSource || null, standardStatus: config.status || null, publicationDate: config.publicationDate || null, effectiveDate: config.effectiveDate || null, scopeEvidence: config.scopeEvidence || null, workflowEvidence: config.workflowEvidence || null, applicationScope: config.applicationScope || datasetLabel, intendedUse: config.intendedUse || '企业资料结构适配与人工复核前处理', missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: measurements.required, missingMeasurements: measurements.missing, requiredPhases: phases.required, missingPhases: phases.missing, requiredPhaseMetrics: config.requiredPhaseMetrics || {}, missingPhaseMetrics: phases.missingMetrics, phaseMetrics, requiredTestStages: config.requiredTestStages || [], testSystemRequirements: config.testSystemRequirements || [], testConditionRequirements: config.testConditionRequirements || null, environmentConditionRequirements: config.environmentConditionRequirements || null, phaseResultRequirements: config.phaseResultRequirements || [], measurementMethodRequirements: config.measurementMethodRequirements || [], efficiencyRequirement: config.efficiencyRequirement || null, acquisition, preCheck, dataQuality, testStages, testSystem, testConditions, environmentConditions, measurementMethods, phaseResults, efficiency, measurements, phases, acceptanceCriteria: config.acceptanceCriteria || {}, acceptanceRules: config.acceptanceRules || [], scope, instruments, acceptance, report, uncertaintyModelRequired, uncertaintyModelConfigured, uncertainty: uncertaintyModelConfigured ? { status: 'configured_pending_calculation' } : { status: 'not_configured' } };
 }

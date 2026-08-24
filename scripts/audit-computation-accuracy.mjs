@@ -30,40 +30,40 @@ async function run() {
   console.log('1. Unit conversion validation');
 
   // 1a. kW -> W for generic power_w
-  const kwRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,power_w\n0,10,20,30,10,6,1,5\n60,10,20,30,10,6,1,5');
+  const kwRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,功率（kW）\n0,10,20,30,10,6,1,5\n60,10,20,30,10,6,1,5');
   const kwResult = analyzeRows(kwRows);
   assert(kwResult.schema.conversions.power_w.factor === 1000, 'power_w kW->W factor should be 1000');
-  assert(kwResult.schema.conversions.power_w.label === 'kW->W', 'power_w label should be kW->W');
+  assert(kwResult.schema.conversions.power_w.label === 'kW→W', 'power_w label should be kW→W');
 
-  // 1b. bar -> kPa for ambient_pressure_kpa (BUG FIX CHECK)
-  const barHeaderRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,ambient_pressure_kpa,flow_slpm,leak_ppm\n0,10,20,30,1,6,1\n60,10,20,30,1,6,1');
-  const barResult = analyzeRows(barHeaderRows, { fieldMapping: { ambient_pressure_kpa: '环境压力（kPa）' } });
-  console.log(`  ambient_pressure_kpa conversion: factor=${barResult.schema.conversions.ambient_pressure_kpa.factor}, label=${barResult.schema.conversions.ambient_pressure_kpa.label}`);
-  assert(barResult.schema.conversions.ambient_pressure_kpa.factor === 1, 'ambient_pressure_kpa kPa->kPa factor should be 1');
-  assert(barResult.schema.conversions.ambient_pressure_kpa.label === 'kPa->kPa', 'ambient_pressure_kpa label should recognize kPa');
+  // 1b. kPa -> kPa for ambient_pressure_kpa (explicit recognition)
+  const kpaHeaderRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,环境压力（kPa）,flow_slpm,leak_ppm\n0,10,20,30,101,6,1\n60,10,20,30,101,6,1');
+  const kpaResult = analyzeRows(kpaHeaderRows, { fieldMapping: { ambient_pressure_kpa: '环境压力（kPa）' } });
+  console.log(`  ambient_pressure_kpa conversion: factor=${kpaResult.schema.conversions.ambient_pressure_kpa.factor}, label=${kpaResult.schema.conversions.ambient_pressure_kpa.label}`);
+  assert(kpaResult.schema.conversions.ambient_pressure_kpa.factor === 1, 'ambient_pressure_kpa kPa->kPa factor should be 1');
+  assert(kpaResult.schema.conversions.ambient_pressure_kpa.label === 'kPa→kPa', 'ambient_pressure_kpa label should recognize kPa');
 
   // 1c. bar -> kPa conversion
-  const barToKpaRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,ambient_pressure_kpa,flow_slpm,leak_ppm\n0,10,20,30,1,6,1\n60,10,20,30,1,6,1');
+  const barToKpaRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,环境压力（bar）,flow_slpm,leak_ppm\n0,10,20,30,1,6,1\n60,10,20,30,1,6,1');
   const barToKpaResult = analyzeRows(barToKpaRows, { fieldMapping: { ambient_pressure_kpa: '环境压力（bar）' } });
   console.log(`  bar->kPa conversion: factor=${barToKpaResult.schema.conversions.ambient_pressure_kpa.factor}, label=${barToKpaResult.schema.conversions.ambient_pressure_kpa.label}`);
   assert(barToKpaResult.schema.conversions.ambient_pressure_kpa.factor === 100, 'bar->kPa factor should be 100');
-  assert(barToKpaResult.schema.conversions.ambient_pressure_kpa.label === 'bar->kPa', 'bar->kPa label should be bar->kPa');
+  assert(barToKpaResult.schema.conversions.ambient_pressure_kpa.label === 'bar→kPa', 'bar->kPa label should be bar→kPa');
 
   // 1d. MW -> W conversion for power_w (BUG FIX CHECK)
-  const mwHeaderRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,power_w\n0,10,20,30,10,6,1,5\n60,10,20,30,10,6,1,5');
+  const mwHeaderRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,功率（MW）\n0,10,20,30,10,6,1,5\n60,10,20,30,10,6,1,5');
   const mwResult = analyzeRows(mwHeaderRows, { fieldMapping: { power_w: '功率（MW）' } });
   console.log(`  MW->W conversion: factor=${mwResult.schema.conversions.power_w.factor}, label=${mwResult.schema.conversions.power_w.label}`);
   assert(mwResult.schema.conversions.power_w.factor === 1000000, 'MW->W factor should be 1000000');
-  assert(mwResult.schema.conversions.power_w.label === 'MW->W', 'MW->W label should be MW->W');
+  assert(mwResult.schema.conversions.power_w.label === 'MW→W', 'MW->W label should be MW→W');
 
-  // 1e. MPa -> kPa for gas_pressure_bar
-  const mpaRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,gas_pressure_bar,flow_slpm,leak_ppm\n0,10,20,30,1,6,1\n60,10,20,30,1,6,1');
+  // 1e. MPa -> bar for gas_pressure_bar
+  const mpaRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,压力（MPa）,flow_slpm,leak_ppm\n0,10,20,30,10,6,1\n60,10,20,30,10,6,1');
   const mpaResult = analyzeRows(mpaRows, { fieldMapping: { gas_pressure_bar: '压力（MPa）' } });
   console.log(`  MPa->bar conversion: factor=${mpaResult.schema.conversions.gas_pressure_bar.factor}, label=${mpaResult.schema.conversions.gas_pressure_bar.label}`);
   assert(mpaResult.schema.conversions.gas_pressure_bar.factor === 10, 'MPa->bar factor should be 10');
 
   // 1f. Pa -> bar for pressure_bar
-  const paRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm\n0,10,20,30,100000,6,1\n60,10,20,30,100000,6,1');
+  const paRows = parseCSV('timestamp_s,current_a,voltage_v,temperature_c,压力（Pa）,flow_slpm,leak_ppm\n0,10,20,30,100000,6,1\n60,10,20,30,100000,6,1');
   const paResult = analyzeRows(paRows, { fieldMapping: { pressure_bar: '压力（Pa）' } });
   console.log(`  Pa->bar conversion: factor=${paResult.schema.conversions.pressure_bar.factor}, label=${paResult.schema.conversions.pressure_bar.label}`);
   assert(paResult.schema.conversions.pressure_bar.factor === 0.00001, 'Pa->bar factor should be 0.00001');

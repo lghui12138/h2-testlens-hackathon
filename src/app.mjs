@@ -987,10 +987,15 @@ function renderComplianceHistory() {
     container.innerHTML = '<div class="compliance-history-empty">暂无标准符合性历史记录；重新分析将追加审计快照。</div>';
     return;
   }
-  container.innerHTML = history.map((item, index) => {
+  container.innerHTML = history.map((item) => {
     const statusClass = String(item.status || '').toLowerCase().replaceAll('_', '-');
     const time = new Date(item.savedAt || item.evaluatedAt).toLocaleString('zh-CN');
-    return `<div class="compliance-history-row"><span class="compliance-history-time">${escapeHtml(time)}</span><span class="compliance-history-status ${statusClass}">${escapeHtml(item.label || item.status || '未评估')}</span><small>审批 ${escapeHtml(item.approvalStatus || '未指定')} · 方法 ${escapeHtml(item.methodExecutionStatus || '未声明')} · 证据 ${item.evidenceReadyCount || 0}/${item.evidenceTotalCount || 0}</small>${item.missingSummary?.length ? `<small>缺失：${escapeHtml(item.missingSummary.slice(0, 6).join('、'))}${item.missingSummary.length > 6 ? '…' : ''}</small>` : ''}</div>`;
+    const methodInfo = item.methodId ? `方法 ${escapeHtml(item.methodId)}${item.revision ? `/${escapeHtml(item.revision)}` : ''}` : '方法未声明';
+    const standardInfo = item.standardRefsCount ? `标准 ${item.standardRefsCount} 项` : '标准未配置';
+    const rowCountInfo = item.datasetRowCount ? `${item.datasetRowCount.toLocaleString('zh-CN')} 条记录` : '无数据记录';
+    const statusIcon = item.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : item.status === 'NOT_READY' ? '!' : '·';
+    const statusTitle = item.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : item.status === 'NOT_READY' ? '资料不完整' : '仅演示';
+    return `<div class="compliance-history-row"><span class="compliance-history-time">${escapeHtml(time)}</span><span class="compliance-history-status ${statusClass}" title="${escapeHtml(statusTitle)}">${statusIcon} ${escapeHtml(item.label || item.status || '未评估')}</span><small>${escapeHtml(methodInfo)} · ${escapeHtml(standardInfo)} · ${escapeHtml(rowCountInfo)}</small><small>审批 ${escapeHtml(item.approvalStatus || '未指定')} · 方法 ${escapeHtml(item.methodExecutionStatus || '未声明')} · 证据 ${item.evidenceReadyCount || 0}/${item.evidenceTotalCount || 0}</small>${item.missingSummary?.length ? `<small class="compliance-history-missing">缺失：${escapeHtml(item.missingSummary.slice(0, 6).join('、'))}${item.missingSummary.length > 6 ? '…' : ''}</small>` : ''}</div>`;
   }).join('');
 }
   const status = verdictLabel(result.verdict);
@@ -1031,8 +1036,20 @@ function renderComplianceHistory() {
   const evidenceReadyCount = compliance.auditTrail?.evidenceReadyCount ?? 0;
   const evidenceTotalCount = compliance.auditTrail?.evidenceTotalCount ?? 0;
   const evidencePct = evidenceTotalCount ? Math.round((evidenceReadyCount / evidenceTotalCount) * 100) : 0;
-  const evidenceBar = evidenceTotalCount ? `<div class="compliance-evidence-bar"><div class="compliance-evidence-bar-fill" style="width:${evidencePct}%"></div><small>证据就绪 ${evidenceReadyCount}/${evidenceTotalCount} · ${evidencePct}%</small></div>` : '';
-  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
+  const evidenceBar = evidenceTotalCount ? `<div class="compliance-evidence-bar" role="progressbar" aria-valuenow="${evidencePct}" aria-valuemin="0" aria-valuemax="100" aria-label="证据就绪比例"><div class="compliance-evidence-bar-fill" style="width:${evidencePct}%"></div><small>证据就绪 ${evidenceReadyCount}/${evidenceTotalCount} · ${evidencePct}%</small></div>` : '';
+  const methodId = escapeHtml(compliance.methodId || '未配置');
+  const revision = escapeHtml(compliance.revision || '—');
+  const standardRefsCount = (compliance.standardRefs || []).length;
+  const standardRefsDetail = standardRefsCount ? `${standardRefsCount} 项（${standardIds.length ? standardIds.join('、') : '已绑定'}）` : '未配置';
+  const gateRows = gateEntries.map(([key, value]) => {
+    const mark = value.ready ? '✓' : value.status === 'missing' || value.status === 'failed' || value.status === 'blocked' ? '!' : '·';
+    const statusText = value.ready ? '就绪' : value.status === 'missing' ? '缺失' : value.status === 'failed' ? '未通过' : value.status === 'blocked' ? '已阻断' : '待补齐';
+    return `<div class="compliance-gate-row"><span class="compliance-gate-mark">${mark}</span><span class="compliance-gate-label">${escapeHtml(key)}</span><small>${escapeHtml(value.evidence || '无证据')}</small><span class="compliance-gate-status ${value.ready ? 'ready' : value.status === 'missing' || value.status === 'failed' || value.status === 'blocked' ? 'danger' : 'warn'}">${statusText}</span></div>`;
+  }).join('');
+  const complianceStatusClass = String(result.compliance.status || '').toLowerCase().replaceAll('_', '-');
+  const complianceStatusIcon = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : result.compliance.status === 'NOT_READY' ? '!' : '·';
+  const complianceStatusTitle = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : result.compliance.status === 'NOT_READY' ? '资料不完整' : '仅演示';
+  const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows.length ? `<div class="compliance-gate-list">${gateRows.join('')}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;

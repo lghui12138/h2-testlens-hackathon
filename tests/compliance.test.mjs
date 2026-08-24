@@ -14,7 +14,7 @@ test('compliance returns DEMO_ONLY with specific boundary for unapproved profile
   }, 'demo', {}, { rowCount: 0, completenessPct: 0, usable: false }, [], {});
   assert.equal(result.status, 'DEMO_ONLY');
   assert.ok(result.boundary.includes('审批状态为 example_unapproved'));
-  assert.ok(result.boundary.includes('方法执行状态为 ENTERPRISE_PROFILE_REQUIRED'));
+  assert.ok(result.boundary.includes('方法执行状态：ENTERPRISE_PROFILE_REQUIRED'));
   assert.ok(result.auditTrail);
   assert.equal(result.auditTrail.approvalStatus, 'example_unapproved');
   assert.equal(result.auditTrail.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED');
