@@ -2526,6 +2526,60 @@ test('separates durability chart data by source report instead of joining a fals
   assert.match(chartXml, /report-b\.docx/);
 });
 
+test('keeps stack inferred platforms tolerant to small current noise near bin boundaries', () => {
+  const rows = Array.from({ length: 61 }, (_, index) => ({
+    时间: String(index), 电堆电压: 1.4, 电堆电流: 10 + (index === 30 ? 0.4 : 0), 电堆功率: 0.014, 平均电压: 0.7, CELL1: 0.69, CELL2: 0.71
+  }));
+  const result = analyzeRows(rows, {});
+  assert.equal(result.dataset.platforms.length, 1, 'small current noise should not split platform');
+  assert.equal(result.dataset.inferredSegments.length, 1);
+});
+
+test('retains stable windows whose terminal duration exactly matches the configured window size', () => {
+  const rows = Array.from({ length: 61 }, (_, index) => ({
+    时间: String(index), 电堆电压: 1.4, 电堆电流: 10, 电堆功率: 0.014, 平均电压: 0.7, CELL1: 0.69, CELL2: 0.71
+  }));
+  const result = analyzeRows(rows, { parameterConfig: { analysisMode: 'relative_stability', parameterRules: [{ code: 'CURRENT', field: 'current_a', lowerTolerance: -0.5, upperTolerance: 0.5, maxDeviation: 0.5, maxRange: 1 }] }, samplePeriodS: 1 });
+  assert.equal(result.dataset.relativeStability.windowS, 60);
+  assert.ok(result.dataset.inferredSegments.length >= 1);
+  assert.ok(result.dataset.inferredSegments[0].relativeStability.checks.some((check) => check.status === 'stable'));
+});
+
+test('filters insulation sentinel 65535 explicitly alongside zero and above-range values', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const row = (second, status, isolation) => `2026-07-07 18:20:${String(second).padStart(2, '0')},${status},10,320,3.2,0.60,3,0.68,8,12,${isolation},1`;
+  const rows = parseCSV([header,
+    row(0, 4, 500),
+    row(60, 4, 65535),
+    row(120, 4, 0),
+    row(180, 4, 10000)
+  ].join('\n'));
+  const result = analyzeRows(rows, { evaluationMode: 'descriptive_only' });
+  assert.equal(result.datasetType, 'vehicle');
+  assert.ok(Array.isArray(result.dataset.insulation.points));
+  assert.equal(result.dataset.insulation.points.length, 1, 'only the valid 500 kohm row should enter the summary');
+  assert.ok(result.dataset.insulation.censoredAboveRange >= 2, '65535 and 10000 should be censored');
+  assert.ok(result.dataset.insulation.excludedByValue >= 1, '0 should be excluded by value');
+  assert.ok(result.issues.some((issue) => issue.code === 'ISOLATION_FILTERED'));
+});
+
+test('resists a single voltage outlier when fitting vehicle performance trend', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const row = (time, current, avg, power) => `2026-07-07 18:${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')},4,${current},320,${power},0.6,1,${avg},8,10,500,1`;
+  const rows = parseCSV([header,
+    row(0, 95, 0.70, 30),
+    row(180, 95, 0.70, 30),
+    row(361, 105, 0.68, 32),
+    row(541, 105, 0.68, 32),
+    row(722, 105, 0.10, 32)
+  ].join('\n'));
+  const result = analyzeRows(rows, { vehicleTargets: [95, 105], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 180 });
+  assert.equal(result.dataset.performancePoints.length, 2);
+  const trend = result.dataset.performanceTrend.averageCellVoltageV;
+  assert.ok(trend.pointCount >= 2, 'trend should include the non-outlier points');
+  assert.ok(trend.slopePerDay < 0, 'outlier should not flip the overall downward trend');
+});
+
 test('acceptance mode blocks cached workbook formulas until formula review evidence is bound', () => {
   const rows = [
     { timestamp_s: 0, current_a: 1, voltage_v: 2, temperature_c: 25, pressure_bar: 1, flow_slpm: 1, leak_ppm: 0, hydrogen_purity_pct: 99 },

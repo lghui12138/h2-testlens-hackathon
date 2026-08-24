@@ -197,7 +197,21 @@ function linearTrend(points) {
   const yMean = mean(points.map(([, y]) => y));
   const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
   if (!denominator) return { slopePerDay: 0, intercept: yMean };
-  const slopePerSecond = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0) / denominator;
+  let slopePerSecond;
+  if (points.length >= 3) {
+    const slopes = [];
+    for (let i = 0; i < points.length; i += 1) {
+      for (let j = i + 1; j < points.length; j += 1) {
+        const dx = points[j][0] - points[i][0];
+        if (Math.abs(dx) > 1e-12) slopes.push((points[j][1] - points[i][1]) / dx);
+      }
+    }
+    if (slopes.length) {
+      slopes.sort((a, b) => a - b);
+      slopePerSecond = slopes.length % 2 === 1 ? slopes[Math.floor(slopes.length / 2)] : (slopes[slopes.length / 2 - 1] + slopes[slopes.length / 2]) / 2;
+    }
+  }
+  if (!Number.isFinite(slopePerSecond)) slopePerSecond = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0) / denominator;
   return { slopePerDay: slopePerSecond * 86400, intercept: yMean - slopePerSecond * xMean };
 }
 
@@ -247,9 +261,24 @@ function fitTrendModel(points, requestedModel = 'linear', xUnit = 'h') {
   } else {
     const denominator = centered.reduce((sum, [z]) => sum + z ** 2, 0);
     if (!denominator) return { ...base, status: 'singular' };
+    let linearSlope;
+    if (clean.length >= 3) {
+      const slopes = [];
+      for (let i = 0; i < clean.length; i += 1) {
+        for (let j = i + 1; j < clean.length; j += 1) {
+          const dx = clean[j][0] - clean[i][0];
+          if (Math.abs(dx) > 1e-12) slopes.push((clean[j][1] - clean[i][1]) / dx);
+        }
+      }
+      if (slopes.length) {
+        slopes.sort((a, b) => a - b);
+        linearSlope = slopes.length % 2 === 1 ? slopes[Math.floor(slopes.length / 2)] : (slopes[slopes.length / 2 - 1] + slopes[slopes.length / 2]) / 2;
+      }
+    }
+    if (!Number.isFinite(linearSlope)) linearSlope = centered.reduce((sum, [z, y]) => sum + z * (y - yMean), 0) / denominator;
     coefficients = {
       quadratic: 0,
-      linear: centered.reduce((sum, [z, y]) => sum + z * (y - yMean), 0) / denominator,
+      linear: linearSlope,
       intercept: yMean
     };
   }
@@ -1156,7 +1185,15 @@ function continuousCurrentSegments(rows, { kind, minimumDurationS, binWidthA, ac
     const currentS = row.session_timestamp_s ?? row.timestamp_s;
     const gap = Number.isFinite(previousS) && Number.isFinite(currentS) ? currentS - previousS : 0;
     const bucket = Math.round(current / binWidthA);
-    if (active && (active.bucket !== bucket || gap > gapLimitS)) close();
+    if (active && gap > gapLimitS) close();
+    if (active) {
+      const activeCurrents = active.rows.map((r) => r.current_a).filter(Number.isFinite);
+      const activeMin = Math.min(...activeCurrents);
+      const activeMax = Math.max(...activeCurrents);
+      const tolerance = binWidthA / 2;
+      const outOfRange = current < activeMin - tolerance || current > activeMax + tolerance;
+      if (active.bucket !== bucket || outOfRange) close();
+    }
     if (!active) active = { bucket, sessionId: row.session_id, rows: [row] };
     else active.rows.push(row);
   });
@@ -1221,11 +1258,11 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
     let endIndex = startIndex;
     while (endIndex + 1 < sampleRows.length) {
       const nextTime = timeOf(sampleRows[endIndex + 1]);
-      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS) break;
+      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS + 1e-9) break;
       endIndex += 1;
     }
     const endTime = timeOf(sampleRows[endIndex]);
-    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS) continue;
+    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS - 1e-9) continue;
     const windowRows = sampleRows.slice(startIndex, endIndex + 1);
     const checks = stability.rules.map((rule) => {
       const values = windowRows.map((row) => row[rule.field]).filter(Number.isFinite);
@@ -1259,7 +1296,7 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
   return merged.filter((window) => {
     const start = timeOf(sampleRows[window.startIndex]);
     const end = timeOf(sampleRows[window.endIndex]);
-    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS;
+    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS - 1e-9;
   }).map((window) => ({
     ...window,
     startS: timeOf(sampleRows[window.startIndex]),
@@ -1500,9 +1537,12 @@ function buildVehicle(rows, config) {
   const rowsForAnalysis = requestedWindow ? analysisRows : normalized;
   const stateCounts = Object.fromEntries([...new Set(rowsForAnalysis.map((row) => row.main_status).filter((value) => value !== null))].sort((a, b) => a - b).map((state) => [String(state), rowsForAnalysis.filter((row) => row.main_status === state).length]));
   const isolationStatusRows = rowsForAnalysis.filter((row) => [4, 8].includes(row.main_status));
-  const isolationRows = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm > 0 && row.isolation_kohm < 9999 && row.isolation_kohm !== 65535);
+  const toInsulationNumber = (value) => (value === null || value === undefined ? NaN : Number(value));
+  const isValidInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && num > 0 && num !== 65535 && num < 9999; };
+  const isCensoredInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && (num >= 9999 || num === 65535); };
+  const isolationRows = isolationStatusRows.filter((row) => isValidInsulation(row.isolation_kohm));
   const isolationExcludedByStatus = rowsForAnalysis.length - isolationStatusRows.length;
-  const isolationCensoredAboveRange = isolationStatusRows.filter((row) => row.isolation_kohm !== null && (row.isolation_kohm >= 9999 || row.isolation_kohm === 65535)).length;
+  const isolationCensoredAboveRange = isolationStatusRows.filter((row) => isCensoredInsulation(row.isolation_kohm)).length;
   const isolationExcludedMissing = isolationStatusRows.filter((row) => row.isolation_kohm === null).length;
   const isolationExcludedNonPositive = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm <= 0).length;
   const buckets = new Map();
