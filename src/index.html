@@ -83,6 +83,12 @@
             <div class="button-row"><button id="download-report" class="primary-button">下载 Markdown 报告</button><button id="download-xlsx" class="icon-button" title="下载 Excel 报告" aria-label="下载 Excel 报告">XLSX</button><button id="download-json" class="icon-button" title="下载分析证据 JSON" aria-label="下载分析证据 JSON">JSON</button><button id="download-enhanced" class="quiet-button" aria-label="生成增强报告">生成增强报告</button></div>
             <small id="enhanced-report-note" class="enhanced-report-note muted">完整 Python/Excel 报告引擎已开源，见 t02-equipment-test-report-assistant 仓库。</small>
           </section>
+          <section class="side-card compliance-history-card">
+            <div class="card-kicker">COMPLIANCE HISTORY <span id="compliance-history-status">0 条审计快照</span></div>
+            <h2>标准符合性审计轨迹</h2>
+            <p class="side-intro">每次分析都会记录标准符合性快照；不导出原始数据，仅保留证据状态与缺失项摘要。</p>
+            <div id="compliance-history-list" class="compliance-history-list"></div>
+          </section>
           <section class="side-card">
             <div class="card-kicker">CONFIGURABLE RULES</div>
             <h2>分析模式与规则</h2>

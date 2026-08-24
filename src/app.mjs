@@ -1181,6 +1181,11 @@ function render(result, pushHistory = true) {
   if (complianceAnnouncement) {
     complianceAnnouncement.textContent = `标准符合性状态：${result.compliance.label}`;
   }
+  const auditTrail = result.compliance?.auditTrail;
+  if (auditTrail) {
+    const snapshot = { ...auditTrail, savedAt: new Date().toISOString(), fileName: state.fileName };
+    state.complianceHistory = [snapshot, ...(state.complianceHistory || [])].slice(0, 20);
+  }
   const verdictTooltip = $('#verdict-tooltip');
   if (verdictTooltip) {
     const qualityNote = result.quality?.usable === false && result.quality?.completenessPct === 100
@@ -1194,6 +1199,7 @@ function render(result, pushHistory = true) {
   renderMetrics(result); renderCalculationSummary(result); renderMetricTrace(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
+  renderComplianceHistory();
   const saveHistoryTop = $('#save-history-top');
   if (saveHistoryTop) saveHistoryTop.hidden = !state.result;
   renderSchema(result);

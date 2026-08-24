@@ -390,3 +390,43 @@ test('enterprise T02 profiles stay example_unapproved with ENTERPRISE_PROFILE_RE
     assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED', `${profile.id} must keep ENTERPRISE_PROFILE_REQUIRED`);
   }
 });
+
+test('unitTransform handles MW->W for power and kPa->kPa for ambient pressure', () => {
+  const mwRows = parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,功率（MW）',
+    '0,10,20,30,10,6,1,5',
+    '60,10,20,30,10,6,1,5'
+  ].join('\n'));
+  const mwResult = analyzeRows(mwRows);
+  assert.equal(mwResult.schema.conversions.power_w.factor, 1000000);
+  assert.equal(mwResult.schema.conversions.power_w.label, 'MW→W');
+
+  const kpaRows = parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,环境压力（kPa）,flow_slpm,leak_ppm',
+    '0,10,20,30,101,6,1',
+    '60,10,20,30,101,6,1'
+  ].join('\n'));
+  const kpaResult = analyzeRows(kpaRows);
+  assert.equal(kpaResult.schema.conversions.ambient_pressure_kpa.factor, 1);
+  assert.equal(kpaResult.schema.conversions.ambient_pressure_kpa.label, 'kPa→kPa');
+});
+
+test('unitTransform handles kA->A and kV->V conversions', () => {
+  const kaRows = parseCSV([
+    'timestamp_s,电流（kA）,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,1,20,30,10,6,1',
+    '60,1,20,30,10,6,1'
+  ].join('\n'));
+  const kaResult = analyzeRows(kaRows);
+  assert.equal(kaResult.schema.conversions.current_a.factor, 1000);
+  assert.equal(kaResult.schema.conversions.current_a.label, 'kA→A');
+
+  const kvRows = parseCSV([
+    'timestamp_s,current_a,电压（kV）,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,1,30,10,6,1',
+    '60,10,1,30,10,6,1'
+  ].join('\n'));
+  const kvResult = analyzeRows(kvRows);
+  assert.equal(kvResult.schema.conversions.voltage_v.factor, 1000);
+  assert.equal(kvResult.schema.conversions.voltage_v.label, 'kV→V');
+});

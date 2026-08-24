@@ -220,6 +220,7 @@ function unitTransform(field, header) {
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'ambient_pressure_kpa') {
+    if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 1, label: 'kPa→kPa' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 1000, label: 'MPa→kPa' };
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };

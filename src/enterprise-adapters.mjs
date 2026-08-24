@@ -64,7 +64,8 @@ const UNIT_DEFINITIONS = Object.freeze({
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
   flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
   temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
-  leak_ppm: { ppm: 1, ppb: 0.001 }
+  leak_ppm: { ppm: 1, ppb: 0.001 },
+  conductivity_us_cm: { 'μs/cm': 1, 'us/cm': 1 }
 });
 const UNIT_DISPLAY = Object.freeze({ kw: 'kW', mw: 'MW', w: 'W', kpa: 'kPa', pa: 'Pa', mpa: 'MPa', bar: 'bar', mbar: 'mbar', ma: 'mA', mv: 'mV', a: 'A', v: 'V', ms: 'ms', s: 's', slpm: 'SLPM', ppm: 'ppm', ppb: 'ppb' });
 
