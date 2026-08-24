@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · GitHub Run 84 回读轮
+
+- 提交 `a0de3f3` 已推送到 `main`；Actions Run 84 成功，`build`/`deploy` 均通过。
+- 本轮公开能力包含逐文件 T02 字段角色计数、XLSX 空状态提示和正式 standardRefs runtime binding fail-closed。
+- workflow 仍未执行 `package:submission`，Run 84 只证明 Pages artifact 发布成功，不证明提交 ZIP 已在云端 smoke；自定义域仍不可达。
+
 ## 2026-08-24 · GitHub 远端与 Actions 回读轮
 
 - 提交 `3f83261` 已成功推送到 `main`；GitHub Actions Run 82 已成功，`build` 与 `deploy` 均通过。
