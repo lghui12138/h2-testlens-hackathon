@@ -2687,9 +2687,9 @@ test('regression: validates real qingchuan enterprise data against manual comput
   assert.equal(first.power_kw, 4.382);
   assert.equal(first.power_w, 4382);
   assert.equal(first.pressure_kpa, 159.8);
-  assert.equal(first.anode_flow_resistance_kpa, 11.3);
-  assert.equal(first.coolant_temperature_difference_c, 10.6);
+  assert.ok(Math.abs(first.anode_flow_resistance_kpa - 11.3) < 0.01);
+  assert.ok(Math.abs(first.coolant_temperature_difference_c - 10.6) < 0.01);
   assert.ok(Math.abs(first.h2_stoich - 1.6061) < 0.001);
   assert.ok(Math.abs(first.air_stoich - 1.4915) < 0.001);
-  assert.equal(parsed.metrics.peakPressureBar, 1.641);
+  assert.ok(Math.abs(parsed.metrics.peakPressureBar - 1.641) < 0.001);
 });

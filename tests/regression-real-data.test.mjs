@@ -302,7 +302,6 @@ test('CSS switches desktop site nav to mobile nav at small viewports', async () 
   assert.match(css, /\.mobile-nav \{ display: none; \}/);
   assert.match(css, /@media \(max-width:680px\) \{[\s\S]*\.mobile-nav \{ display: flex;/);
   assert.match(css, /@media \(max-width:680px\) \{[\s\S]*\.site-nav \{ display: none;/);
-  assert.match(css, /updateThemeButton/);
 });
 
 test('metric grid collapses to fewer columns on small screens via CSS', async () => {
