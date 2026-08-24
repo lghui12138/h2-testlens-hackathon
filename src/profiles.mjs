@@ -476,11 +476,8 @@ export const DEVICE_PROFILES = Object.freeze([
       coolant_out_pressure_kpa: '循环水出堆压力（kPa）',
       h2_humidifier_water_temp_c: '阳极增湿罐水温度（℃）',
       air_humidifier_water_temp_c: '阴极增湿罐水温度（℃）',
-      h2_stoich: '氢气计量比',
-      air_stoich: '空气计量比',
       coolant_flow_lpm: '循环水流量（L/min）',
       coolant_conductivity_us_cm: '循环水电导率（μS/cm）',
-      internal_resistance: '内阻（mΩ）'
     }
   },
   {
