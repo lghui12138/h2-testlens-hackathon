@@ -2,6 +2,16 @@ import { publicDataset } from './analyzer.mjs';
 
 const SYSTEM_PROMPT = `你是氢能设备测试工程师的报告助手。只允许使用用户提供的 evidence JSON，不得补造设备型号、单位、原因、阈值或实验结论。必须保留 verdict 原值；如果证据不足，明确写“证据不足，需人工复核”。输出中文 Markdown，结构为：结论、关键证据、优先动作、数据边界。不要把演示阈值写成企业安全标准，不要替代工程师签核。`;
 const MAX_DRAFT_LENGTH = 12000;
+const REDACTED_EVIDENCE_KEYS = new Set(['rows', 'rawRows', 'csv', 'content', 'text', 'apiKey', 'secret', 'webhook', 'webhookUrl', 'oldValue', 'newValue']);
+
+function sanitizeEvidenceValue(value, depth = 0) {
+  if (value === null || value === undefined || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.slice(0, 4000);
+  if (depth >= 7) return '[depth-limited]';
+  if (Array.isArray(value)) return value.slice(0, 200).map((item) => sanitizeEvidenceValue(item, depth + 1));
+  if (typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => !REDACTED_EVIDENCE_KEYS.has(key)).slice(0, 200).map(([key, item]) => [key, sanitizeEvidenceValue(item, depth + 1)]));
+  return null;
+}
 
 const statusTokens = {
   PASS: ['PASS', '通过'],
@@ -39,25 +49,24 @@ function evidenceConfig(config = {}) {
 }
 
 export function evidenceBundle(result, comparison = null) {
-  if (result?.evidenceVersion) return comparison ? { ...result, comparison } : result;
   return {
     evidenceVersion: 'h2-testlens.v1',
-    verdict: result.verdict,
-    generatedAt: result.generatedAt,
-    narrative: result.narrative,
-    source: result.source,
-    datasetType: result.datasetType || null,
+    verdict: String(result?.verdict || '未评估'),
+    generatedAt: result?.generatedAt || null,
+    narrative: String(result?.narrative || '证据不足，需人工复核。').slice(0, 4000),
+    source: sanitizeEvidenceValue(result?.source),
+    datasetType: result?.datasetType || null,
     dataset: publicDataset(result.dataset) || null,
-    quality: result.quality,
-    schema: result.schema,
-    metrics: result.metrics,
-    phases: result.phases,
-    issues: result.issues,
-    workflow: result.workflow,
-    releaseGate: result.releaseGate || null,
-    thresholds: evidenceConfig(result.config),
-    compliance: result.compliance,
-    comparison
+    quality: sanitizeEvidenceValue(result?.quality),
+    schema: sanitizeEvidenceValue(result?.schema),
+    metrics: sanitizeEvidenceValue(result?.metrics),
+    phases: sanitizeEvidenceValue(result?.phases),
+    issues: sanitizeEvidenceValue(result?.issues),
+    workflow: sanitizeEvidenceValue(result?.workflow),
+    releaseGate: sanitizeEvidenceValue(result?.releaseGate || null),
+    thresholds: evidenceConfig(result?.config || result?.thresholds || {}),
+    compliance: sanitizeEvidenceValue(result?.compliance),
+    comparison: sanitizeEvidenceValue(comparison)
   };
 }
 

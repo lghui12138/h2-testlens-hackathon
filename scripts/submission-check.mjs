@@ -116,6 +116,12 @@ const coverageSummary = await readFile(join(root, 'config/t02-coverage-summary.j
 const publicCoverageSummary = await readFile(join(root, 'public/config/t02-coverage-summary.json'), 'utf8');
 const releaseSummary = await readFile(join(root, 'config/release-summary.json'), 'utf8');
 const publicReleaseSummary = await readFile(join(root, 'public/config/release-summary.json'), 'utf8');
+const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'structured-evidence.mjs'];
+const browserRuntimeParity = await Promise.all(browserRuntimeModules.map(async (file) => {
+  const source = await readFile(join(root, 'src', file), 'utf8');
+  const publicCopy = await readFile(join(root, 'public/src', file), 'utf8');
+  return source === publicCopy;
+}));
 const completionReport = await readFile(join(root, 'docs/COMPLETION_REPORT.md'), 'utf8');
 const roadmap = await readFile(join(root, 'ROADMAP.md'), 'utf8');
 const apiDoc = await readFile(join(root, 'docs/API.md'), 'utf8');
@@ -145,6 +151,7 @@ checks.push({ id: 'profile:t02-descriptive-package', pass: t02ProfilePayload.pro
 checks.push({ id: 'config:public-batch-declaration-parity', pass: batchDeclaration === publicBatchDeclaration });
 checks.push({ id: 'config:public-coverage-summary-parity', pass: coverageSummary === publicCoverageSummary });
 checks.push({ id: 'config:public-release-summary-parity', pass: releaseSummary === publicReleaseSummary && JSON.parse(releaseSummary).schemaVersion === 'h2-testlens.release-summary.v1' });
+checks.push({ id: 'runtime:public-browser-modules-parity', pass: browserRuntimeParity.every(Boolean) });
 const coverageEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_coverage_audit_v${packageJson.version}.json`);
 const referenceEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_reference_audit_v${packageJson.version}.json`);
 const integrationReportPath = join(root, '.research/ignite_t02_standards_20260821', `t02_integration_report_v${packageJson.version}.md`);

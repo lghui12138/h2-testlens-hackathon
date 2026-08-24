@@ -34,6 +34,7 @@
         <div class="hero-actions"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button">载入演示样本</button><button id="load-legacy" class="quiet-button">中文/单位样本</button></div>
         <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
         <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：加载中 · DEMO_ONLY</div>
+        <div id="result-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
       </section>
 
@@ -46,13 +47,13 @@
           </section>
           <section class="section-block trend-section">
             <div class="section-label"><span>02</span><div><b>工况趋势</b><small>温度与压力沿时间轴的同屏证据</small></div><span class="legend-note">演示数据 · 可替换为真实 CSV</span></div>
-            <div class="chart-wrap"><canvas id="trend-chart" aria-label="温度与压力趋势图"></canvas></div>
+            <div class="chart-wrap"><canvas id="trend-chart" aria-label="温度与压力趋势图" aria-describedby="trend-chart-summary"></canvas><p id="trend-chart-summary" class="chart-summary">载入数据后显示温度、压力的范围和记录数。</p></div>
           </section>
           <section id="enterprise-panel" class="section-block enterprise-panel" hidden>
             <div class="section-label"><span>03</span><div><b id="enterprise-title">企业数据适配</b><small id="enterprise-subtitle">识别到企业资料结构后显示专用统计</small></div><span id="enterprise-contract" class="legend-note"></span></div>
             <div id="enterprise-controls" class="enterprise-controls"></div>
-            <div class="enterprise-chart-wrap"><canvas id="enterprise-chart" aria-label="企业专用测试趋势图"></canvas></div>
-            <div id="enterprise-performance-chart-wrap" class="enterprise-chart-wrap" hidden><canvas id="enterprise-performance-chart" aria-label="车辆性能趋势图"></canvas></div>
+            <div class="enterprise-chart-wrap"><canvas id="enterprise-chart" aria-label="企业专用测试趋势图" aria-describedby="enterprise-chart-summary"></canvas><p id="enterprise-chart-summary" class="chart-summary">识别企业资料后显示专用图表摘要。</p></div>
+            <div id="enterprise-performance-chart-wrap" class="enterprise-chart-wrap" hidden><canvas id="enterprise-performance-chart" aria-label="车辆性能趋势图" aria-describedby="enterprise-performance-chart-summary"></canvas><p id="enterprise-performance-chart-summary" class="chart-summary">识别企业性能资料后显示专用性能图表摘要。</p></div>
             <div id="enterprise-summary" class="enterprise-summary"></div>
             <div id="enterprise-table" class="enterprise-table"></div>
           </section>

@@ -431,18 +431,23 @@ function electricalPower(row) {
 function powerCrossCheck(rows) {
   const rawRows = rows.filter((row) => row.power_w !== null);
   const comparable = rawRows.filter((row) => row.current_a !== null && row.voltage_v !== null);
+  const missingPowerCount = rows.length - rawRows.length;
   const differences = comparable.map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v));
   const relativeDifferences = comparable
     .map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v) / Math.max(Math.abs(row.power_w), Math.abs(row.current_a * row.voltage_v), 1e-12) * 100);
   return {
     rawPowerCount: rawRows.length,
     derivedPowerCount: rows.filter((row) => row.power_w === null && row.current_a !== null && row.voltage_v !== null).length,
+    missingPowerCount,
+    powerCoveragePct: rows.length ? (rawRows.length / rows.length) * 100 : null,
     comparableCount: comparable.length,
     maxAbsoluteDifferenceW: differences.length ? Math.max(...differences) : null,
     maxRelativeDifferencePct: relativeDifferences.length ? Math.max(...relativeDifferences) : null,
-    status: rawRows.length ? (comparable.length ? 'checked' : 'raw_only') : 'derived_only',
+    status: rawRows.length === 0 ? 'derived_only' : missingPowerCount > 0 ? 'mixed' : comparable.length ? 'checked' : 'raw_only',
     evidence: rawRows.length
-      ? comparable.length ? '原始电功率通道已记录，并与电压×电流做独立交叉核算；未配置一致性限值，不自动判定合格。' : '已记录原始电功率通道，但电压或电流不可用于交叉核算。'
+      ? missingPowerCount > 0
+        ? `原始电功率通道仅覆盖 ${rawRows.length}/${rows.length} 条记录；其余 ${missingPowerCount} 条记录的通用 KPI 使用电压×电流派生，不能把整段结果当作原始功率通道结果；未配置一致性限值，不自动判定合格。`
+        : comparable.length ? '原始电功率通道已记录，并与电压×电流做独立交叉核算；未配置一致性限值，不自动判定合格。' : '已记录原始电功率通道，但电压或电流不可用于交叉核算。'
       : '未提供原始电功率通道；当前功率/能耗仅由电压×电流派生。'
   };
 }
@@ -485,7 +490,17 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
     }
     const startS = timestamps.length ? Math.min(...timestamps) : null;
     const endS = timestamps.length ? Math.max(...timestamps) : null;
-    const spanS = startS !== null && endS !== null ? Math.max(0, endS - startS) : null;
+    const sessionSpans = new Map();
+    for (const index of indexes) {
+      const timestamp = rows[index].timestamp_s;
+      if (timestamp === null) continue;
+      const key = sessionKey(rows[index]);
+      const current = sessionSpans.get(key) || { start: timestamp, end: timestamp };
+      current.start = Math.min(current.start, timestamp);
+      current.end = Math.max(current.end, timestamp);
+      sessionSpans.set(key, current);
+    }
+    const spanS = sessionSpans.size ? [...sessionSpans.values()].reduce((sum, item) => sum + Math.max(0, item.end - item.start), 0) : null;
     return {
       id,
       count: indexes.length,
@@ -495,7 +510,7 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
       validSegmentCount,
       interruptedSegmentCount,
       nonPositiveIntervalCount,
-      validDataCoveragePct: spanS && spanS > 0 ? (durationS / spanS) * 100 : indexes.length >= 2 ? 100 : null,
+      validDataCoveragePct: spanS && spanS > 0 ? (durationS / spanS) * 100 : indexes.length >= 2 && sessionSpans.size === 1 ? 100 : indexes.length >= 2 ? 0 : null,
       labels: item ? [...item.labels] : []
     };
   });
@@ -545,6 +560,17 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
     const completeTime = validSegments > 0 && interruptedSegmentCount === 0 && nonPositiveIntervalCount === 0;
     const completeEnergy = completeTime && indexes.every((index) => electricalPower(rows[index]) !== null);
     const completeVolume = completeTime && indexes.every((index) => rows[index].flow_slpm !== null);
+    const phaseSessionSpans = new Map();
+    for (const index of indexes) {
+      const timestamp = rows[index].timestamp_s;
+      if (timestamp === null) continue;
+      const key = sessionKey(rows[index]);
+      const current = phaseSessionSpans.get(key) || { start: timestamp, end: timestamp };
+      current.start = Math.min(current.start, timestamp);
+      current.end = Math.max(current.end, timestamp);
+      phaseSessionSpans.set(key, current);
+    }
+    const phaseSpanS = phaseSessionSpans.size ? [...phaseSessionSpans.values()].reduce((sum, item) => sum + Math.max(0, item.end - item.start), 0) : null;
     const phase = {
       phaseId,
       labels: [...new Set(indexes.map((index) => String(rows[index].phase || '未标注')))],
@@ -567,11 +593,12 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       peakPowerW: maxPower,
       minimumPowerW: minPower,
       maximumPowerW: maxPower,
-      validDataCoveragePct: indexes.length >= 2 && rows[indexes[0]].timestamp_s !== null && rows[indexes.at(-1)].timestamp_s !== null && rows[indexes.at(-1)].timestamp_s > rows[indexes[0]].timestamp_s
-        ? (durationS / (rows[indexes.at(-1)].timestamp_s - rows[indexes[0]].timestamp_s)) * 100
-        : indexes.length >= 2 ? 100 : null
+      validDataCoveragePct: indexes.length >= 2 && phaseSpanS !== null && phaseSpanS > 0
+        ? (durationS / phaseSpanS) * 100
+        : indexes.length >= 2 && phaseSessionSpans.size === 1 ? 100 : indexes.length >= 2 ? 0 : null
     };
-    if (phase.energyConsumedWh !== null && phase.hydrogenVolumeNl !== null && phase.hydrogenVolumeNl > 0) phase.specificEnergyKWhPerNm3 = phase.energyConsumedWh / phase.hydrogenVolumeNl * 1000;
+    // Wh/NL and kWh/Nm³ are numerically equivalent: both numerator and denominator scale by 1,000.
+    if (phase.energyConsumedWh !== null && phase.hydrogenVolumeNl !== null && phase.hydrogenVolumeNl > 0) phase.specificEnergyKWhPerNm3 = phase.energyConsumedWh / phase.hydrogenVolumeNl;
     phases[phaseId] = phase;
     for (const metric of requirements[phaseId] || []) {
       if (!Number.isFinite(phase[metric])) missing.push(`${phaseId}.${metric}`);
@@ -616,8 +643,20 @@ function dataQualityReadiness(config, quality, phaseCoverage = { required: [] })
   return { required: configured, status, ready: status === 'ready' || status === 'not_configured', missing, failed, requirements, evidence };
 }
 
-function selectSteadyRows(rows) {
-  const explicit = rows.filter((row) => isSteadyPhase(row.phase));
+function selectSteadyRows(rows, config = {}) {
+  const steadyAliases = new Set(['steady', 'stabilized', 'stable', '稳态', '稳定', '恒定', ...(config.phaseAliases?.steady || [])].map(normalizePhaseToken));
+  const explicitWithIndex = rows.map((row, index) => ({ row, index })).filter(({ row }) => steadyAliases.has(normalizePhaseToken(row.phase)));
+  const explicit = explicitWithIndex.map(({ row }) => row);
+  if (config.approvalStatus === 'approved') {
+    const groups = [];
+    for (const item of explicitWithIndex) {
+      const previous = groups.at(-1)?.at(-1);
+      if (previous && item.index === previous.index + 1 && sameSession(previous.row, item.row)) groups.at(-1).push(item);
+      else groups.push([item]);
+    }
+    const best = groups.sort((a, b) => b.length - a.length)[0] || [];
+    return best.length >= 2 ? { rows: best.map(({ row }) => row), source: 'phase=steady（连续窗口）' } : { rows: [], source: 'phase=steady（缺少连续窗口，阻断）' };
+  }
   if (explicit.length >= 2) return { rows: explicit, source: 'phase=steady' };
   const active = rows.filter((row) => row.current_a !== null && row.current_a > 0 && row.voltage_v !== null);
   const fallback = active.slice(Math.floor(active.length * 0.4));
@@ -868,7 +907,7 @@ function missingPerformanceMeasurements(config, rows, schema) {
   const required = Array.isArray(config.requiredMeasurements) ? config.requiredMeasurements : [];
   return required.filter((field) => {
     if (field === 'energy_derived') return rows.filter((row) => row.timestamp_s !== null && row.current_a !== null && row.voltage_v !== null).length < 2;
-    if (field === 'power_w') return !schema.mapping[field] || rows.filter((row) => row[field] !== null).length < 2;
+    if (field === 'power_w') return !schema.mapping[field] || rows.length < 2 || rows.some((row) => row[field] === null);
     return !schema.mapping[field] || rows.filter((row) => row[field] !== null).length < 2;
   });
 }
@@ -928,18 +967,21 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
   const integrateFlowU = () => {
     const flowU = u('flow_slpm');
     if (flowU === null) return null;
-    const segments = [];
+    const contributions = new Map();
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
       if (!sameSession(previous, current)) continue;
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
-      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
+      if (deltaS <= 0 || (maxIntervalS !== null && deltaS > maxIntervalS) || previous.flow_slpm === null || current.flow_slpm === null) continue;
+      const coefficient = deltaS / 60 / 2;
+      contributions.set(index - 1, (contributions.get(index - 1) || 0) + flowU * coefficient);
+      contributions.set(index, (contributions.get(index) || 0) + flowU * coefficient);
     }
-    return rss(segments);
+    return contributions.size ? rss([...contributions.values()]) : null;
   };
   const integrateEnergyU = () => {
-    const segments = [];
+    const contributions = new Map();
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
@@ -947,9 +989,12 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       const previousU = powerU(previous);
       const currentU = powerU(current);
-      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previousU !== null && currentU !== null) segments.push(((previousU + currentU) / 2) * deltaS / 3600);
+      if (deltaS <= 0 || (maxIntervalS !== null && deltaS > maxIntervalS) || previousU === null || currentU === null) continue;
+      const coefficient = deltaS / 3600 / 2;
+      contributions.set(index - 1, (contributions.get(index - 1) || 0) + previousU * coefficient);
+      contributions.set(index, (contributions.get(index) || 0) + currentU * coefficient);
     }
-    return rss(segments);
+    return contributions.size ? rss([...contributions.values()]) : null;
   };
   const energyU = integrateEnergyU();
   const volumeU = integrateFlowU();
@@ -1221,7 +1266,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     powerUnit: dynamicPowerConfig.powerUnit || 'W'
   });
   const valueList = (field, selectedRows = rows) => selectedRows.map((row) => row[field]).filter((value) => value !== null);
-  const steadySelection = selectSteadyRows(rows);
+  const steadySelection = selectSteadyRows(rows, config);
   const steadyRows = steadySelection.rows;
   const timestamps = valueList('timestamp_s');
   const temperatures = valueList('temperature_c');
@@ -1255,7 +1300,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
   const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600, quality.gapLimitS, integrationEvidence.energyConsumed);
-  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl * 1000 : null;
+  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl : null;
   const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel, quality.gapLimitS);
   const scope = scopeReadiness(config);
   const instruments = instrumentReadiness(config);
@@ -1324,7 +1369,11 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (quality.nonPositiveIntervalCount > 0) issues.push(issue('warn', 'TIME_INTERVAL_INVALID', '时间间隔存在非正值', `非正时间间隔 ${quality.nonPositiveIntervalCount} 个；中位采样间隔 ${quality.medianIntervalS ?? '—'} s`, '确认重复/逆序记录和多文件拼接顺序，修复后再积分。'));
   if (quality.samplingGapCount !== null && quality.samplingGapCount > 0) issues.push(issue('warn', 'SAMPLING_GAP', '时间轴存在采样缺口', `超过当前 profile 缺口上限 ${quality.gapLimitS} s 的间隔 ${quality.samplingGapCount} 个`, '核对数据采集计划、时钟同步和缺失记录；不要用插值结果替代原始证据。'));
   if (dataQuality.failed.length || dataQuality.missing.length) issues.push(issue('critical', 'DATA_QUALITY_GATE', 'profile 数据质量门控未通过', dataQuality.evidence, '补齐采样计划/时间轴/阶段连续性证据后重新分析。'));
-  if (quality.completenessPct < 98 && quality.missingHeaders.length === 0) issues.push(issue('warn', 'DATA_GAP', '测试数据存在缺口', `关键数值字段完整率 ${quality.completenessPct.toFixed(1)}%`, '补齐缺失字段后再做正式判定。'));
+  if (quality.missingCells > 0 && quality.missingHeaders.length === 0) {
+    const missingFields = Object.entries(quality.invalidValueCounts).filter(([, count]) => count > 0).map(([field, count]) => `${field}=${count}`).join('；');
+    issues.push(issue('warn', 'DATA_GAP', '测试数据存在缺口', `关键数值字段缺失 ${quality.missingCells}/${quality.totalCells} 个单元格（完整率 ${quality.completenessPct.toFixed(1)}%）；${missingFields}`, '补齐缺失字段或提供企业批准的缺失值规则后再做正式判定；系统不会用插值或默认值替代原始记录。'));
+  }
+  if (powerEvidence.status === 'mixed') issues.push(issue('warn', 'POWER_SOURCE_MIXED', '原始功率通道不完整', powerEvidence.evidence, '补齐原始功率通道，或在企业 profile 中明确允许派生功率；正式验收不能把派生段当作原始测量。'));
   if (metrics.peakTemperatureC !== null && metrics.peakTemperatureC > config.maxTemperatureC) issues.push(issue('critical', 'TEMP_HIGH', '温度超过演示阈值', `峰值 ${metrics.peakTemperatureC.toFixed(1)} °C > ${config.maxTemperatureC} °C${timeRef(metrics.peakTemperatureAtS)}`, '检查散热、负载爬升和温度传感器安装。'));
   if (metrics.peakPressureBar !== null && metrics.peakPressureBar > config.maxPressureBar) issues.push(issue('critical', 'PRESSURE_HIGH', '压力超过演示阈值', `峰值 ${metrics.peakPressureBar.toFixed(1)} bar > ${config.maxPressureBar} bar${timeRef(metrics.peakPressureAtS)}`, '暂停升载，检查调压与泄压回路。'));
   if (metrics.peakLeakPpm !== null && metrics.peakLeakPpm > config.maxLeakPpm) issues.push(issue('critical', 'LEAK_HIGH', '泄漏监测值超过演示阈值', `峰值 ${metrics.peakLeakPpm.toFixed(1)} ppm > ${config.maxLeakPpm} ppm${timeRef(metrics.peakLeakAtS)}`, '优先复核密封、采样管路与环境本底。'));
@@ -1619,7 +1668,7 @@ export function reportMarkdown(result, fileName = 'test-run.csv', options = {}) 
   const dynamicPowerSection = result.dynamicPower?.enabled
     ? `\n## 动态功率事件（描述性指标）\n\n- 状态：${result.dynamicPower.status}\n- 设定字段：${result.dynamicPower.commandField}；实测字段：${result.dynamicPower.actualField}\n- 事件数：${result.dynamicPower.eventCount}；进入响应带并满足保持窗口：${result.dynamicPower.settledEventCount}；未稳定：${result.dynamicPower.unsettledEventCount}\n- 设定/实测有效记录：${result.dynamicPower.commandSampleCount}/${result.dynamicPower.actualSampleCount}\n- 数据缺口：${result.dynamicPower.dataGapCount}；最大间隔：${result.dynamicPower.maximumIntervalS ?? '—'} s\n- 边界：${result.dynamicPower.boundary}\n\n| 事件 | 方向 | 设定变化 | 响应带 | 响应时间(s) | 实测最大爬坡 | 数据覆盖 | 状态 |\n|---|---|---:|---:|---:|---:|---:|---|\n${(result.dynamicPower.events || []).slice(0, 100).map((event) => `| ${event.id} | ${event.direction === 'up' ? '升载' : '降载'} | ${event.commandFrom} → ${event.commandTo} ${result.dynamicPower.unit} | ±${event.responseBand.toFixed(3)} | ${event.responseTimeS?.toFixed(3) ?? '—'} | ${event.maxActualRampUpPerS?.toFixed(3) ?? '—'} / ${event.maxActualRampDownPerS?.toFixed(3) ?? '—'} ${result.dynamicPower.unit}/s | ${event.validDataCoveragePct?.toFixed(2) ?? '—'}% | ${event.status} |`).join('\\n') || '| — | — | — | — | — | — | — | 未发现事件 |'}\n`
     : '';
-  const performanceSection = `\n## 性能测量摘要\n\n- 产氢量：${metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL\n- 电能消耗：${metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh\n- 单位制氢电耗：${metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³（NL→Nm³ 已换算 ×1000）\n- 电功率来源：${metrics.powerSource || '—'}；原始通道 ${metrics.powerCrossCheck?.rawPowerCount ?? 0} 条；交叉核算最大差异 ${metrics.powerCrossCheck?.maxAbsoluteDifferenceW?.toFixed(3) ?? '—'} W（未配置一致性限值，不自动判定合格）\n- 效率结果：${result.compliance?.efficiency?.valuePct?.toFixed?.(3) ?? '—'}%（${result.compliance?.efficiency?.source || '未提供；系统不猜测效率公式'}）\n- 最低氢气纯度：${metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%${metrics.minimumHydrogenPurityAtS?.length ? `（t=${metrics.minimumHydrogenPurityAtS.slice(0, 3).join('、')} s）` : ''}\n- profile 要求的性能测量缺失：${result.compliance?.missingMeasurements?.join('、') || '无'}\n- profile 要求的测试段缺失：${result.compliance?.missingPhases?.join('、') || '无'}\n- profile 要求的阶段指标缺失：${result.compliance?.missingPhaseMetrics?.join('、') || '无'}\n- 时间轴观测：中位间隔 ${quality.medianIntervalS ?? '—'} s；实际采样频率 ${quality.effectiveSamplingFrequencyHz?.toFixed?.(4) ?? '—'} Hz；最大间隔 ${quality.maximumIntervalS ?? '—'} s；缺口 ${quality.samplingGapCount ?? '未配置'}\n- 测试阶段证据：${result.compliance?.testStages?.evidence || '未配置'}\n- 测试条件证据：${result.compliance?.testConditions?.evidence || '未配置'}\n- 测量方法证据：${result.compliance?.measurementMethods?.evidence || '未配置'}\n- profile 验收准则：${Object.entries(acceptanceCriteria).map(([field, value]) => `${field}=${value}`).join('；') || '未配置，不能据此宣称符合'}\n- 不确定度模型：${result.uncertainty?.status || '未配置'}${result.uncertainty?.method ? ` · ${result.uncertainty.method} · k=${result.uncertainty.coverageFactor}` : ''}\n\n## 按工况阶段计算\n\n${phaseMetricLines}\n`;
+  const performanceSection = `\n## 性能测量摘要\n\n- 产氢量：${metrics.hydrogenVolumeNl?.toFixed(3) ?? '—'} NL\n- 电能消耗：${metrics.energyConsumedWh?.toFixed(3) ?? '—'} Wh\n- 单位制氢电耗：${metrics.specificEnergyKWhPerNm3?.toFixed(3) ?? '—'} kWh/Nm³（Wh/NL 与 kWh/Nm³ 的换算因分子、分母同时缩放 1000 而数值等价）\n- 电功率来源：${metrics.powerSource || '—'}；原始通道 ${metrics.powerCrossCheck?.rawPowerCount ?? 0} 条；交叉核算最大差异 ${metrics.powerCrossCheck?.maxAbsoluteDifferenceW?.toFixed(3) ?? '—'} W（未配置一致性限值，不自动判定合格）\n- 效率结果：${result.compliance?.efficiency?.valuePct?.toFixed?.(3) ?? '—'}%（${result.compliance?.efficiency?.source || '未提供；系统不猜测效率公式'}）\n- 最低氢气纯度：${metrics.minimumHydrogenPurityPct?.toFixed(3) ?? '—'}%${metrics.minimumHydrogenPurityAtS?.length ? `（t=${metrics.minimumHydrogenPurityAtS.slice(0, 3).join('、')} s）` : ''}\n- profile 要求的性能测量缺失：${result.compliance?.missingMeasurements?.join('、') || '无'}\n- profile 要求的测试段缺失：${result.compliance?.missingPhases?.join('、') || '无'}\n- profile 要求的阶段指标缺失：${result.compliance?.missingPhaseMetrics?.join('、') || '无'}\n- 时间轴观测：中位间隔 ${quality.medianIntervalS ?? '—'} s；实际采样频率 ${quality.effectiveSamplingFrequencyHz?.toFixed?.(4) ?? '—'} Hz；最大间隔 ${quality.maximumIntervalS ?? '—'} s；缺口 ${quality.samplingGapCount ?? '未配置'}\n- 测试阶段证据：${result.compliance?.testStages?.evidence || '未配置'}\n- 测试条件证据：${result.compliance?.testConditions?.evidence || '未配置'}\n- 测量方法证据：${result.compliance?.measurementMethods?.evidence || '未配置'}\n- profile 验收准则：${Object.entries(acceptanceCriteria).map(([field, value]) => `${field}=${value}`).join('；') || '未配置，不能据此宣称符合'}\n- 不确定度模型：${result.uncertainty?.status || '未配置'}${result.uncertainty?.method ? ` · ${result.uncertainty.method} · k=${result.uncertainty.coverageFactor}` : ''}\n\n## 按工况阶段计算\n\n${phaseMetricLines}\n`;
   const structuredEvidenceSection = `\n## 方法级结构化证据\n\n- 测试阶段：${result.compliance?.testStages?.evidence || '未配置'}\n- 测试系统组成：${result.compliance?.testSystem?.evidence || '未配置'}\n- 测试条件：${result.compliance?.testConditions?.evidence || '未配置'}\n- 环境条件：${result.compliance?.environmentConditions?.evidence || '未配置'}\n- 测量方法：${result.compliance?.measurementMethods?.evidence || '未配置'}\n- 方法阶段结果：${result.compliance?.phaseResults?.evidence || '未配置'}\n`;
   const comparisonSection = `${complianceSection}${releaseGateSection}${workflowSection}${performanceSection}${dynamicPowerSection}${structuredEvidenceSection}${metadataSection}${options.comparison ? `\n${comparisonMarkdown(options.comparison)}` : ''}${options.aiDraft?.draft ? `\n\n## 报告初稿（结构化证据模式）\n\n${options.aiDraft.draft}\n\n- 生成路径：${options.aiDraft.mode === 'remote-llm' ? '已配置的企业模型服务' : '本地规则回退'}\n\n- fallbackReason：${options.aiDraft.fallbackReason ?? '无'}\n` : ''}`;
   const profileName = config.profileName ?? '未指定设备模板';

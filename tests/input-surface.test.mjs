@@ -17,10 +17,12 @@ const renderedVinextMarkup = (source) => {
 };
 
 test('static and Vinext pages expose the same multi-format T02 input contract', async () => {
-  const [staticPage, vinextPage, app] = await Promise.all([
+  const [staticPage, vinextPage, app, styles, publicApp] = await Promise.all([
     read('src/index.html'),
     read('app/page.tsx'),
-    read('src/app.mjs')
+    read('src/app.mjs'),
+    read('src/styles.css'),
+    read('public/src/app.mjs')
   ]);
   const server = await read('server.mjs');
   const [releaseSource, releasePublic] = await Promise.all([read('config/release-summary.json'), read('public/config/release-summary.json')]);
@@ -38,6 +40,9 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     for (const id of ['parameter-file', 'metadata-traceability', 'metadata-edit-log', 'metadata-formula-review', 'metadata-test-system', 'metadata-phase-results']) assert.match(page, new RegExp(id));
     assert.match(page, /coverage-blocked/);
     assert.match(page, /coverage-unuploaded/);
+    assert.match(page, /trend-chart-summary/);
+    assert.match(page, /enterprise-performance-chart-summary/);
+    assert.match(page, /result-announcement/);
   }
   assert.match(app, /ensureBrowserEngines/);
   assert.match(app, /setSpreadsheetEngine/);
@@ -49,6 +54,10 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /publicBatchAggregation/);
   assert.match(app, /escapeHtml\(profile\.name\)/);
   assert.match(app, /loadReleaseSummary/);
+  assert.match(app, /updateAccessibleSummaries/);
+  assert.match(app, /enterprise-performance-chart-summary/);
+  assert.match(styles, /.mobile-nav a { min-height: 44px/);
+  assert.equal(publicApp, app);
   assert.match(server, /invalid_path_encoding/);
   assert.match(server, /publicRelativeRoots/);
   assert.match(app, /loadReleaseSummary/);

@@ -866,6 +866,29 @@ function renderEnterprisePanel(result) {
   $('#enterprise-table').innerHTML = `<h3>${dataset.parameterConfig?.ok ? '电流平台与稳定区间' : '描述性候选电流区间（非正式稳定区间/极化点）'}</h3><table><thead><tr><th>工况/候选</th><th>目标电流 A</th><th>有效持续 s</th><th>平台状态</th><th>稳定区间选择</th></tr></thead><tbody>${platformRows}</tbody></table><h3>目标工况对比</h3><table><thead><tr><th>平台</th><th>参数</th><th>目标</th><th>实际均值</th><th>绝对偏差</th><th>超限比例 %</th><th>状态</th></tr></thead><tbody>${comparisonRows}</tbody></table><h3>稳定区间排除证据</h3><table><thead><tr><th>平台</th><th>起始 s</th><th>结束 s</th><th>持续 s</th><th>样本</th><th>原因</th><th>说明</th></tr></thead><tbody>${excludedRows}</tbody></table><h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
 }
 
+function updateAccessibleSummaries(result) {
+  const numericRange = (field) => {
+    const values = result.rows.map((row) => row[field]).filter(Number.isFinite);
+    return values.length ? `${fmt(Math.min(...values), 2)}–${fmt(Math.max(...values), 2)}` : '无有效值';
+  };
+  const trendSummary = $('#trend-chart-summary');
+  if (trendSummary) trendSummary.textContent = `趋势图摘要：${result.rows.length} 条记录；温度 ${numericRange('temperature_c')} °C；压力 ${numericRange('pressure_bar')} bar；时间轴 ${fmt(result.metrics.durationS, 1)} s。`;
+  const enterpriseSummary = $('#enterprise-chart-summary');
+  if (enterpriseSummary) {
+    const dataset = result.dataset || {};
+    const points = dataset.performancePoints?.length || dataset.points?.length || dataset.insulation?.points?.length || 0;
+    enterpriseSummary.textContent = `企业图表摘要：${dataset.label || '企业数据'}；${points} 个可绘制点；当前仅作描述性统计，不替代标准判定。`;
+  }
+  const performanceSummary = $('#enterprise-performance-chart-summary');
+  if (performanceSummary) {
+    const dataset = result.dataset || {};
+    const points = dataset.performancePoints?.length || 0;
+    performanceSummary.textContent = `企业性能图表摘要：${points} 个性能点；当前仅在具备企业性能证据时显示，不替代标准判定。`;
+  }
+  const announcement = $('#result-announcement');
+  if (announcement) announcement.textContent = `分析完成：${verdictLabel(result.verdict)}；${result.metrics.sampleCount || 0} 条记录；${result.issues?.length || 0} 项风险或提示；正式符合性声明未执行。`;
+}
+
 function render(result) {
   state.result = result;
   state.aiDraft = null;
@@ -887,7 +910,7 @@ function render(result) {
   const complianceClass = result.compliance.status.toLowerCase().replaceAll('_', '-');
   $('#compliance-chip').textContent = result.compliance.label;
   $('#compliance-chip').className = `compliance-chip ${complianceClass}`;
-  renderMetrics(result); renderCalculationSummary(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); renderBatchObservation();
+  renderMetrics(result); renderCalculationSummary(result); renderIssues(result); renderPhases(result); renderWorkflow(result); renderReport(result); renderEnterprisePanel(result); drawChart(result); drawEnterpriseChart(result); drawEnterprisePerformanceChart(result); updateAccessibleSummaries(result); renderBatchObservation();
   renderComparison();
   renderHistory();
   renderSchema(result);

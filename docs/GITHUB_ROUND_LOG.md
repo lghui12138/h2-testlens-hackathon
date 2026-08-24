@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · GitHub 实际运行时 parity 与无障碍摘要轮
+
+- 修复发布面漂移：Vinext 实际加载的 `public/src/app.mjs`、`analyzer.mjs`、`ai-draft.mjs`、`structured-evidence.mjs` 已从 `src/` 同步，并新增 `runtime:public-browser-modules-parity` 提交门。
+- 静态页/App 都新增分析完成播报、温度/压力/企业/性能画布文字摘要和 `aria-describedby`；图表容器改为给摘要保留空间，移动导航触控目标从 36px 提升到 44px。
+- 回归门：`npm test` 165/165、`npm run check:submission` 128/128、typecheck、Vinext build 5/5、package smoke install/test/typecheck/build/start/HTTP 全通过；receipt SHA-256：`receipt 文件记录最终 artifact SHA-256`。
+- GitHub Actions workflow 本轮保持不变：当前 OAuth token 缺少 `workflow` scope，Pages 公共 receipt 仍明确为 unbound，未伪造已绑定发布证据。
+
 ## 2026-08-24 · 效率范围与批准覆盖门修复轮
 
 - 实测效率增加 0–100% 物理范围校验；approved profile 默认要求效率记录覆盖全部输入行，避免用两条样本平均整段测试。

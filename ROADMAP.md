@@ -12,6 +12,11 @@
 
 ## v3.5.37 current continuation evidence
 
+- GitHub-facing runtime parity is now enforced for the four browser modules actually loaded by Vinext (`app.mjs`, `analyzer.mjs`, `ai-draft.mjs`, `structured-evidence.mjs`); the public copies are synchronized from `src/` and cannot silently drift.
+- Both static and Vinext surfaces now expose a live analysis result announcement, text summaries for trend/enterprise/performance canvases, and 44px mobile navigation targets; the chart layout reserves space for the readable summaries.
+- Gate: `npm test` **165/165**, `npm run check:submission` **128/128**, typecheck, Vinext build 5/5 and package smoke install/test/typecheck/build/start/HTTP pass. The local package receipt records SHA-256 `receipt 文件记录最终 artifact SHA-256`.
+- Residual: GitHub Pages workflow still does not run `package:submission` because the current OAuth token lacks workflow scope; public release-summary remains explicitly unbound until a workflow-scoped update is authorized and read back.
+
 - Enterprise adapter compliance now preserves standard-reference readiness, method source, standard dates, full-method prerequisites and the same non-certification boundary already used by the generic analyzer.
 - Vehicle fractional time-only rollover and cross-session pseudo-duration defects are closed; stack target points now fail closed on invalid timestamp quality, repeated current conditions use enabled target fields for disambiguation, and formal power acceptance requires an original power channel.
 - Static webpage and Next/Vinext App now expose the same rendered evidence controls and an explicit non-native-app boundary; the rendered contract is regression-tested.
