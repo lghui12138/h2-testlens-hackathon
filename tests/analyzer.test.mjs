@@ -97,6 +97,20 @@ test('uses an original power channel for KPI integration and preserves voltage-c
   assert.match(result.metrics.powerCrossCheck.evidence, /交叉核算/);
 });
 
+test('marks partial raw-power coverage instead of presenting derived segments as fully measured', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,power_w,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,250,30,10,6,1',
+    '60,10,2,,30,10,6,1',
+    '120,10,2,250,30,10,6,1'
+  ].join('\n')));
+  assert.equal(result.metrics.powerSource, 'mixed');
+  assert.equal(result.metrics.powerCrossCheck.rawPowerCount, 2);
+  assert.equal(result.metrics.powerCrossCheck.missingPowerCount, 1);
+  assert.equal(result.metrics.powerCrossCheck.derivedPowerCount, 1);
+  assert.ok(result.issues.some((item) => item.code === 'POWER_SOURCE_MIXED'));
+});
+
 test('converts a kW original power channel to watts before integration', () => {
   const result = analyzeRows(parseCSV([
     'timestamp_s,current_a,voltage_v,功率(kW),temperature_c,pressure_bar,flow_slpm,leak_ppm',
@@ -167,6 +181,17 @@ test('uses valid steady rows without index-shifting around a missing voltage', (
   const result = analyzeRows(rows);
   assert.equal(result.metrics.steadySampleCount, 3);
   assert.equal(result.metrics.steadyVoltageMeanV, 1.85);
+});
+
+test('surfaces a warning for any missing analytical numeric cell instead of allowing a silent clear result', () => {
+  const rows = parseCSV([
+    'timestamp_s,current_a,voltage_v,power_w,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,20,,10,6,1',
+    '60,10,2,20,30,10,6,1'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.ok(result.issues.some((item) => item.code === 'DATA_GAP'));
+  assert.equal(result.issues.find((item) => item.code === 'DATA_GAP').severity, 'warn');
 });
 
 test('AI draft defaults to local evidence mode and does not include raw rows', async () => {

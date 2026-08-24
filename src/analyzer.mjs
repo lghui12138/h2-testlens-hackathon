@@ -431,18 +431,23 @@ function electricalPower(row) {
 function powerCrossCheck(rows) {
   const rawRows = rows.filter((row) => row.power_w !== null);
   const comparable = rawRows.filter((row) => row.current_a !== null && row.voltage_v !== null);
+  const missingPowerCount = rows.length - rawRows.length;
   const differences = comparable.map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v));
   const relativeDifferences = comparable
     .map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v) / Math.max(Math.abs(row.power_w), Math.abs(row.current_a * row.voltage_v), 1e-12) * 100);
   return {
     rawPowerCount: rawRows.length,
     derivedPowerCount: rows.filter((row) => row.power_w === null && row.current_a !== null && row.voltage_v !== null).length,
+    missingPowerCount,
+    powerCoveragePct: rows.length ? (rawRows.length / rows.length) * 100 : null,
     comparableCount: comparable.length,
     maxAbsoluteDifferenceW: differences.length ? Math.max(...differences) : null,
     maxRelativeDifferencePct: relativeDifferences.length ? Math.max(...relativeDifferences) : null,
-    status: rawRows.length ? (comparable.length ? 'checked' : 'raw_only') : 'derived_only',
+    status: rawRows.length === 0 ? 'derived_only' : missingPowerCount > 0 ? 'mixed' : comparable.length ? 'checked' : 'raw_only',
     evidence: rawRows.length
-      ? comparable.length ? '原始电功率通道已记录，并与电压×电流做独立交叉核算；未配置一致性限值，不自动判定合格。' : '已记录原始电功率通道，但电压或电流不可用于交叉核算。'
+      ? missingPowerCount > 0
+        ? `原始电功率通道仅覆盖 ${rawRows.length}/${rows.length} 条记录；其余 ${missingPowerCount} 条记录的通用 KPI 使用电压×电流派生，不能把整段结果当作原始功率通道结果；未配置一致性限值，不自动判定合格。`
+        : comparable.length ? '原始电功率通道已记录，并与电压×电流做独立交叉核算；未配置一致性限值，不自动判定合格。' : '已记录原始电功率通道，但电压或电流不可用于交叉核算。'
       : '未提供原始电功率通道；当前功率/能耗仅由电压×电流派生。'
   };
 }
@@ -1324,7 +1329,11 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   if (quality.nonPositiveIntervalCount > 0) issues.push(issue('warn', 'TIME_INTERVAL_INVALID', '时间间隔存在非正值', `非正时间间隔 ${quality.nonPositiveIntervalCount} 个；中位采样间隔 ${quality.medianIntervalS ?? '—'} s`, '确认重复/逆序记录和多文件拼接顺序，修复后再积分。'));
   if (quality.samplingGapCount !== null && quality.samplingGapCount > 0) issues.push(issue('warn', 'SAMPLING_GAP', '时间轴存在采样缺口', `超过当前 profile 缺口上限 ${quality.gapLimitS} s 的间隔 ${quality.samplingGapCount} 个`, '核对数据采集计划、时钟同步和缺失记录；不要用插值结果替代原始证据。'));
   if (dataQuality.failed.length || dataQuality.missing.length) issues.push(issue('critical', 'DATA_QUALITY_GATE', 'profile 数据质量门控未通过', dataQuality.evidence, '补齐采样计划/时间轴/阶段连续性证据后重新分析。'));
-  if (quality.completenessPct < 98 && quality.missingHeaders.length === 0) issues.push(issue('warn', 'DATA_GAP', '测试数据存在缺口', `关键数值字段完整率 ${quality.completenessPct.toFixed(1)}%`, '补齐缺失字段后再做正式判定。'));
+  if (quality.missingCells > 0 && quality.missingHeaders.length === 0) {
+    const missingFields = Object.entries(quality.invalidValueCounts).filter(([, count]) => count > 0).map(([field, count]) => `${field}=${count}`).join('；');
+    issues.push(issue('warn', 'DATA_GAP', '测试数据存在缺口', `关键数值字段缺失 ${quality.missingCells}/${quality.totalCells} 个单元格（完整率 ${quality.completenessPct.toFixed(1)}%）；${missingFields}`, '补齐缺失字段或提供企业批准的缺失值规则后再做正式判定；系统不会用插值或默认值替代原始记录。'));
+  }
+  if (powerEvidence.status === 'mixed') issues.push(issue('warn', 'POWER_SOURCE_MIXED', '原始功率通道不完整', powerEvidence.evidence, '补齐原始功率通道，或在企业 profile 中明确允许派生功率；正式验收不能把派生段当作原始测量。'));
   if (metrics.peakTemperatureC !== null && metrics.peakTemperatureC > config.maxTemperatureC) issues.push(issue('critical', 'TEMP_HIGH', '温度超过演示阈值', `峰值 ${metrics.peakTemperatureC.toFixed(1)} °C > ${config.maxTemperatureC} °C${timeRef(metrics.peakTemperatureAtS)}`, '检查散热、负载爬升和温度传感器安装。'));
   if (metrics.peakPressureBar !== null && metrics.peakPressureBar > config.maxPressureBar) issues.push(issue('critical', 'PRESSURE_HIGH', '压力超过演示阈值', `峰值 ${metrics.peakPressureBar.toFixed(1)} bar > ${config.maxPressureBar} bar${timeRef(metrics.peakPressureAtS)}`, '暂停升载，检查调压与泄压回路。'));
   if (metrics.peakLeakPpm !== null && metrics.peakLeakPpm > config.maxLeakPpm) issues.push(issue('critical', 'LEAK_HIGH', '泄漏监测值超过演示阈值', `峰值 ${metrics.peakLeakPpm.toFixed(1)} ppm > ${config.maxLeakPpm} ppm${timeRef(metrics.peakLeakAtS)}`, '优先复核密封、采样管路与环境本底。'));

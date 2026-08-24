@@ -304,7 +304,7 @@ function configFromUI() {
 }
 
 function renderProfileOptions() {
-  $('#profile-select').innerHTML = `${state.profileCatalog.map((profile) => `<option value="${profile.id}">${profile.name}</option>`).join('')}<option value="${CUSTOM_PROFILE_ID}">自定义阈值 · 当前会话</option>`;
+  $('#profile-select').innerHTML = `${state.profileCatalog.map((profile) => `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.name)}</option>`).join('')}<option value="${escapeHtml(CUSTOM_PROFILE_ID)}">自定义阈值 · 当前会话</option>`;
 }
 
 function applyProfile(profileId) {
@@ -422,7 +422,7 @@ function renderCalculationSummary(result) {
   const datasetMetrics = result.dataset?.metrics || {};
   const quality = result.quality || {};
   const powerSource = metrics.powerSource || datasetMetrics.powerSource || null;
-  const powerLabels = { checked: '原始功率 + 电压×电流交叉核算', raw_only: '原始功率通道（未交叉核算）', derived_only: '电压×电流派生功率', not_available: '当前数据集未提供功率口径' };
+  const powerLabels = { checked: '原始功率 + 电压×电流交叉核算', mixed: '原始功率部分覆盖 · 缺失段派生', raw_only: '原始功率通道（未交叉核算）', derived_only: '电压×电流派生功率', not_available: '当前数据集未提供功率口径' };
   const powerEvidence = metrics.powerCrossCheck || datasetMetrics.powerCrossCheck || {};
   const integrationEvidence = metrics.integrationEvidence || {};
   const skippedIntegrationGaps = Math.max(Number(integrationEvidence.hydrogenVolume?.skippedGapCount || 0), Number(integrationEvidence.energyConsumed?.skippedGapCount || 0));
@@ -993,7 +993,8 @@ async function loadCoverageSummary() {
     setText('coverage-total-files', total.toLocaleString('zh-CN'));
     setText('coverage-processed', processed.toLocaleString('zh-CN'));
     setText('coverage-reference', reference.toLocaleString('zh-CN'));
-    setText('coverage-blocked', `${blocked} + ${noUpload}`);
+    setText('coverage-blocked', blocked.toLocaleString('zh-CN'));
+    setText('coverage-unuploaded', noUpload.toLocaleString('zh-CN'));
     const fill = $('#coverage-meter-fill');
     if (fill) fill.style.width = `${total > 0 ? Math.min(100, (processed / total) * 100) : 0}%`;
     const note = $('#coverage-note');

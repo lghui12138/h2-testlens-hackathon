@@ -18,6 +18,13 @@
 - Enterprise Markdown reports and the browser report preview expose standard references, method execution status and release-gate status; they do not declare standard conformity.
 - Verification artifacts: v3.5.37 T02 coverage/reference/integration reports; new per-cell, excluded-interval and parameter-formula regressions; full submission gates remain required before packaging.
 
+## 2026-08-24 current continuation evidence · mixed-source and public parity hardening
+
+- Change: partial raw-power coverage now reports `mixed`, raw/derived/missing counts and coverage percentage; any missing analytical numeric cell produces a `DATA_GAP` review warning instead of silently looking complete.
+- Public surface: T02 blocked-binary and declared-no-upload counts are separate; static/Next navigation and canonical/OG metadata align; Next initialization errors use the existing error tone; imported profile labels are HTML-escaped.
+- Gate: `npm test` **158/158**, `npm run check:submission` **124/124**, `npm run typecheck`, `npm run eval:ai` **4/4**, `npm run smoke:api`, `npm run prepare:github-pages`, and clean-clone Vinext production build **5/5 stages** pass.
+- Residual: standard conformity, approved profile/data, Excel/WPS acceptance, and human parallel validation remain external gates.
+
 ## 2026-08-24 current continuation evidence · field-value diagnostics
 
 - Change: vehicle and stack adapters now preserve per-signal numeric coverage, missing/non-numeric mix, negative-value count, zero-dominance, unique-value count and semantic-review reasons; raw values are never silently filtered.

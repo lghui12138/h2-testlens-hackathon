@@ -8,7 +8,7 @@ const DASHBOARD_HTML = String.raw`
   <header class="topbar">
     <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试智报</small></span></a>
     <div class="topbar-meta"><span class="live-dot"></span><span>PUBLIC ANALYSIS</span><span class="divider"></span><span id="last-run">等待数据</span></div>
-    <nav class="site-nav" aria-label="页面导航"><a href="#top">分析台</a><a href="#enterprise-panel">数据视图</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noreferrer">GitHub ↗</a></nav><nav class="mobile-nav" aria-label="移动端页面导航"><a href="#top">分析台</a><a href="#enterprise-panel">数据</a><a href="#workflow">流程</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noreferrer">GitHub</a></nav>
+    <nav class="site-nav" aria-label="页面导航"><a href="#top">分析台</a><a href="#workflow">流程</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noreferrer">GitHub ↗</a></nav><nav class="mobile-nav" aria-label="移动端页面导航"><a href="#top">分析台</a><a href="#enterprise-panel">数据</a><a href="#workflow">流程</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noreferrer">GitHub</a></nav>
   </header>
   <main id="top">
     <section class="hero">
@@ -41,7 +41,7 @@ const DASHBOARD_HTML = String.raw`
 const DISPLAY_HTML = DASHBOARD_HTML
   .replaceAll("ONLINE DEMO", "PUBLIC ANALYSIS")
   .replace('<div id="metric-grid" class="metric-grid"></div>', '<div id="metric-grid" class="metric-grid"></div><div id="calculation-summary" class="calculation-summary" aria-label="计算口径摘要"></div>')
-  .replace('<section class="side-card workflow-card">', '<section class="side-card coverage-card"><div class="card-kicker">T02 SOURCE COVERAGE <span id="coverage-audit-version">v3.5.37</span></div><h2>T02 资料接入范围</h2><p class="side-intro">版本化审计把下载目录逐文件分类；“已处理”表示进入对应解析器，不等于已满足标准。</p><div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1 + 1</b>阻断 / 未上传</span></div><div class="coverage-meter" aria-label="190 个文件进入处理，共 198 个文件"><span id="coverage-meter-fill"></span></div><small id="coverage-note" class="coverage-note">处理数据进入适配器：2,262,283 行/功率点 · 正式符合性声明：0<br>阻断项：二进制/不可按当前文本合同解析；保留哈希，不生成测试结论。</small><a class="template-link" href="https://github.com/lghui12138/h2-testlens-hackathon/blob/main/.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json" target="_blank" rel="noreferrer">查看版本化覆盖审计证据 ↗</a></section><section class="side-card workflow-card">')
+  .replace('<section class="side-card workflow-card">', '<section class="side-card coverage-card"><div class="card-kicker">T02 SOURCE COVERAGE <span id="coverage-audit-version">v3.5.37</span></div><h2>T02 资料接入范围</h2><p class="side-intro">版本化审计把下载目录逐文件分类；“已处理”表示进入对应解析器，不等于已满足标准。</p><div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span></div><div class="coverage-meter" aria-label="190 个文件进入处理，共 198 个文件"><span id="coverage-meter-fill"></span></div><small id="coverage-note" class="coverage-note">处理数据进入适配器：2,262,283 行/功率点 · 正式符合性声明：0<br>阻断二进制：保留哈希，不生成测试结论；声明未上传：没有原始数据，不进入解析器。</small><a class="template-link" href="https://github.com/lghui12138/h2-testlens-hackathon/blob/main/.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json" target="_blank" rel="noreferrer">查看版本化覆盖审计证据 ↗</a></section><section class="side-card workflow-card">')
   .replace('<h2>判定阈值</h2>', '<h2>分析模式与规则</h2>')
   .replace('按设备模板加载阈值；内置模板仅用于演示，正式部署时应替换为企业标准。', 'profile 明确区分描述性统计、风险筛查和企业验收；描述性 profile 不携带或执行伪企业阈值。')
   .replace('<button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button>', '<button id="load-profile-demo" class="quiet-button profile-demo-button">载入示例企业配置</button><button id="load-t02-profiles" class="quiet-button profile-demo-button">载入 T02 描述性 profiles</button><a class="template-link" href="./config/t02-profile.example.json" download>下载 T02 profile 示例包</a>')
@@ -82,7 +82,7 @@ export default function Home() {
       const status = document.querySelector("#analysis-status");
       if (status) {
         status.textContent = "初始化失败 · 请刷新页面或改用 GitHub Pages 静态入口";
-        status.setAttribute("data-tone", "danger");
+        status.setAttribute("data-tone", "error");
       }
     });
   }, []);

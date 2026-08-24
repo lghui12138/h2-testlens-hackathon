@@ -33,6 +33,8 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     assert.match(page, /batch-observation-status/);
     assert.match(page, /descriptive_only/);
     for (const id of ['parameter-file', 'metadata-traceability', 'metadata-edit-log', 'metadata-formula-review', 'metadata-test-system', 'metadata-phase-results']) assert.match(page, new RegExp(id));
+    assert.match(page, /coverage-blocked/);
+    assert.match(page, /coverage-unuploaded/);
   }
   assert.match(app, /ensureBrowserEngines/);
   assert.match(app, /setSpreadsheetEngine/);
@@ -42,6 +44,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /validateBatchDeclaration/);
   assert.match(app, /observeDeclaredBatch/);
   assert.match(app, /publicBatchAggregation/);
+  assert.match(app, /escapeHtml\(profile\.name\)/);
   assert.match(app, /BATCH_DATASET_TYPE_MISMATCH/);
   assert.match(app, /SHA-256:\$\{contentHash\}/);
   assert.doesNotMatch(app, /hashText: entries\.map\(\(\{ name, text, contentHash \}\)/);
@@ -81,13 +84,24 @@ test('T02 coverage card is visible on both public browser surfaces', async () =>
   const rendered = renderedVinextMarkup(appSource);
   for (const page of [staticPage, rendered]) {
     assert.match(page, /T02 资料接入范围/);
-    for (const id of ['coverage-audit-version', 'coverage-total-files', 'coverage-processed', 'coverage-reference', 'coverage-blocked', 'coverage-meter-fill', 'coverage-note']) assert.match(page, new RegExp(id));
+    for (const id of ['coverage-audit-version', 'coverage-total-files', 'coverage-processed', 'coverage-reference', 'coverage-blocked', 'coverage-unuploaded', 'coverage-meter-fill', 'coverage-note']) assert.match(page, new RegExp(id));
     assert.match(page, /190/);
     assert.match(page, /2,262,283/);
     assert.match(page, /正式符合性声明：0/);
-    assert.match(page, /二进制\/不可按当前文本合同解析/);
+    assert.match(page, /阻断二进制/);
+    assert.match(page, /声明未上传/);
     assert.match(page, /标准实施边界矩阵/);
   }
+});
+
+test('Next metadata and initialization failure state remain aligned with the static public entry', async () => {
+  const [layout, page, staticPage] = await Promise.all([read('app/layout.tsx'), read('app/page.tsx'), read('src/index.html')]);
+  assert.match(layout, /metadataBase/);
+  assert.match(layout, /alternates: \{ canonical/);
+  assert.match(layout, /openGraph: \{ type: "website", url:/);
+  assert.match(page, /href="#workflow">流程/);
+  assert.match(page, /status\.setAttribute\("data-tone", "error"\)/);
+  assert.match(staticPage, /href="#workflow">流程/);
 });
 
 test('public static page exposes share metadata and the Pages build copies its preview card', async () => {
