@@ -229,7 +229,7 @@
 - The T02 coverage definition is unchanged: every source file remains classified by actual parser/usage boundary, and processed data remains descriptive evidence rather than standards conformity.
 - The existing table rows below retain the v3.5.18 phase record; this section is the current continuation override until the fresh replay and package gates close.
 - Enterprise vehicle, stack and durability adapters now emit `uncertainty.metricDetails`, preserve direct-versus-derived power provenance, expose assumptions/boundaries, and block an approved profile when `uncertaintyModelRequired` lacks a valid calculated result. Missing raw-power uncertainty no longer falls back to the current×voltage chain; pooled cell-voltage standard deviation reports only its instrument-propagation component and records the Type A boundary. Markdown and Excel exports include dedicated uncertainty evidence.
-- Current override evidence: `npm test` 101/101; `npm run check:submission` 92/92; `npm run eval:ai` 4/4; API smoke, profile audit, production build, Pages preparation and ZIP integrity all pass. T02 coverage is 198/198 with 190 processed and 2,262,283 rows/power points; reference audit is 7 files, 0 parser errors, 21/21 keyword-complete claims; the generated integration report contains 198 file-ledger rows. Final package: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.22.zip`; SHA-256 is recorded only in its adjacent `.sha256` sidecar.
+- Current override evidence: `npm test` 101/101; `npm run check:submission` 92/92; `npm run eval:ai` 4/4; API smoke, profile audit, production build, Pages preparation and ZIP integrity all pass. T02 coverage is 198/198 with 190 processed and 2,262,283 rows/power points; reference audit is 7 files, 0 parser errors, 21/21 keyword-complete claims; the generated integration report contains 198 file-ledger rows. Final package: `dist/h2-testlens-submission-v3.5.22.zip`; SHA-256 is recorded only in its adjacent `.sha256` sidecar.
 
 ## v3.5.18 historical continuation evidence
 
@@ -297,7 +297,7 @@
 - T02 actual parser audit: `198/198` files hashed and classified: `190 processed`, `6 reference_only`, `1 blocked_binary`, `1 declared_no_upload`. The processed count means the configured parser actually read the file and entered the corresponding adapter; it does not mean every field became a KPI or that any standard was satisfied.
 - T02 batch audit: `2,262,283` processed rows; package-level aggregation covers 170 vehicle files, 12 stack files, and 8 durability DOCX files. Reference types and a descriptive cross-report durability first/last comparison are now recorded; cross-file time-series KPI merge, durability-method/cycle-equivalence validation, and enterprise acceptance parallel validation remain explicitly open. Evidence: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.2.json`.
 - Submission gate: `65/65` checks, AI grounding `4/4`, API smoke and profile audit passed.
-- Delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.2.zip`; verify its SHA-256 only from the adjacent `.sha256` sidecar after packaging.
+- Delivery artifact: `dist/h2-testlens-submission-v3.5.2.zip`; verify its SHA-256 only from the adjacent `.sha256` sidecar after packaging.
 - External rollout remains open: approved profile, real anonymized data, enterprise acceptance rules, uncertainty budget, parallel validation, Excel/WPS acceptance, audit/sign-off system and safety evidence are still required. Keep `DEMO_ONLY`.
 
 ## v3.5.3 continuation evidence
@@ -305,23 +305,23 @@
 - v3.5.3 retains the v3.5.2 evidence gates and adds source-file session boundaries to vehicle/stack time axes, prevents cross-file performance/platform/stability segment merging, and adds independently scaled vehicle left/right display signals with export/log evidence.
 - Build/review gate: `70/70` tests, including dual-axis signal selection and cross-file session isolation regressions; API smoke, 65/65 submission checks, AI grounding 4/4, profile audit, static Pages preparation, Node syntax checks, and diff check pass.
 - T02 audit counts remain `198/198`: `190 processed`, `6 reference_only`, `1 blocked_binary`, `1 declared_no_upload`; `2,262,283` processed rows/power points. The new session-aware logic is validated by synthetic multi-file regressions; durability-method/cycle-equivalence validation, Excel/WPS visual acceptance, and enterprise parallel validation remain open.
-- v3.5.3 T02 replay artifact: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.3.json` was generated from `/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手` with `198/198` files hashed and classified; duplicate processed SHA-256 count is `0`.
+- v3.5.3 T02 replay artifact: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.3.json` was generated from `T02_SOURCE_ROOT` with `198/198` files hashed and classified; duplicate processed SHA-256 count is `0`.
 - v3.5.3 reference artifact: `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.3.json` extracts and maps all seven non-time-series PDF/DOCX files (six `reference_only` plus one `declared_no_upload` brief); product background remains reference-only and no raw reference document is copied into the repository.
-- Delivery artifact for this continuation: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.3.zip`; verify its SHA-256 only from the adjacent `.sha256` sidecar.
+- Delivery artifact for this continuation: `dist/h2-testlens-submission-v3.5.3.zip`; verify its SHA-256 only from the adjacent `.sha256` sidecar.
 
 ## v3.5.4 continuation evidence
 
 - v3.5.4 adds the missing Qingchuan review loop: every stack platform keeps all eligible stable-interval candidates; the default remains the last eligible interval, while an engineer can choose another eligible interval in the page.
 - The analyzer records `automaticSegmentId`, `requestedSegmentId`, `selectedSegmentId`, `selectionMode`, available candidates, and invalid-override fallback evidence. The same record is emitted in the public result, Markdown narrative, Excel `稳定区间` and `处理日志` sheets.
 - Regression and delivery gate: `71/71` tests, `70/70` submission checks, AI grounding `4/4`, API smoke, profile audit, static Pages preparation, Node syntax checks, diff check, ZIP integrity, and checksum readback pass. Automatic selection, manual override, and invalid override fallback are covered by regression tests; the demo page passes responsive layout checks at 1440/768/375 CSS px with no horizontal overflow.
-- The versioned delivery artifact for this continuation is generated only after the full gate: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.4.zip` with its adjacent `.sha256` sidecar.
+- The versioned delivery artifact for this continuation is generated only after the full gate: `dist/h2-testlens-submission-v3.5.4.zip` with its adjacent `.sha256` sidecar.
 
 ## v3.5.5 continuation evidence
 
 - v3.5.5 adds visible `aria-live` import/analysis status, event-loop yielding between file reads, a module Web Worker for analysis above 10,000 rows with main-thread fallback, and display-only chart sampling capped at 6,000 rows while preserving first/last points and source-session transitions.
 - Unit and static gate: `72/72` tests and Node syntax checks pass; the sampler regression proves full analytical row count is retained by the source result while the display rows are bounded and session boundaries are visible.
 - T02 evidence is replayed for v3.5.5 after the version bump: the expected `198` files remain `190 processed`, `6 reference_only`, `1 blocked_binary`, `1 declared_no_upload`, with `2,262,283` processed rows/power points and zero duplicate processed SHA-256 values.
-- The versioned delivery artifact is generated only after the current gate: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.5.zip` with its adjacent `.sha256` sidecar. The archive includes `tests/analyzer.test.mjs` so post-unpack `npm test` is reproducible. Browser/Excel/WPS enterprise acceptance and formal standard compliance remain external gates.
+- The versioned delivery artifact is generated only after the current gate: `dist/h2-testlens-submission-v3.5.5.zip` with its adjacent `.sha256` sidecar. The archive includes `tests/analyzer.test.mjs` so post-unpack `npm test` is reproducible. Browser/Excel/WPS enterprise acceptance and formal standard compliance remain external gates.
 
 ## v3.5.6 continuation evidence
 

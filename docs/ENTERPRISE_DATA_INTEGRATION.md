@@ -8,7 +8,7 @@ v3.5.37 实际重放结果：198/198 文件、190 processed、6 reference_only�
 
 v3.5.37 在此前版本基础上保持 XLSX 宏/活动内容/外链阻断、标准 provenance 和显式 `evaluationMode` 门；并补齐静态网页与 Next/Vinext App 的参数工作簿、对象追溯、人工修改审计和公式复核入口。T02 示例 profile 仍固定为 `descriptive_only`，不带验收阈值，不生成放行/安全/符合性结论；正式验收路径必须绑定人工公式复核证据；审计根目录、声明记录总数、路径唯一性和文件漂移仍均 fail-closed。
 
-审计命令：`npm run t02:coverage` 默认写入当前版本覆盖证据，也支持显式输入/输出参数；参考资料内容映射命令：`npm run t02:reference` 默认写入当前版本参考证据，也支持显式输入/输出参数；源资料完整性核对命令：`npm run t02:integrity -- "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json"`。
+审计命令：`npm run t02:coverage` 默认写入当前版本覆盖证据，也支持显式输入/输出参数；参考资料内容映射命令：`npm run t02:reference` 默认写入当前版本参考证据，也支持显式输入/输出参数；源资料完整性核对命令：`npm run t02:integrity -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json"`。
 
 v3.5.37 实际重放结果：198/198 文件、190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，198/198 使用台账，7/7 参考边界文件交叉链接，0 个重复 processed SHA-256，0 个正式符合性声明；170 个车辆文件按 T02 描述性 profile 执行动态设定变化分析，共 15,281 个事件，其中 3,727 个进入响应带并满足保持窗口，11,554 个未稳定/数据不足，0 个超过配置上限的采样缺口；真实 XLSX 有 6,572 个公式单元格且 6,572 个有缓存值，正式验收仍需人工公式复核；源完整性核对 198/198 文件大小和 SHA-256 一致，参考审计 7 个文件、0 个解析错误、21/21 条关键词证据完整。动态事件统计按文件/会话隔离，不是 GB/T 46104-2025 的动态试验合格判定。上述机器证据不等于标准全文人工复核或标准符合性。
 
@@ -18,11 +18,11 @@ T02 示例 profile 包：`config/t02-profile.example.json` 与 `public/config/t0
 
 ## v3.5.26 historical replay
 
-审计命令：`npm run t02:coverage -- "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json"`。命令只读取资料目录，输出每个文件的相对路径、大小、SHA-256、原始数据解析器、参考审计要求、状态和使用台账，并核对源字段是否未分类或多角色冲突，不复制原始资料。
+审计命令：`npm run t02:coverage -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json"`。命令只读取资料目录，输出每个文件的相对路径、大小、SHA-256、原始数据解析器、参考审计要求、状态和使用台账，并核对源字段是否未分类或多角色冲突，不复制原始资料。
 
-参考资料内容映射命令：`npm run t02:reference -- "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手" ".research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.26.json"`。该命令用 `pdftotext`/`pandoc` 提取 PDF/DOCX 的可读文本，只保存哈希、提取统计、关键词命中、实现映射和关键词证据完整性摘要，不保存原文；覆盖台账以相对路径记录该独立参考审计要求。
+参考资料内容映射命令：`npm run t02:reference -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.26.json"`。该命令用 `pdftotext`/`pandoc` 提取 PDF/DOCX 的可读文本，只保存哈希、提取统计、关键词命中、实现映射和关键词证据完整性摘要，不保存原文；覆盖台账以相对路径记录该独立参考审计要求。
 
-源资料完整性核对命令：`npm run t02:integrity -- "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json"`。该命令只重新计算文件大小和 SHA-256；新增、缺失或变更文件即失败，不解析、不复制、不上传原始资料。
+源资料完整性核对命令：`npm run t02:integrity -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json"`。该命令只重新计算文件大小和 SHA-256；新增、缺失或变更文件即失败，不解析、不复制、不上传原始资料。
 
 v3.5.26 实际重放结果：覆盖审计 198/198 文件、190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，198/198 使用台账，7/7 参考边界文件与独立参考审计交叉链接，0 个重复 processed SHA-256，0 个正式符合性声明；源资料完整性核对 198/198 文件大小和 SHA-256 一致；参考审计 7 个文件、0 个解析错误、21/21 条关键词证据完整。8 份耐久报告进入描述性跨报告筛查，审计状态为 `screened`，但因电堆型号不一致标记 `DURABILITY_COMPARABILITY_STACK_MODEL_MISMATCH`，不生成耐久等效性结论。机器证据为 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.26.json` 和 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.26.md`。
 

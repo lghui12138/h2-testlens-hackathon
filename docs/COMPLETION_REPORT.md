@@ -24,7 +24,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Fresh T02 evidence is regenerated with the same real-data boundary: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 7/7 reference cross-links and 21/21 complete keyword-evidence claims.
 - Historical machine artifacts: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.30.json`, `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.30.json`, and `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.30.md`.
 - Historical automated gate: `npm test` **114/114**, `npm run check:submission` **107/107**, `npm run eval:ai` **4/4**, API smoke, profile audit and GitHub Pages preparation pass; T02 source integrity is **198/198 unchanged**. A clean APFS staging tree with the v3.5.30 source and locked dependencies completed the Vinext production build **5/5 stages**.
-- Historical delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.30.zip`; SHA-256 was recorded in the adjacent `.sha256` sidecar and the archive passed `unzip -t`.
+- Historical delivery artifact: `dist/h2-testlens-submission-v3.5.30.zip`; SHA-256 was recorded in the adjacent `.sha256` sidecar and the archive passed `unzip -t`.
 
 ## v3.5.37 current gate
 
@@ -48,7 +48,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Added `FULL_METHOD_PROFILE_EVIDENCE_MISSING` issue evidence, release-gate visibility, regression coverage, and aligned API/standard/readiness documentation. This prevents a complete-looking clause-coverage object from being treated as a complete executable standard method.
 - T02 source usage boundary is unchanged and was re-audited for the new version: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 7/7 reference cross-links, 21/21 keyword-evidence claims, 0 duplicate processed hashes and 0 formal conformity claims.
 - Current automated gate (2026-08-23 re-run): `npm test` **115/115**, `npm run check:submission` **107/107**, `npm run eval:ai` **4/4**, API smoke, profile audit, T02 source integrity **198/198 unchanged**, static GitHub Pages preparation, ZIP integrity and SHA-256 sidecar readback all pass. Clean internal-APFS staging completes the Vinext production build **5/5 stages**; the original worktree build remains environment-blocked by macOS `compressed,dataless` dependency/config placeholders, not by application source.
-- Delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.31.zip`; its SHA-256 is canonical in the adjacent `.sha256` sidecar and is verified after packaging.
+- Delivery artifact: `dist/h2-testlens-submission-v3.5.31.zip`; its SHA-256 is canonical in the adjacent `.sha256` sidecar and is verified after packaging.
 - Formal standards compliance remains open: full GB/T method execution, approved enterprise limits and uncertainty budgets, ISO 22734-1 safety evidence, ISO/IEC 17025 laboratory evidence, Excel/WPS acceptance, and human parallel validation are not established by this gate.
 
 ## v3.5.28 historical gate
@@ -59,7 +59,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Fresh v3.5.28 T02 evidence is complete with the same real-data boundary: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 0 duplicate processed hashes, 0 formal conformity claims, 7/7 reference cross-links and 21/21 complete keyword-evidence claims.
 - Current machine artifacts: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.28.json`, `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.28.json`, and `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.28.md`.
 - Current automated gate: `npm test` **110/110**, `npm run check:submission` **101/101**, `npm run eval:ai` **4/4**, API smoke, profile audit, T02 source integrity **198/198 unchanged**, static GitHub Pages preparation, ZIP integrity and SHA-256 sidecar readback all pass. A clean APFS staging install from `package-lock.json` completes the Vinext production build **5/5 stages**; the original worktree build remains environment-blocked by macOS `compressed,dataless` dependency/config placeholders, not by application source.
-- Current delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.28.zip`; its SHA-256 is recorded in the adjacent `.sha256` sidecar. The ZIP contains only current T02 evidence, not historical audit snapshots or raw enterprise files.
+- Current delivery artifact: `dist/h2-testlens-submission-v3.5.28.zip`; its SHA-256 is recorded in the adjacent `.sha256` sidecar. The ZIP contains only current T02 evidence, not historical audit snapshots or raw enterprise files.
 
 ## v3.5.26 historical gate
 
@@ -67,7 +67,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Fresh v3.5.26 T02 evidence: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points entered adapters, 198/198 usage ledgers, 0 duplicate processed hashes, 0 formal conformity claims, 7/7 reference cross-links and 21/21 complete keyword-evidence claims. Source-integrity replay confirms 198/198 files unchanged from the coverage audit. The eight-report durability screen retains `DURABILITY_COMPARABILITY_STACK_MODEL_MISMATCH`.
 - The new regression covers clean, changed, added and missing source files without parsing content. Current regression/delivery gate: `npm test` **105/105**, `npm run check:submission` **98/98**, `npm run eval:ai` **4/4**, T02 source integrity **198/198 unchanged**, API smoke, profile audit, production build, GitHub Pages preparation and `git diff --check` all pass.
 - The current build completes all five Vinext production stages. The current submission ZIP and SHA-256 sidecar are generated only after this documentation update and verified below.
-- Final delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.26.zip`; its adjacent `.sha256` sidecar is canonical and is kept outside the archive to avoid checksum self-reference.
+- Final delivery artifact: `dist/h2-testlens-submission-v3.5.26.zip`; its adjacent `.sha256` sidecar is canonical and is kept outside the archive to avoid checksum self-reference.
 - Current machine artifacts: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.26.json`, `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.26.json`, and `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.26.md`.
 
 ## v3.5.25 historical gate
@@ -90,7 +90,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - Approved profiles with these requirements remain `NOT_READY` when evidence is absent or malformed. Public API, public JSON, Markdown and Excel `处理日志` preserve status/count evidence without exposing operator identity or old/new value summaries.
 - Regression gate after the feature: `npm test` **103/103**. This test gate is separate from standard conformity, safety validation, laboratory competence and enterprise release approval.
 - Historical v3.5.23 T02 evidence: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 0 duplicate processed hashes and 0 formal conformity claims; reference audit 7 files, 0 parser errors and 21/21 keyword-complete claims; the integration report contained 198 file-ledger rows.
-- Historical delivery package: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.23.zip`; SHA-256 was recorded in its adjacent `.sha256` sidecar. These gates remain implementation/release evidence, not standards conformity.
+- Historical delivery package: `dist/h2-testlens-submission-v3.5.23.zip`; SHA-256 was recorded in its adjacent `.sha256` sidecar. These gates remain implementation/release evidence, not standards conformity.
 
 ## v3.5.22 historical gate
 
@@ -100,13 +100,13 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 - The versioned T02 integration report now enumerates all 198 source files, explicitly distinguishes 190 adapter inputs from 6 reference-only, 1 blocked-binary and 1 declared-no-upload boundary, and keeps the 0 formal-conformity-claim invariant visible in the same human-readable artifact.
 - Regression gate: `npm test` **101/101**. The regressions cover raw-versus-derived power uncertainty, invalid generic models, the standard-deviation propagation boundary, settings-only relative-stability screening, the explicit UTF-16 BOM text boundary, and the full-package report row/boundary invariants.
 - Fresh v3.5.22 T02 audit: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 0 formal conformity claims, 0 duplicate processed hashes; reference audit 7 files, 0 parser errors, 21/21 keyword-complete claims.
-- Current automated delivery gates: `npm run check:submission` **92/92**, `npm run eval:ai` **4/4**, API smoke, profile audit, production build, GitHub Pages preparation and ZIP integrity pass. Delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.22.zip`; SHA-256 is recorded only in its adjacent `.sha256` sidecar. These gates remain separate from T02 coverage and do not establish standards conformity.
+- Current automated delivery gates: `npm run check:submission` **92/92**, `npm run eval:ai` **4/4**, API smoke, profile audit, production build, GitHub Pages preparation and ZIP integrity pass. Delivery artifact: `dist/h2-testlens-submission-v3.5.22.zip`; SHA-256 is recorded only in its adjacent `.sha256` sidecar. These gates remain separate from T02 coverage and do not establish standards conformity.
 
 ## v3.5.18 historical gate
 
 - v3.5.18 locks the real package 01 XLSX evidence into the T02 audit and regression suite. All 8/8 sheets are classified: 1 time-series analysis sheet (`稳定性`), 4 static single-cell matrices, 1 factory-report evidence sheet, 1 BD identity sheet and 1 parameter-catalog sheet. The evidence summary records 1,196 static channels, 185,089 valid static points, 590 missing points, 24 factory-report checks, 27 polarization points, 1 stability point, 2 identity fields and 24 parameter-catalog rows; these are traceability/descriptive evidence, not conformity limits.
 - Current T02 audit result: 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 0 formal conformity claims and 0 duplicate processed hashes. The one blocked package 01 TXT is a binary/proprietary export with control-byte content; it remains blocked until the enterprise supplies its export format/decoder contract. Package 04 has no uploaded raw data according to its brief.
-- Historical automated gate: `npm test` **93/93**, `npm run check:submission` **87/87**, `npm run eval:ai` **4/4**, API smoke, profile audit, production build, static Pages preparation and ZIP integrity pass. Delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.18.zip`; its adjacent `.sha256` sidecar is canonical.
+- Historical automated gate: `npm test` **93/93**, `npm run check:submission` **87/87**, `npm run eval:ai` **4/4**, API smoke, profile audit, production build, static Pages preparation and ZIP integrity pass. Delivery artifact: `dist/h2-testlens-submission-v3.5.18.zip`; its adjacent `.sha256` sidecar is canonical.
 
 ## v3.5.17 historical gate
 
@@ -117,7 +117,7 @@ The v3.5.1 capability list below remains the base delivery; v3.5.2 adds shared e
 ## v3.5.16 historical gate
 
 - v3.5.16 adds a browser-side declared-batch panel to both the static and Vinext input surfaces. The panel reuses `src/batch-aggregation.mjs` for declaration validation, canonical timestamp observation, actual median sampling interval, deviation, restart-boundary checks, descriptive-only summaries, and redacted display; it never joins file sessions into a conformity result.
-- Current gate: `npm test` **91/91**, `npm run eval:ai` **4/4**, `npm run check:submission` **86/86**, `npm run smoke:api`, profile audit, `npm run build`, static Pages preparation, `git diff --check`, ZIP integrity and SHA-256 readback all pass. Delivery artifact: `/Users/kili/Documents/Codex/ignite-future-energy-hackathon/dist/h2-testlens-submission-v3.5.16.zip`; its adjacent `.sha256` sidecar is canonical.
+- Current gate: `npm test` **91/91**, `npm run eval:ai` **4/4**, `npm run check:submission` **86/86**, `npm run smoke:api`, profile audit, `npm run build`, static Pages preparation, `git diff --check`, ZIP integrity and SHA-256 readback all pass. Delivery artifact: `dist/h2-testlens-submission-v3.5.16.zip`; its adjacent `.sha256` sidecar is canonical.
 - Current T02 evidence: `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.16.json` records 198/198 files, 190 processed, 6 reference-only, 1 blocked binary, 1 declared no-upload, 2,262,283 processed rows/power points, 198/198 usage ledgers, 0 formal conformity claims, and 0 duplicate processed hashes. `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.16.json` records 7 reference files and 0 parser errors.
 
 ## v3.5.15 historical gate
