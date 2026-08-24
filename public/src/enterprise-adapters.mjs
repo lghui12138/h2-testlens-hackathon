@@ -980,8 +980,10 @@ function workflow(dataset, quality, issues, targetConfigured = true, complianceR
   return { status, nextAction: hardDataIssue ? '先修复时间轴或关键字段，再重跑。' : status === 'NOT_READY' ? '补齐 profile、适用范围、仪器证据、验收规则和报告字段。' : issueReview ? '复核异常证据、完成处置并决定是否复测。' : '可进入人工符合性复核与正式归档。', steps };
 }
 
-function vehicleSegments(rows, targetCurrents, toleranceA, minimumDurationS) {
+function vehicleSegments(rows, targetCurrents, toleranceA, minimumDurationS, activeStatuses = [4]) {
   const segments = [];
+  const allowedStatuses = new Set(activeStatuses.map(Number).filter(Number.isFinite));
+  const hasStatus = rows.some((row) => Number.isFinite(row?.main_status));
   const timeOf = (row) => row?.session_timestamp_s ?? row?.timestamp_s;
   let active = null;
   const close = (endIndex) => {
@@ -1021,6 +1023,7 @@ function vehicleSegments(rows, targetCurrents, toleranceA, minimumDurationS) {
   };
   rows.forEach((row, index) => {
     if (active && row.session_id !== active.sessionId) close(index);
+    if (hasStatus && !allowedStatuses.has(row.main_status)) { close(index); return; }
     const current = row.current_a;
     const target = targetCurrents.find((candidate) => current !== null && Math.abs(current - candidate) <= toleranceA);
     if (target === undefined) { close(index); return; }
@@ -1496,7 +1499,10 @@ function buildVehicle(rows, config) {
     return [String(threshold), { threshold, trend: crossSessionBoundary ? { slopePerDay: null, intercept: null } : linearTrend(points), forecast: crossSessionBoundary ? null : forecastToThreshold(points, threshold), boundary: crossSessionBoundary }];
   }));
   const targetCurrents = (config.vehicleTargets || []).map(Number).filter(Number.isFinite);
-  const rawPerformancePoints = vehicleSegments(rowsForAnalysis, targetCurrents, Number(config.vehicleCurrentToleranceA ?? 5), Number(config.vehicleMinimumDurationS ?? 180));
+  const activeStatuses = (Array.isArray(config.vehicleActiveStatuses) && config.vehicleActiveStatuses.length ? config.vehicleActiveStatuses : [4]).map(Number).filter(Number.isFinite);
+  const hasVehicleStatus = rowsForAnalysis.some((row) => Number.isFinite(row.main_status));
+  const excludedPerformanceStatusCount = hasVehicleStatus ? rowsForAnalysis.filter((row) => !activeStatuses.includes(row.main_status)).length : 0;
+  const rawPerformancePoints = vehicleSegments(rowsForAnalysis, targetCurrents, Number(config.vehicleCurrentToleranceA ?? 5), Number(config.vehicleMinimumDurationS ?? 180), activeStatuses);
   const inferredAnalysis = targetCurrents.length ? { segments: [], gapLimitS: null, minimumDurationS: null, binWidthA: null } : inferVehicleSegments(rowsForAnalysis, config);
   const rawInferredSegments = inferredAnalysis.segments;
   const requestedTrendAxis = config.vehicleTrendXAxis === 'timestamp' ? 'timestamp' : 'runtime_h';
@@ -1537,6 +1543,7 @@ function buildVehicle(rows, config) {
   if (quality.duplicateTimestampCount || quality.nonMonotonicCount) issues.push({ severity: 'warn', code: 'VEHICLE_TIME_SEQUENCE', title: '车辆时间轴需要复核', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，逆序 ${quality.nonMonotonicCount} 次`, recommendation: '确认多文件拼接、采样时钟和时区口径。' });
   if (requestedWindow && !analysisRows.length) issues.push({ severity: 'warn', code: 'VEHICLE_WINDOW_EMPTY', title: '时间窗口没有记录', evidence: `请求窗口 ${windowStartS}–${windowEndS} s 未找到记录；本次不回退到全量数据，也不生成该窗口 KPI`, recommendation: '调整起止时间，或先确认时间戳转换和多文件拼接顺序。' });
   if (unresolvedUnitFields.size) issues.push({ severity: 'warn', code: 'VEHICLE_UNIT_UNRESOLVED', title: '车辆单体电压单位未确认', evidence: `${[...unresolvedUnitFields].join('、')} 的原始值超出 V 口径可直接解释的范围，已不进入单体电压均值/趋势；原始值保留在 raw 字段`, recommendation: '在企业 profile 中提供 vehicleSignalUnits.sourceUnit（V 或 mV）及证据后重新分析；不按数量级自动换算。' });
+  if (excludedPerformanceStatusCount) issues.push({ severity: 'info', code: 'VEHICLE_PERFORMANCE_STATUS_EXCLUDED', title: '车辆非活动状态未进入正式性能点', evidence: `${excludedPerformanceStatusCount} 条状态 ${[...new Set(rowsForAnalysis.filter((row) => !activeStatuses.includes(row.main_status)).map((row) => row.main_status))].join('、')} 记录被排除；正式目标电流性能点只使用活动状态 ${activeStatuses.join('、')}`, recommendation: '确认企业 FC_MainSts 状态字典；状态 8 等非活动记录可保留作状态/绝缘描述性统计，不进入正式性能点。' });
   if (Object.keys(invalidSentinelCounts).length) issues.push({ severity: 'info', code: 'VEHICLE_INVALID_SENTINEL_FILTERED', title: '车辆字段包含已识别无效哨兵值', evidence: Object.entries(invalidSentinelCounts).map(([field, count]) => `${field}=${count}`).join('；'), recommendation: '确认企业无效码表和状态定义；当前只排除明确的 65535 方差哨兵，不外推其他字段规则。' });
   const invalidIsolation = isolationExcludedMissing + isolationExcludedNonPositive + isolationCensoredAboveRange;
   if (invalidIsolation || isolationExcludedByStatus) issues.push({ severity: 'info', code: 'ISOLATION_FILTERED', title: '绝缘阻值按状态/值类型分层过滤', evidence: `状态外 ${isolationExcludedByStatus} 条；状态4/8内缺失 ${isolationExcludedMissing} 条；非正值 ${isolationExcludedNonPositive} 条；量程上限/哨兵 ${isolationCensoredAboveRange} 条；有效进入10分钟最小值 ${isolationRows.length} 条`, recommendation: '正式报告中保留各类计数，并由企业 profile 确认 9999/10000/65535 的量程或无效码含义。' });

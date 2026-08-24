@@ -1609,7 +1609,7 @@ test('recognizes the enterprise vehicle contract and computes target-current and
     '2026-07-07 18:24:52,4,95,320,31,0.60,3,0.67,9,13,240,1',
     '2026-07-07 18:25:52,8,0,0,0,0,0,0,0,0,65535,1'
   ].join('\n'));
-  const result = analyzeRows(rows, { vehicleTargets: [95], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 180 });
+  const result = analyzeRows(rows, { vehicleTargets: [95], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 60 });
   assert.equal(result.datasetType, 'vehicle');
   assert.equal(result.schema.mapping.isolation_kohm, 'FC_VehicleIsolationR');
   assert.equal(result.dataset.performancePoints.length, 1);
@@ -1643,6 +1643,14 @@ test('fits vehicle performance trends from separate target-current platforms', (
   assert.equal(result.dataset.performanceTrend.averageCellVoltageV.pointCount, 2);
   assert.ok(result.dataset.performanceTrend.averageCellVoltageV.slopePerDay < 0);
   assert.match(reportMarkdown(result, 'vehicle.csv'), /性能趋势参数/);
+});
+
+test('excludes non-active vehicle states from formal target-current performance points', () => {
+  const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
+  const row = (time) => `2026-01-01 00:${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')},8,95,320,30,0.60,3,0.68,8,12,500,1`;
+  const result = analyzeRows(parseCSV([header, row(0), row(180)].join('\n')), { vehicleTargets: [95], vehicleCurrentToleranceA: 1, vehicleMinimumDurationS: 180 });
+  assert.equal(result.dataset.performancePoints.length, 0);
+  assert.ok(result.issues.some((item) => item.code === 'VEHICLE_PERFORMANCE_STATUS_EXCLUDED'));
 });
 
 test('keeps vehicle inferred current intervals descriptive when target currents are absent', () => {
