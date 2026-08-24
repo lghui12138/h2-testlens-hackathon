@@ -17,7 +17,7 @@ const allocatePort = async () => {
   return port;
 };
 const port = await allocatePort();
-const child = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: port, H2_FEISHU_WEBHOOK_URL: '', H2_FEISHU_SECRET: '' }, stdio: ['ignore', 'ignore', 'pipe'] });
+const child = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: port, H2_FEISHU_WEBHOOK_URL: '', H2_FEISHU_SECRET: '', H2_AI_ENDPOINT: 'http://127.0.0.1:9/v1/chat/completions', H2_AI_API_KEY: 'server-secret-must-not-leak', H2_AI_ALLOWED_HOSTS: '' }, stdio: ['ignore', 'ignore', 'pipe'] });
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let childError = '';
 child.stderr.on('data', (chunk) => { childError += chunk.toString(); });
@@ -35,6 +35,10 @@ try {
   if (result.rows !== undefined || result.source?.fileName !== undefined || result.source?.fileNamePresent !== true) throw new Error('raw rows or file name leaked from public API');
   if (result.verdict !== 'FAIL' || !result.reportMarkdown?.includes('自动判定')) throw new Error('unexpected analysis response');
   if (result.config?.testMetadata?.operator !== true || JSON.stringify(result).includes('secret-operator') || result.reportMarkdown.includes('secret-operator')) throw new Error('sensitive metadata leaked from public API');
+  const aiResponse = await fetch('http://127.0.0.1:' + port + '/api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...result, endpoint: 'https://attacker.example/v1/chat/completions', apiKey: 'client-secret-must-not-leak', model: 'attacker-model' }) });
+  if (!aiResponse.ok) throw new Error('ai draft status ' + aiResponse.status);
+  const aiResult = await aiResponse.json();
+  if (aiResult.mode !== 'local-evidence' || aiResult.fallbackReason !== 'upstream_endpoint_not_allowed' || JSON.stringify(aiResult).includes('client-secret-must-not-leak') || JSON.stringify(aiResult).includes('server-secret-must-not-leak')) throw new Error('AI server boundary accepted client endpoint/key or leaked a secret');
   const batchDeclaration = { version: 'h2-testlens.batch-declaration.v1', groups: [{ id: 'TR-SMOKE-G1', testRunId: 'TR-SMOKE', sessionGroup: 'SG-SMOKE', files: ['part-001.csv', 'part-002.csv'], fileOrder: ['part-001.csv', 'part-002.csv'], clockReference: 'DAQ-SMOKE', samplingIntervalS: 5, restartBoundaries: ['part-002.csv'] }] };
   const batchResponse = await fetch(`http://127.0.0.1:${port}/api/analyze-batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ declaration: batchDeclaration, files: [{ name: 'part-001.csv', csv }, { name: 'part-002.csv', csv }], includeReport: true }) });
   if (!batchResponse.ok) throw new Error(`batch api status ${batchResponse.status}`);

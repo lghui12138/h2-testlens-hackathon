@@ -283,10 +283,11 @@ export function efficiencyReadiness(config = {}, rows = [], schema = {}) {
   const formulaMissing = requirement.formulaRefRequired !== false && !formulaRef;
   const sourceMissing = requirement.dataSource === 'measured_or_approved_formula_record' && measured === null && !sourceRef;
   if (measured !== null && !formulaMissing) return { required: true, ready: true, status: 'ready', missing: [], source: 'measured_data', valuePct: measured, formulaRef, evidence: `${measuredValues.length} 条效率测量记录已汇总；公式引用：${formulaRef}` };
-  if (hasRecordValue && !recordValueOutOfRange && !formulaMissing && sourceRef) return { required: true, ready: true, status: 'ready', missing: [], source: 'approved_formula_record', valuePct: numericRecordValue, formulaRef, sourceRef, evidence: `采用企业提供的效率结果记录；公式引用：${formulaRef}；结果引用：${sourceRef}` };
+  if (requirement.dataSource !== 'measured' && hasRecordValue && !recordValueOutOfRange && !formulaMissing && sourceRef) return { required: true, ready: true, status: 'ready', missing: [], source: 'approved_formula_record', valuePct: numericRecordValue, formulaRef, sourceRef, evidence: `采用企业提供的效率结果记录；公式引用：${formulaRef}；结果引用：${sourceRef}` };
   const missing = [];
   if (measuredProblems.length) missing.push(...measuredProblems);
   if (recordValueOutOfRange) missing.push('efficiencyRecord.valuePct 超出 0–100% 范围');
+  if (requirement.dataSource === 'measured' && hasRecordValue && measured === null) missing.push('dataSource=measured 时 efficiencyRecord.valuePct 不能替代实测 efficiency_pct');
   if (measured === null && !hasRecordValue && !measuredProblems.length) missing.push('efficiency_pct 或 efficiencyRecord.valuePct');
   if (formulaMissing) missing.push('efficiencyRecord.formulaRef 或 formulaRefs');
   if (sourceMissing) missing.push('efficiencyRecord.sourceRef');
@@ -310,7 +311,10 @@ export function phaseResultReadiness(config = {}, phaseMetrics = { phases: {} })
     if (requirement.evidenceRefRequired !== false && !hasText(record.evidenceRef)) missingEvidence.push(phaseId);
     if (requirement.resultRefRequired === true && !hasText(record.resultRef)) missingResultFields.push(`${phaseId}.resultRef`);
     const phase = phaseMetrics?.phases?.[phaseId] || {};
-    for (const field of requirement.resultFields || []) if (!Number.isFinite(Number(phase[field]))) missingResultFields.push(`${phaseId}.${field}`);
+    for (const field of requirement.resultFields || []) {
+      const value = phase[field];
+      if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) missingResultFields.push(`${phaseId}.${field}`);
+    }
   }
   const malformed = records.filter((item) => !item || typeof item !== 'object' || Array.isArray(item) || !hasText(item.phase || item.id) || !hasText(item.status)).length;
   const status = malformed ? 'malformed' : missing.length || failed.length || missingEvidence.length || missingResultFields.length ? 'missing' : 'ready';

@@ -9,13 +9,14 @@ No environment variable is required. Clicking “生成报告初稿” calls the
 Set these variables before starting the server:
 
 ```bash
-H2_AI_ENDPOINT=http://your-approved-gateway/v1/chat/completions \
+H2_AI_ENDPOINT=https://your-approved-gateway/v1/chat/completions \
+H2_AI_ALLOWED_HOSTS=your-approved-gateway \
 H2_AI_MODEL=your-approved-model \
 H2_AI_API_KEY='provided-at-runtime' \
 npm start
 ```
 
-`H2_AI_API_KEY` is read only by `server.mjs`; it is never placed in browser JavaScript. The adapter uses a low temperature and a system instruction that forbids inventing facts, changing the verdict, or treating demo thresholds as enterprise safety standards.
+`H2_AI_API_KEY` is read only by `server.mjs`; it is never placed in browser JavaScript. The server ignores endpoint/model/key values supplied by a client, requires an HTTPS endpoint whose hostname appears in `H2_AI_ALLOWED_HOSTS`, aborts an upstream request after 15 seconds, and caps the upstream JSON body at 1 MiB before parsing. The adapter uses a low temperature and a system instruction that forbids inventing facts, changing the verdict, or treating demo thresholds as enterprise safety standards.
 
 Remote output is fail-closed before it reaches the UI: the adapter rejects empty/oversized drafts, missing current verdict, contradictory current verdict, or drafts with no numeric/issue evidence anchor. Any rejection returns the local evidence draft and a machine-readable `fallbackReason`.
 

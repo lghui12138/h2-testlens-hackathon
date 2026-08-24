@@ -116,7 +116,7 @@ const coverageSummary = await readFile(join(root, 'config/t02-coverage-summary.j
 const publicCoverageSummary = await readFile(join(root, 'public/config/t02-coverage-summary.json'), 'utf8');
 const releaseSummary = await readFile(join(root, 'config/release-summary.json'), 'utf8');
 const publicReleaseSummary = await readFile(join(root, 'public/config/release-summary.json'), 'utf8');
-const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'structured-evidence.mjs'];
+const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'structured-evidence.mjs'];
 const browserRuntimeParity = await Promise.all(browserRuntimeModules.map(async (file) => {
   const source = await readFile(join(root, 'src', file), 'utf8');
   const publicCopy = await readFile(join(root, 'public/src', file), 'utf8');

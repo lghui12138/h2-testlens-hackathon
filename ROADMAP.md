@@ -12,9 +12,12 @@
 
 ## v3.5.37 current continuation evidence
 
-- GitHub-facing runtime parity is now enforced for the four browser modules actually loaded by Vinext (`app.mjs`, `analyzer.mjs`, `ai-draft.mjs`, `structured-evidence.mjs`); the public copies are synchronized from `src/` and cannot silently drift.
+- GitHub-facing runtime parity is now enforced for the five browser runtime modules actually loaded by Vinext (`app.mjs`, `analyzer.mjs`, `ai-draft.mjs`, `enterprise-adapters.mjs`, `structured-evidence.mjs`); the public copies are synchronized from `src/` and cannot silently drift.
+- Critical accuracy fix: enterprise stack headers with explicit mA/mV/W/ms units are converted before power, timestamp, phase and cell KPI calculations; unsupported units block the enterprise path instead of guessing. Phase coverage/integration now uses local session time and never bridges session boundaries.
+- Critical security fix: /api/ai-draft ignores client endpoint/model/key fields, requires a server HTTPS hostname allowlist, aborts after 15 s, caps upstream response at 1 MiB before JSON parsing, and keeps an explicit AI-safe dataset allowlist. API smoke covers the boundary.
+- Evidence gates: measured-only efficiency cannot be replaced by a formula record, and null phase KPI values fail phase-result readiness. Public runtime parity now includes enterprise-adapters.mjs.
 - Both static and Vinext surfaces now expose a live analysis result announcement, text summaries for trend/enterprise/performance canvases, and 44px mobile navigation targets; the chart layout reserves space for the readable summaries.
-- Gate: `npm test` **165/165**, `npm run check:submission` **128/128**, typecheck, Vinext build 5/5 and package smoke install/test/typecheck/build/start/HTTP pass. The local package receipt records SHA-256 `receipt 文件记录最终 artifact SHA-256`.
+- Gate: `npm test` **169/169**, `npm run check:submission` **128/128**, typecheck, Vinext build 5/5 and package smoke install/test/typecheck/build/start/HTTP pass. API smoke now exercises AI client-parameter isolation. The package receipt remains the source of truth for the final artifact SHA-256.
 - Residual: GitHub Pages workflow still does not run `package:submission` because the current OAuth token lacks workflow scope; public release-summary remains explicitly unbound until a workflow-scoped update is authorized and read back.
 
 - Enterprise adapter compliance now preserves standard-reference readiness, method source, standard dates, full-method prerequisites and the same non-certification boundary already used by the generic analyzer.

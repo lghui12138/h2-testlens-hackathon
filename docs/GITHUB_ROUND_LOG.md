@@ -1,5 +1,13 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 六智能体数值安全与 AI 边界修复轮
+
+- 六智能体 fan-in 发现并核实两个 critical 风险：企业电堆显式 mA/mV 表头可能被当作 A/V；AI draft route 缺少服务端 endpoint allowlist、超时和上游响应大小边界。
+- 已修复：企业时间/电流/电压/功率/压力/流量/温度/泄漏单位先转 canonical，跨 session 阶段积分不再拼接；measured-only 效率拒绝 formula record，null phase KPI 阻断 readiness。
+- AI route 现在忽略客户端 endpoint/model/key，要求 HTTPS + H2_AI_ALLOWED_HOSTS，15 s deadline，1 MiB JSON 上限，显式 AI-safe dataset allowlist；API smoke 已覆盖注入/泄露边界。
+- GitHub 实际加载的 public/src parity 扩展到五个模块（含 enterprise-adapters.mjs）。回归门：169/169 测试、128/128 提交检查、typecheck、Vinext build 5/5、API smoke 和 package smoke 全通过。
+- GitHub Pages workflow/CNAME 仍保持真实状态：Run 77 成功，但自定义域返回 502，receipt 仍 unbound；未伪造正式标准或线上 receipt 绑定。
+
 ## 2026-08-24 · GitHub 实际运行时 parity 与无障碍摘要轮
 
 - 修复发布面漂移：Vinext 实际加载的 `public/src/app.mjs`、`analyzer.mjs`、`ai-draft.mjs`、`structured-evidence.mjs` 已从 `src/` 同步，并新增 `runtime:public-browser-modules-parity` 提交门。

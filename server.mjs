@@ -145,8 +145,8 @@ const server = createServer(async (req, res) => {
   }
   if (req.method === 'POST' && requestPath === '/api/ai-draft') {
     try {
-      const payload = JSON.parse(await readBody(req));
-      const response = await generateDraft(payload);
+      const payload = JSON.parse(await readBody(req, 2_000_000));
+      const response = await generateDraft(payload, { serverRequest: true });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(response));
     } catch (error) {

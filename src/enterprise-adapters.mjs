@@ -49,6 +49,45 @@ const normalizeHeader = (value) => String(value ?? '')
   .replace(/[\s_\-().（）[\]{}]/g, '')
   .toLowerCase();
 
+const normalizeUnit = (value) => String(value ?? '')
+  .trim()
+  .toLowerCase()
+  .replace(/[\s·]/g, '')
+  .replace('℃', '°c')
+  .replace('度', '');
+
+const UNIT_DEFINITIONS = Object.freeze({
+  timestamp_s: { s: 1, sec: 1, second: 1, seconds: 1, ms: 0.001, millisecond: 0.001, milliseconds: 0.001, min: 60, minute: 60, minutes: 60, h: 3600, hr: 3600, hour: 3600 },
+  current_a: { a: 1, amp: 1, amps: 1, 安: 1, ma: 0.001, 毫安: 0.001 },
+  voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001 },
+  power_kw: { kw: 1, mw: 0.001, w: 0.001, 瓦: 0.001 },
+  pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
+  flow_slpm: { slpm: 1, lpm: 1, 'l/min': 1, 'l·min-1': 1, 'm3/h': 1000 / 60, 'm³/h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
+  temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
+  leak_ppm: { ppm: 1, ppb: 0.001 }
+});
+const UNIT_DISPLAY = Object.freeze({ kw: 'kW', mw: 'MW', w: 'W', kpa: 'kPa', pa: 'Pa', mpa: 'MPa', bar: 'bar', mbar: 'mbar', ma: 'mA', mv: 'mV', a: 'A', v: 'V', ms: 'ms', s: 's', slpm: 'SLPM', ppm: 'ppm', ppb: 'ppb' });
+
+function explicitHeaderUnit(header) {
+  const match = String(header ?? '').match(/[（(]([^（）()]+)[)）]\s*$/);
+  return match ? normalizeUnit(match[1]) : null;
+}
+
+function unitSpec(header, field) {
+  const rawUnit = explicitHeaderUnit(header);
+  if (!rawUnit) return { field, status: 'implicit', factor: 1, label: '未声明（按 canonical 单位）', rawUnit: null };
+  const factor = UNIT_DEFINITIONS[field]?.[rawUnit];
+  if (!Number.isFinite(factor)) return { field, status: 'unsupported', factor: null, label: '不支持的单位 ' + rawUnit, rawUnit };
+  return { field, status: 'declared', factor, label: (UNIT_DISPLAY[rawUnit] || rawUnit) + '→canonical', rawUnit };
+}
+
+function convertEnterpriseValue(value, spec) {
+  const raw = num(value);
+  if (raw === null && spec?.field === 'timestamp_s' && spec.rawUnit === null) return value === undefined || value === null ? null : value;
+  if (raw === null || spec?.status === 'unsupported') return null;
+  return raw * (spec?.factor ?? 1);
+}
+
 const findHeader = (headers, candidates = []) => {
   const normalized = headers.map((header) => [header, normalizeHeader(header)]);
   for (const candidate of candidates) {
@@ -659,6 +698,20 @@ function phaseIndexesFor(config, rows, phaseId) {
     .map(({ index }) => index);
 }
 
+function sessionSpanS(rows) {
+  const spans = new Map();
+  for (const row of rows) {
+    const session = row.session_id || '__single_session__';
+    const time = Number.isFinite(row.session_timestamp_s) ? row.session_timestamp_s : row.timestamp_s;
+    if (!Number.isFinite(time)) continue;
+    const current = spans.get(session) || { min: time, max: time };
+    current.min = Math.min(current.min, time);
+    current.max = Math.max(current.max, time);
+    spans.set(session, current);
+  }
+  return [...spans.values()].reduce((sum, span) => sum + Math.max(0, span.max - span.min), 0);
+}
+
 function enterprisePhaseCoverage(config, rows) {
   const metricRequirements = config.requiredPhaseMetrics && typeof config.requiredPhaseMetrics === 'object' ? config.requiredPhaseMetrics : {};
   const requiredPhases = [...new Set([...(Array.isArray(config.requiredPhases) ? config.requiredPhases : []), ...Object.keys(metricRequirements)])];
@@ -671,14 +724,16 @@ function enterprisePhaseCoverage(config, rows) {
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1) {
+      if (currentIndex !== previousIndex + 1 || rows[currentIndex]?.session_id !== rows[previousIndex]?.session_id) {
         interruptedSegmentCount += 1;
         continue;
       }
       const previous = rows[previousIndex];
       const current = rows[currentIndex];
-      const deltaS = Number.isFinite(previous.timestamp_s) && Number.isFinite(current.timestamp_s)
-        ? current.timestamp_s - previous.timestamp_s
+      const previousTime = Number.isFinite(previous.session_timestamp_s) ? previous.session_timestamp_s : previous.timestamp_s;
+      const currentTime = Number.isFinite(current.session_timestamp_s) ? current.session_timestamp_s : current.timestamp_s;
+      const deltaS = Number.isFinite(previousTime) && Number.isFinite(currentTime)
+        ? currentTime - previousTime
         : 0;
       if (deltaS <= 0) {
         nonPositiveIntervalCount += 1;
@@ -690,7 +745,7 @@ function enterprisePhaseCoverage(config, rows) {
     const timestamps = indexes.map((index) => rows[index].timestamp_s).filter((value) => Number.isFinite(value));
     const startS = timestamps.length ? Math.min(...timestamps) : null;
     const endS = timestamps.length ? Math.max(...timestamps) : null;
-    const spanS = startS !== null && endS !== null ? Math.max(0, endS - startS) : null;
+    const spanS = sessionSpanS(indexes.map((index) => rows[index]));
     return {
       id: phaseId,
       count: indexes.length,
@@ -726,13 +781,15 @@ function enterprisePhaseMetricReadiness(config, rows) {
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1) {
+      if (currentIndex !== previousIndex + 1 || rows[currentIndex]?.session_id !== rows[previousIndex]?.session_id) {
         interruptedSegmentCount += 1;
         continue;
       }
       const previous = rows[previousIndex];
       const current = rows[currentIndex];
-      const deltaS = Number.isFinite(previous.timestamp_s) && Number.isFinite(current.timestamp_s) ? current.timestamp_s - previous.timestamp_s : 0;
+      const previousTime = Number.isFinite(previous.session_timestamp_s) ? previous.session_timestamp_s : previous.timestamp_s;
+      const currentTime = Number.isFinite(current.session_timestamp_s) ? current.session_timestamp_s : current.timestamp_s;
+      const deltaS = Number.isFinite(previousTime) && Number.isFinite(currentTime) ? currentTime - previousTime : 0;
       if (deltaS <= 0) { interruptedSegmentCount += 1; continue; }
       durationS += deltaS;
       validSegments += 1;
@@ -746,7 +803,7 @@ function enterprisePhaseMetricReadiness(config, rows) {
     const timestamps = phaseRows.map((row) => row.timestamp_s).filter((value) => Number.isFinite(value));
     const startS = timestamps.length ? Math.min(...timestamps) : null;
     const endS = timestamps.length ? Math.max(...timestamps) : null;
-    const spanS = startS !== null && endS !== null ? Math.max(0, endS - startS) : null;
+    const spanS = sessionSpanS(phaseRows);
     const metric = {
       phaseId,
       sampleCount: phaseRows.length,
@@ -2045,7 +2102,7 @@ function buildStack(rows, config) {
   const cellHeaders = headers.filter((header) => /^(单片电压\d+|CELL\d+)/i.test(String(header).trim()));
   const mapping = {
     phase: findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
-    timestamp_s: findHeader(headers, ['测试时间', '时间']),
+    timestamp_s: findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
     current_a: findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流']),
     // Prefer the actual stack voltage when both an aggregate/diagnostic
     // `总电压` channel and an electrical `实际电压` channel are exported.
@@ -2090,7 +2147,23 @@ function buildStack(rows, config) {
   const required = ['timestamp_s', 'current_a', 'voltage_v'];
   const missing = required.filter((field) => !mapping[field]);
   if (missing.length >= 2) return null;
-  const sessionTime = sessionizedTimes(rows, mapping.timestamp_s);
+  const unitSpecs = {
+    timestamp_s: unitSpec(mapping.timestamp_s, 'timestamp_s'),
+    current_a: unitSpec(mapping.current_a, 'current_a'),
+    voltage_v: unitSpec(mapping.voltage_v, 'voltage_v'),
+    power_kw: unitSpec(mapping.power_kw, 'power_kw'),
+    avg_cell_voltage_v: unitSpec(mapping.avg_cell_voltage_v, 'voltage_v'),
+    min_cell_voltage_v: unitSpec(mapping.min_cell_voltage_v, 'voltage_v'),
+    max_cell_voltage_v: unitSpec(mapping.max_cell_voltage_v, 'voltage_v'),
+    pressure_kpa: unitSpec(mapping.pressure_kpa, 'pressure_kpa'),
+    flow_slpm: unitSpec(mapping.flow_slpm, 'flow_slpm'),
+    temperature_c: unitSpec(mapping.temperature_c, 'temperature_c'),
+    leak_ppm: unitSpec(mapping.leak_ppm, 'leak_ppm')
+  };
+  const sessionRows = mapping.timestamp_s
+    ? rows.map((row) => ({ ...row, [mapping.timestamp_s]: convertEnterpriseValue(row[mapping.timestamp_s], unitSpecs.timestamp_s) }))
+    : rows;
+  const sessionTime = sessionizedTimes(sessionRows, mapping.timestamp_s);
   const normalized = rows.map((row, index) => {
     const cells = Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, num(row[header])]));
     return {
@@ -2100,24 +2173,24 @@ function buildStack(rows, config) {
       source_file: row.source_file || null,
       source_row_index: Number.isInteger(row.source_row_index) ? row.source_row_index : index,
       phase: mapping.phase ? String(row[mapping.phase] ?? '').trim() || '未标注' : '未标注',
-      current_a: num(row[mapping.current_a]),
-      voltage_v: num(row[mapping.voltage_v]),
-      power_kw: num(row[mapping.power_kw]),
-      raw_power_w: num(row[mapping.power_kw]) === null ? null : num(row[mapping.power_kw]) * 1000,
-      derived_power_w: Number.isFinite(num(row[mapping.current_a])) && Number.isFinite(num(row[mapping.voltage_v])) ? num(row[mapping.current_a]) * num(row[mapping.voltage_v]) : null,
-      power_w: num(row[mapping.power_kw]) !== null
-        ? num(row[mapping.power_kw]) * 1000
-        : Number.isFinite(num(row[mapping.current_a])) && Number.isFinite(num(row[mapping.voltage_v]))
-          ? num(row[mapping.current_a]) * num(row[mapping.voltage_v])
+      current_a: convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a),
+      voltage_v: convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v),
+      power_kw: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw),
+      raw_power_w: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) === null ? null : convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) * 1000,
+      derived_power_w: Number.isFinite(convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a)) && Number.isFinite(convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v)) ? convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a) * convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v) : null,
+      power_w: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) !== null
+        ? convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) * 1000
+        : Number.isFinite(convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a)) && Number.isFinite(convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v))
+          ? convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a) * convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v)
           : null,
-      avg_cell_voltage_v: num(row[mapping.avg_cell_voltage_v]),
-      min_cell_voltage_v: num(row[mapping.min_cell_voltage_v]),
-      max_cell_voltage_v: num(row[mapping.max_cell_voltage_v]),
+      avg_cell_voltage_v: convertEnterpriseValue(row[mapping.avg_cell_voltage_v], unitSpecs.avg_cell_voltage_v),
+      min_cell_voltage_v: convertEnterpriseValue(row[mapping.min_cell_voltage_v], unitSpecs.min_cell_voltage_v),
+      max_cell_voltage_v: convertEnterpriseValue(row[mapping.max_cell_voltage_v], unitSpecs.max_cell_voltage_v),
       current_density_mAcm2: num(row[mapping.current_density_mAcm2]),
-      temperature_c: num(row[mapping.temperature_c]),
-      pressure_kpa: num(row[mapping.pressure_kpa]),
-      flow_slpm: num(row[mapping.flow_slpm]),
-      leak_ppm: num(row[mapping.leak_ppm]),
+      temperature_c: convertEnterpriseValue(row[mapping.temperature_c], unitSpecs.temperature_c),
+      pressure_kpa: convertEnterpriseValue(row[mapping.pressure_kpa], unitSpecs.pressure_kpa),
+      flow_slpm: convertEnterpriseValue(row[mapping.flow_slpm], unitSpecs.flow_slpm),
+      leak_ppm: convertEnterpriseValue(row[mapping.leak_ppm], unitSpecs.leak_ppm),
       cell_count: num(row[mapping.cell_count]),
       coolant_dt: num(row[mapping.coolant_dt]),
       anode_in_pressure_kpa: num(row[mapping.anode_in_pressure_kpa]),
@@ -2177,6 +2250,10 @@ function buildStack(rows, config) {
   }
   const requiredQuality = ['timestamp_s', 'current_a', 'voltage_v', ...cellHeaders.map((_, index) => `cell_${index + 1}_v`)];
   const quality = qualityFor(normalized, requiredQuality);
+  const unsupportedUnitFields = Object.entries(unitSpecs).filter(([, spec]) => spec.status === 'unsupported').map(([field, spec]) => `${field}: ${spec.label}`);
+  quality.unitConversions = Object.fromEntries(Object.entries(unitSpecs).map(([field, spec]) => [field, { status: spec.status, factor: spec.factor, label: spec.label, rawUnit: spec.rawUnit }]));
+  quality.unsupportedUnitFields = unsupportedUnitFields;
+  if (unsupportedUnitFields.length) quality.usable = false;
   quality.sessionCount = sessionTime.sessions.length;
   quality.sessionBoundaryCount = Math.max(0, sessionTime.sessions.length - 1);
   quality.sessionDurationsS = sessionTime.sessions.map((session) => ({ sessionId: session.sessionId, sourceFile: session.sourceFile, durationS: session.durationS, rowCount: session.rowCount }));
@@ -2257,6 +2334,7 @@ function buildStack(rows, config) {
   const settingCrossChecks = pairEvidence(rows, settingPairs);
   const feedbackSignals = signalCatalog.filter((item) => item.usage === 'context_or_cross_check' && /反馈/.test(item.source));
   const issues = [];
+  if (unsupportedUnitFields.length) issues.push({ severity: 'critical', code: 'UNIT_UNSUPPORTED', title: '电堆表头单位无法安全换算', evidence: unsupportedUnitFields.join('；'), recommendation: '补充明确的 canonical 单位或企业单位字典；系统不按数值大小猜测单位。' });
   if (hasUsableTargetConditions && !quality.usable) issues.push({ severity: 'critical', code: 'STACK_DATA_QUALITY_BLOCKS_POINTS', title: '时间轴/关键字段质量未通过，未生成正式稳定点', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，逆序 ${quality.nonMonotonicCount} 次，非正间隔 ${quality.nonPositiveIntervalCount} 个；正式目标工况点已阻断`, recommendation: '修复时间轴和关键字段后重新分析；不使用配置采样周期覆盖无效原始时间戳。' });
   if (parameterConfig && !parameterConfig.ok && parameterConfig.analysisMode !== 'relative_stability') issues.push({ severity: 'critical', code: 'PARAMETER_WORKBOOK_INVALID', title: '参数工作簿校验未通过', evidence: parameterConfig.errors.join('；'), recommendation: '修正参数代码、单位、偏差和目标工况后再处理。' });
   if (missing.length) issues.push({ severity: 'critical', code: 'STACK_SCHEMA_MISSING', title: '电堆时序关键字段不完整', evidence: `缺少：${missing.join('、')}`, recommendation: '补充时间、电流、电压和单片电压通道后再进行平台/稳定性分析。' });
@@ -2331,7 +2409,7 @@ function buildStack(rows, config) {
     },
     sourceFieldMap: {
       ...mapping,
-      power_w: mapping.power_kw ? `${mapping.power_kw} · kW→W（原始通道）` : '计算：实际电流 × 实际电压（W，派生功率）',
+      current_a: mapping.current_a ? mapping.current_a + ' · ' + unitSpecs.current_a.label : null, voltage_v: mapping.voltage_v ? mapping.voltage_v + ' · ' + unitSpecs.voltage_v.label : null, power_w: mapping.power_kw ? mapping.power_kw + ' · ' + (UNIT_DISPLAY[unitSpecs.power_kw.rawUnit] || unitSpecs.power_kw.rawUnit || 'kW') + '→W（原始通道）' : '计算：实际电流 × 实际电压（W，派生功率）',
       anode_flow_resistance_kpa: '计算：阳极入口压力 - 阳极出口压力',
       cathode_flow_resistance_kpa: '计算：阴极入口压力 - 阴极出口压力',
       coolant_flow_resistance_kpa: '计算：冷却液入口压力 - 冷却液出口压力',
@@ -2384,7 +2462,7 @@ function buildStack(rows, config) {
   // original power column.  Derived power remains available in rows/metrics
   // and is described separately in the source map and schema conversions.
   const schemaMapping = { ...mapping, power_w: mapping.power_kw || null, ...efficiencyFields, ...Object.fromEntries(cellHeaders.map((header, index) => [`cell_${index + 1}_v`, header])) };
-  const schemaConversions = mapping.power_kw ? { power_w: { mode: 'scale', factor: 1000, label: 'kW→W' } } : { power_w: { mode: 'derived', factor: 1, label: '电流×电压派生（W）' } };
+  const schemaConversions = { ...Object.fromEntries(Object.entries(unitSpecs).map(([field, spec]) => [field, { mode: spec.status === 'declared' ? 'scale' : spec.status === 'unsupported' ? 'unsupported' : 'identity', factor: spec.factor, label: spec.label, rawUnit: spec.rawUnit }])), power_w: mapping.power_kw ? { mode: unitSpecs.power_kw.status === 'unsupported' ? 'unsupported' : unitSpecs.power_kw.status === 'declared' ? 'scale' : 'identity', factor: unitSpecs.power_kw.factor === null ? null : unitSpecs.power_kw.factor * 1000, label: (UNIT_DISPLAY[unitSpecs.power_kw.rawUnit] || unitSpecs.power_kw.rawUnit || 'kW') + '→W', rawUnit: unitSpecs.power_kw.rawUnit } : { mode: 'derived', factor: 1, label: '电流×电压派生（W）' } };
   const schema = commonSchema(schemaMapping, Object.keys(schemaMapping).length, schemaConversions);
   schema.derivedFields = mapping.power_kw ? [] : ['power_w'];
   schema.derivedEvidence = mapping.power_kw ? null : 'power_w = 实际电流 × 实际电压；仅用于描述性 KPI，不满足 requiredMeasurements 的原始功率通道要求';
@@ -2441,7 +2519,6 @@ function buildStack(rows, config) {
     source: { type: 'csv', rowCount: normalized.length, requiredFields: required }
   };
 }
-
 export function analyzeEnterpriseRows(inputRows, config = {}) {
   const rows = Array.isArray(inputRows) ? inputRows : [];
   if (!rows.length) return null;

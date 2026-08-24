@@ -3,6 +3,7 @@
 ## 当前可确认的控制
 
 - 默认分析在浏览器本地完成；远程 AI 只接收结构化证据和存在性信息，不接收原始数据行。
+- /api/ai-draft 只使用服务端环境中的 AI endpoint/model/key；客户端提交的同名字段会被忽略。远程 endpoint 必须是 HTTPS 且 hostname 必须命中 H2_AI_ALLOWED_HOSTS，上游请求有 15 s deadline 和 1 MiB 响应字节上限，超限或超时回退本地证据草稿。
 - CSV/TXT 入口在进入文本解析器前执行 BOM、控制字节和二进制检测；二进制或无法确认编码的文件进入 `blocked_binary`。
 - 文件哈希、文件大小、记录数和批次边界进入 provenance/manifest；历史只保存摘要，不保存原始测试行。
 - `descriptive_only` T02 profile 不执行阈值、验收、安全、符合性或放行结论。

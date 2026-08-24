@@ -2,7 +2,17 @@ import { publicDataset } from './analyzer.mjs';
 
 const SYSTEM_PROMPT = `你是氢能设备测试工程师的报告助手。只允许使用用户提供的 evidence JSON，不得补造设备型号、单位、原因、阈值或实验结论。必须保留 verdict 原值；如果证据不足，明确写“证据不足，需人工复核”。输出中文 Markdown，结构为：结论、关键证据、优先动作、数据边界。不要把演示阈值写成企业安全标准，不要替代工程师签核。`;
 const MAX_DRAFT_LENGTH = 12000;
+const MAX_UPSTREAM_RESPONSE_BYTES = 1_000_000;
+const UPSTREAM_TIMEOUT_MS = 15_000;
 const REDACTED_EVIDENCE_KEYS = new Set(['rows', 'rawRows', 'csv', 'content', 'text', 'apiKey', 'secret', 'webhook', 'webhookUrl', 'oldValue', 'newValue']);
+const AI_DATASET_KEYS = new Set([
+  'kind', 'label', 'sourceContract', 'performancePoints', 'targetCurrents', 'inferredSegments', 'insulation',
+  'sourceFieldMap', 'signalCatalog', 'signalDiagnostics', 'sessions', 'sessionCount', 'coverage', 'settingCrossChecks',
+  'feedbackSignals', 'parameterConfig', 'platforms', 'stableSegments', 'selectionAudit', 'excludedIntervals',
+  'selectionPolicy', 'metrics', 'cellChannelCount', 'activeCellChannelCount', 'cellValueQuality', 'cellCountDistribution',
+  'configuredCellCount', 'cellHeaders', 'cellTimeSeriesStats', 'stoich', 'crossReportSummary', 'reports', 'points',
+  'targetPowers', 'rules', 'workbookEvidence', 'relativeStability'
+]);
 
 function sanitizeEvidenceValue(value, depth = 0) {
   if (value === null || value === undefined || typeof value === 'number' || typeof value === 'boolean') return value;
@@ -11,6 +21,62 @@ function sanitizeEvidenceValue(value, depth = 0) {
   if (Array.isArray(value)) return value.slice(0, 200).map((item) => sanitizeEvidenceValue(item, depth + 1));
   if (typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => !REDACTED_EVIDENCE_KEYS.has(key)).slice(0, 200).map(([key, item]) => [key, sanitizeEvidenceValue(item, depth + 1)]));
   return null;
+}
+
+function aiSafeDataset(dataset) {
+  const publicValue = publicDataset(dataset);
+  if (!publicValue || typeof publicValue !== 'object' || Array.isArray(publicValue)) return null;
+  return Object.fromEntries(Object.entries(publicValue)
+    .filter(([key]) => AI_DATASET_KEYS.has(key))
+    .map(([key, value]) => [key, sanitizeEvidenceValue(value)]));
+}
+
+function utf8ByteLength(value) {
+  return new TextEncoder().encode(String(value)).byteLength;
+}
+
+function serverEndpointAllowed(endpoint) {
+  try {
+    const url = new URL(endpoint);
+    const allowedHosts = String(process.env.H2_AI_ALLOWED_HOSTS || '')
+      .split(',')
+      .map((host) => host.trim().toLowerCase())
+      .filter(Boolean);
+    return url.protocol === 'https:' && allowedHosts.includes(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+async function readUpstreamPayload(response) {
+  const contentLength = Number(response.headers?.get?.('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > MAX_UPSTREAM_RESPONSE_BYTES) throw new Error('upstream_response_too_large');
+  if (response.body?.getReader) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let text = '';
+    let bytes = 0;
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      bytes += part.value?.byteLength || 0;
+      if (bytes > MAX_UPSTREAM_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error('upstream_response_too_large');
+      }
+      text += decoder.decode(part.value, { stream: true });
+    }
+    text += decoder.decode();
+    return JSON.parse(text);
+  }
+  if (typeof response.text === 'function') {
+    const text = await response.text();
+    if (utf8ByteLength(text) > MAX_UPSTREAM_RESPONSE_BYTES) throw new Error('upstream_response_too_large');
+    return JSON.parse(text);
+  }
+  const payload = await response.json();
+  if (utf8ByteLength(JSON.stringify(payload)) > MAX_UPSTREAM_RESPONSE_BYTES) throw new Error('upstream_response_too_large');
+  return payload;
 }
 
 const statusTokens = {
@@ -56,7 +122,7 @@ export function evidenceBundle(result, comparison = null) {
     narrative: String(result?.narrative || '证据不足，需人工复核。').slice(0, 4000),
     source: sanitizeEvidenceValue(result?.source),
     datasetType: result?.datasetType || null,
-    dataset: publicDataset(result.dataset) || null,
+    dataset: aiSafeDataset(result.dataset),
     quality: sanitizeEvidenceValue(result?.quality),
     schema: sanitizeEvidenceValue(result?.schema),
     metrics: sanitizeEvidenceValue(result?.metrics),
@@ -193,18 +259,23 @@ export function validateRemoteDraft(draft, evidence) {
 }
 
 export async function generateDraft(result, options = {}) {
-  const endpoint = options.endpoint ?? process.env.H2_AI_ENDPOINT;
-  const apiKey = options.apiKey ?? process.env.H2_AI_API_KEY;
-  const model = options.model ?? process.env.H2_AI_MODEL ?? 'hydrogen-report-assistant';
+  const serverRequest = options.serverRequest === true;
+  const endpoint = serverRequest ? process.env.H2_AI_ENDPOINT : options.endpoint ?? process.env.H2_AI_ENDPOINT;
+  const apiKey = serverRequest ? process.env.H2_AI_API_KEY : options.apiKey ?? process.env.H2_AI_API_KEY;
+  const model = serverRequest ? process.env.H2_AI_MODEL ?? 'hydrogen-report-assistant' : options.model ?? process.env.H2_AI_MODEL ?? 'hydrogen-report-assistant';
   const fetchImpl = options.fetchImpl ?? fetch;
   if (!endpoint) return responseFallback(result, 'no_endpoint_configured');
+  if (serverRequest && !serverEndpointAllowed(endpoint)) return responseFallback(result, 'upstream_endpoint_not_allowed');
   const evidence = evidenceBundle(result);
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timeoutId = setTimeout(() => controller?.abort(), UPSTREAM_TIMEOUT_MS);
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
     const response = await fetchImpl(endpoint, {
       method: 'POST',
       headers,
+      signal: controller?.signal,
       body: JSON.stringify({
         model,
         temperature: 0.1,
@@ -215,12 +286,14 @@ export async function generateDraft(result, options = {}) {
       })
     });
     if (!response.ok) return responseFallback(result, `upstream_http_${response.status}`);
-    const payload = await response.json();
+    const payload = await readUpstreamPayload(response);
     const draft = payload?.choices?.[0]?.message?.content?.trim();
     const validation = validateRemoteDraft(draft, evidence);
     if (!validation.ok) return responseFallback(result, validation.reason);
     return { mode: 'remote-llm', provider: 'openai-compatible', model, draft, evidence };
-  } catch {
-    return responseFallback(result, 'upstream_unavailable');
+  } catch (error) {
+    return responseFallback(result, error?.message === 'upstream_response_too_large' ? 'upstream_response_too_large' : controller?.signal?.aborted ? 'upstream_timeout' : 'upstream_unavailable');
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

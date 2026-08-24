@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown } from '../src/analyzer.mjs';
 import { evidenceBundle, generateDraft, validateRemoteDraft } from '../src/ai-draft.mjs';
+import { phaseResultReadiness } from '../src/structured-evidence.mjs';
 import { compareResults } from '../src/compare.mjs';
 import { DEVICE_PROFILES, getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { appendHistory, clearHistory, readHistory } from '../src/history.mjs';
@@ -280,6 +281,39 @@ test('remote AI output fails closed when it conflicts with verdict or lacks evid
   assert.equal(fallback.fallbackReason, 'grounding_verdict_conflict');
 });
 
+test('remote AI response is bounded before JSON parsing completes', async () => {
+  const result = analyzeRows(parseCSV(csv));
+  const fallback = await generateDraft(result, {
+    endpoint: 'https://model.test/v1/chat/completions',
+    fetchImpl: async () => ({ ok: true, status: 200, text: async () => 'x'.repeat(1_000_001) })
+  });
+  assert.equal(fallback.mode, 'local-evidence');
+  assert.equal(fallback.fallbackReason, 'upstream_response_too_large');
+});
+
+test('measured-only efficiency cannot be replaced by an approved formula record', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,30,10,6,1',
+    '60,10,2,30,10,6,1'
+  ].join('\n')), {
+    approvalStatus: 'approved',
+    efficiencyRequirement: { required: true, formulaRefRequired: true, dataSource: 'measured' },
+    testMetadata: { formulaRefs: 'EFF-001', efficiencyRecord: { valuePct: 70, formulaRef: 'EFF-001', sourceRef: 'RESULT-001' } }
+  });
+  assert.equal(result.compliance.efficiency.ready, false);
+  assert.ok(result.compliance.efficiency.missing.some((item) => item.includes('dataSource=measured')));
+});
+
+test('phase result readiness rejects null computed KPI values', () => {
+  const readiness = phaseResultReadiness({
+    phaseResultRequirements: [{ phase: 'steady', resultFields: ['energyConsumedWh'] }],
+    testMetadata: { phaseResults: [{ phase: 'steady', status: 'pass', evidenceRef: 'PHASE-001' }] }
+  }, { phases: { steady: { energyConsumedWh: null } } });
+  assert.equal(readiness.ready, false);
+  assert.deepEqual(readiness.missingResultFields, ['steady.energyConsumedWh']);
+});
+
 test('maps Chinese headers and converts common engineering units', () => {
   const legacyRows = parseCSV([
     '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量,泄漏(ppb)',
@@ -297,6 +331,22 @@ test('maps Chinese headers and converts common engineering units', () => {
   assert.equal(result.metrics.steadyWindow, 'phase=steady');
   assert.ok(Math.abs(result.metrics.pressureDriftBarPerMin) < 20);
   assert.ok(result.issues.some((item) => item.code === 'UNIT_CONVERTED'));
+});
+
+test('enterprise stack converts explicit mA/mV/W and timestamp units before KPI calculation', () => {
+  const result = analyzeRows(parseCSV([
+    '时间(ms),电堆电压(mV),电堆电流(mA),电堆功率(W),平均电压(mV),CELL1,CELL2',
+    '0,1800,1000,1.8,700,0.69,0.71',
+    '1000,1800,1000,1.8,700,0.69,0.71'
+  ].join('\n')));
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.rows[1].timestamp_s, 1);
+  assert.equal(result.rows[0].current_a, 1);
+  assert.equal(result.rows[0].voltage_v, 1.8);
+  assert.ok(Math.abs(result.rows[0].power_w - 1.8) < 1e-12);
+  assert.ok(Math.abs(result.metrics.peakPowerW - 1.8) < 1e-12);
+  assert.equal(result.schema.conversions.power_w.label, 'W→W');
+  assert.equal(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED'), false);
 });
 
 test('phase is optional and uses an explicit fallback window', () => {
