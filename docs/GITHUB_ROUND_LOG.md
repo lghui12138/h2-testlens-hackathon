@@ -9,6 +9,12 @@
 - 六智能体并行调度本轮实际尝试，但运行时返回 `agent thread limit reached`，没有把未启动智能体计入结果；本轮结论只采用本地测试和可复核机器证据。
 - 下一发布门：推送后核对新的 GitHub Actions/Pages run；自定义域证书和真实企业批准 profile 仍是外部门控，不在本轮伪造闭环。
 
+## 2026-08-24 · GitHub Actions Run 94 回读轮
+
+- `be607cb` 已由 Run `32706813818` 成功构建/部署；`build` 47 秒、`deploy` 19 秒，Pages 产物 714 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- 云端 run 与本地 183/183、136/136、package smoke 证据一致；公开提交页已包含 v3.5.38 三份 T02 审计文件。
+- GitHub 仍报告 `configure-pages@v5`、`upload-artifact` 和 `deploy-pages@v4` 触发 Node 20 弃用警告；该 workflow 变更需要下一轮单独处理，不能与本轮代码门混淆。
+
 ## 2026-08-24 · Run 88 回读轮
 
 - 提交 `b648db9` 已推送；Actions Run 88 成功，`build`/`deploy` 通过，云端 package smoke hook 继续生效。
