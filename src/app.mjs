@@ -16,7 +16,7 @@ import { decodeTextBuffer } from './input-safety.mjs';
 import { observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration, annotateDeclaredBatchRows } from './batch-aggregation.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, coverageSummary: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0, resultHistory: [], resultHistoryIndex: -1, recentFiles: [], theme: 'dark' };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], trustedApprovalRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, coverageSummary: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0, resultHistory: [], resultHistoryIndex: -1, recentFiles: [], theme: 'dark', complianceHistory: [] };
 const assetUrl = (relativePath) => /\/src\/index\.html$/.test(window.location.pathname) ? `../${relativePath}` : `./${relativePath}`;
 let standardEvidencePromise = null;
 let trustedApprovalPromise = null;
@@ -844,15 +844,28 @@ function drawChart(result) {
   ctx.font = '11px Avenir Next, sans-serif'; ctx.fillStyle = '#a4b5bd'; ctx.fillText('°C', 8, pad.top + 3); ctx.fillText('bar', w - 28, pad.top + 3);
   ctx.fillStyle = '#ef8f62'; ctx.fillRect(pad.left, h - 13, 12, 2); ctx.fillText('温度', pad.left + 18, h - 9);
   ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 70, h - 13, 12, 2); ctx.fillText('压力', pad.left + 88, h - 9);
+  } catch (error) {
+    if (wrap) {
+      wrap.classList.remove('chart-loading', 'chart-ready');
+      wrap.classList.add('chart-error');
+      const existing = wrap.querySelector('.chart-skeleton-message');
+      if (!existing) {
+        wrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>请检查数据格式后重试</span></div>');
+      }
+    }
+  }
 }
 
 function drawEnterpriseChart(result) {
   const canvas = $('#enterprise-chart');
+  const wrap = canvas?.parentElement;
+  if (wrap) { wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready'); const msg = wrap.querySelector('.chart-skeleton-message'); if (msg) msg.remove(); }
   if (!canvas || !result.datasetType) return;
-  const dpr = window.devicePixelRatio || 1;
-  const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245;
-  canvas.width = width * dpr; canvas.height = height * dpr;
-  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
+  try {
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245;
+    canvas.width = width * dpr; canvas.height = height * dpr;
+    const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
   const pad = { left: 46, right: 24, top: 20, bottom: 32 };
   const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom;
   const grid = () => { ctx.strokeStyle = 'rgba(154,172,184,.16)'; ctx.lineWidth = 1; for (let i = 0; i < 4; i += 1) { const y = pad.top + i * plotH / 3; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke(); } };
@@ -889,6 +902,16 @@ function drawEnterpriseChart(result) {
   ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
   points.forEach((point) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); });
   label(`平均单片电压（V）`, pad.left, 12, '#13262d'); label(`电流密度/电流`, width - 86, height - 8);
+  } catch (error) {
+    if (wrap) {
+      wrap.classList.remove('chart-loading', 'chart-ready');
+      wrap.classList.add('chart-error');
+      const existing = wrap.querySelector('.chart-skeleton-message');
+      if (!existing) {
+        wrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>请检查数据格式后重试</span></div>');
+      }
+    }
+  }
 }
 
 function evaluateChartTrend(trend, xValue) {

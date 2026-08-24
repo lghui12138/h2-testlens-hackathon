@@ -1590,6 +1590,10 @@ function publicCompliance(compliance = {}) {
     const { openGaps, ...methodEvidence } = safe.methodImplementationEvidence;
     safe.methodImplementationEvidence = { ...methodEvidence, openGapCount: Array.isArray(openGaps) ? openGaps.length : 0 };
   }
+  if (safe.auditTrail && typeof safe.auditTrail === 'object') {
+    const { datasetLabel, ...auditTrail } = safe.auditTrail;
+    safe.auditTrail = auditTrail;
+  }
   return safe;
 }
 
