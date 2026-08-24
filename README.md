@@ -16,7 +16,7 @@
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.38**。本轮继续优化 GitHub Pages / App 的真实发布运行时：静态页和 Vinext 页都提供结果播报、图表文字摘要与 44px 移动导航目标；实际被 Vinext 加载的 `public/src` 五个浏览器运行时模块已与 `src/` 强制 parity，避免 GitHub 网站只更新源码而不更新运行时。新增企业 mA/mV/W/时间单位 canonical 转换、跨 session 阶段边界、phase-null 阻断和 measured-only 效率门；AI server route 新增 HTTPS host allowlist、客户端参数隔离、超时和响应大小保护。已新增 versioned metricTrace：JSON/API/Markdown/XLSX 和 App 均可查看 canonical 字段、证据 ID、hash 状态与脱敏行定位；仍不把标准流程映射写成完整符合性声明。运行时标准 profile 现要求 compact evidence ledger 绑定；本轮进一步让受控运行时对完整 profile 包（含 approvalStatus/approvalEvidence）计算确定性 SHA-256，只排除运行时生成的绑定结果，审批包改写会 fail-closed。
+当前交付版本：**v3.5.39**。本轮完成真实企业数据回归验证：新增青川科技 127 列电堆样例与氢质氢离 `FC_*` 车辆样例的回归测试，覆盖 38,257 行电堆时序与 20,294/12,945 行车辆时序；`npm test` 当前为 **190/190** 全绿。核心分析器已能直接从真实样例识别 61 个电流平台候选、29/13 个绝缘窗口，并保持 `descriptive_only` 边界，不把演示阈值写成企业标准结论。GitHub Pages 站点新增独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html)，公开摘要、核心功能与边界说明与仓库同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 

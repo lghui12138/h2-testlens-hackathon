@@ -307,6 +307,12 @@
 
 - 历史测试门控曾同步为 `npm test 408/408`、`npm run check:submission 124/124`；当前轮次已更新为 `npm test 409/409`。
 
+## 2026-08-24 · 真实企业数据回归验证轮
+
+- 新增回归测试，直接验证青川科技 127 列电堆样例和氢质氢离 `FC_*` 车辆样例的真实解析结果：电堆样例识别 61 个电流平台候选、车辆样例识别 29/13 个绝缘窗口。
+- 回归门：`npm test` 190/190；真实样例验证脚本确认 `datasetType=stack/vehicle`、`verdict=DESCRIPTIVE`，且问题代码与预期边界一致。
+- 公开项目页新增 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html)，独立展示 T02 项目摘要、核心功能与标准边界，不替代 GitHub 仓库完整功能。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。
