@@ -426,7 +426,7 @@ export const DEVICE_PROFILES = Object.freeze([
         { field: 'current_a', unit: 'A' },
         { field: 'voltage_v', unit: 'V' },
         { field: 'temperature_c', unit: '°C' },
-        { field: 'pressure_bar', unit: 'bar' },
+        { field: 'pressure_bar', unit: 'kPa' },
         { field: 'flow_slpm', unit: 'SLPM' }
       ]
     },
@@ -491,7 +491,7 @@ export const DEVICE_PROFILES = Object.freeze([
         { id: 'testDate', label: '测试日期', valueType: 'date' }
       ]
     },
-    requiredMeasurements: ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm'],
+    requiredMeasurements: ['current_a', 'voltage_v', 'net_power_kw'],
     acquisitionRequirements: {
       requireSamplingFrequency: true,
       requireSynchronization: true,
@@ -500,9 +500,7 @@ export const DEVICE_PROFILES = Object.freeze([
         { field: 'timestamp_s', unit: 's' },
         { field: 'current_a', unit: 'A' },
         { field: 'voltage_v', unit: 'V' },
-        { field: 'temperature_c', unit: '°C' },
-        { field: 'pressure_bar', unit: 'bar' },
-        { field: 'flow_slpm', unit: 'SLPM' }
+        { field: 'net_power_kw', unit: 'kW' }
       ]
     },
     preCheckRequirements: [
@@ -529,7 +527,7 @@ export const DEVICE_PROFILES = Object.freeze([
       timestamp_s: 'Timestamp',
       current_a: 'FC_CurrOut',
       voltage_v: 'FC_VoltOut',
-      power_w: 'FC_NetPwrOut'
+      net_power_kw: 'FC_NetPwrOut'
     }
   },
   {
@@ -560,7 +558,7 @@ export const DEVICE_PROFILES = Object.freeze([
         { id: 'testDate', label: '测试日期', valueType: 'date' }
       ]
     },
-    requiredMeasurements: ['current_a', 'voltage_v', 'power_w'],
+    requiredMeasurements: ['current_a', 'voltage_v'],
     acquisitionRequirements: {
       requireSamplingFrequency: true,
       requireSynchronization: true,
@@ -568,8 +566,7 @@ export const DEVICE_PROFILES = Object.freeze([
       requiredChannels: [
         { field: 'timestamp_s', unit: 's' },
         { field: 'current_a', unit: 'A' },
-        { field: 'voltage_v', unit: 'V' },
-        { field: 'power_w', unit: 'W' }
+        { field: 'voltage_v', unit: 'V' }
       ]
     },
     preCheckRequirements: [
@@ -592,9 +589,8 @@ export const DEVICE_PROFILES = Object.freeze([
     thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
     fieldMapping: {
       timestamp_s: '时间',
-      current_a: '电流',
-      voltage_v: '电压',
-      power_w: '功率'
+      current_a: ' 电堆电流',
+      voltage_v: ' 电堆电压'
     }
   }
 ]);
@@ -602,7 +598,7 @@ export const DEVICE_PROFILES = Object.freeze([
 export const CUSTOM_PROFILE_ID = 'custom';
 
 const THRESHOLD_FIELDS = ['maxTemperatureC', 'maxPressureBar', 'maxLeakPpm', 'maxVoltageStdV', 'maxPressureDriftBarPerMin'];
-const FIELD_MAPPING_FIELDS = ['timestamp_s', 'phase', 'current_a', 'voltage_v', 'power_w', 'power_setpoint_w', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm', 'hydrogen_purity_pct', 'gas_temperature_c', 'gas_pressure_bar', 'ambient_temperature_c', 'ambient_humidity_pct', 'ambient_pressure_kpa', 'efficiency_pct'];
+const FIELD_MAPPING_FIELDS = ['timestamp_s', 'phase', 'current_a', 'voltage_v', 'power_w', 'power_setpoint_w', 'temperature_c', 'pressure_bar', 'flow_slpm', 'leak_ppm', 'hydrogen_purity_pct', 'gas_temperature_c', 'gas_pressure_bar', 'ambient_temperature_c', 'ambient_humidity_pct', 'ambient_pressure_kpa', 'efficiency_pct', 'net_power_kw'];
 const PROFILE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 const APPROVAL_STATUSES = ['approved', 'pending', 'example_unapproved'];
 const APPROVAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -624,7 +620,7 @@ const metadataFields = ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preChe
 const traceabilityFields = ['testRunId', 'deviceId', 'testType', 'testDate', 'cellCount', 'activeAreaCm2', 'evidenceRef'];
 const traceabilityValueTypes = ['text', 'number', 'date', 'reference'];
 const editLogFields = ['field', 'oldValueSummary', 'newValueSummary', 'operator', 'timestamp', 'reason', 'evidenceRef'];
-const measurementFields = ['flow_slpm', 'hydrogen_purity_pct', 'power_w', 'power_setpoint_w', 'energy_derived', 'gas_temperature_c', 'gas_pressure_bar', 'ambient_temperature_c', 'ambient_humidity_pct', 'ambient_pressure_kpa', 'efficiency_pct'];
+const measurementFields = ['flow_slpm', 'hydrogen_purity_pct', 'power_w', 'power_setpoint_w', 'energy_derived', 'gas_temperature_c', 'gas_pressure_bar', 'ambient_temperature_c', 'ambient_humidity_pct', 'ambient_pressure_kpa', 'efficiency_pct', 'net_power_kw'];
 const acquisitionChannelFields = ['timestamp_s', 'phase', 'current_a', 'voltage_v', 'temperature_c', 'pressure_bar', ...measurementFields.filter((field) => field !== 'energy_derived')];
 const phaseMetricFields = ['durationS', 'energyConsumedWh', 'hydrogenVolumeNl', 'specificEnergyKWhPerNm3', 'powerRangeW', 'maxRampUpWPerS', 'maxRampDownWPerS', 'peakPowerW', 'minimumPowerW', 'maximumPowerW', 'validDataCoveragePct'];
 const conditionValueTypes = ['text', 'number', 'reference'];
