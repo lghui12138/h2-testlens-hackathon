@@ -203,7 +203,7 @@ function unitTransform(field, header) {
   }
   if (field === 'power_w' || field === 'power_setpoint_w') {
     if (normalized.includes('mw') || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
-    if (/\bmw\b/.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
+    if (/(?:^|[^a-zA-Z])m[Ww](?:[^a-zA-Z]|$)/.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
     if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
   }
   if (field === 'current_a' && (/\bua\b/i.test(String(header ?? '')) || /\bµa\b/i.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µA→A' };

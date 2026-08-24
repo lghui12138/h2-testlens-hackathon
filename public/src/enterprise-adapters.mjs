@@ -2259,12 +2259,12 @@ function buildStack(rows, config) {
   const mapping = {
     phase: resolveProfileMapping(config, 'phase') || findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
     timestamp_s: resolveProfileMapping(config, 'timestamp_s') || findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
-    current_a: resolveProfileMapping(config, 'current_a') || findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流', '电流（kA）', '电流(kA)']),
+    current_a: resolveProfileMapping(config, 'current_a') || findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流', '电流（kA）', '电流(kA)', '电流']),
     // Prefer the actual stack voltage when both an aggregate/diagnostic
     // `总电压` channel and an electrical `实际电压` channel are exported.
     // The raw power channel is checked against the electrical measurement,
     // not against a diagnostic total that may use a different convention.
-    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压', '电压（kV）', '电压(kV)']),
+    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压', '电压（kV）', '电压(kV)', '电压']),
     power_kw: resolveProfileMapping(config, 'power_kw') || findHeader(headers, ['功率（kW）', '功率（kW)', '功率(kW)', '电堆功率']),
     avg_cell_voltage_v: findHeader(headers, ['平均电压', '平均单片电压']),
     min_cell_voltage_v: findHeader(headers, ['最小电压（V）', '最小电压(V)', '单片电压最小值']),
@@ -2684,7 +2684,7 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   if (headers.includes('target_power_kw') && headers.includes('average_cell_voltage_mv')) return buildDurability(rows, config);
   if (headers.includes('FC_CurrOut') && headers.includes('FC_VoltOut')) return buildVehicle(rows, config);
-  if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
+  if (headers.some((header) => /实际电流|电堆电流|电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压|电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
 export { compliance };
