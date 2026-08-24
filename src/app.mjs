@@ -947,13 +947,21 @@ function renderReport(result, draft = state.aiDraft) {
   const compliance = result.compliance || {};
   const standardIds = (Array.isArray(compliance.standardRefs) ? compliance.standardRefs : []).map((reference) => reference.id).filter(Boolean);
   const reportFacts = `<div class="report-facts"><span><b>标准引用</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>方法状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>合规结论</b>不由系统自动声明</span></div>`;
+  const missingItems = [
+    ...(compliance.missingProfileFields || []),
+    ...(compliance.missingMeasurements || []),
+    ...(compliance.missingPhases || []),
+    ...(compliance.missingPhaseMetrics || []),
+    ...(compliance.missingMetadata || [])
+  ];
+  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span></div>${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
-    $('#report-preview').innerHTML = `${reportFacts}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
+    $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;
   }
   const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和建议动作可追溯；';
-  $('#report-preview').innerHTML = `${reportFacts}<div class="report-head"><span>自动报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与建议</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
+  $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>自动报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与建议</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
 }
 
 function renderSignalDiagnostics(dataset) {
@@ -1114,6 +1122,10 @@ function render(result, pushHistory = true) {
   if (complianceBoundary) {
     complianceBoundary.textContent = result.compliance.boundary || '';
     complianceBoundary.hidden = !result.compliance.boundary;
+  }
+  const complianceAnnouncement = $('#compliance-announcement');
+  if (complianceAnnouncement) {
+    complianceAnnouncement.textContent = `标准符合性状态：${result.compliance.label}`;
   }
   const verdictTooltip = $('#verdict-tooltip');
   if (verdictTooltip) {
