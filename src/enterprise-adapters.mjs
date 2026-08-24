@@ -1249,6 +1249,8 @@ function relativeStabilityConfig(config, parameterConfig, minimumDurationS) {
   };
 }
 
+const STABLE_WINDOW_TOLERANCE_S = 1e-9;
+
 function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
   const timeOf = (row) => row?.session_timestamp_s ?? row?.timestamp_s;
   const windows = [];
@@ -1258,11 +1260,11 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
     let endIndex = startIndex;
     while (endIndex + 1 < sampleRows.length) {
       const nextTime = timeOf(sampleRows[endIndex + 1]);
-      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS + 1e-9) break;
+      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS + STABLE_WINDOW_TOLERANCE_S) break;
       endIndex += 1;
     }
     const endTime = timeOf(sampleRows[endIndex]);
-    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS - 1e-9) continue;
+    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS - STABLE_WINDOW_TOLERANCE_S) continue;
     const windowRows = sampleRows.slice(startIndex, endIndex + 1);
     const checks = stability.rules.map((rule) => {
       const values = windowRows.map((row) => row[rule.field]).filter(Number.isFinite);
@@ -1296,7 +1298,7 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
   return merged.filter((window) => {
     const start = timeOf(sampleRows[window.startIndex]);
     const end = timeOf(sampleRows[window.endIndex]);
-    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS - 1e-9;
+    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS - STABLE_WINDOW_TOLERANCE_S;
   }).map((window) => ({
     ...window,
     startS: timeOf(sampleRows[window.startIndex]),
@@ -1450,7 +1452,7 @@ function buildVehicle(rows, config) {
     let unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
     const varianceField = field === 'cell_voltage_variance';
     const allowedUnits = varianceField ? ['mV²', 'V²'] : ['mV', 'V'];
-    if (varianceField && !unit && raw >= 0 && raw <= 1_000_000) {
+    if (varianceField && !unit && !vehicleUnitEvidenceRequired && raw >= 0 && raw <= 1_000_000) {
       unit = 'mV²';
     }
     if (unit && !allowedUnits.includes(unit)) {
@@ -1538,8 +1540,10 @@ function buildVehicle(rows, config) {
   const stateCounts = Object.fromEntries([...new Set(rowsForAnalysis.map((row) => row.main_status).filter((value) => value !== null))].sort((a, b) => a - b).map((state) => [String(state), rowsForAnalysis.filter((row) => row.main_status === state).length]));
   const isolationStatusRows = rowsForAnalysis.filter((row) => [4, 8].includes(row.main_status));
   const toInsulationNumber = (value) => (value === null || value === undefined ? NaN : Number(value));
-  const isValidInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && num > 0 && num !== 65535 && num < 9999; };
-  const isCensoredInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && (num >= 9999 || num === 65535); };
+  const INSULATION_CENSOR_THRESHOLD = 9999;
+  const INSULATION_SENTINEL = 65535;
+  const isValidInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && num > 0 && num !== INSULATION_SENTINEL && num < INSULATION_CENSOR_THRESHOLD; };
+  const isCensoredInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && (num >= INSULATION_CENSOR_THRESHOLD || num === INSULATION_SENTINEL); };
   const isolationRows = isolationStatusRows.filter((row) => isValidInsulation(row.isolation_kohm));
   const isolationExcludedByStatus = rowsForAnalysis.length - isolationStatusRows.length;
   const isolationCensoredAboveRange = isolationStatusRows.filter((row) => isCensoredInsulation(row.isolation_kohm)).length;
