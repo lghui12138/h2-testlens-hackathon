@@ -4,9 +4,9 @@
 
 这份矩阵是产品验收边界，不是企业标准符合性声明。`已实现`表示代码有可复现证据；`受控试运行`表示可以用脱敏或企业批准数据运行，但仍需要企业批准的 profile、平行验证和人工签核；`待企业输入`表示不能从公开标准或样例数据推断。
 
-历史 v3.5.34 机器证据使用 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.34.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.34.json` 和全包报告 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.34.md`；当前判定以 v3.5.37 证据为准。源资料完整性由 `npm run t02:integrity` 对当前目录逐文件复核，并额外校验审计根目录、记录数和路径唯一性；approved profile 另增加标准引用 provenance、完整方法前置证据、公式复核和 `evaluationMode` 门；下方旧版本路径仅保留历史记录。
+历史 v3.5.34 机器证据使用 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.34.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.34.json` 和全包报告 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.34.md`；当前判定以 v3.5.38 证据为准。源资料完整性由 `npm run t02:integrity` 对当前目录逐文件复核，并额外校验审计根目录、记录数和路径唯一性；approved profile 另增加标准引用 provenance、完整方法前置证据、公式复核和 `evaluationMode` 门；下方旧版本路径仅保留历史记录。
 
-当前 v3.5.37 机器证据另包含 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.37.json` 和 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.37.md`；本轮新增电堆逐片时序统计、稳定区间排除证据和参数工作簿公式复核门回归。
+当前 v3.5.38 机器证据另包含 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.38.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.38.json` 和 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.38.md`；本轮新增电堆逐片时序统计、稳定区间排除证据和参数工作簿公式复核门回归。
 
 历史 v3.5.34 额外要求：除 v3.5.32 的源完整性、标准引用、完整方法前置证据和 `evaluationMode` 门外，`descriptive_only` profile 不得携带 acceptanceRules/acceptanceCriteria，必须使用 `thresholds: null`，并将阈值/验收状态写成 `NOT_RUN`、release gate 固定为 `ANALYSIS_DRAFT`；含公式单元格的正式验收路径必须提供人工公式复核证据；VBA 宏、ActiveX/OLE 和外部链接在 SheetJS 前阻断且返回 `ok: false`。三个 T02 示例 profile 必须分别限制 vehicle、stack、durability 数据集，不能被误用于其他数据类型。XLSX 入口还必须在 vendored SheetJS 前执行 ZIP 容器预检（64 MiB 压缩输入、256 MiB 声明展开、2048 条目、200:1 压缩比及损坏/ZIP64/加密阻断），且把这些参数标为解析器保护而非标准限值。车辆 profile 还必须进入动态设定变化描述分析，并在逐文件/包级证据中保留事件数、保持窗口数、未稳定数和采样缺口数；这些指标不得被写成 GB/T 46104-2025 合格结论。该门只证明资料审计和分析模式边界的可追溯性，不把机器审计变成标准符合性声明。
 
@@ -16,7 +16,7 @@ v3.5.26 额外要求：版本化审计必须先通过当前 T02 目录的逐文�
 
 | 来源 | 要求 | 当前状态 | 证据/边界 |
 |---|---|---|---|
-| T02 资料覆盖 | 198 个文件逐文件盘点、哈希、原始数据解析器、参考内容审计、用途台账和状态，并形成包级汇总 | 已实现/有边界 | `npm run t02:coverage`、`npm run t02:reference`、`npm run t02:integrity` 和 `npm run t02:report` 共同生成 v3.5.37 机器证据；当前逐文件证据深度为 143 descriptive_interval、13 dynamic_event_only、34 generic_metrics_only、8 reference_boundary、0 formal_kpi。其余文件/行数/字段角色和标准边界沿用当前审计，processed 表示真实进入原始时序解析器/适配器，不等于每列都参与 KPI，也不等于标准符合 |
+| T02 资料覆盖 | 198 个文件逐文件盘点、哈希、原始数据解析器、参考内容审计、用途台账和状态，并形成包级汇总 | 已实现/有边界 | `npm run t02:coverage`、`npm run t02:reference`、`npm run t02:integrity` 和 `npm run t02:report` 共同生成 v3.5.38 机器证据；当前逐文件证据深度为 143 descriptive_interval、13 dynamic_event_only、34 generic_metrics_only、8 reference_boundary、0 formal_kpi。其余文件/行数/字段角色和标准边界沿用当前审计，processed 表示真实进入原始时序解析器/适配器，不等于每列都参与 KPI，也不等于标准符合 |
 | 氢质氢离 46 列信号 | 全部原始车辆字段可追溯，核心/上下限交叉核对/目录字段分层 | 已实现/有边界 | 46 列信号目录、动态 `FC_SysLoadCurr→FC_CurrOut` 设定/实测响应、4 组设定/实测交叉核对、选择信号和时间窗口；支持左/右双轴独立缩放；多文件按 `session_id` 断开图线和目标电流段；未配置规则的扩展字段不自动判定 |
 | 青川科技 127 列信号 | 全部原始电堆字段可追溯，设定值/反馈进入辅助证据，原始功率统一到 `power_w` | 已实现/有边界 | 127 列覆盖目录、40 个单片通道、13 组设定/实测核对、10 个阀/泵反馈摘要；字段覆盖表对每列保留完整率、极值、均值和标准差；`功率(kW)` 保留来源并记录 kW→W；多文件按会话隔离平台和稳定区间；扩展字段仍需企业规则才可形成判定 |
 | 氢璞创能 | 大体量电堆时序数据自动分析并生成含图表报告 | 受控试运行 | TXT/CSV/XLSX 适配、字段映射、质量检查、14 表 XLSX、OOXML 图表路径；大文件需内网批处理器运行 |

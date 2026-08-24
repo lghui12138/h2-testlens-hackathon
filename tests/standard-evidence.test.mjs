@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseJsonlLedger, validateEvidenceLedger, validateMethodSourceBinding, validateStandardReferenceBinding } from '../src/standard-evidence.mjs';
-import { validateTrustedApprovalBinding } from '../src/approval-ledger.mjs';
+import { canonicalApprovalPayload, validateTrustedApprovalBinding } from '../src/approval-ledger.mjs';
 
 test('standards evidence ledger closes source, evidence, and claim references', () => {
   const sources = parseJsonlLedger('{"source_id":"std-1"}\n', 'sources');
@@ -58,4 +58,19 @@ test('approved profiles fail closed without a trusted approval ledger while unap
   assert.ok(blocked.checks[0].missing.includes('trustedApprovalLedger.approvalRows'));
   const unapproved = validateTrustedApprovalBinding({ profiles: [{ id: 'p-2', approvalStatus: 'example_unapproved' }] }, []);
   assert.equal(unapproved.ready, true);
+});
+
+test('approval package canonicalization binds self-declared approval fields but ignores runtime binding output', () => {
+  const base = { schemaVersion: 'h2-testlens.profile.v1', profiles: [{ id: 'p-1', approvalStatus: 'approved', approvalEvidence: { approverId: 'self', approvalDate: '2026-08-24', approvalRef: 'REF-1', profileRevision: 'r1', profileRevisionRef: 'REV-1' }, revision: 'r1', thresholds: { maxTemperatureC: 80 } }] };
+  const changed = structuredClone(base);
+  changed.profiles[0].approvalEvidence = { approverId: 'different' };
+  assert.notEqual(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
+  changed.profiles[0].approvalEvidence = base.profiles[0].approvalEvidence;
+  changed.profiles[0].trustedApprovalBinding = { ready: true, approvalId: 'runtime-only' };
+  assert.equal(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
+  changed.profiles[0].approvalStatus = 'pending';
+  assert.notEqual(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
+  changed.profiles[0].approvalStatus = base.profiles[0].approvalStatus;
+  changed.profiles[0].thresholds.maxTemperatureC = 81;
+  assert.notEqual(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
 });

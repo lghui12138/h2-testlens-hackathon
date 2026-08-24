@@ -13,6 +13,8 @@ import { profilesFromPackage } from '../src/profiles.mjs';
 import { decodeTextBuffer } from '../src/input-safety.mjs';
 import { annotateDeclaredBatchRows, batchAggregationMarkdown, observeDeclaredBatch, summarizeDeclaredBatch, validateBatchDeclaration } from '../src/batch-aggregation.mjs';
 import { loadXlsx } from '../src/xlsx-node-loader.mjs';
+import { createHash } from 'node:crypto';
+import { canonicalApprovalPayload } from '../src/approval-ledger.mjs';
 
 const SheetJS = await loadXlsx();
 setSpreadsheetEngine(SheetJS);
@@ -44,7 +46,10 @@ async function loadProfile(profilePath, profileId) {
   const ledger = JSON.parse(await readFile(join(repoRoot, 'config/standard-evidence-ledger.v1.json'), 'utf8'));
   const trustedApprovalLedger = JSON.parse(await readFile(join(repoRoot, 'config/trusted-approval-ledger.v1.json'), 'utf8'));
 
-  const packageResult = profilesFromPackage(JSON.parse(await readFile(profilePath, 'utf8')), { requireEvidenceLedger: true, evidenceRows: ledger.evidenceRows || [], requireApprovalLedger: true, approvalRows: trustedApprovalLedger.approvalRows || [] });
+  const payload = JSON.parse(await readFile(profilePath, 'utf8'));
+  const packageHash = createHash('sha256').update(canonicalApprovalPayload(payload), 'utf8').digest('hex');
+  const packageHashes = Object.fromEntries((payload.profiles || []).map((profile) => [profile.id, packageHash]));
+  const packageResult = profilesFromPackage(payload, { requireEvidenceLedger: true, evidenceRows: ledger.evidenceRows || [], requireApprovalLedger: true, approvalRows: trustedApprovalLedger.approvalRows || [], packageHashes });
   if (!packageResult.ok) throw new Error(`profile_invalid: ${packageResult.errors.join('；')}`);
   const profile = packageResult.profiles.find((candidate) => candidate.id === profileId);
   if (!profile) throw new Error(`profile_not_found: ${profileId}`);

@@ -1,4 +1,19 @@
 const text = (value) => typeof value === 'string' && value.trim().length > 0;
+// The package hash must cover every author-controlled profile field, including
+// the declared approval status and evidence. Only runtime-derived binding data
+// is excluded so re-serializing an imported package remains deterministic.
+const EXCLUDED_RUNTIME_KEYS = new Set(['trustedApprovalBinding']);
+
+const canonicalize = (value, key = null) => {
+  if (key && EXCLUDED_RUNTIME_KEYS.has(key)) return undefined;
+  if (Array.isArray(value)) return value.map((item) => canonicalize(item)).filter((item) => item !== undefined);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((childKey) => [childKey, canonicalize(value[childKey], childKey)]).filter(([, childValue]) => childValue !== undefined));
+  return value;
+};
+
+export function canonicalApprovalPayload(payload) {
+  return JSON.stringify(canonicalize(payload));
+}
 
 const validIsoDate = (value) => {
   const raw = String(value || '').trim();

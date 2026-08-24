@@ -2,6 +2,7 @@ import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown, DEFAULT_CONFIG }
 import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
+import { canonicalApprovalPayload } from './approval-ledger.mjs';
 import { appendHistory, clearHistory, readHistory } from './history.mjs';
 import { sha256Bytes, sha256Hex } from './provenance.mjs';
 import { buildEnterpriseWorkbook, parseDataWorkbook, parseParameterWorkbook, setSpreadsheetEngine, workbookArrayBuffer } from './excel-workflow.mjs';
@@ -42,6 +43,10 @@ async function ensureTrustedApprovalLedger() {
     return state.trustedApprovalRows;
   });
   return trustedApprovalPromise;
+}
+async function runtimeProfilePackageOptions(payload) {
+  const packageHash = await sha256Hex(canonicalApprovalPayload(payload));
+  return { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger(), requireApprovalLedger: true, approvalRows: await ensureTrustedApprovalLedger(), packageHashes: Object.fromEntries((payload.profiles || []).map((profile) => [profile.id, packageHash])) };
 }
 const ANALYSIS_WORKER_THRESHOLD = 10000;
 const analysisWorkerState = { worker: null, nextId: 0, pending: new Map() };
@@ -1188,7 +1193,8 @@ $('#profile-file').addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
   try {
-        const packageResult = profilesFromPackage(JSON.parse(await file.text()), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger(), requireApprovalLedger: true, approvalRows: await ensureTrustedApprovalLedger() });
+        const packagePayload = JSON.parse(await file.text());
+        const packageResult = profilesFromPackage(packagePayload, await runtimeProfilePackageOptions(packagePayload));
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     applyProfilePackage(packageResult);
   } catch (error) {
@@ -1220,7 +1226,8 @@ $('#load-profile-demo').addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/enterprise-profile.example.json'));
     if (!response.ok) throw new Error('示例配置读取失败');
-        const packageResult = profilesFromPackage(await response.json(), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger(), requireApprovalLedger: true, approvalRows: await ensureTrustedApprovalLedger() });
+        const packagePayload = await response.json();
+        const packageResult = profilesFromPackage(packagePayload, await runtimeProfilePackageOptions(packagePayload));
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     const sampleResponse = await fetch(assetUrl('sample-data/test_run_legacy_cn.csv'));
     if (!sampleResponse.ok) throw new Error('配置匹配样本读取失败');
@@ -1239,7 +1246,8 @@ $('#load-t02-profiles')?.addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/t02-profile.example.json'));
     if (!response.ok) throw new Error('T02 profile 包读取失败');
-        const packageResult = profilesFromPackage(await response.json(), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger(), requireApprovalLedger: true, approvalRows: await ensureTrustedApprovalLedger() });
+        const packagePayload = await response.json();
+        const packageResult = profilesFromPackage(packagePayload, await runtimeProfilePackageOptions(packagePayload));
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     applyProfilePackage(packageResult);
     $('#profile-import-status').textContent = `${packageResult.organization} · 已载入 T02 ${packageResult.profiles.length} 个描述性 profile；未执行阈值/验收判定`;

@@ -47,7 +47,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     assert.match(page, /metric-trace-details/);
     assert.match(page, /metric-trace/);
     assert.match(page, /result-announcement/);
-    assert.match(page, /t02_integration_report_v3\.5\.37\.md/);
+    assert.match(page, /t02_integration_report_v3\.5\.38\.md/);
   }
   assert.match(app, /ensureBrowserEngines/);
   assert.match(app, /setSpreadsheetEngine/);
@@ -97,7 +97,7 @@ test('T02 coverage summary is parity-checked for static page runtime loading', a
   assert.deepEqual(JSON.parse(publicCopy), JSON.parse(source));
   const summary = JSON.parse(source);
   assert.equal(summary.schemaVersion, 'h2-testlens.t02-coverage-summary.v1');
-  assert.equal(summary.auditVersion, '3.5.37');
+  assert.equal(summary.auditVersion, '3.5.38');
   assert.equal(summary.totalFiles, 198);
   assert.equal(summary.counts.processed, 190);
 });

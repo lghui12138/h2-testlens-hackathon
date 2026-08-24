@@ -1,6 +1,6 @@
 # H₂ TestLens 标准实施边界矩阵
 
-更新时间：2026-08-24 · 仓库版本：v3.5.37
+更新时间：2026-08-24 · 仓库版本：v3.5.38
 
 这份矩阵只说明当前原型已经实现的产品映射和仍缺失的证据，不把字段覆盖、KPI 计算或 profile 门控写成标准符合性结论。
 
@@ -15,7 +15,7 @@
 
 版本化 T02 覆盖审计当前为 198 个文件：190 个进入对应解析器，6 个 reference-only，1 个 blocked-binary，1 个 declared-no-upload；处理数据进入适配器的记录/功率点为 2,262,283，正式符合性声明为 0。原始资料不提交到 GitHub。
 
-证据入口：[t02_coverage_audit_v3.5.37.json](../.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.37.json)、[enterprise readiness](./ENTERPRISE_READINESS.md)、[standards alignment](./STANDARDS_ALIGNMENT.md)。
+证据入口：[t02_coverage_audit_v3.5.38.json](../.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.38.json)、[enterprise readiness](./ENTERPRISE_READINESS.md)、[standards alignment](./STANDARDS_ALIGNMENT.md)。
 
 ## 企业落地前置条件
 

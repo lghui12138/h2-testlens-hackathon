@@ -1,5 +1,14 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
+
+- 运行时对完整 profile package 做确定性 SHA-256：`approvalStatus` 与 `approvalEvidence` 均纳入绑定，只排除运行时生成的 `trustedApprovalBinding`；API、浏览器 profile 导入和 `batch-watch` 统一传入受控哈希，审批包被改写时 trusted ledger fail-closed。
+- `src/approval-ledger.mjs` 与 `public/src/approval-ledger.mjs` 保持字节 parity；新增回归锁定审批状态、审批证据、阈值改动会改变哈希，运行时绑定输出不改变哈希。
+- v3.5.38 T02 证据重新生成：198/198 文件、190 processed、6 reference-only、1 blocked binary、1 declared no-upload、2,262,283 行/功率点、198/198 使用台账、7/7 参考交叉链接、21/21 关键词证据完整、0 正式符合性声明、源完整性 198/198 unchanged。
+- 本地门控：`npm test` 183/183、`npm run check:submission` 136/136、AI grounding 4/4、API smoke、两个 profile audit、typecheck、Vinext build 5/5、package smoke install/test/typecheck/build/start/HTTP 全部通过；包 SHA-256 由 `dist/h2-testlens-submission-v3.5.38.zip.sha256` 记录。
+- 六智能体并行调度本轮实际尝试，但运行时返回 `agent thread limit reached`，没有把未启动智能体计入结果；本轮结论只采用本地测试和可复核机器证据。
+- 下一发布门：推送后核对新的 GitHub Actions/Pages run；自定义域证书和真实企业批准 profile 仍是外部门控，不在本轮伪造闭环。
+
 ## 2026-08-24 · Run 88 回读轮
 
 - 提交 `b648db9` 已推送；Actions Run 88 成功，`build`/`deploy` 通过，云端 package smoke hook 继续生效。

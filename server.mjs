@@ -7,6 +7,7 @@ import { generateDraft } from './src/ai-draft.mjs';
 import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown } from './src/analyzer.mjs';
 import { compareResults } from './src/compare.mjs';
 import { profilesFromPackage } from './src/profiles.mjs';
+import { canonicalApprovalPayload } from './src/approval-ledger.mjs';
 import { sendFeishuAlert } from './src/feishu-alerts.mjs';
 import { annotateDeclaredBatchRows, batchAggregationMarkdown, observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration } from './src/batch-aggregation.mjs';
 
@@ -58,7 +59,9 @@ function resolveApiConfig(payload) {
     }
     return config;
   }
-  const imported = profilesFromPackage(payload.profilePackage, { requireEvidenceLedger: true, evidenceRows: standardEvidenceRows, requireApprovalLedger: true, approvalRows: trustedApprovalRows });
+  const packageHash = createHash('sha256').update(canonicalApprovalPayload(payload.profilePackage), 'utf8').digest('hex');
+  const packageHashes = Object.fromEntries((payload.profilePackage.profiles || []).map((profile) => [profile.id, packageHash]));
+  const imported = profilesFromPackage(payload.profilePackage, { requireEvidenceLedger: true, evidenceRows: standardEvidenceRows, requireApprovalLedger: true, approvalRows: trustedApprovalRows, packageHashes });
   if (!imported.ok) { const error = new Error('profile_package_invalid'); error.status = 422; error.details = imported.errors; throw error; }
   const profile = imported.profiles.find((candidate) => candidate.id === payload.profileId);
   if (!profile) { const error = new Error('profile_not_found'); error.status = 422; throw error; }
