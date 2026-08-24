@@ -1220,6 +1220,7 @@ function updateAccessibleSummaries(result) {
 }
 
 function render(result, pushHistory = true) {
+  hideInitialLoadingState();
   if (pushHistory) {
     pushResultHistory(result);
   }
@@ -1848,7 +1849,7 @@ async function withLoading(promise, message = '处理中…') {
 }
 function showQuickStart() {
   const overlay = $('#quick-start-overlay');
-  if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; }
+  if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; trapFocus(overlay); const first = overlay.querySelector('button'); if (first) first.focus(); }
 }
 function dismissQuickStart() {
   const overlay = $('#quick-start-overlay');
@@ -1947,7 +1948,7 @@ readSelectedDataFiles = async function(files) {
 // Keyboard shortcuts for power users.
 function showKeyboardShortcuts() {
   const overlay = $('#keyboard-shortcuts-overlay');
-  if (overlay) overlay.hidden = false;
+  if (overlay) { overlay.hidden = false; trapFocus(overlay); const first = overlay.querySelector('button'); if (first) first.focus(); }
 }
 function dismissKeyboardShortcuts() {
   const overlay = $('#keyboard-shortcuts-overlay');
@@ -2046,7 +2047,7 @@ function updateDropZoneFileCount(files) {
 }
 
 $('#close-shortcuts')?.addEventListener('click', dismissKeyboardShortcuts);
-$('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) dismissKeyboardShortcuts(); });
+$('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) { trapFocus($('#keyboard-shortcuts-overlay')); dismissKeyboardShortcuts(); } });
 $('#enterprise-qingchuan')?.addEventListener('click', () => { void applyEnterpriseConfig('qingchuan'); });
 $('#enterprise-qingzhihuli')?.addEventListener('click', () => { void applyEnterpriseConfig('qingzhihuli'); });
 $('#enterprise-hypu')?.addEventListener('click', () => { void applyEnterpriseConfig('hypu'); });
@@ -2141,5 +2142,39 @@ renderRecentFiles();
 void loadCoverageSummary();
 void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
+showInitialLoadingState();
 void loadSampleSafely();
 void showQuickStart();
+
+function initChartTooltip() {
+  const canvas = $('#trend-chart');
+  const tooltip = $('#chart-tooltip');
+  if (!canvas || !tooltip) return;
+  const showTooltip = (clientX, clientY) => {
+    if (!state.result?.rows?.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+    const plotWidth = rect.width - pad.left - pad.right;
+    const ratio = Math.max(0, Math.min(1, (x - pad.left) / plotWidth));
+    const rows = state.result.rows.filter((row) => row.timestamp_s !== null);
+    const index = Math.round(ratio * (rows.length - 1));
+    const row = rows[index];
+    if (!row) return;
+    const temp = row.temperature_c !== null ? `${fmt(row.temperature_c, 2)} °C` : '—';
+    const pressure = row.pressure_bar !== null ? `${fmt(row.pressure_bar, 2)} bar` : '—';
+    const time = row.timestamp_s !== null ? `${fmt(row.timestamp_s, 1)} s` : '—';
+    tooltip.innerHTML = `<div><b>${escapeHtml(time)}</b></div><div>温度：${temp}</div><div>压力：${pressure}</div>`;
+    tooltip.hidden = false;
+    tooltip.style.left = `${clientX + 12}px`;
+    tooltip.style.top = `${clientY - 48}px`;
+  };
+  canvas.addEventListener('mousemove', (event) => showTooltip(event.clientX, event.clientY));
+  canvas.addEventListener('mouseleave', () => { tooltip.hidden = true; });
+  canvas.addEventListener('touchstart', (event) => {
+    if (!state.result?.rows?.length || !event.touches.length) return;
+    showTooltip(event.touches[0].clientX, event.touches[0].clientY);
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => { tooltip.hidden = true; });
+}
+void initChartTooltip();

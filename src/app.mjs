@@ -1849,7 +1849,7 @@ async function withLoading(promise, message = '处理中…') {
 }
 function showQuickStart() {
   const overlay = $('#quick-start-overlay');
-  if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; }
+  if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; trapFocus(overlay); const first = overlay.querySelector('button'); if (first) first.focus(); }
 }
 function dismissQuickStart() {
   const overlay = $('#quick-start-overlay');
@@ -1948,7 +1948,7 @@ readSelectedDataFiles = async function(files) {
 // Keyboard shortcuts for power users.
 function showKeyboardShortcuts() {
   const overlay = $('#keyboard-shortcuts-overlay');
-  if (overlay) overlay.hidden = false;
+  if (overlay) { overlay.hidden = false; trapFocus(overlay); const first = overlay.querySelector('button'); if (first) first.focus(); }
 }
 function dismissKeyboardShortcuts() {
   const overlay = $('#keyboard-shortcuts-overlay');
@@ -2047,7 +2047,7 @@ function updateDropZoneFileCount(files) {
 }
 
 $('#close-shortcuts')?.addEventListener('click', dismissKeyboardShortcuts);
-$('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) dismissKeyboardShortcuts(); });
+$('#keyboard-shortcuts-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) { trapFocus($('#keyboard-shortcuts-overlay')); dismissKeyboardShortcuts(); } });
 $('#enterprise-qingchuan')?.addEventListener('click', () => { void applyEnterpriseConfig('qingchuan'); });
 $('#enterprise-qingzhihuli')?.addEventListener('click', () => { void applyEnterpriseConfig('qingzhihuli'); });
 $('#enterprise-hypu')?.addEventListener('click', () => { void applyEnterpriseConfig('hypu'); });
