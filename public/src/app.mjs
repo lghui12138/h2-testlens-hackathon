@@ -1811,18 +1811,15 @@ function updateBatchQueueItem(entries, index, updates) {
 }
 
 // Batch queue event delegation.
-?.addEventListener('click', async (event) => {
+$('#batch-queue')?.addEventListener('click', async (event) => {
   const retryButton = event.target.closest('button[data-retry]');
   const removeButton = event.target.closest('button[data-remove]');
   if (retryButton) {
     const index = Number(retryButton.dataset.retry);
-    const fileInput = ;
-    if (fileInput && state.inputEntries && state.inputEntries[index]) {
-      setAnalysisStatus('请重新选择该文件进行导入。', 'neutral');
-    }
+    setAnalysisStatus('请重新选择该文件进行导入。', 'neutral');
   } else if (removeButton) {
     const index = Number(removeButton.dataset.remove);
-    const item = document.querySelector();
+    const item = document.querySelector(`.batch-queue-item[data-index="${index}"]`);
     if (item) item.remove();
   }
 });
