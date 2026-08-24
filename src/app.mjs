@@ -15,8 +15,21 @@ import { decodeTextBuffer } from './input-safety.mjs';
 import { observeDeclaredBatch, publicBatchAggregation, summarizeDeclaredBatch, validateBatchDeclaration, annotateDeclaredBatchRows } from './batch-aggregation.mjs';
 
 const $ = (selector) => document.querySelector(selector);
-const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0 };
+const state = { rows: [], fileName: '演示样本 · electrolyzer_run_017.csv', result: null, aiDraft: null, baselineResult: null, comparison: null, history: [], profileCatalog: [...DEVICE_PROFILES], fieldMapping: {}, profileOrganization: '内置演示配置', rawDataHash: null, standardEvidenceRows: [], parameterConfig: null, workbookEvidence: null, durabilityReports: [], currentManifest: [], inputEntries: [], batchDeclarationInput: null, batchValidation: null, batchSummaries: [], incrementalDiff: null, inputSummary: { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 }, stackSelectionOverrides: {}, analysisToken: 0 };
 const assetUrl = (relativePath) => /\/src\/index\.html$/.test(window.location.pathname) ? `../${relativePath}` : `./${relativePath}`;
+let standardEvidencePromise = null;
+async function ensureStandardEvidenceLedger() {
+  if (!standardEvidencePromise) standardEvidencePromise = fetch(assetUrl('config/standard-evidence-ledger.v1.json')).then(async (response) => {
+    if (!response.ok) throw new Error('standard_evidence_ledger_unavailable');
+    const payload = await response.json();
+    state.standardEvidenceRows = Array.isArray(payload.evidenceRows) ? payload.evidenceRows : [];
+    return state.standardEvidenceRows;
+  }).catch(() => {
+    state.standardEvidenceRows = [];
+    return state.standardEvidenceRows;
+  });
+  return standardEvidencePromise;
+}
 const ANALYSIS_WORKER_THRESHOLD = 10000;
 const analysisWorkerState = { worker: null, nextId: 0, pending: new Map() };
 
@@ -213,7 +226,8 @@ function configFromUI() {
     intendedUse: profile?.intendedUse ?? null,
     methodId: profile?.methodId ?? null,
     revision: profile?.revision ?? null,
-    standardRefs: profile?.standardRefs ?? [],
+        standardRefs: profile?.standardRefs ?? [],
+        standardEvidenceBinding: profile?.standardEvidenceBinding ?? null,
     methodSource: profile?.methodSource ?? null,
     methodImplementationEvidence: profile?.methodImplementationEvidence ?? null,
     methodExecutionStatus: profile?.methodExecutionStatus ?? null,
@@ -1127,7 +1141,7 @@ $('#profile-file').addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
   try {
-    const packageResult = profilesFromPackage(JSON.parse(await file.text()));
+        const packageResult = profilesFromPackage(JSON.parse(await file.text()), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger() });
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     applyProfilePackage(packageResult);
   } catch (error) {
@@ -1154,7 +1168,7 @@ $('#load-profile-demo').addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/enterprise-profile.example.json'));
     if (!response.ok) throw new Error('示例配置读取失败');
-    const packageResult = profilesFromPackage(await response.json());
+        const packageResult = profilesFromPackage(await response.json(), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger() });
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     const sampleResponse = await fetch(assetUrl('sample-data/test_run_legacy_cn.csv'));
     if (!sampleResponse.ok) throw new Error('配置匹配样本读取失败');
@@ -1173,7 +1187,7 @@ $('#load-t02-profiles')?.addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/t02-profile.example.json'));
     if (!response.ok) throw new Error('T02 profile 包读取失败');
-    const packageResult = profilesFromPackage(await response.json());
+        const packageResult = profilesFromPackage(await response.json(), { requireEvidenceLedger: true, evidenceRows: await ensureStandardEvidenceLedger() });
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     applyProfilePackage(packageResult);
     $('#profile-import-status').textContent = `${packageResult.organization} · 已载入 T02 ${packageResult.profiles.length} 个描述性 profile；未执行阈值/验收判定`;
@@ -1253,5 +1267,6 @@ applyProfile('electrolyzer-demo');
 state.history = readHistory(window.localStorage);
 renderHistory();
 void loadCoverageSummary();
+void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
 loadSample();

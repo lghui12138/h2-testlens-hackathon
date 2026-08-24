@@ -631,6 +631,16 @@ test('approved profiles require bound approval evidence and public surfaces expo
   assert.equal(JSON.stringify(safe).includes('WO-2026-0822-001'), false);
 });
 
+test('runtime profile import binds standard method evidence to the compact ledger when required', async () => {
+  const ledger = JSON.parse(await readFile(join(here, '../config/standard-evidence-ledger.v1.json'), 'utf8'));
+  const bound = profilesFromPackage(enterpriseProfilePayload, { requireEvidenceLedger: true, evidenceRows: ledger.evidenceRows });
+  assert.equal(bound.ok, true);
+  assert.equal(bound.standardEvidenceBinding.ready, true);
+  const unbound = profilesFromPackage(enterpriseProfilePayload, { requireEvidenceLedger: true, evidenceRows: [] });
+  assert.equal(unbound.ok, false);
+  assert.match(unbound.errors[0], /evidence ledger/);
+});
+
 test('profile packages reject approved profiles without approval evidence', () => {
   const profile = {
     id: 'approved-package',

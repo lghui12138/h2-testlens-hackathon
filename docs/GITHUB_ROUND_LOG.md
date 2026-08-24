@@ -1,5 +1,13 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 运行时标准 evidence ledger 绑定轮
+
+- 六智能体确认：离线 profile-audit 已能绑定 evidenceIds，但 browser/API/batch-watch 运行时仍可能结构完整即通过；本轮新增 repository-backed standard-evidence-ledger.v1，并在所有 runtime profile import 路径启用绑定。
+- methodSource 的 evidenceIds 现在必须命中 source_id、locator、evidence_type；缺失、未知或跨 source 引用直接阻断 profile import，formal readiness 同步保留 binding 状态。
+- compact ledger 只保留 18 条标准证据元数据，不含证据原文或 T02 原始数据；config/public parity、package entries、Pages 静态资源和 runtime copies 均加入门控。
+- API smoke 新增未知 evidenceId 的 HTTP 422 回归；完整门：171/171 测试、132/132 提交检查、typecheck、Vinext build 5/5、API smoke、package smoke 全通过。
+- GitHub Pages Run 80 已成功；自定义域仍返回 502，receipt workflow scope 仍未绑定，继续保持真实残余声明。
+
 ## 2026-08-24 · metricTrace 字段级复核链与公共脱敏轮
 
 - 六智能体审查确认：原有 198 文件使用台账不等于每个 KPI 可复核；本轮新增 h2-testlens.metric-trace.v1，绑定 canonical 字段、metric evidenceId、source hash 状态、证据类别和脱敏文件 token/行范围。

@@ -82,6 +82,8 @@ const requiredFiles = [
   'public/og-card.svg',
   'config/t02-coverage-summary.json',
   'public/config/t02-coverage-summary.json',
+  'config/standard-evidence-ledger.v1.json',
+  'public/config/standard-evidence-ledger.v1.json',
   'config/release-summary.json',
   'public/config/release-summary.json',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
@@ -117,7 +119,9 @@ const coverageSummary = await readFile(join(root, 'config/t02-coverage-summary.j
 const publicCoverageSummary = await readFile(join(root, 'public/config/t02-coverage-summary.json'), 'utf8');
 const releaseSummary = await readFile(join(root, 'config/release-summary.json'), 'utf8');
 const publicReleaseSummary = await readFile(join(root, 'public/config/release-summary.json'), 'utf8');
-const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'metric-trace.mjs', 'structured-evidence.mjs'];
+const standardEvidenceLedger = await readFile(join(root, 'config/standard-evidence-ledger.v1.json'), 'utf8');
+const publicStandardEvidenceLedger = await readFile(join(root, 'public/config/standard-evidence-ledger.v1.json'), 'utf8');
+const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'metric-trace.mjs', 'profiles.mjs', 'standard-evidence.mjs', 'structured-evidence.mjs'];
 const browserRuntimeParity = await Promise.all(browserRuntimeModules.map(async (file) => {
   const source = await readFile(join(root, 'src', file), 'utf8');
   const publicCopy = await readFile(join(root, 'public/src', file), 'utf8');
@@ -152,6 +156,7 @@ checks.push({ id: 'profile:t02-descriptive-package', pass: t02ProfilePayload.pro
 checks.push({ id: 'config:public-batch-declaration-parity', pass: batchDeclaration === publicBatchDeclaration });
 checks.push({ id: 'config:public-coverage-summary-parity', pass: coverageSummary === publicCoverageSummary });
 checks.push({ id: 'config:public-release-summary-parity', pass: releaseSummary === publicReleaseSummary && JSON.parse(releaseSummary).schemaVersion === 'h2-testlens.release-summary.v1' });
+checks.push({ id: 'config:public-standard-evidence-ledger-parity', pass: standardEvidenceLedger === publicStandardEvidenceLedger && JSON.parse(standardEvidenceLedger).schemaVersion === 'h2-testlens.standard-evidence-ledger.v1' && JSON.parse(standardEvidenceLedger).evidenceRows?.length >= 18 });
 checks.push({ id: 'runtime:public-browser-modules-parity', pass: browserRuntimeParity.every(Boolean) });
 const coverageEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_coverage_audit_v${packageJson.version}.json`);
 const referenceEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_reference_audit_v${packageJson.version}.json`);

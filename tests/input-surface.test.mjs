@@ -26,7 +26,9 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   ]);
   const server = await read('server.mjs');
   const [releaseSource, releasePublic] = await Promise.all([read('config/release-summary.json'), read('public/config/release-summary.json')]);
+  const [ledgerSource, ledgerPublic] = await Promise.all([read('config/standard-evidence-ledger.v1.json'), read('public/config/standard-evidence-ledger.v1.json')]);
   assert.deepEqual(JSON.parse(releasePublic), JSON.parse(releaseSource));
+  assert.deepEqual(JSON.parse(ledgerPublic), JSON.parse(ledgerSource));
   for (const page of [staticPage, vinextPage]) {
     assert.match(page, /multiple/);
     assert.match(page, /\.csv/);
@@ -58,6 +60,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /loadReleaseSummary/);
   assert.match(app, /updateAccessibleSummaries/);
   assert.match(app, /enterprise-performance-chart-summary/);
+  assert.match(app, /ensureStandardEvidenceLedger/);
   assert.match(app, /renderMetricTrace/);
   assert.match(styles, /.mobile-nav a { min-height: 44px/);
   assert.equal(publicApp, app);
@@ -145,6 +148,8 @@ test('Vinext App public runtime exposes the browser engines and analysis worker 
     'public/src/analyzer.mjs',
     'public/src/enterprise-adapters.mjs',
     'public/src/metric-trace.mjs',
+    'public/src/profiles.mjs',
+    'public/src/standard-evidence.mjs',
     'public/src/browser-engines.mjs',
     'public/src/vendor/xlsx.full.min.js',
     'public/src/vendor/jszip.min.js',

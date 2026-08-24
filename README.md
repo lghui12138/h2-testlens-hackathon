@@ -16,7 +16,7 @@
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.37**。本轮继续优化 GitHub Pages / App 的真实发布运行时：静态页和 Vinext 页都提供结果播报、图表文字摘要与 44px 移动导航目标；实际被 Vinext 加载的 `public/src` 五个浏览器运行时模块已与 `src/` 强制 parity，避免 GitHub 网站只更新源码而不更新运行时。新增企业 mA/mV/W/时间单位 canonical 转换、跨 session 阶段边界、phase-null 阻断和 measured-only 效率门；AI server route 新增 HTTPS host allowlist、客户端参数隔离、超时和响应大小保护。已新增 versioned metricTrace：JSON/API/Markdown/XLSX 和 App 均可查看 canonical 字段、证据 ID、hash 状态与脱敏行定位；仍不把标准流程映射写成完整符合性声明。
+当前交付版本：**v3.5.37**。本轮继续优化 GitHub Pages / App 的真实发布运行时：静态页和 Vinext 页都提供结果播报、图表文字摘要与 44px 移动导航目标；实际被 Vinext 加载的 `public/src` 五个浏览器运行时模块已与 `src/` 强制 parity，避免 GitHub 网站只更新源码而不更新运行时。新增企业 mA/mV/W/时间单位 canonical 转换、跨 session 阶段边界、phase-null 阻断和 measured-only 效率门；AI server route 新增 HTTPS host allowlist、客户端参数隔离、超时和响应大小保护。已新增 versioned metricTrace：JSON/API/Markdown/XLSX 和 App 均可查看 canonical 字段、证据 ID、hash 状态与脱敏行定位；仍不把标准流程映射写成完整符合性声明。 运行时标准 profile 现要求 compact evidence ledger 绑定，缺失/未知 evidence ID 直接阻断导入。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -96,7 +96,7 @@ npm start
 - v3.5.26：新增源资料完整性核对器，逐文件重新计算当前资料目录的大小和 SHA-256，并对新增、缺失、变更文件 fail-closed；这证明版本化审计仍对应当前目录，但不改变原始数据、参考资料和标准符合性边界。
 - v3.5.27：源资料完整性核对器新增审计根目录、记录总数和重复路径 fail-closed 校验，并补齐三类审计形状回归；T02 原始资料、参考内容和标准符合性边界不变。
 - v3.5.37 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
-- 2026-08-24 继续轮：六智能体完成 metricTrace 设计审查；本轮把字段级 trace 接入 analyzer、public API、批次/对比报告、Markdown、XLSX 和 App 折叠证据表，同时修复 enterprise issue/report 公共响应敏感证据泄露。当前门：`npm test` **170/170**、`npm run check:submission` **129/129**、`npm run typecheck`、Vinext 生产构建 **5/5 阶段**、API smoke 和 package smoke 全通过；GitHub Pages 仍受自定义域 502 和 workflow receipt scope 外部状态影响。
+- 2026-08-24 继续轮：六智能体审查确认 runtime approved profile 的标准 evidence ledger 仍可能绕过；本轮新增 repository-backed compact ledger，API、浏览器 profile import、batch-watch 和 formal readiness 均接入绑定门，public/config parity 也加入提交检查。当前门：`npm test` **171/171**、`npm run check:submission` **132/132**、`npm run typecheck`、Vinext 生产构建 **5/5 阶段**、API smoke 和 package smoke 全通过；GitHub Pages 自定义域 502 与 workflow receipt scope 仍是外部残余。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
 - 企业专用图：车辆绝缘阻值与 350/250 kΩ 报警线、电堆有效极化点与短稳定点标记

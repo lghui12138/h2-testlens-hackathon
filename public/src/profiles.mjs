@@ -1,3 +1,5 @@
+import { validateProfileEvidenceBindings } from './standard-evidence.mjs';
+
 export const DEVICE_PROFILES = Object.freeze([
   {
     id: 'electrolyzer-demo',
@@ -988,13 +990,20 @@ export function validateProfilePackage(payload) {
   return { ok: errors.length === 0, errors };
 }
 
-export function profilesFromPackage(payload) {
+export function profilesFromPackage(payload, options = {}) {
   const validation = validateProfilePackage(payload);
   if (!validation.ok) return validation;
+  const evidenceRows = Array.isArray(options.evidenceRows) ? options.evidenceRows : [];
+  const requiresLedger = options.requireEvidenceLedger === true && (payload.profiles || []).some((profile) => Array.isArray(profile?.standardRefs) && profile.standardRefs.length && profile.methodSource);
+  const standardEvidenceBinding = requiresLedger
+    ? evidenceRows.length ? validateProfileEvidenceBindings(payload, evidenceRows, { requireEvidenceIds: true }) : { ready: false, checks: [], error: 'standardEvidenceLedger 缺失' }
+    : { ready: true, checks: [], status: 'not_configured' };
+  if (requiresLedger && !standardEvidenceBinding.ready) return { ok: false, errors: ['运行时标准 evidence ledger 绑定失败：' + (standardEvidenceBinding.error || standardEvidenceBinding.checks?.flatMap((check) => check.binding?.missing || []).join('、') || '未知错误')], standardEvidenceBinding };
   return {
     ok: true,
     errors: [],
     organization: payload.organization || '未命名企业配置',
+    standardEvidenceBinding,
     profiles: payload.profiles.map((profile) => ({
       ...profile,
       approvalStatus: profile.approvalStatus || 'pending',
@@ -1006,6 +1015,7 @@ export function profilesFromPackage(payload) {
       standardRefs: profile.standardRefs || [],
       methodSource: profile.methodSource || null,
       standardReferenceEvidence: standardReferenceReadiness(profile),
+      standardEvidenceBinding,
       profilePackageValidated: true,
       methodImplementationEvidence: profile.methodImplementationEvidence || null,
       methodExecutionStatus: profile.methodExecutionStatus || (profile.standardRefs?.length ? 'ENTERPRISE_PROFILE_REQUIRED' : null),
