@@ -105,6 +105,31 @@ const findHeader = (headers, candidates = []) => {
   return null;
 };
 
+const PROFILE_FIELD_ALIASES = Object.freeze({
+  pressure_kpa: ['pressure_bar', 'pressure', 'p_bar', 'p', '压力'],
+  power_kw: ['power_w', 'power', 'electrical_power', 'input_power', '电功率', '输入功率', '功率'],
+  current_a: ['current_a', 'current', 'i_a', 'i', '电流'],
+  voltage_v: ['voltage_v', 'voltage', 'u_v', 'u', '电压'],
+  flow_slpm: ['flow_slpm', 'flow', 'flow_rate', '流量'],
+  leak_ppm: ['leak_ppm', 'leak', 'leakage', 'hydrogen_leak', '泄漏', '泄漏监测'],
+  temperature_c: ['temperature_c', 'temperature', 'temp_c', 'temp', '温度']
+});
+
+function resolveProfileMapping(config, enterpriseField) {
+  const mapping = config?.fieldMapping;
+  if (!mapping || typeof mapping !== 'object') return null;
+  const direct = mapping[enterpriseField];
+  if (direct) return String(direct).trim() || null;
+  const aliases = PROFILE_FIELD_ALIASES[enterpriseField];
+  if (aliases) {
+    for (const alias of aliases) {
+      const value = mapping[alias];
+      if (value) return String(value).trim() || null;
+    }
+  }
+  return null;
+}
+
 function parseTimestamp(value) {
   const text = String(value ?? '').trim();
   if (!text) return null;
@@ -197,7 +222,21 @@ function linearTrend(points) {
   const yMean = mean(points.map(([, y]) => y));
   const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
   if (!denominator) return { slopePerDay: 0, intercept: yMean };
-  const slopePerSecond = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0) / denominator;
+  let slopePerSecond;
+  if (points.length >= 3) {
+    const slopes = [];
+    for (let i = 0; i < points.length; i += 1) {
+      for (let j = i + 1; j < points.length; j += 1) {
+        const dx = points[j][0] - points[i][0];
+        if (Math.abs(dx) > 1e-12) slopes.push((points[j][1] - points[i][1]) / dx);
+      }
+    }
+    if (slopes.length) {
+      slopes.sort((a, b) => a - b);
+      slopePerSecond = slopes.length % 2 === 1 ? slopes[Math.floor(slopes.length / 2)] : (slopes[slopes.length / 2 - 1] + slopes[slopes.length / 2]) / 2;
+    }
+  }
+  if (!Number.isFinite(slopePerSecond)) slopePerSecond = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0) / denominator;
   return { slopePerDay: slopePerSecond * 86400, intercept: yMean - slopePerSecond * xMean };
 }
 
@@ -247,9 +286,24 @@ function fitTrendModel(points, requestedModel = 'linear', xUnit = 'h') {
   } else {
     const denominator = centered.reduce((sum, [z]) => sum + z ** 2, 0);
     if (!denominator) return { ...base, status: 'singular' };
+    let linearSlope;
+    if (clean.length >= 3) {
+      const slopes = [];
+      for (let i = 0; i < clean.length; i += 1) {
+        for (let j = i + 1; j < clean.length; j += 1) {
+          const dx = clean[j][0] - clean[i][0];
+          if (Math.abs(dx) > 1e-12) slopes.push((clean[j][1] - clean[i][1]) / dx);
+        }
+      }
+      if (slopes.length) {
+        slopes.sort((a, b) => a - b);
+        linearSlope = slopes.length % 2 === 1 ? slopes[Math.floor(slopes.length / 2)] : (slopes[slopes.length / 2 - 1] + slopes[slopes.length / 2]) / 2;
+      }
+    }
+    if (!Number.isFinite(linearSlope)) linearSlope = centered.reduce((sum, [z, y]) => sum + z * (y - yMean), 0) / denominator;
     coefficients = {
       quadratic: 0,
-      linear: centered.reduce((sum, [z, y]) => sum + z * (y - yMean), 0) / denominator,
+      linear: linearSlope,
       intercept: yMean
     };
   }
@@ -462,7 +516,8 @@ function enterpriseMeasurementReadiness(config, rows) {
     // but that derived value cannot satisfy a profile that explicitly requires
     // an original power channel.
     if (field === 'power_w') return !hasNumericValue(rows, 'raw_power_w');
-    return !hasNumericValue(rows, field);
+    const enterpriseField = field === 'pressure_bar' ? 'pressure_kpa' : field;
+    return !hasNumericValue(rows, enterpriseField);
   });
   const derivedOnlyPower = requiredMeasurements.includes('power_w')
     && !hasNumericValue(rows, 'raw_power_w')
@@ -1156,7 +1211,15 @@ function continuousCurrentSegments(rows, { kind, minimumDurationS, binWidthA, ac
     const currentS = row.session_timestamp_s ?? row.timestamp_s;
     const gap = Number.isFinite(previousS) && Number.isFinite(currentS) ? currentS - previousS : 0;
     const bucket = Math.round(current / binWidthA);
-    if (active && (active.bucket !== bucket || gap > gapLimitS)) close();
+    if (active && gap > gapLimitS) close();
+    if (active) {
+      const activeCurrents = active.rows.map((r) => r.current_a).filter(Number.isFinite);
+      const activeMin = Math.min(...activeCurrents);
+      const activeMax = Math.max(...activeCurrents);
+      const tolerance = binWidthA / 2;
+      const outOfRange = current < activeMin - tolerance || current > activeMax + tolerance;
+      if (active.bucket !== bucket || outOfRange) close();
+    }
     if (!active) active = { bucket, sessionId: row.session_id, rows: [row] };
     else active.rows.push(row);
   });
@@ -1212,6 +1275,8 @@ function relativeStabilityConfig(config, parameterConfig, minimumDurationS) {
   };
 }
 
+const STABLE_WINDOW_TOLERANCE_S = 1e-9;
+
 function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
   const timeOf = (row) => row?.session_timestamp_s ?? row?.timestamp_s;
   const windows = [];
@@ -1221,11 +1286,11 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
     let endIndex = startIndex;
     while (endIndex + 1 < sampleRows.length) {
       const nextTime = timeOf(sampleRows[endIndex + 1]);
-      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS) break;
+      if (!Number.isFinite(nextTime) || nextTime - startTime > stability.windowS + STABLE_WINDOW_TOLERANCE_S) break;
       endIndex += 1;
     }
     const endTime = timeOf(sampleRows[endIndex]);
-    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS) continue;
+    if (!Number.isFinite(endTime) || endTime - startTime < stability.windowS - STABLE_WINDOW_TOLERANCE_S) continue;
     const windowRows = sampleRows.slice(startIndex, endIndex + 1);
     const checks = stability.rules.map((rule) => {
       const values = windowRows.map((row) => row[rule.field]).filter(Number.isFinite);
@@ -1259,7 +1324,7 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
   return merged.filter((window) => {
     const start = timeOf(sampleRows[window.startIndex]);
     const end = timeOf(sampleRows[window.endIndex]);
-    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS;
+    return Number.isFinite(start) && Number.isFinite(end) && end - start >= minimumDurationS - STABLE_WINDOW_TOLERANCE_S;
   }).map((window) => ({
     ...window,
     startS: timeOf(sampleRows[window.startIndex]),
@@ -1393,7 +1458,11 @@ function buildDurability(rows, config) {
 function buildVehicle(rows, config) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const efficiencyFields = efficiencyMapping(headers);
-  const mapping = Object.fromEntries(VEHICLE_FIELDS.map(([field, source]) => [field, headers.includes(source) ? source : null]));
+  const mapping = Object.fromEntries(VEHICLE_FIELDS.map(([field, source]) => {
+    const profileSource = resolveProfileMapping(config, field);
+    const candidates = [profileSource, source].filter((candidate) => headers.includes(candidate));
+    return [field, candidates[0] || null];
+  }));
   const dynamicConfig = config.vehicleDynamicAnalysis && typeof config.vehicleDynamicAnalysis === 'object' ? config.vehicleDynamicAnalysis : {};
   const vehicleSignalUnits = config.vehicleSignalUnits && typeof config.vehicleSignalUnits === 'object' ? config.vehicleSignalUnits : {};
   const vehicleUnitEvidenceRequired = config.vehicleUnitEvidenceRequired === true;
@@ -1410,9 +1479,12 @@ function buildVehicle(rows, config) {
     const raw = num(value);
     if (raw === null) return null;
     const declared = vehicleSignalUnits[field];
-    const unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
+    let unit = normalizeVehicleUnit(typeof declared === 'string' ? declared : declared?.sourceUnit);
     const varianceField = field === 'cell_voltage_variance';
     const allowedUnits = varianceField ? ['mV²', 'V²'] : ['mV', 'V'];
+    if (varianceField && !unit && !vehicleUnitEvidenceRequired && raw >= 0 && raw <= 1_000_000) {
+      unit = 'mV²';
+    }
     if (unit && !allowedUnits.includes(unit)) {
       unresolvedUnitFields.add(field);
       return null;
@@ -1497,9 +1569,14 @@ function buildVehicle(rows, config) {
   const rowsForAnalysis = requestedWindow ? analysisRows : normalized;
   const stateCounts = Object.fromEntries([...new Set(rowsForAnalysis.map((row) => row.main_status).filter((value) => value !== null))].sort((a, b) => a - b).map((state) => [String(state), rowsForAnalysis.filter((row) => row.main_status === state).length]));
   const isolationStatusRows = rowsForAnalysis.filter((row) => [4, 8].includes(row.main_status));
-  const isolationRows = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm > 0 && row.isolation_kohm < 9999 && row.isolation_kohm !== 65535);
+  const toInsulationNumber = (value) => (value === null || value === undefined ? NaN : Number(value));
+  const INSULATION_CENSOR_THRESHOLD = 9999;
+  const INSULATION_SENTINEL = 65535;
+  const isValidInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && num > 0 && num !== INSULATION_SENTINEL && num < INSULATION_CENSOR_THRESHOLD; };
+  const isCensoredInsulation = (value) => { const num = toInsulationNumber(value); return Number.isFinite(num) && (num >= INSULATION_CENSOR_THRESHOLD || num === INSULATION_SENTINEL); };
+  const isolationRows = isolationStatusRows.filter((row) => isValidInsulation(row.isolation_kohm));
   const isolationExcludedByStatus = rowsForAnalysis.length - isolationStatusRows.length;
-  const isolationCensoredAboveRange = isolationStatusRows.filter((row) => row.isolation_kohm !== null && (row.isolation_kohm >= 9999 || row.isolation_kohm === 65535)).length;
+  const isolationCensoredAboveRange = isolationStatusRows.filter((row) => isCensoredInsulation(row.isolation_kohm)).length;
   const isolationExcludedMissing = isolationStatusRows.filter((row) => row.isolation_kohm === null).length;
   const isolationExcludedNonPositive = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm <= 0).length;
   const buckets = new Map();
@@ -2130,26 +2207,26 @@ function buildStack(rows, config) {
   const cellHeaders = headers.filter((header) => /^(单片电压\d+|CELL\d+)/i.test(String(header).trim()));
   const cellUnitSpecs = Object.fromEntries(cellHeaders.map((header, index) => [`cell_${index + 1}_v`, unitSpec(header, 'voltage_v')]));
   const mapping = {
-    phase: findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
-    timestamp_s: findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
-    current_a: findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流']),
+    phase: resolveProfileMapping(config, 'phase') || findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
+    timestamp_s: resolveProfileMapping(config, 'timestamp_s') || findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
+    current_a: resolveProfileMapping(config, 'current_a') || findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流']),
     // Prefer the actual stack voltage when both an aggregate/diagnostic
     // `总电压` channel and an electrical `实际电压` channel are exported.
     // The raw power channel is checked against the electrical measurement,
     // not against a diagnostic total that may use a different convention.
-    voltage_v: findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压']),
-    power_kw: findHeader(headers, ['功率（kW）', '功率（kW)', '功率(kW)', '电堆功率']),
+    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压']),
+    power_kw: resolveProfileMapping(config, 'power_kw') || findHeader(headers, ['功率（kW）', '功率（kW)', '功率(kW)', '电堆功率']),
     avg_cell_voltage_v: findHeader(headers, ['平均电压', '平均单片电压']),
     min_cell_voltage_v: findHeader(headers, ['最小电压（V）', '最小电压(V)', '单片电压最小值']),
     max_cell_voltage_v: findHeader(headers, ['最大电压（V）', '最大电压(V)', '单片电压最大值']),
     current_density_mAcm2: findHeader(headers, ['电流密度（mA/cm2）', '电流密度', '电流密度']),
-    temperature_c: findHeader(headers, ['冷却水入口温度（℃）', '冷却水入口温度', '循环水入堆温度（℃）', '循环水入堆温度']),
-    pressure_kpa: findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)', '循环水入堆压力（kPa）']),
-    flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
-    leak_ppm: findHeader(headers, ['柜内氢气浓度（ppm）', '氢气浓度', '测试区氢气浓度（ppm）']),
+    temperature_c: resolveProfileMapping(config, 'temperature_c') || findHeader(headers, ['冷却水入口温度（℃）', '冷却水入口温度', '循环水入堆温度（℃）', '循环水入堆温度']),
+    pressure_kpa: resolveProfileMapping(config, 'pressure_kpa') || findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)', '循环水入堆压力（kPa）']),
+    flow_slpm: resolveProfileMapping(config, 'flow_slpm') || findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
+    leak_ppm: resolveProfileMapping(config, 'leak_ppm') || findHeader(headers, ['柜内氢气浓度（ppm）', '氢气浓度', '测试区氢气浓度（ppm）']),
     cell_count: findHeader(headers, ['片数']),
     coolant_dt: findHeader(headers, ['冷却液温差', '循环水进出口温差', '冷却水温差']),
-    anode_in_pressure_kpa: findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)']),
+    anode_in_pressure_kpa: resolveProfileMapping(config, 'pressure_kpa') || findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)']),
     anode_out_pressure_kpa: findHeader(headers, ['阳极出堆压力（kPa）', '阳极气体出堆压力(kpa)']),
     cathode_in_pressure_kpa: findHeader(headers, ['阴极入堆压力（kPa）', '阴极气体进堆压力(kpa)']),
     cathode_out_pressure_kpa: findHeader(headers, ['阴极出堆压力（kPa）', '阴极气体出堆压力(kpa)']),
@@ -2157,7 +2234,7 @@ function buildStack(rows, config) {
     coolant_out_pressure_kpa: findHeader(headers, ['循环水出堆压力（kPa）', '电堆循环水出堆压力(kpa)']),
     coolant_in_temp_c: findHeader(headers, ['循环水入堆温度（℃）', '冷却水入口温度（℃）', '冷却水入口温度']),
     coolant_out_temp_c: findHeader(headers, ['循环水出堆温度（℃）', '冷却水出口温度（℃）', '冷却水出口温度']),
-    anode_in_temp_c: findHeader(headers, ['阳极入堆温度（℃）', '阳极气体进堆温度（℃）', '氢气入口温度']),
+    anode_in_temp_c: resolveProfileMapping(config, 'temperature_c') || findHeader(headers, ['阳极入堆温度（℃）', '阳极气体进堆温度（℃）', '氢气入口温度']),
     anode_out_temp_c: findHeader(headers, ['阳极出堆温度（℃）', '阳极气体出堆温度（℃）']),
     cathode_in_temp_c: findHeader(headers, ['阴极入堆温度（℃）', '阴极气体进堆温度（℃）', '空气入口温度']),
     cathode_out_temp_c: findHeader(headers, ['阴极出堆温度（℃）', '阴极气体出堆温度（℃）']),
@@ -2165,7 +2242,7 @@ function buildStack(rows, config) {
     air_dewpoint_c: findHeader(headers, ['空气入口露点温度', '阴极入口露点温度']),
     h2_humidifier_water_temp_c: findHeader(headers, ['阳极增湿罐水温度（℃）', '阳极增湿罐水温度']),
     air_humidifier_water_temp_c: findHeader(headers, ['阴极增湿罐水温度（℃）', '阴极增湿罐水温度']),
-    anode_flow_slpm: findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
+    anode_flow_slpm: resolveProfileMapping(config, 'flow_slpm') || findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
     cathode_flow_slpm: findHeader(headers, ['阴极流量（SLPM）', '阴极气体流量(L/Min)', '阴极气体流量']),
     h2_stoich: findHeader(headers, ['氢气计量比', '氢气化学计量比']),
     air_stoich: findHeader(headers, ['空气计量比', '空气化学计量比']),

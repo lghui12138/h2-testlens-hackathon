@@ -385,6 +385,216 @@ export const DEVICE_PROFILES = Object.freeze([
     acceptanceCriteria: {},
     durabilityRules: {},
     thresholds: null
+  },
+  {
+    id: 'qingchuan-stack',
+    name: '青川科技 · 电堆时序测试 profile',
+    source: 'T02 企业资料字段审计（未审批）',
+    description: '针对青川科技 127 列电堆时序 CSV 的字段映射与描述性统计；基于真实数据集 38,257 行回归验证。不执行企业目标工况符合性或正式放行判定。',
+    approvalStatus: 'example_unapproved',
+    applicationScope: '青川科技燃料电池电堆稳态/动态时序测试数据',
+    intendedUse: '电流平台识别、单片电压统计、温度/压力趋势、候选稳定区间描述；需企业批准参数工作簿才可进入目标工况路径',
+    methodId: 'QINGCHUAN-stack-rule-set',
+    revision: '2026-08',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    evaluationMode: 'descriptive_only',
+    supportedDatasetTypes: ['stack'],
+    standardRefs: [
+      { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
+      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
+    ],
+    methodSource: { sourceId: 'qingchuan_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_qingchuan_field_mapping'] },
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    traceabilityRequirements: {
+      required: true,
+      requireEvidenceRef: true,
+      fields: [
+        { id: 'testRunId', label: '测试运行编号', valueType: 'reference' },
+        { id: 'deviceId', label: '设备编号', valueType: 'reference' },
+        { id: 'testType', label: '测试类型', valueType: 'text' },
+        { id: 'testDate', label: '测试日期', valueType: 'date' },
+        { id: 'cellCount', label: '片数', valueType: 'number' }
+      ]
+    },
+    requiredMeasurements: ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm'],
+    acquisitionRequirements: {
+      requireSamplingFrequency: true,
+      requireSynchronization: true,
+      requireEvidenceRef: true,
+      requiredChannels: [
+        { field: 'timestamp_s', unit: 's' },
+        { field: 'current_a', unit: 'A' },
+        { field: 'voltage_v', unit: 'V' },
+        { field: 'temperature_c', unit: '°C' },
+        { field: 'pressure_bar', unit: 'bar' },
+        { field: 'flow_slpm', unit: 'SLPM' }
+      ]
+    },
+    preCheckRequirements: [
+      { id: 'device_identity', label: '设备身份与电堆编号', required: true },
+      { id: 'test_bench', label: '测试台与气液路状态', required: true },
+      { id: 'instruments', label: '仪器与采集系统状态', required: true },
+      { id: 'safety', label: '安全联锁与报警状态', required: true }
+    ],
+    requiredPhases: ['steady', 'dynamic'],
+    requiredPhaseMetrics: {
+      steady: ['durationS', 'avgCellVoltageV', 'voltageVariance'],
+      dynamic: ['durationS', 'currentRangeA']
+    },
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    scopeRules: {
+      maxCellCount: 40,
+      maxTemperatureC: 85,
+      maxPressureBar: 50,
+      description: '青川科技电堆时序测试覆盖；具体限值以企业批准资料为准。'
+    },
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: '测试时间',
+      current_a: '实际电流（A）',
+      voltage_v: '实际电压（V）',
+      temperature_c: '阳极入堆温度（℃）',
+      pressure_bar: '阳极入堆压力（kPa）',
+      flow_slpm: '阳极流量（SLPM）',
+      leak_ppm: '柜内氢气浓度（ppm）',
+      power_w: '功率（kW)'
+    }
+  },
+  {
+    id: 'qingzhihuli-vehicle',
+    name: '氢质氢离 · 车辆运行数据 profile',
+    source: 'T02 企业资料字段审计（未审批）',
+    description: '针对氢质氢离 FC_* 车辆运行信号的字段映射与描述性统计；基于真实数据集 212 车 20,294 行、345 车 12,945 行回归验证。不执行企业目标工况符合性或正式放行判定。',
+    approvalStatus: 'example_unapproved',
+    applicationScope: '氢质氢离燃料电池车辆运行信号与绝缘时序测试数据',
+    intendedUse: 'FC_* 字段映射、绝缘阻值趋势、电流平台识别、候选稳定区间描述；需企业批准参数工作簿才可进入目标工况路径',
+    methodId: 'QINGZHIHULI-vehicle-rule-set',
+    revision: '2026-08',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    evaluationMode: 'descriptive_only',
+    supportedDatasetTypes: ['vehicle'],
+    standardRefs: [
+      { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
+      { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] }
+    ],
+    methodSource: { sourceId: 'qingzhihuli_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_qingzhihuli_field_mapping'] },
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    traceabilityRequirements: {
+      required: true,
+      requireEvidenceRef: true,
+      fields: [
+        { id: 'testRunId', label: '测试运行编号', valueType: 'reference' },
+        { id: 'vehicleId', label: '车辆编号', valueType: 'reference' },
+        { id: 'testType', label: '测试类型', valueType: 'text' },
+        { id: 'testDate', label: '测试日期', valueType: 'date' }
+      ]
+    },
+    requiredMeasurements: ['current_a', 'voltage_v', 'temperature_c', 'pressure_bar', 'flow_slpm'],
+    acquisitionRequirements: {
+      requireSamplingFrequency: true,
+      requireSynchronization: true,
+      requireEvidenceRef: true,
+      requiredChannels: [
+        { field: 'timestamp_s', unit: 's' },
+        { field: 'current_a', unit: 'A' },
+        { field: 'voltage_v', unit: 'V' },
+        { field: 'temperature_c', unit: '°C' },
+        { field: 'pressure_bar', unit: 'bar' },
+        { field: 'flow_slpm', unit: 'SLPM' }
+      ]
+    },
+    preCheckRequirements: [
+      { id: 'vehicle_identity', label: '车辆身份与燃料电池系统编号', required: true },
+      { id: 'test_bench', label: '测试台与气液路状态', required: true },
+      { id: 'instruments', label: '仪器与采集系统状态', required: true },
+      { id: 'safety', label: '安全联锁与报警状态', required: true }
+    ],
+    requiredPhases: ['steady', 'dynamic'],
+    requiredPhaseMetrics: {
+      steady: ['durationS', 'avgCellVoltageV'],
+      dynamic: ['durationS', 'currentRangeA']
+    },
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    scopeRules: {
+      vehicleTypes: ['FCV', 'FCEV'],
+      maxTemperatureC: 85,
+      maxPressureBar: 50,
+      description: '氢质氢离车辆运行数据覆盖；具体限值以企业批准资料为准。'
+    },
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: 'Timestamp',
+      current_a: 'FC_CurrOut',
+      voltage_v: 'FC_VoltOut',
+      power_w: 'FC_NetPwrOut'
+    }
+  },
+  {
+    id: 'hypu-durability',
+    name: '氢璞创能 · 耐久测试数据 profile',
+    source: 'T02 企业资料字段审计（未审批）',
+    description: '针对氢璞创能耐久报告（XLSX/DOCX）的字段映射与描述性统计；基于出厂检测报告解析与功率点分析。不执行企业预警阈值或放行判定。',
+    approvalStatus: 'example_unapproved',
+    applicationScope: '氢璞创能燃料电池耐久台架测试与出厂检测数据',
+    intendedUse: '耐久功率点统计、电芯电压趋势、跨报告可比性描述、预警检测；需企业批准规则和方法版本才可进入风险筛查',
+    methodId: 'HYPU-durability-rule-set',
+    revision: '2026-08',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    evaluationMode: 'descriptive_only',
+    supportedDatasetTypes: ['durability'],
+    standardRefs: [
+      { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] }
+    ],
+    methodSource: { sourceId: 'hypu_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_hypu_field_mapping'] },
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    traceabilityRequirements: {
+      required: true,
+      requireEvidenceRef: true,
+      fields: [
+        { id: 'testRunId', label: '测试运行编号', valueType: 'reference' },
+        { id: 'deviceId', label: '设备编号', valueType: 'reference' },
+        { id: 'testType', label: '测试类型', valueType: 'text' },
+        { id: 'testDate', label: '测试日期', valueType: 'date' }
+      ]
+    },
+    requiredMeasurements: ['current_a', 'voltage_v', 'power_w'],
+    acquisitionRequirements: {
+      requireSamplingFrequency: true,
+      requireSynchronization: true,
+      requireEvidenceRef: true,
+      requiredChannels: [
+        { field: 'timestamp_s', unit: 's' },
+        { field: 'current_a', unit: 'A' },
+        { field: 'voltage_v', unit: 'V' },
+        { field: 'power_w', unit: 'W' }
+      ]
+    },
+    preCheckRequirements: [
+      { id: 'device_identity', label: '设备身份与出厂编号', required: true },
+      { id: 'test_bench', label: '测试台状态', required: true },
+      { id: 'instruments', label: '仪器与采集系统状态', required: true },
+      { id: 'safety', label: '安全联锁与报警状态', required: true }
+    ],
+    requiredPhases: ['steady'],
+    requiredPhaseMetrics: {
+      steady: ['durationS', 'peakPowerW', 'minimumPowerW']
+    },
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    durabilityRules: {
+      enableVoltageMonitoring: true,
+      enablePowerTracking: true,
+      warningThresholdPct: 10
+    },
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: '时间',
+      current_a: '电流',
+      voltage_v: '电压',
+      power_w: '功率'
+    }
   }
 ]);
 
