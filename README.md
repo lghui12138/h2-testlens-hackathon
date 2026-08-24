@@ -172,11 +172,30 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## 边界测试覆盖
 
-- 当前测试套件共 **203 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 当前测试套件共 **210 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
 - 运行方式：`npm test`。
 - 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
 
+## 企业级边界测试
+
+本轮新增 **7 条**企业级边缘用例，进一步锁定真实企业数据中的异常文件与解析退化路径：
+
+- 青川 **127 列**样本缺失单片电压列时，系统执行降级处理，不阻断整体分析，同时在报告中标记缺失证据。
+- 氢质氢离样本中 `FC_MainSts` **全为同一有效状态**时，绝缘窗口统计仍按会话边界输出候选区间，不伪造额外状态变化。
+- 极大压力值 **9999** 的峰值统计与告警：保留描述性峰值证据，按企业默认阈值输出警告，不自动升级为合规判定。
+- **负电流值**处理与 `peakPowerW` 计算：对负电流执行显式过滤/标记，功率计算仅使用有效区间，避免符号错误污染 KPI。
+- **时间戳乱序**时的 `nonMonotonicCount` 与 `TIME_SEQUENCE` 警告：识别乱序事件并计入质量证据，正式阶段判定仍保持 fail-closed。
+- **重复表头名**的后列覆盖前列处理：同一列名出现多次时保留最后有效声明，并在字段映射与报告中显式记录覆盖关系。
+- **混合逗号/制表符分隔**的解析容错：单文件内分隔符不一致时逐块识别并保留原始文本证据，不因格式噪声丢失整批记录。
+
 ## Python 增强版
+
+配套 Python 增强实现位于独立仓库，提供 FastAPI 后端与更完整的工程分析骨架，当前测试门为 **70/70**：
+
+[![Python Enhanced](https://img.shields.io/badge/Python%20Enhanced-t02--equipment--test--report--assistant-20bfa5)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)](https://github.com/lghui12138/t02-equipment-test-report-assistant) [![CI](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/lghui12138/t02-equipment-test-report-assistant/actions/workflows/ci.yml)
+
+- 仓库地址：`https://github.com/lghui12138/t02-equipment-test-report-assistant`
+- 包含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
 
 配套 Python 增强实现位于独立仓库，提供 FastAPI 后端与更完整的工程分析骨架：
 
@@ -184,6 +203,14 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 - 仓库地址：`https://github.com/lghui12138/t02-equipment-test-report-assistant`
 - 包含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
+
+## 前端易用性
+
+- 拖放上传：支持 CSV/TXT/Excel/DOCX 直接拖入浏览器窗口，自动触发解析与会话隔离。
+- 快速启动引导覆盖层：首次打开时提供步骤提示，降低企业用户上手成本。
+- 加载状态指示器：大文件导入、批次聚合和报告生成时展示进度与可回退状态。
+- ARIA 标签：关键操作区域补全可访问性标签，保证键盘导航与屏幕阅读器可用。
+- 移动端 44px 按钮：触控目标统一到 44px 以上，适配手机/平板现场评审场景。
 
 ## 贡献指南
 
