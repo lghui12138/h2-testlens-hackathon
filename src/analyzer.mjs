@@ -933,18 +933,21 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
   const integrateFlowU = () => {
     const flowU = u('flow_slpm');
     if (flowU === null) return null;
-    const segments = [];
+    const contributions = new Map();
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
       if (!sameSession(previous, current)) continue;
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
-      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previous.flow_slpm !== null && current.flow_slpm !== null) segments.push(flowU * deltaS / 60);
+      if (deltaS <= 0 || (maxIntervalS !== null && deltaS > maxIntervalS) || previous.flow_slpm === null || current.flow_slpm === null) continue;
+      const coefficient = deltaS / 60 / 2;
+      contributions.set(index - 1, (contributions.get(index - 1) || 0) + flowU * coefficient);
+      contributions.set(index, (contributions.get(index) || 0) + flowU * coefficient);
     }
-    return rss(segments);
+    return contributions.size ? rss([...contributions.values()]) : null;
   };
   const integrateEnergyU = () => {
-    const segments = [];
+    const contributions = new Map();
     for (let index = 1; index < rows.length; index += 1) {
       const previous = rows[index - 1];
       const current = rows[index];
@@ -952,9 +955,12 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
       const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
       const previousU = powerU(previous);
       const currentU = powerU(current);
-      if (deltaS > 0 && (maxIntervalS === null || deltaS <= maxIntervalS) && previousU !== null && currentU !== null) segments.push(((previousU + currentU) / 2) * deltaS / 3600);
+      if (deltaS <= 0 || (maxIntervalS !== null && deltaS > maxIntervalS) || previousU === null || currentU === null) continue;
+      const coefficient = deltaS / 3600 / 2;
+      contributions.set(index - 1, (contributions.get(index - 1) || 0) + previousU * coefficient);
+      contributions.set(index, (contributions.get(index) || 0) + currentU * coefficient);
     }
-    return rss(segments);
+    return contributions.size ? rss([...contributions.values()]) : null;
   };
   const energyU = integrateEnergyU();
   const volumeU = integrateFlowU();

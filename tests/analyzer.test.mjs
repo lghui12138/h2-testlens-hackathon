@@ -132,7 +132,21 @@ test('uses the original power uncertainty when a profile provides it', () => {
     uncertaintyModel: { method: 'first_order_rss', coverageFactor: 2, standardUncertainty: { current_a: 99, voltage_v: 99, power_w: 0.5, flow_slpm: 0.05, temperature_c: 0.2, pressure_bar: 0.02, leak_ppm: 0.5, hydrogen_purity_pct: 0.01 } },
     testMetadata: { signoff: 'reviewer' }
   });
-  assert.equal(result.uncertainty.metrics.energyConsumedWh, 1 / 60);
+  assert.ok(Math.abs(result.uncertainty.metrics.energyConsumedWh - Math.sqrt(2) / 120) < 1e-12);
+});
+
+test('propagates trapezoid uncertainty by sample sensitivity without double-counting interior points', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,power_w,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,10,30,10,6,1',
+    '1,10,2,10,30,10,6,1',
+    '2,10,2,10,30,10,6,1'
+  ].join('\n')), {
+    uncertaintyModelRequired: true,
+    uncertaintyModel: { method: 'first_order_rss', coverageFactor: 1, standardUncertainty: { power_w: 1, flow_slpm: 1, temperature_c: 0.2, pressure_bar: 0.02, leak_ppm: 0.5 } }
+  });
+  const expected = Math.sqrt(1.5) / 3600;
+  assert.ok(Math.abs(result.uncertainty.metrics.energyConsumedWh - expected) < 1e-12);
 });
 
 test('detects pressure and leak risks and preserves traceable evidence', () => {

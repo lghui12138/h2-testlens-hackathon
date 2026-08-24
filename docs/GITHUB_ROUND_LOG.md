@@ -5,7 +5,8 @@
 - 部分原始功率通道不再显示为完整的“原始功率 + 交叉核算”；分析输出 `mixed`、原始/派生/缺失计数和覆盖率，并给出 `POWER_SOURCE_MIXED` 复核提示。
 - 关键数值字段出现缺失单元格时生成 `DATA_GAP` 复核提示，保留原始缺失，不使用插值或默认值替代。
 - T02 页面把 `blocked_binary` 与 `declared_no_upload` 分成两个计数和两种解释；Next 与静态入口统一流程导航、GitHub Pages canonical/OG URL、初始化错误态，并对导入 profile 名称做 HTML 转义。
-- 回归门：`npm test` 158/158、`npm run check:submission` 124/124、`npm run typecheck`、`npm run eval:ai` 4/4、API smoke、Pages 静态准备和干净克隆 Vinext 生产构建 5/5 阶段通过。
+- 梯形积分不确定度按采样点敏感系数累计后再做 RSS，避免中间采样点被两个相邻区间重复按完整端点计权；新增 3 点边界回归。
+- 回归门：`npm test` 159/159、`npm run check:submission` 124/124、`npm run typecheck`、`npm run eval:ai` 4/4、API smoke、Pages 静态准备和干净克隆 Vinext 生产构建 5/5 阶段通过。
 
 ## 2026-08-24 · T02 车辆单位强制门轮
 

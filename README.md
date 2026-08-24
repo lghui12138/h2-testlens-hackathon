@@ -96,7 +96,7 @@ npm start
 - v3.5.26：新增源资料完整性核对器，逐文件重新计算当前资料目录的大小和 SHA-256，并对新增、缺失、变更文件 fail-closed；这证明版本化审计仍对应当前目录，但不改变原始数据、参考资料和标准符合性边界。
 - v3.5.27：源资料完整性核对器新增审计根目录、记录总数和重复路径 fail-closed 校验，并补齐三类审计形状回归；T02 原始资料、参考内容和标准符合性边界不变。
 - v3.5.37 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
-- 2026-08-24 继续轮：混合原始功率覆盖输出 `mixed` 与覆盖率/缺口证据，任何关键数值单元缺失都生成 `DATA_GAP` 复核提示；T02 页面将 `blocked_binary` 与 `declared_no_upload` 分开展示，静态/Next 导航、canonical/OG URL、初始化错误态和 profile 名称 HTML 转义完成 parity 回归。当前门：`npm test` **158/158**、`npm run check:submission` **124/124**、`npm run typecheck`、`npm run eval:ai` **4/4**、API smoke、Pages 静态准备和 Vinext 生产构建 **5/5 阶段**通过；仍不改变 `DEMO_ONLY` 边界。
+- 2026-08-24 继续轮：混合原始功率覆盖输出 `mixed` 与覆盖率/缺口证据，任何关键数值单元缺失都生成 `DATA_GAP` 复核提示；梯形积分不确定度改为按采样点敏感系数累计 RSS，避免重复计权；T02 页面将 `blocked_binary` 与 `declared_no_upload` 分开展示，静态/Next 导航、canonical/OG URL、初始化错误态和 profile 名称 HTML 转义完成 parity 回归。当前门：`npm test` **159/159**、`npm run check:submission` **124/124**、`npm run typecheck`、`npm run eval:ai` **4/4**、API smoke、Pages 静态准备和 Vinext 生产构建 **5/5 阶段**通过；仍不改变 `DEMO_ONLY` 边界。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
 - 企业专用图：车辆绝缘阻值与 350/250 kΩ 报警线、电堆有效极化点与短稳定点标记
