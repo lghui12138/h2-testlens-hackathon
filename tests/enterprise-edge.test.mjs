@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
 
 test('青川 127 列样本缺失单片电压列时降级为电堆堆级分析并告警', () => {
@@ -129,4 +130,55 @@ test('混合逗号与制表符分隔时按首行 majority delimiter 解析', () 
   assert.equal(result.rows[1].timestamp_s, null);
   assert.equal(result.rows[1].current_a, 2);
   assert.equal(result.rows[1].voltage_v, null);
+});
+
+test('青川真实样例数据 100 行可进入电堆分析且压力字段正确映射', async () => {
+  const text = await readFile('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv', 'utf8');
+  const lines = text.split(/\r?\n/).filter((line) => line.trim());
+  const sliced = lines.slice(0, 101).join('\n');
+  const result = analyzeRows(parseCSV(sliced));
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.schema.mapping.power_kw, '功率（kW)');
+  assert.equal(result.schema.mapping.pressure_kpa, '阳极入堆压力（kPa）');
+});
+
+test('氢质氢离 FC_* 车辆数据绝缘窗口统计保留所有有效状态', () => {
+  const csv = [
+    'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours',
+    '2026-07-07 18:20:00,4,95,320,30,0.6,1,0.68,8,10,500,1',
+    '2026-07-07 18:21:00,4,95,320,30,0.6,1,0.68,8,10,480,1',
+    '2026-07-07 18:22:00,4,95,320,30,0.6,1,0.68,8,10,350,1',
+    '2026-07-07 18:23:00,4,95,320,30,0.6,1,0.68,8,10,240,1',
+    '2026-07-07 18:24:00,4,95,320,30,0.6,1,0.68,8,10,200,1'
+  ].join('\n');
+
+  const result = analyzeRows(parseCSV(csv), { evaluationMode: 'descriptive_only' });
+  assert.equal(result.datasetType, 'vehicle');
+  assert.equal(result.dataset.insulation.validCount, 5);
+  assert.equal(result.dataset.insulation.excludedByStatus, 0);
+  assert.ok(result.dataset.insulation.points.length >= 1);
+});
+
+test('氢璞创能耐久报告解析保留功率点和企业原始结果', () => {
+  const rows = [
+    { target_power_kw: '33', net_power_kw: '32.9', average_cell_voltage_mv: '813', average_deviation_mv: '6', voltage_variance: '20', temperature_c: '57.5', source_file: 'hypu-a.docx' },
+    { target_power_kw: '58.5', net_power_kw: '53.0', average_cell_voltage_mv: '790', average_deviation_mv: '12', voltage_variance: '25', temperature_c: '60.0', source_file: 'hypu-a.docx' },
+    { target_power_kw: '117', net_power_kw: '112.5', average_cell_voltage_mv: '760', average_deviation_mv: '18', voltage_variance: '30', temperature_c: '65.0', source_file: 'hypu-a.docx' },
+    { target_power_kw: '156', net_power_kw: '150.0', average_cell_voltage_mv: '720', average_deviation_mv: '25', voltage_variance: '35', temperature_c: '70.0', source_file: 'hypu-b.docx' },
+    { target_power_kw: '175.5', net_power_kw: '168.0', average_cell_voltage_mv: '680', average_deviation_mv: '30', voltage_variance: '40', temperature_c: '73.0', source_file: 'hypu-b.docx' },
+    { target_power_kw: '195', net_power_kw: '185.0', average_cell_voltage_mv: '650', average_deviation_mv: '35', voltage_variance: '45', temperature_c: '75.0', source_file: 'hypu-b.docx' }
+  ];
+  const reports = [
+    { metadata: { 测试方案: '耐久0-5', 测试结果: '未通过', 电堆型号: 'H3300B' }, points: rows.slice(0, 3) },
+    { metadata: { 测试方案: '耐久5-10', 测试结果: '通过', 电堆型号: 'H3300B' }, points: rows.slice(3, 6) }
+  ];
+  const result = analyzeRows(rows, { durabilityReports: reports, durabilityRules: {} });
+  assert.equal(result.datasetType, 'durability');
+  assert.equal(result.dataset.points.length, 6);
+  assert.deepEqual(result.dataset.targetPowers, [33, 58.5, 117, 156, 175.5, 195]);
+  assert.equal(result.dataset.reports.length, 2);
+  assert.equal(result.dataset.reports[0].metadata['测试结果'], '未通过');
+  assert.equal(result.dataset.reports[0].metadata['电堆型号'], 'H3300B');
+  assert.equal(result.dataset.points[0].targetPowerKw, 33);
+  assert.equal(result.dataset.points[0].sourceFile, 'hypu-a.docx');
 });

@@ -2594,3 +2594,18 @@ test('acceptance mode blocks cached workbook formulas until formula review evide
   assert.equal(reviewed.releaseGate.workbookFormulaReview.ready, true);
   assert.equal(reviewed.issues.some((item) => item.code === 'WORKBOOK_FORMULA_REVIEW_MISSING'), false);
 });
+
+test('qingchuan profile pressure_bar maps to kPa source correctly', () => {
+  const profile = getProfile('qingchuan-stack');
+  const header = '测试时间,实际电流（A）,实际电压（V）,功率（kW),平均电压（V）,最小电压（V）,最大电压（V）,极差（mV）,标准差（mV）,电流密度（mA/cm2）,单片电压1（V）,阳极入堆压力（kPa）,阳极流量（SLPM）,柜内氢气浓度（ppm）,片数';
+  const row = (second, current, voltage, power, avgCell, cell1, pressure, flow, leak, count) => [
+    `2026/6/23 14:${String(Math.floor(second / 60)).padStart(2, '0')}:${String(second % 60).padStart(2, '0')}`,
+    current, voltage, power * 3.6, voltage * current, voltage * 0.9, voltage * 1.1, 2, 0.005,
+    current * 4.382, cell1, pressure, flow, leak, count
+  ].join(',');
+  const rows = parseCSV([header, ...Array.from({ length: 10 }, (_, i) => row(i * 2, 14.7, 0.601, 4.64, 0.601, 0.561, 159.8, 84.5, 0.7, 100))].join('\n'));
+  const result = analyzeRows(rows, { ...profile, fieldMapping: profile.fieldMapping, profileId: profile.id, profileName: profile.name, profileSource: profile.source });
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.schema.mapping.pressure_kpa, '阳极入堆压力（kPa）');
+  assert.equal(result.schema.mapping.power_kw, '功率（kW)');
+});
