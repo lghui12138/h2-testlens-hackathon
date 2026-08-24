@@ -458,12 +458,18 @@ export const DEVICE_PROFILES = Object.freeze([
       pressure_bar: '阳极入堆压力（kPa）',
       flow_slpm: '阳极流量（SLPM）',
       leak_ppm: '柜内氢气浓度（ppm）',
-      power_w: '功率（kW)',
+      power_kw: '功率（kW)',
       cell_count: '片数',
       avg_cell_voltage_v: '平均电压（V）',
       min_cell_voltage_v: '最小电压（V）',
       max_cell_voltage_v: '最大电压（V）',
       current_density_mAcm2: '电流密度（mA/cm2）',
+      h2_dewpoint_c: '氢气入口露点温度（℃）',
+      air_dewpoint_c: '空气入口露点温度（℃）',
+      coolant_dt: '循环水进出口温差（℃）',
+      h2_stoich: '氢气计量比',
+      air_stoich: '空气计量比',
+      internal_resistance: '内阻（mΩ）',
       anode_out_temp_c: '阳极出堆温度（℃）',
       cathode_in_temp_c: '阴极入堆温度（℃）',
       cathode_out_temp_c: '阴极出堆温度（℃）',
@@ -478,6 +484,9 @@ export const DEVICE_PROFILES = Object.freeze([
       air_humidifier_water_temp_c: '阴极增湿罐水温度（℃）',
       coolant_flow_lpm: '循环水流量（L/min）',
       coolant_conductivity_us_cm: '循环水电导率（μS/cm）',
+    },
+    dataQualityRequirements: {
+      maxIntervalS: 1
     }
   },
   {
@@ -554,6 +563,14 @@ export const DEVICE_PROFILES = Object.freeze([
       cell_voltage_variance: 'FC_VARVoltage',
       isolation_kohm: 'FC_VehicleIsolationR',
       runtime_h: 'FC_RunTime_Hours'
+    },
+    vehicleSignalUnits: {
+      min_cell_voltage_v: { sourceUnit: 'V' },
+      avg_cell_voltage_v: { sourceUnit: 'V' },
+      cell_voltage_variance: { sourceUnit: 'V²' }
+    },
+    dataQualityRequirements: {
+      maxIntervalMultiplier: 5
     }
   },
   {
@@ -615,8 +632,11 @@ export const DEVICE_PROFILES = Object.freeze([
     thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
     fieldMapping: {
       timestamp_s: '时间',
-      current_a: ' 电堆电流',
-      voltage_v: ' 电堆电压'
+      current_a: '电堆电流',
+      voltage_v: '电堆电压'
+    },
+    dataQualityRequirements: {
+      maxIntervalS: 5
     }
   }
 ]);

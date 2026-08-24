@@ -430,3 +430,47 @@ test('unitTransform handles kA->A and kV->V conversions', () => {
   assert.equal(kvResult.schema.conversions.voltage_v.factor, 1000);
   assert.equal(kvResult.schema.conversions.voltage_v.label, 'kV→V');
 });
+
+test('qingchuan-stack profile uses canonical power_kw mapping and covers real T02 headers', () => {
+  const profile = getProfile('qingchuan-stack');
+  assert.ok(profile, 'qingchuan-stack profile must exist');
+  assert.equal(profile.fieldMapping?.power_kw, '功率（kW)', 'profile should use canonical power_kw key');
+  assert.equal(profile.fieldMapping?.power_w, undefined, 'legacy power_w key should be removed');
+  assert.ok(profile.fieldMapping?.h2_dewpoint_c, 'should map hydrogen dewpoint');
+  assert.ok(profile.fieldMapping?.air_dewpoint_c, 'should map air dewpoint');
+  assert.ok(profile.fieldMapping?.coolant_dt, 'should map coolant temperature difference');
+  assert.ok(profile.fieldMapping?.h2_stoich, 'should map hydrogen stoichiometry');
+  assert.ok(profile.fieldMapping?.air_stoich, 'should map air stoichiometry');
+  assert.ok(profile.fieldMapping?.internal_resistance, 'should map internal resistance');
+  assert.ok(profile.dataQualityRequirements?.maxIntervalS, 'should declare data quality interval requirement');
+});
+
+test('qingzhihuli-vehicle profile declares vehicleSignalUnits and dataQualityRequirements', () => {
+  const profile = getProfile('qingzhihuli-vehicle');
+  assert.ok(profile, 'qingzhihuli-vehicle profile must exist');
+  assert.ok(profile.vehicleSignalUnits, 'profile should declare vehicle signal units');
+  assert.equal(profile.vehicleSignalUnits?.min_cell_voltage_v?.sourceUnit, 'V', 'min cell voltage should be V');
+  assert.equal(profile.vehicleSignalUnits?.avg_cell_voltage_v?.sourceUnit, 'V', 'avg cell voltage should be V');
+  assert.equal(profile.vehicleSignalUnits?.cell_voltage_variance?.sourceUnit, 'V²', 'cell voltage variance should be V²');
+  assert.ok(profile.dataQualityRequirements?.maxIntervalMultiplier, 'should declare data quality multiplier');
+});
+
+test('hypu-durability profile has clean fieldMapping without leading whitespace', () => {
+  const profile = getProfile('hypu-durability');
+  assert.ok(profile, 'hypu-durability profile must exist');
+  const mapping = profile.fieldMapping || {};
+  for (const [key, value] of Object.entries(mapping)) {
+    assert.equal(value, String(value).trim(), `hypu-durability fieldMapping[${key}] should not have leading/trailing whitespace`);
+  }
+});
+
+test('qingchuan-stack real fixture 212 and 345 vehicle data do not regress adapter entrypoints', async () => {
+  const fixture212 = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-212-real.csv'), 'utf8');
+  const fixture345 = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-345-real.csv'), 'utf8');
+  const result212 = analyzeEnterpriseRows(parseCSV(fixture212), getProfile('qingzhihuli-vehicle'));
+  const result345 = analyzeEnterpriseRows(parseCSV(fixture345), getProfile('qingzhihuli-vehicle'));
+  assert.equal(result212.datasetType, 'vehicle');
+  assert.equal(result345.datasetType, 'vehicle');
+  assert.ok(result212.dataset.insulation.validCount >= 1);
+  assert.ok(result345.dataset.insulation.validCount >= 1);
+});

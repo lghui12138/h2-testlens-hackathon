@@ -202,9 +202,9 @@ function unitTransform(field, header) {
     if (normalized.includes('min') || normalized.includes('分钟')) return { mode: 'scale', factor: 60, label: 'min→s' };
   }
   if (field === 'power_w' || field === 'power_setpoint_w') {
-    if (/\bmw\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
-    if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
     if (normalized.includes('mw') || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
+    if (/\bmw\b/.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
+    if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
   }
   if (field === 'current_a' && (/\bua\b/i.test(String(header ?? '')) || /\bµa\b/i.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µA→A' };
   if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };

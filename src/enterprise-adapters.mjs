@@ -58,8 +58,8 @@ const normalizeUnit = (value) => String(value ?? '')
 
 const UNIT_DEFINITIONS = Object.freeze({
   timestamp_s: { s: 1, sec: 1, second: 1, seconds: 1, ms: 0.001, millisecond: 0.001, milliseconds: 0.001, min: 60, minute: 60, minutes: 60, h: 3600, hr: 3600, hour: 3600 },
-  current_a: { a: 1, amp: 1, amps: 1, 安: 1, ma: 0.001, 毫安: 0.001, ka: 1000, 千安: 1000 },
-  voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001, kv: 1000, 千伏: 1000 },
+  current_a: { a: 1, amp: 1, amps: 1, 安: 1, ma: 0.001, 毫安: 0.001, ka: 1000, 'kA': 1000, 千安: 1000 },
+  voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001, kv: 1000, 'kV': 1000, 千伏: 1000 },
   power_kw: { kw: 1, mw: 1000, w: 0.001, 瓦: 0.001 },
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
   flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
@@ -2259,12 +2259,12 @@ function buildStack(rows, config) {
   const mapping = {
     phase: resolveProfileMapping(config, 'phase') || findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
     timestamp_s: resolveProfileMapping(config, 'timestamp_s') || findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
-    current_a: resolveProfileMapping(config, 'current_a') || findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流']),
+    current_a: resolveProfileMapping(config, 'current_a') || findHeader(headers, ['实际电流（A）', '实际电流(A)', '电堆电流', '电流（kA）', '电流(kA)']),
     // Prefer the actual stack voltage when both an aggregate/diagnostic
     // `总电压` channel and an electrical `实际电压` channel are exported.
     // The raw power channel is checked against the electrical measurement,
     // not against a diagnostic total that may use a different convention.
-    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压']),
+    voltage_v: resolveProfileMapping(config, 'voltage_v') || findHeader(headers, ['实际电压（V）', '实际电压(V)', '实际电压', '总电压（V）', '总电压(V)', '电堆电压', '电压（kV）', '电压(kV)']),
     power_kw: resolveProfileMapping(config, 'power_kw') || findHeader(headers, ['功率（kW）', '功率（kW)', '功率(kW)', '电堆功率']),
     avg_cell_voltage_v: findHeader(headers, ['平均电压', '平均单片电压']),
     min_cell_voltage_v: findHeader(headers, ['最小电压（V）', '最小电压(V)', '单片电压最小值']),
@@ -2272,7 +2272,7 @@ function buildStack(rows, config) {
     current_density_mAcm2: findHeader(headers, ['电流密度（mA/cm2）', '电流密度', '电流密度']),
     temperature_c: resolveProfileMapping(config, 'temperature_c') || findHeader(headers, ['冷却水入口温度（℃）', '冷却水入口温度', '循环水入堆温度（℃）', '循环水入堆温度']),
     pressure_kpa: resolveProfileMapping(config, 'pressure_kpa') || findHeader(headers, ['阳极入堆压力（kPa）', '阳极气体进堆压力(kpa)', '循环水入堆压力（kPa）']),
-    flow_slpm: resolveProfileMapping(config, 'flow_slpm') || findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量']),
+    flow_slpm: resolveProfileMapping(config, 'flow_slpm') || findHeader(headers, ['阳极流量（SLPM）', '阳极气体流量(L/Min)', '阳极气体流量', '流量（SLPM）', '流量(SLPM)']),
     leak_ppm: resolveProfileMapping(config, 'leak_ppm') || findHeader(headers, ['柜内氢气浓度（ppm）', '氢气浓度', '测试区氢气浓度（ppm）']),
     cell_count: findHeader(headers, ['片数']),
     coolant_dt: findHeader(headers, ['冷却液温差', '循环水进出口温差', '冷却水温差']),
