@@ -1,7 +1,9 @@
 {
   "audit": "T02 actual parser coverage audit",
   "auditVersion": "3.5.36",
-  "root": "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手",
+  "root": "T02_SOURCE_ROOT",
+  "sourceRootLabel": "T02_SOURCE_ROOT",
+  "pathDisclosure": "redacted",
   "rawDataCopiedIntoRepository": false,
   "processedDefinition": "文件已由配置的文本/XLSX/DOCX 解析器读取，并进入对应企业数据适配器或耐久结构化入口；不代表每个字段都参与 KPI，也不代表标准符合性。",
   "totalFiles": 198,

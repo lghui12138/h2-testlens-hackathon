@@ -5,9 +5,10 @@ import { execFile } from 'node:child_process';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { dirname, extname, relative, resolve } from 'node:path';
+import { homedir } from 'node:os';
 
 const exec = promisify(execFile);
-const defaultRoot = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+const defaultRoot = process.env.T02_SOURCE_ROOT || `${homedir()}/Downloads/T02_设备测试数据分析与自动报告助手`;
 const inputRoot = resolve(process.argv[2] || defaultRoot);
 const packageVersion = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version;
 const outputPath = resolve(process.argv[3] || `${resolve(new URL('..', import.meta.url).pathname)}/.research/ignite_t02_standards_20260821/t02_reference_audit_v${packageVersion}.json`);
@@ -217,7 +218,9 @@ const sourceEvidenceSummary = {
 const summary = {
   audit: 'T02 reference-content and implementation mapping audit',
   auditVersion: packageVersion,
-  root: inputRoot,
+  root: 'T02_SOURCE_ROOT',
+  sourceRootLabel: 'T02_SOURCE_ROOT',
+  pathDisclosure: 'redacted',
   rawReferenceFilesCopiedIntoRepository: false,
   totalReferenceFiles: records.length,
   parserErrors: records.filter((record) => record.status === 'parser_error').length,

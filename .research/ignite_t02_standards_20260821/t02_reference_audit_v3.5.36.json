@@ -1,7 +1,9 @@
 {
   "audit": "T02 reference-content and implementation mapping audit",
   "auditVersion": "3.5.36",
-  "root": "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手",
+  "root": "T02_SOURCE_ROOT",
+  "sourceRootLabel": "T02_SOURCE_ROOT",
+  "pathDisclosure": "redacted",
   "rawReferenceFilesCopiedIntoRepository": false,
   "totalReferenceFiles": 7,
   "parserErrors": 0,

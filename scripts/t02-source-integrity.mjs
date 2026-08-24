@@ -5,9 +5,10 @@ import { createReadStream } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { extname, relative, resolve } from 'node:path';
+import { homedir } from 'node:os';
 
 const repoRoot = resolve(new URL('..', import.meta.url).pathname);
-const defaultSourceRoot = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+const defaultSourceRoot = process.env.T02_SOURCE_ROOT || `${homedir()}/Downloads/T02_设备测试数据分析与自动报告助手`;
 
 export async function listSourceFiles(sourceRoot) {
   const files = [];
@@ -40,7 +41,7 @@ export async function compareSourceToAudit({ sourceRoot, audit }) {
   const actualFiles = await listSourceFiles(root);
   const auditPaths = audit.records.map((record) => record.path);
   const duplicateAuditPaths = [...new Set(auditPaths.filter((path, index) => auditPaths.indexOf(path) !== index))].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
-  const auditRoot = audit.root ? resolve(audit.root) : null;
+  const auditRoot = audit.root && audit.root !== 'T02_SOURCE_ROOT' ? resolve(audit.root) : null;
   const auditRootMismatch = Boolean(auditRoot && auditRoot !== root);
   const auditTotalFilesMismatch = Number.isInteger(audit.totalFiles) && audit.totalFiles !== audit.records.length;
   const auditIssues = [
@@ -68,6 +69,7 @@ export async function compareSourceToAudit({ sourceRoot, audit }) {
     auditVersion: audit.auditVersion || null,
     sourceRoot: root,
     auditRoot,
+    auditRootLabel: audit.rootLabel || (audit.root === 'T02_SOURCE_ROOT' ? 'T02_SOURCE_ROOT' : null),
     auditValid: auditIssues.length === 0,
     auditIssues,
     duplicateAuditPaths,

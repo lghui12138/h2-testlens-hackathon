@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve } from 'node:path';
+import { homedir } from 'node:os';
 import vm from 'node:vm';
 import { parseCSV } from '../src/analyzer.mjs';
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
@@ -23,7 +24,7 @@ const ensureDocxEngine = async () => {
   docxReady = true;
 };
 
-const defaultRoot = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+const defaultRoot = process.env.T02_SOURCE_ROOT || `${homedir()}/Downloads/T02_设备测试数据分析与自动报告助手`;
 const inputRoot = resolve(process.argv[2] || defaultRoot);
 const packageVersion = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version;
 const t02ProfilePackage = JSON.parse(await readFile(new URL('../config/t02-profile.example.json', import.meta.url), 'utf8'));
@@ -840,7 +841,9 @@ const duplicateHashes = Object.entries(processedRecords.reduce((accumulator, rec
 const summary = {
   audit: 'T02 actual parser coverage audit',
   auditVersion: packageVersion,
-  root: inputRoot,
+  root: 'T02_SOURCE_ROOT',
+  sourceRootLabel: 'T02_SOURCE_ROOT',
+  pathDisclosure: 'redacted',
   rawDataCopiedIntoRepository: false,
   processedDefinition: '文件已由配置的文本/XLSX/DOCX 解析器读取，并进入对应企业数据适配器或耐久结构化入口；不代表每个字段都参与 KPI，也不代表标准符合性。',
   totalFiles: records.length,

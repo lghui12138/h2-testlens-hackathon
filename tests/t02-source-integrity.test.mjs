@@ -59,3 +59,18 @@ test('T02 source integrity rejects an audit with a wrong root, count, or duplica
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('T02 source integrity accepts a redacted public audit root while validating file fingerprints', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'h2-testlens-source-integrity-redacted-'));
+  try {
+    await writeFile(join(root, 'run.csv'), 'timestamp_s,current_a\n0,1\n', 'utf8');
+    const fingerprint = await fingerprintFile(join(root, 'run.csv'));
+    const audit = { auditVersion: 'test', root: 'T02_SOURCE_ROOT', sourceRootLabel: 'T02_SOURCE_ROOT', pathDisclosure: 'redacted', totalFiles: 1, records: [{ path: 'run.csv', bytes: fingerprint.bytes, sha256: fingerprint.sha256 }] };
+    const result = await compareSourceToAudit({ sourceRoot: root, audit });
+    assert.equal(result.auditValid, true);
+    assert.equal(result.drift, false);
+    assert.equal(result.auditRootLabel, 'T02_SOURCE_ROOT');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
