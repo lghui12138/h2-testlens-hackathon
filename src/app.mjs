@@ -476,6 +476,19 @@ function showMetricSkeletons() {
   const grid = $('#metric-grid');
   if (!grid) return;
   grid.innerHTML = Array.from({ length: 8 }).map(() => `<article class="metric-card skeleton skeleton-card"><div class="skeleton-text short"></div><div class="skeleton-text"></div><div class="skeleton-text"></div></article>`).join('');
+  const chartWrap = $('#trend-chart')?.parentElement;
+  if (chartWrap && !chartWrap.querySelector('.chart-skeleton-message')) {
+    chartWrap.classList.add('chart-loading');
+    chartWrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>分析完成后将在此渲染趋势图</span></div>');
+  }
+  ['enterprise-chart', 'enterprise-performance-chart'].forEach((id) => {
+    const canvas = $(`#${id}`);
+    const wrap = canvas?.parentElement;
+    if (wrap && !wrap.querySelector('.chart-skeleton-message')) {
+      wrap.classList.add('chart-loading');
+      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>识别到企业数据后将显示专用图表</span></div>`);
+    }
+  });
 }
 
 function renderMetrics(result) {

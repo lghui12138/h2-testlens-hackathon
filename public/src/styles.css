@@ -252,6 +252,64 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 .skeleton-text.short { width: 60%; }
 .skeleton-card { height: 116px; border-radius: 10px; }
 
+/* Chart loading skeleton */
+.chart-loading { position: relative; }
+.chart-loading::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(104,229,202,.08), transparent); animation: skeleton-shimmer 1.6s infinite; z-index: 2; pointer-events: none; }
+.chart-loading canvas { opacity: 0; transition: opacity .25s ease; }
+.chart-ready canvas { opacity: 1; }
+.chart-error { border-color: rgba(255,125,120,.35) !important; }
+.chart-error::before { content: ""; position: absolute; inset: 0; background: rgba(74,35,40,.18); z-index: 1; pointer-events: none; border-radius: inherit; }
+
+/* Micro-interactions: metric cards */
+.metric-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.metric-card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0,0,0,.18); }
+.metric-card:active { transform: translateY(-1px); }
+
+/* Micro-interactions: batch queue items */
+.batch-queue-item { transition: border-color .18s ease, background .18s ease, transform .15s ease; }
+.batch-queue-item:hover { border-color: rgba(104,229,202,.28); background: rgba(16,51,61,.92); }
+.batch-queue-item:active { transform: scale(.995); }
+
+/* Micro-interactions: recent file chips */
+.recent-file-chip { transition: border-color .18s ease, color .18s ease, background .18s ease, transform .15s ease; }
+.recent-file-chip:hover { transform: translateY(-1px); }
+.recent-file-chip:active { transform: translateY(0); background: rgba(104,229,202,.06); }
+
+/* Upload button active state */
+.upload-button:active { transform: translateY(0); background: #8feeD9; }
+
+/* Chart fade-in */
+.trend-section canvas, .enterprise-panel canvas { animation: chartFadeIn .35s ease; }
+@keyframes chartFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Empty state styles */
+.empty-state { display: grid; place-items: center; text-align: center; padding: 26px 18px; color: var(--muted); font-size: 11px; line-height: 1.6; min-height: 120px; }
+.empty-state svg { width: 38px; height: 38px; margin-bottom: 10px; opacity: .7; }
+.empty-state strong { display: block; color: var(--muted-strong); font-size: 12px; margin-bottom: 4px; }
+
+/* Report preview empty state */
+.report-preview-empty { display: grid; place-items: center; text-align: center; padding: 38px 22px; color: var(--muted); font-size: 11px; line-height: 1.6; min-height: 180px; }
+.report-preview-empty svg { width: 42px; height: 42px; margin-bottom: 12px; opacity: .65; }
+.report-preview-empty strong { display: block; color: var(--muted-strong); font-size: 12px; margin-bottom: 6px; }
+
+/* Issue list empty state */
+.issue-empty-state { display: grid; grid-template-columns: 28px 1fr; gap: 13px; padding: 14px; border: 1px solid #1c424c; border-radius: 10px; background: rgba(14,48,59,.84); color: var(--muted); font-size: 11px; line-height: 1.6; }
+.issue-empty-state svg { width: 22px; height: 22px; opacity: .7; }
+.issue-empty-state strong { display: block; color: var(--muted-strong); font-size: 12px; margin-bottom: 3px; }
+
+/* Loading overlay transition */
+.overlay { transition: opacity .2s ease; }
+.overlay[hidden] { opacity: 0; pointer-events: none; }
+
+/* Button active feedback */
+.primary-button:active { transform: translateY(0); background: #5bD4b8; }
+.outline-button:active { background: rgba(104,229,202,.18); }
+.ai-button:active { background: #1F4A52; }
+.icon-button:active { background: #0F2E36; }
+
+/* Focus ring consistency */
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+
 /* Data quality indicators */
 .metric-card .quality-meter { height: 4px; margin-top: 10px; border-radius: 99px; background: #12333e; overflow: hidden; }
 .metric-card .quality-meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--mint), #a78bfa); transition: width .3s ease; }

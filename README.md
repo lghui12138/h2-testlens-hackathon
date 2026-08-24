@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.50**。本轮完成计算准确性修复、数据覆盖透明度升级与 Pages 同步：青川 127 列电堆 CSV 字段映射闭环，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行回归测试可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`），enterprise adapter 深度绑定 profile fieldMapping。前端易用性增强： verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **226/226** 全绿，Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.53**。本轮完成计算准确性修复、数据覆盖透明度升级与 Pages 同步：青川 127 列电堆 CSV 字段映射闭环，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行回归测试可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`），enterprise adapter 深度绑定 profile fieldMapping。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **259/259** 全绿，Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -30,7 +30,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 每轮 GitHub 更新记录见 [`docs/GITHUB_ROUND_LOG.md`](docs/GITHUB_ROUND_LOG.md)。
 
-v3.5.50 证据：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.50.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.50.json`、`.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.50.md`。
+v3.5.53 证据：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.53.json`、`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.53.json`、`.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.53.md`。
 
 ## 运行
 
@@ -128,10 +128,10 @@ GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #
 
 - 本地 CSV 导入和演示样本加载
 - 企业资料结构适配：车辆 `FC_*` CSV、中文电堆 CSV、GB18030/带明确 BOM 的 UTF-16 制表符 TXT 和原始时序 XLSX；支持多文件 CSV/TXT 批次导入；原始企业数据不进入仓库
-- T02 实际解析覆盖审计：`npm run t02:coverage` 默认写入当前版本 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.50.json`，也支持显式输入/输出参数；对 198 个资料文件输出 SHA-256、实际原始数据解析器、参考审计要求和逐文件使用台账（当前 190 processed / 6 reference_only / 1 blocked_binary / 1 declared_no_upload）；新增证据深度分层为 143 `descriptive_interval`、13 `dynamic_event_only`、34 `generic_metrics_only`、8 `reference_boundary`、0 `formal_kpi`；7 个参考边界文件与独立参考审计逐文件交叉链接；车辆 46 列、电堆 127/422 列以“分析输入/交叉核对/目录保留”分层，并验证未分类字段与多角色冲突字段；耐久 8 份报告的跨报告筛查发现电堆型号不一致；真实 XLSX 公式 6,572/6,572 有缓存值，正式验收仍需人工公式复核证据；缺少企业目标参数时还输出 `inferred/descriptive_only` 候选区间，但不把候选、文件扫描或规则原型误写成标准符合
-- T02 源资料完整性核对：`npm run t02:integrity -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.50.json"` 重新计算当前目录全部文件的大小和 SHA-256，并校验审计根目录、记录数和路径唯一性；新增、缺失、变更或审计形状错配会失败并列出，不复制原始资料
-- T02 参考资料内容映射：`npm run t02:reference` 默认写入当前版本 `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.50.json`，也支持显式输入/输出参数；提取企业说明、车辆需求、青川任务说明书和产品背景 PDF/DOCX 的关键词与实现映射；当前 21/21 条声明关键词证据完整，若未来出现不完整项会单独阻断“完整复核”表述；不把参考资料正文复制进仓库，也不把企业需求误写成国家标准
-- T02 全包报告：`npm run t02:report` 读取同版本覆盖/参考审计，生成 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.50.md`，逐项列出 198 个文件、源 SHA-256、原始数据解析状态、参考内容审计状态、逐文件字段角色计数、字段用途矩阵和非符合性边界，并展示耐久跨报告可比性筛查；输入安全层对带明确 BOM 且解码后文本正常的 UTF-16 表格做兼容处理，无 BOM 的控制字节文件仍阻断
+- T02 实际解析覆盖审计：`npm run t02:coverage` 默认写入当前版本 `.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.53.json`，也支持显式输入/输出参数；对 198 个资料文件输出 SHA-256、实际原始数据解析器、参考审计要求和逐文件使用台账（当前 190 processed / 6 reference_only / 1 blocked_binary / 1 declared_no_upload）；新增证据深度分层为 143 `descriptive_interval`、13 `dynamic_event_only`、34 `generic_metrics_only`、8 `reference_boundary`、0 `formal_kpi`；7 个参考边界文件与独立参考审计逐文件交叉链接；车辆 46 列、电堆 127/422 列以“分析输入/交叉核对/目录保留”分层，并验证未分类字段与多角色冲突字段；耐久 8 份报告的跨报告筛查发现电堆型号不一致；真实 XLSX 公式 6,572/6,572 有缓存值，正式验收仍需人工公式复核证据；缺少企业目标参数时还输出 `inferred/descriptive_only` 候选区间，但不把候选、文件扫描或规则原型误写成标准符合
+- T02 源资料完整性核对：`npm run t02:integrity -- "T02_SOURCE_ROOT" ".research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.53.json"` 重新计算当前目录全部文件的大小和 SHA-256，并校验审计根目录、记录数和路径唯一性；新增、缺失、变更或审计形状错配会失败并列出，不复制原始资料
+- T02 参考资料内容映射：`npm run t02:reference` 默认写入当前版本 `.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.53.json`，也支持显式输入/输出参数；提取企业说明、车辆需求、青川任务说明书和产品背景 PDF/DOCX 的关键词与实现映射；当前 21/21 条声明关键词证据完整，若未来出现不完整项会单独阻断“完整复核”表述；不把参考资料正文复制进仓库，也不把企业需求误写成国家标准
+- T02 全包报告：`npm run t02:report` 读取同版本覆盖/参考审计，生成 `.research/ignite_t02_standards_20260821/t02_integration_report_v3.5.53.md`，逐项列出 198 个文件、源 SHA-256、原始数据解析状态、参考内容审计状态、逐文件字段角色计数、字段用途矩阵和非符合性边界，并展示耐久跨报告可比性筛查；输入安全层对带明确 BOM 且解码后文本正常的 UTF-16 表格做兼容处理，无 BOM 的控制字节文件仍阻断
 - 台架耐久 DOCX 报告解析：读取测试结果、目标功率点、平均单体电压、离均差、方差和冷却温度；可配置耐久预警阈值
 - 飞书告警适配：默认 dry-run/JSON 预览，用户明确确认后才向企业批准的机器人 webhook 发送结构化文本
 - 车辆性能趋势：目标电流段平均单体电压、离均差、方差和净功率的点位趋势与斜率参数
@@ -173,7 +173,7 @@ GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #
 - v3.5.26：新增源资料完整性核对器，逐文件重新计算当前资料目录的大小和 SHA-256，并对新增、缺失、变更文件 fail-closed；这证明版本化审计仍对应当前目录，但不改变原始数据、参考资料和标准符合性边界。
 - v3.5.27：源资料完整性核对器新增审计根目录、记录总数和重复路径 fail-closed 校验，并补齐三类审计形状回归；T02 原始资料、参考内容和标准符合性边界不变。
 - v3.5.38 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；已声明物理单体电压时，归一化后的非正值从物理电压 KPI 排除而 raw 保留并计数；电堆阳极/阴极气体流量无标准状态单位或使用实际 `L/min` 时不进入计量比，直接 `UNIT_UNSUPPORTED` 阻断；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；T02 覆盖卡现在可下载前 5 个字段值复核重点的聚合 CSV，供企业确认字段语义/无效码，但不含原始行、不自动判定异常；公共 API 的质量会话摘要递归脱敏来源文件名，Excel workflow 也纳入 source/public parity；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
-- v3.5.50：六智能体进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **226/226**、`npm run check:submission` **226/226**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已闭环，Pages 自定义域仍不可达。
+- v3.5.53：六智能体进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **259/259**、`npm run check:submission` **259/259**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已闭环，Pages 自定义域仍不可达。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
 - 企业专用图：车辆绝缘阻值与 350/250 kΩ 报警线、电堆有效极化点与短稳定点标记
@@ -265,7 +265,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## 边界测试覆盖
 
-- 当前测试套件共 **210 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 当前测试套件共 **259 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
 - 运行方式：`npm test`。
 - 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
 
