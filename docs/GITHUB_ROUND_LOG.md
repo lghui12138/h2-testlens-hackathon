@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · GitHub 远端与 Actions 回读轮
+
+- 提交 `3f83261` 已成功推送到 `main`；GitHub Actions Run 82 已成功，`build` 与 `deploy` 均通过。
+- Pages 项目 URL 仍 301 到 `lghui.top`，自定义域当前不可达；这属于 GitHub Pages/CNAME 外部状态，未修改 DNS、代理或 VPN。
+- 云端 workflow 仍只执行 typecheck/submission/static preparation，未执行 `package:submission`；因此线上静态 receipt 仍可能是 commit/run 已绑定但 package 未执行，未宣称 artifact SHA 已线上回读。
+
 ## 2026-08-24 · T02 逐文件回指与电堆流量安全轮
 
 - 六智能体发现覆盖审计虽保存 198 个 SHA-256，integration report 逐文件表却没有显示；现在报告逐行输出源 SHA-256，198/198 可直接回指，GitHub Pages T02 卡片新增“全包接入报告（含逐文件 SHA-256）”入口。
@@ -14,7 +20,7 @@
 - 易用性修复：四类文件导入完成后清空 input，允许重新选择同名文件；release receipt 空门控映射不再误显示“门控已回读”。
 - 针对性回归通过：标准证据/profile 8/8、analyzer 128/128、静态输入面 10/10；完整测试、打包和 T02 完整性将在提交前重跑。
 - 最终门控：`npm test` **175/175**、`npm run check:submission` **132/132**、typecheck、Vinext build 5/5、API smoke、AI grounding 4/4、T02 源完整性 198/198 unchanged、package smoke 全通过；ZIP SHA-256 以相邻版本化 release receipt/`.sha256` sidecar 为准，避免文档自引用。
-- GitHub 外部残余：本地提交尚未推送；Pages 项目地址仍跳转自定义域且当前不可达，workflow 权限限制仍未改变。
+- GitHub 外部残余：`3f83261` 已推送且 Run 82 成功；Pages 项目地址仍跳转自定义域且当前不可达，workflow package smoke 权限/步骤限制仍未改变。
 
 ## 2026-08-24 · Pages 静态部署回执绑定轮
 
