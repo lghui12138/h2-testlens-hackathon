@@ -313,6 +313,15 @@
 - 回归门：`npm test` 190/190；真实样例验证脚本确认 `datasetType=stack/vehicle`、`verdict=DESCRIPTIVE`，且问题代码与预期边界一致。
 - 公开项目页新增 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html)，独立展示 T02 项目摘要、核心功能与标准边界，不替代 GitHub 仓库完整功能。
 
+## 2026-08-24 · 计算准确性与边界处理改进轮
+
+- 电流平台识别加入分箱容差：新值落入当前段电流范围 ± 半个分箱宽度时仍归并到同一平台，减少微小波动导致平台分裂。
+- 稳定窗口检测加入浮点容差：扩展循环与最终过滤两端均加入 `1e-9` 容差，避免采样间隔导致的边界漏判。
+- 绝缘阻值过滤改为显式谓词：新增 `toInsulationNumber`、`isValidInsulation`、`isCensoredInsulation`，确保 `65535`、`0`、负值、`null`、非数值和数值字符串都被安全处理。
+- 性能趋势线性回归升级为 Theil-Sen 鲁棒估计器：对 3 个及以上数据点取 pairwise slope 中位数，单点异常不再翻转趋势符号；不足点时自动回退 OLS。
+- 新增 4 条回归测试，覆盖平台容差、稳定窗口边界、绝缘 censored 判定和鲁棒趋势回归。
+- 回归门：`npm test` 194/194 全绿；原有 138 条 analyzer 测试全部通过，新增 4 条回归测试通过，`input-surface` 预存失败也随全量运行恢复通过。
+
 ## 使用边界
 
 视觉和导航轮次不改变标准边界：T02 示例 profile 仍是 `descriptive_only`，标准参考仍不是完整方法执行证明，缺少企业批准 profile、仪器溯源、不确定度和人工签核时不进入正式放行结论。
