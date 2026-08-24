@@ -81,7 +81,7 @@ test('converts NL and Wh to the correct kWh/Nm3 specific energy unit', () => {
   ].join('\n')));
   assert.equal(result.metrics.hydrogenVolumeNl, 6);
   assert.equal(result.metrics.energyConsumedWh, 1 / 3);
-  assert.ok(Math.abs(result.metrics.specificEnergyKWhPerNm3 - (500 / 9)) < 1e-9);
+  assert.ok(Math.abs(result.metrics.specificEnergyKWhPerNm3 - (1 / 18)) < 1e-9);
 });
 
 test('uses an original power channel for KPI integration and preserves voltage-current cross-check evidence', () => {
@@ -812,7 +812,7 @@ test('maps the official power-fluctuation workflow phase aliases and reaches a r
   assert.deepEqual(result.phaseCoverage.missing, []);
   assert.deepEqual(result.compliance.missingPhaseMetrics, []);
   assert.equal(result.phaseMetrics.phases.dynamic.powerRangeW, 0);
-  assert.equal(result.phaseMetrics.phases.steady.specificEnergyKWhPerNm3, 10);
+  assert.equal(result.phaseMetrics.phases.steady.specificEnergyKWhPerNm3, 0.01);
   assert.equal(result.metrics.powerSource, 'checked');
   assert.equal(result.compliance.acquisition.status, 'ready');
   assert.equal(result.compliance.preCheck.status, 'ready');
@@ -935,6 +935,16 @@ test('keeps generic multi-file sessions separate for quality, phase summaries, a
   assert.equal(result.metrics.pressureDriftBarPerMin, -30);
   assert.equal(result.phases.length, 2);
   assert.deepEqual(result.phases.map((phase) => phase.sessionId), ['session:file:a.csv', 'session:file:b.csv']);
+});
+
+test('computes phase coverage over the sum of per-session spans', () => {
+  const result = analyzeRows([
+    { session_id: 'file:a.csv', timestamp_s: '0', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'file:a.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'file:b.csv', timestamp_s: '0', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'file:b.csv', timestamp_s: '1', phase: 'steady', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' }
+  ], { requiredPhases: ['steady'], requiredPhaseMetrics: { steady: ['durationS'] } });
+  assert.equal(result.phaseCoverage.required[0].validDataCoveragePct, 100);
 });
 
 test('structured acquisition and pre-check records fail closed without inventing sampling or safety limits', () => {

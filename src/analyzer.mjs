@@ -490,7 +490,17 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
     }
     const startS = timestamps.length ? Math.min(...timestamps) : null;
     const endS = timestamps.length ? Math.max(...timestamps) : null;
-    const spanS = startS !== null && endS !== null ? Math.max(0, endS - startS) : null;
+    const sessionSpans = new Map();
+    for (const index of indexes) {
+      const timestamp = rows[index].timestamp_s;
+      if (timestamp === null) continue;
+      const key = sessionKey(rows[index]);
+      const current = sessionSpans.get(key) || { start: timestamp, end: timestamp };
+      current.start = Math.min(current.start, timestamp);
+      current.end = Math.max(current.end, timestamp);
+      sessionSpans.set(key, current);
+    }
+    const spanS = sessionSpans.size ? [...sessionSpans.values()].reduce((sum, item) => sum + Math.max(0, item.end - item.start), 0) : null;
     return {
       id,
       count: indexes.length,
@@ -550,6 +560,17 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
     const completeTime = validSegments > 0 && interruptedSegmentCount === 0 && nonPositiveIntervalCount === 0;
     const completeEnergy = completeTime && indexes.every((index) => electricalPower(rows[index]) !== null);
     const completeVolume = completeTime && indexes.every((index) => rows[index].flow_slpm !== null);
+    const phaseSessionSpans = new Map();
+    for (const index of indexes) {
+      const timestamp = rows[index].timestamp_s;
+      if (timestamp === null) continue;
+      const key = sessionKey(rows[index]);
+      const current = phaseSessionSpans.get(key) || { start: timestamp, end: timestamp };
+      current.start = Math.min(current.start, timestamp);
+      current.end = Math.max(current.end, timestamp);
+      phaseSessionSpans.set(key, current);
+    }
+    const phaseSpanS = phaseSessionSpans.size ? [...phaseSessionSpans.values()].reduce((sum, item) => sum + Math.max(0, item.end - item.start), 0) : null;
     const phase = {
       phaseId,
       labels: [...new Set(indexes.map((index) => String(rows[index].phase || '未标注')))],
@@ -572,11 +593,12 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       peakPowerW: maxPower,
       minimumPowerW: minPower,
       maximumPowerW: maxPower,
-      validDataCoveragePct: indexes.length >= 2 && rows[indexes[0]].timestamp_s !== null && rows[indexes.at(-1)].timestamp_s !== null && rows[indexes.at(-1)].timestamp_s > rows[indexes[0]].timestamp_s
-        ? (durationS / (rows[indexes.at(-1)].timestamp_s - rows[indexes[0]].timestamp_s)) * 100
+      validDataCoveragePct: indexes.length >= 2 && phaseSpanS !== null && phaseSpanS > 0
+        ? (durationS / phaseSpanS) * 100
         : indexes.length >= 2 ? 100 : null
     };
-    if (phase.energyConsumedWh !== null && phase.hydrogenVolumeNl !== null && phase.hydrogenVolumeNl > 0) phase.specificEnergyKWhPerNm3 = phase.energyConsumedWh / phase.hydrogenVolumeNl * 1000;
+    // Wh/NL and kWh/Nm³ are numerically equivalent: both numerator and denominator scale by 1,000.
+    if (phase.energyConsumedWh !== null && phase.hydrogenVolumeNl !== null && phase.hydrogenVolumeNl > 0) phase.specificEnergyKWhPerNm3 = phase.energyConsumedWh / phase.hydrogenVolumeNl;
     phases[phaseId] = phase;
     for (const metric of requirements[phaseId] || []) {
       if (!Number.isFinite(phase[metric])) missing.push(`${phaseId}.${metric}`);
@@ -1266,7 +1288,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
   const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600, quality.gapLimitS, integrationEvidence.energyConsumed);
-  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl * 1000 : null;
+  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl : null;
   const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel, quality.gapLimitS);
   const scope = scopeReadiness(config);
   const instruments = instrumentReadiness(config);
