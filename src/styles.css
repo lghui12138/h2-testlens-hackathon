@@ -192,3 +192,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
   .enterprise-quick-configs .quiet-button { width: 100%; }
   .batch-queue-item { padding: 10px; }
 }
+
+/* Batch queue header */
+.batch-queue-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+.batch-summary { color: var(--muted-strong); font-size: 10px; font-weight: 700; }
