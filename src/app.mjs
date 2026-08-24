@@ -1035,6 +1035,15 @@ async function loadSample() {
   await loadCsv(assetUrl('sample-data/test_run_001.csv'), '演示样本 · electrolyzer_run_017.csv');
 }
 
+async function loadSampleSafely() {
+  try {
+    await loadSample();
+  } catch (error) {
+    setAnalysisStatus(`演示样本读取失败：${error.message}`, 'error');
+    $('#schema-notice').textContent = '请刷新页面、检查 Pages 资源，或改为手动导入测试文件。';
+  }
+}
+
 async function loadCoverageSummary() {
   try {
     const response = await fetch(assetUrl('config/t02-coverage-summary.json'));
@@ -1159,7 +1168,7 @@ $('#batch-declaration-file').addEventListener('change', async (event) => {
 $('#reanalyze').addEventListener('click', () => { void analyzeCurrent('重新分析'); });
 $('#profile-select').addEventListener('change', () => { applyProfile($('#profile-select').value); void analyzeCurrent('切换 profile'); });
 ['max-temperature', 'max-pressure', 'max-leak', 'max-voltage-std', 'max-pressure-drift'].forEach((id) => document.querySelector(`#${id}`).addEventListener('input', () => { $('#profile-select').value = CUSTOM_PROFILE_ID; applyProfile(CUSTOM_PROFILE_ID); }));
-$('#load-demo').addEventListener('click', loadSample);
+$('#load-demo').addEventListener('click', loadSampleSafely);
 $('#load-legacy').addEventListener('click', loadLegacySample);
 $('#profile-file').addEventListener('change', async (event) => {
   const input = event.currentTarget;
@@ -1299,4 +1308,4 @@ renderHistory();
 void loadCoverageSummary();
 void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
-loadSample();
+void loadSampleSafely();

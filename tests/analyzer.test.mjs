@@ -1793,6 +1793,17 @@ test('prefers actual stack voltage and uses per-row cell count for power and cel
   assert.equal(result.dataset.stoich.cellCountSource, '逐行片数字段（缺失时回退 profile/导出通道数）');
 });
 
+test('converts explicit mV cell headers before stack cell statistics', () => {
+  const result = analyzeRows([
+    { 时间: 0, 电堆电压: 1.4, 电堆电流: 10, 电堆功率: 0.014, 平均电压: 0.7, 'CELL1(mV)': 700, 'CELL2(mV)': 710 },
+    { 时间: 1, 电堆电压: 1.4, 电堆电流: 10, 电堆功率: 0.014, 平均电压: 0.7, 'CELL1(mV)': 700, 'CELL2(mV)': 710 }
+  ]);
+  assert.ok(Math.abs(result.rows[0].cells.cell_1_v - 0.7) < 1e-12);
+  assert.ok(Math.abs(result.rows[0].cells.cell_2_v - 0.71) < 1e-12);
+  assert.equal(result.quality.unitConversions.cell_1_v.factor, 0.001);
+  assert.equal(result.quality.usable, true);
+});
+
 test('unwraps fractional time-only timestamps across midnight for vehicle sessions', () => {
   const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
   const rows = parseCSV([header,

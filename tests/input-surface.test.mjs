@@ -59,6 +59,8 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /publicBatchAggregation/);
   assert.match(app, /escapeHtml\(profile\.name\)/);
   assert.match(app, /loadReleaseSummary/);
+  assert.match(app, /loadSampleSafely/);
+  assert.match(app, /演示样本读取失败/);
   assert.match(app, /解析错误/);
   assert.match(app, /topObservedReviewFields/);
   assert.match(app, /#compare-status.*请先载入并分析数据/);

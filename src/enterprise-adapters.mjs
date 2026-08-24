@@ -2109,6 +2109,7 @@ function buildStack(rows, config) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const efficiencyFields = efficiencyMapping(headers);
   const cellHeaders = headers.filter((header) => /^(单片电压\d+|CELL\d+)/i.test(String(header).trim()));
+  const cellUnitSpecs = Object.fromEntries(cellHeaders.map((header, index) => [`cell_${index + 1}_v`, unitSpec(header, 'voltage_v')]));
   const mapping = {
     phase: findHeader(headers, ['阶段', '工况', '测试阶段', '工况阶段', 'phase', 'stage']),
     timestamp_s: findHeader(headers, ['测试时间', '时间', '测试时间(ms)', '测试时间（ms）', '测试时间(s)', '测试时间（s）', '时间(ms)', '时间（ms）', '时间(s)', '时间（s）']),
@@ -2176,7 +2177,7 @@ function buildStack(rows, config) {
     : rows;
   const sessionTime = sessionizedTimes(sessionRows, mapping.timestamp_s);
   const normalized = rows.map((row, index) => {
-    const cells = Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, num(row[header])]));
+    const cells = Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, convertEnterpriseValue(row[header], cellUnitSpecs[`cell_${cellIndex + 1}_v`])]));
     return {
       timestamp_s: sessionTime.globalTimes[index],
       session_timestamp_s: sessionTime.localTimes[index],
@@ -2261,8 +2262,9 @@ function buildStack(rows, config) {
   }
   const requiredQuality = ['timestamp_s', 'current_a', 'voltage_v', ...cellHeaders.map((_, index) => `cell_${index + 1}_v`)];
   const quality = qualityFor(normalized, requiredQuality);
-  const unsupportedUnitFields = Object.entries(unitSpecs).filter(([, spec]) => spec.status === 'unsupported').map(([field, spec]) => `${field}: ${spec.label}`);
-  quality.unitConversions = Object.fromEntries(Object.entries(unitSpecs).map(([field, spec]) => [field, { status: spec.status, factor: spec.factor, label: spec.label, rawUnit: spec.rawUnit }]));
+  const allUnitSpecs = { ...unitSpecs, ...cellUnitSpecs };
+  const unsupportedUnitFields = Object.entries(allUnitSpecs).filter(([, spec]) => spec.status === 'unsupported').map(([field, spec]) => `${field}: ${spec.label}`);
+  quality.unitConversions = Object.fromEntries(Object.entries(allUnitSpecs).map(([field, spec]) => [field, { status: spec.status, factor: spec.factor, label: spec.label, rawUnit: spec.rawUnit }]));
   quality.unsupportedUnitFields = unsupportedUnitFields;
   if (unsupportedUnitFields.length) quality.usable = false;
   quality.sessionCount = sessionTime.sessions.length;
