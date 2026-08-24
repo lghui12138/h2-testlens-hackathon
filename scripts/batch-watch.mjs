@@ -42,8 +42,9 @@ async function walk(dir, outputDir, files = []) {
 async function loadProfile(profilePath, profileId) {
   if (!profilePath) return {};
   const ledger = JSON.parse(await readFile(join(repoRoot, 'config/standard-evidence-ledger.v1.json'), 'utf8'));
+  const trustedApprovalLedger = JSON.parse(await readFile(join(repoRoot, 'config/trusted-approval-ledger.v1.json'), 'utf8'));
 
-  const packageResult = profilesFromPackage(JSON.parse(await readFile(profilePath, 'utf8')), { requireEvidenceLedger: true, evidenceRows: ledger.evidenceRows || [] });
+  const packageResult = profilesFromPackage(JSON.parse(await readFile(profilePath, 'utf8')), { requireEvidenceLedger: true, evidenceRows: ledger.evidenceRows || [], requireApprovalLedger: true, approvalRows: trustedApprovalLedger.approvalRows || [] });
   if (!packageResult.ok) throw new Error(`profile_invalid: ${packageResult.errors.join('；')}`);
   const profile = packageResult.profiles.find((candidate) => candidate.id === profileId);
   if (!profile) throw new Error(`profile_not_found: ${profileId}`);

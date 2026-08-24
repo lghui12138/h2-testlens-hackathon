@@ -1,4 +1,5 @@
 import { validateProfileEvidenceBindings } from './standard-evidence.mjs';
+import { validateTrustedApprovalBinding } from './approval-ledger.mjs';
 
 export const DEVICE_PROFILES = Object.freeze([
   {
@@ -1005,11 +1006,20 @@ export function profilesFromPackage(payload, options = {}) {
     ]) || [];
     return { ok: false, errors: ['运行时标准 evidence ledger 绑定失败：' + (standardEvidenceBinding.error || bindingErrors.join('、') || '未知错误')], standardEvidenceBinding };
   }
+  const requiresApprovalLedger = options.requireApprovalLedger === true && (payload.profiles || []).some((profile) => profile?.approvalStatus === 'approved');
+  const trustedApprovalBinding = requiresApprovalLedger
+    ? validateTrustedApprovalBinding(payload, options.approvalRows || [], { now: options.now, packageHashes: options.packageHashes })
+    : { ready: true, status: 'not_configured', checks: [], source: 'trusted-approval-ledger' };
+  if (requiresApprovalLedger && !trustedApprovalBinding.ready) {
+    const errors = trustedApprovalBinding.checks.flatMap((check) => [...(check.missing || []), ...(check.malformed || [])]);
+    return { ok: false, errors: ['可信审批 ledger 绑定失败：' + (errors.join('、') || '未知错误')], standardEvidenceBinding, trustedApprovalBinding };
+  }
   return {
     ok: true,
     errors: [],
     organization: payload.organization || '未命名企业配置',
     standardEvidenceBinding,
+    trustedApprovalBinding,
     profiles: payload.profiles.map((profile) => ({
       ...profile,
       approvalStatus: profile.approvalStatus || 'pending',
@@ -1022,6 +1032,7 @@ export function profilesFromPackage(payload, options = {}) {
       methodSource: profile.methodSource || null,
       standardReferenceEvidence: standardReferenceReadiness(profile),
       standardEvidenceBinding,
+      trustedApprovalBinding,
       profilePackageValidated: true,
       methodImplementationEvidence: profile.methodImplementationEvidence || null,
       methodExecutionStatus: profile.methodExecutionStatus || (profile.standardRefs?.length ? 'ENTERPRISE_PROFILE_REQUIRED' : null),

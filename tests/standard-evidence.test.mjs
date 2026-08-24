@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseJsonlLedger, validateEvidenceLedger, validateMethodSourceBinding, validateStandardReferenceBinding } from '../src/standard-evidence.mjs';
+import { validateTrustedApprovalBinding } from '../src/approval-ledger.mjs';
 
 test('standards evidence ledger closes source, evidence, and claim references', () => {
   const sources = parseJsonlLedger('{"source_id":"std-1"}\n', 'sources');
@@ -49,4 +50,12 @@ test('each declared standard reference requires its own ledger source and eviden
   const wrongStandard = validateStandardReferenceBinding({ id: 'STD-1', evidenceSourceId: 'std-2', evidenceIds: ['ev-std-2'] }, 0, rows);
   assert.equal(wrongStandard.ready, false);
   assert.ok(wrongStandard.malformed.some((item) => item.includes('standardMismatch')));
+});
+
+test('approved profiles fail closed without a trusted approval ledger while unapproved profiles remain usable', () => {
+  const blocked = validateTrustedApprovalBinding({ profiles: [{ id: 'p-1', approvalStatus: 'approved', revision: 'r1', methodId: 'M1' }] }, []);
+  assert.equal(blocked.ready, false);
+  assert.ok(blocked.checks[0].missing.includes('trustedApprovalLedger.approvalRows'));
+  const unapproved = validateTrustedApprovalBinding({ profiles: [{ id: 'p-2', approvalStatus: 'example_unapproved' }] }, []);
+  assert.equal(unapproved.ready, true);
 });

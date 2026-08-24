@@ -30,6 +30,7 @@ const requiredFiles = [
   'src/structured-evidence.mjs',
   'src/metric-trace.mjs',
   'src/standard-evidence.mjs',
+  'src/approval-ledger.mjs',
   'src/enterprise-adapters.mjs',
   'src/excel-workflow.mjs',
   'src/docx-workflow.mjs',
@@ -84,6 +85,8 @@ const requiredFiles = [
   'public/config/t02-coverage-summary.json',
   'config/standard-evidence-ledger.v1.json',
   'public/config/standard-evidence-ledger.v1.json',
+  'config/trusted-approval-ledger.v1.json',
+  'public/config/trusted-approval-ledger.v1.json',
   'config/release-summary.json',
   'public/config/release-summary.json',
   '.research/ignite_t02_standards_20260821/sources.jsonl',
@@ -121,7 +124,9 @@ const releaseSummary = await readFile(join(root, 'config/release-summary.json'),
 const publicReleaseSummary = await readFile(join(root, 'public/config/release-summary.json'), 'utf8');
 const standardEvidenceLedger = await readFile(join(root, 'config/standard-evidence-ledger.v1.json'), 'utf8');
 const publicStandardEvidenceLedger = await readFile(join(root, 'public/config/standard-evidence-ledger.v1.json'), 'utf8');
-const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'metric-trace.mjs', 'profiles.mjs', 'standard-evidence.mjs', 'structured-evidence.mjs'];
+const trustedApprovalLedger = await readFile(join(root, 'config/trusted-approval-ledger.v1.json'), 'utf8');
+const publicTrustedApprovalLedger = await readFile(join(root, 'public/config/trusted-approval-ledger.v1.json'), 'utf8');
+const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'metric-trace.mjs', 'profiles.mjs', 'standard-evidence.mjs', 'approval-ledger.mjs', 'structured-evidence.mjs'];
 const browserRuntimeParity = await Promise.all(browserRuntimeModules.map(async (file) => {
   const source = await readFile(join(root, 'src', file), 'utf8');
   const publicCopy = await readFile(join(root, 'public/src', file), 'utf8');
@@ -157,6 +162,7 @@ checks.push({ id: 'config:public-batch-declaration-parity', pass: batchDeclarati
 checks.push({ id: 'config:public-coverage-summary-parity', pass: coverageSummary === publicCoverageSummary });
 checks.push({ id: 'config:public-release-summary-parity', pass: releaseSummary === publicReleaseSummary && JSON.parse(releaseSummary).schemaVersion === 'h2-testlens.release-summary.v1' });
 checks.push({ id: 'config:public-standard-evidence-ledger-parity', pass: standardEvidenceLedger === publicStandardEvidenceLedger && JSON.parse(standardEvidenceLedger).schemaVersion === 'h2-testlens.standard-evidence-ledger.v1' && JSON.parse(standardEvidenceLedger).evidenceRows?.length >= 18 });
+checks.push({ id: 'config:public-trusted-approval-ledger-parity', pass: trustedApprovalLedger === publicTrustedApprovalLedger && JSON.parse(trustedApprovalLedger).schemaVersion === 'h2-testlens.trusted-approval-ledger.v1' && JSON.parse(trustedApprovalLedger).approvalRows?.length === 0 });
 checks.push({ id: 'runtime:public-browser-modules-parity', pass: browserRuntimeParity.every(Boolean) });
 const coverageEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_coverage_audit_v${packageJson.version}.json`);
 const referenceEvidencePath = join(root, '.research/ignite_t02_standards_20260821', `t02_reference_audit_v${packageJson.version}.json`);

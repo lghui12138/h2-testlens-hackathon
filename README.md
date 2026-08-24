@@ -18,6 +18,8 @@
 
 当前交付版本：**v3.5.37**。本轮继续优化 GitHub Pages / App 的真实发布运行时：静态页和 Vinext 页都提供结果播报、图表文字摘要与 44px 移动导航目标；实际被 Vinext 加载的 `public/src` 五个浏览器运行时模块已与 `src/` 强制 parity，避免 GitHub 网站只更新源码而不更新运行时。新增企业 mA/mV/W/时间单位 canonical 转换、跨 session 阶段边界、phase-null 阻断和 measured-only 效率门；AI server route 新增 HTTPS host allowlist、客户端参数隔离、超时和响应大小保护。已新增 versioned metricTrace：JSON/API/Markdown/XLSX 和 App 均可查看 canonical 字段、证据 ID、hash 状态与脱敏行定位；仍不把标准流程映射写成完整符合性声明。 运行时标准 profile 现要求 compact evidence ledger 绑定，缺失/未知 evidence ID 直接阻断导入。
 
+运行时 approved profile 还必须命中独立的 trusted approval ledger；当前仓库不提供任何伪造的企业批准行，因此 approved 导入默认 fail-closed，T02 示例继续保持 `descriptive_only`。
+
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
 网页与 App 的分离边界见 [`docs/WEB_AND_APP.md`](docs/WEB_AND_APP.md)：GitHub Pages 是评审和公开演示入口，Vinext App 是同一分析内核的可扩展应用入口；两者共用 `src/` 分析模块和样本/配置，不把原始 T02 数据提交到仓库。

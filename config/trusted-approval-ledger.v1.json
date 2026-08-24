@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "h2-testlens.trusted-approval-ledger.v1",
+  "source": "trusted-approval-ledger",
+  "status": "not_configured",
+  "approvalRows": [],
+  "boundary": "仓库不伪造企业 approved 记录；真实审批必须由受控企业 ledger、有效期和 profile package SHA-256 提供。"
+}

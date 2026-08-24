@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · Trusted approval ledger fail-closed 轮
+
+- 新增独立 `trusted-approval-ledger.v1`，当前 `approvalRows=[]`，不伪造企业批准记录；runtime `approved` profile 无可信匹配直接拒绝，`example_unapproved`/T02 descriptive 继续可用。
+- server、browser profile import、batch-watch 和 package/submission parity 均接入该 ledger；标准 evidence ledger 与审批 ledger 分离，审批主体/工单不发布到 public config。
+- 针对性标准/输入面回归 15/15 通过；完整门控将在提交前重跑。
+
 ## 2026-08-24 · Run 88 回读轮
 
 - 提交 `b648db9` 已推送；Actions Run 88 成功，`build`/`deploy` 通过，云端 package smoke hook 继续生效。
