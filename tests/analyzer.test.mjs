@@ -334,7 +334,7 @@ test('phase result readiness rejects null computed KPI values', () => {
 
 test('maps Chinese headers and converts common engineering units', () => {
   const legacyRows = parseCSV([
-    '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量,泄漏(ppb)',
+    '时间(ms),工况,电流(mA),电压(mV),温度(°C),压力(kPa),流量(SLPM),泄漏(ppb)',
     '0,稳态,1000,1800,30,100,3,1000',
     '1000,稳态,1000,1800,31,100,3,1000'
   ].join('\n'));
@@ -349,6 +349,17 @@ test('maps Chinese headers and converts common engineering units', () => {
   assert.equal(result.metrics.steadyWindow, 'phase=steady');
   assert.ok(Math.abs(result.metrics.pressureDriftBarPerMin) < 20);
   assert.ok(result.issues.some((item) => item.code === 'UNIT_CONVERTED'));
+});
+
+test('blocks generic flow without an explicit standard-state unit', () => {
+  const result = analyzeRows([
+    { timestamp_s: 0, phase: 'steady', current_a: 100, voltage_v: 10, temperature_c: 25, pressure_bar: 1, flow: 60, leak_ppm: 0 },
+    { timestamp_s: 60, phase: 'steady', current_a: 100, voltage_v: 10, temperature_c: 25, pressure_bar: 1, flow: 60, leak_ppm: 0 }
+  ]);
+  assert.equal(result.schema.conversions.flow_slpm.mode, 'unsupported');
+  assert.equal(result.rows[0].flow_slpm, null);
+  assert.equal(result.metrics.hydrogenVolumeNl, null);
+  assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED'));
 });
 
 test('enterprise stack converts explicit mA/mV/W and timestamp units before KPI calculation', () => {

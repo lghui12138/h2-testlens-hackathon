@@ -1230,7 +1230,7 @@ $('#save-history').addEventListener('click', () => {
 });
 $('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
-  if (!state.result) return;
+  if (!state.result) { $('#compare-status').textContent = '请先载入并分析数据'; return; }
   const button = $('#compare-demo');
   button.disabled = true;
   button.textContent = '对比中…';
@@ -1249,7 +1249,7 @@ $('#compare-demo').addEventListener('click', async () => {
   }
 });
 $('#generate-ai').addEventListener('click', async () => {
-  if (!state.result) return;
+  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
   button.textContent = '处理中…';

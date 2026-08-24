@@ -1,16 +1,16 @@
 # GitHub 发布轮次记录
 
-## 2026-08-24 · Pages 云端 package smoke 闭环轮
+## 2026-08-24 · Run 86 云端 package smoke 回读轮
 
 - `prepare-github-pages.mjs` 在 GitHub Actions 缺少本地 receipt 时自动执行 `npm run package:submission`；package smoke、ZIP 完整性或 SHA-256 失败会直接阻断 Pages 准备。
 - 隔离验证已确认模拟 Actions 会生成 `source: github-actions`、`packageSmoke: passed` 和 artifact SHA；本地/非 Actions 预览仍保留 unbound/`not_run` 回退。
-- 本轮将触发新的 Pages Run；自定义域可达性仍是外部残余。
+- Run 86 已成功，耗时约 1 分钟；本轮云端 package smoke、ZIP 完整性和 artifact SHA 门已实际执行。自定义域可达性仍是外部残余。
 
 ## 2026-08-24 · GitHub Run 84 回读轮
 
 - 提交 `a0de3f3` 已推送到 `main`；Actions Run 84 成功，`build`/`deploy` 均通过。
 - 本轮公开能力包含逐文件 T02 字段角色计数、XLSX 空状态提示和正式 standardRefs runtime binding fail-closed。
-- workflow 仍未执行 `package:submission`，Run 84 只证明 Pages artifact 发布成功，不证明提交 ZIP 已在云端 smoke；自定义域仍不可达。
+- Run 84 之前只证明 Pages artifact 发布成功；当前 `prepare-github-pages` 已在 Actions 缺少 receipt 时自动执行 package smoke，自定义域仍不可达。
 
 ## 2026-08-24 · GitHub 远端与 Actions 回读轮
 

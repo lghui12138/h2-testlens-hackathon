@@ -221,6 +221,7 @@ function unitTransform(field, header) {
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
+  if (field === 'flow_slpm' && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
   if (field === 'flow_slpm' && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
   if (field === 'flow_slpm' && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
   if (field === 'flow_slpm' && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
