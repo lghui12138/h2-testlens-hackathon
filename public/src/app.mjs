@@ -1070,6 +1070,7 @@ async function loadCsv(url, name) {
   state.inputSummary = { totalFiles: 1, processed: 1, referenceOnly: 0, blockedBinary: 0, parserErrors: 0 };
   state.currentManifest = manifestFromEntries(state.inputEntries);
   state.incrementalDiff = diffManifests(readBatchManifest(window.localStorage), state.currentManifest);
+  saveRecentFile(name, state.rawDataHash);
   await analyzeCurrent('载入样本');
 }
 
@@ -1375,6 +1376,7 @@ $('#file-input').addEventListener('change', async (event) => {
       $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
       return;
     }
+    saveRecentFile(state.fileName, state.rawDataHash);
     await analyzeCurrent('导入分析');
   } catch (error) {
     setAnalysisStatus(`导入失败：${error.message}`, 'error');
@@ -1542,6 +1544,45 @@ $('#download-enhanced').addEventListener('click', () => { if (!state.result) { $
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 
+window.addEventListener('keydown', (event) => {
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+  if (!ctrlKey && event.key !== 'Escape') return;
+  if (event.key === 'Escape') {
+    const quickStart = $('#quick-start-overlay');
+    const loading = $('#loading-overlay');
+    if (quickStart && !quickStart.hidden) { dismissQuickStart(); event.preventDefault(); return; }
+    if (loading && !loading.hidden) { hideLoading(); event.preventDefault(); return; }
+    return;
+  }
+  if ((event.key === 'o' || event.key === 'O') && !event.shiftKey) {
+    event.preventDefault();
+    $('#file-input').click();
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (state.result) void analyzeCurrent('手动重分析');
+    else void loadSampleSafely();
+    return;
+  }
+  if ((event.key === 'l' || event.key === 'L') && !event.shiftKey) {
+    event.preventDefault();
+    void loadSampleSafely();
+    return;
+  }
+  if (event.key === 'z' && !event.shiftKey) {
+    event.preventDefault();
+    if (event.ctrlKey || event.metaKey) { undoResult(); }
+    return;
+  }
+  if (event.key === 'y' || (event.key === 'z' && event.shiftKey)) {
+    event.preventDefault();
+    if (event.ctrlKey || event.metaKey) { redoResult(); }
+    return;
+  }
+});
+
 function showLoading(message = '分析中…') {
   const overlay = $('#loading-overlay');
   const msg = $('#loading-message');
@@ -1606,6 +1647,7 @@ if (dropZone) {
         $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
         return;
       }
+      saveRecentFile(state.fileName, state.rawDataHash);
       await analyzeCurrent('导入分析');
     } catch (error) {
       setAnalysisStatus(`导入失败：${error.message}`, 'error');
@@ -1624,6 +1666,17 @@ analyzeCurrent = async function(reason = '重新分析') {
 $('#close-quick-start')?.addEventListener('click', dismissQuickStart);
 $('#quick-start-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) dismissQuickStart(); });
 
+$('#theme-toggle')?.addEventListener('click', toggleTheme);
+$('#undo-result')?.addEventListener('click', undoResult);
+$('#redo-result')?.addEventListener('click', redoResult);
+$('#retry-analysis')?.addEventListener('click', () => { void analyzeCurrent('重试'); });
+$('#recent-files-list')?.addEventListener('click', (event) => {
+  const chip = event.target.closest('.recent-file-chip');
+  if (!chip) return;
+  const name = chip.dataset.name;
+  setAnalysisStatus(`最近文件：${name}；请重新导入该文件进行分析。`, 'neutral');
+});
+
 const originalReadSelectedDataFiles = readSelectedDataFiles;
 readSelectedDataFiles = async function(files) {
   try { return await originalReadSelectedDataFiles(files); }
@@ -1640,6 +1693,10 @@ renderProfileOptions();
 applyProfile('electrolyzer-demo');
 state.history = readHistory(window.localStorage);
 renderHistory();
+const savedTheme = (() => { try { return window.localStorage.getItem('h2-testlens-theme'); } catch { return null; } })();
+applyTheme(savedTheme || 'dark');
+state.recentFiles = getRecentFiles();
+renderRecentFiles();
 void loadCoverageSummary();
 void ensureStandardEvidenceLedger();
 void loadReleaseSummary();
