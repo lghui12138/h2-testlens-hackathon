@@ -7,6 +7,25 @@
 - 本地门控：`npm test` 184/184、`npm run check:submission` 138/138、定向输入面 10/10、Node syntax、`git diff --check` 通过；T02 198/198 unchanged，现有字段诊断为 176 个文件/2,759 次复核提示。
 - 六智能体本轮再次尝试仍返回 `agent thread limit reached`；不把未启动的分片算作审计结果，继续保留真实边界。
 
+## 2026-08-24 · 车辆非正单体电压 KPI 过滤轮
+
+- 真实 T02 字段诊断显示车辆 `FC_MinCellVoltage`/`FC_AvgCellVoltage` 存在大量负值和零值；车辆适配器现在保留 `*_raw` 原始值，但将已明确物理单体电压字段的非正归一化值从均值、趋势和性能点 KPI 排除，并输出 `VEHICLE_NONPOSITIVE_CELL_VOLTAGE_FILTERED` 计数。
+- 未提供企业 `V/mV` 单位证据时仍先走 `VEHICLE_UNIT_UNRESOLVED` fail-closed，不会用数量级猜单位；该修正只影响单位已明确或可解释的物理电压 KPI。
+- T02 覆盖重放仍为 198/198 文件、190 processed、2,262,283 行/功率点、0 正式符合性声明，字段诊断计数不漂移；车辆回归和全套门控继续执行。
+
+## 2026-08-24 · 电堆流量/公共脱敏/标准账本收敛轮
+
+- 电堆阳极/阴极气体流量的 `implicit` 单位不再默认按 SLPM；无单位和实际 `L/min` 都在计量比前进入 `UNIT_UNSUPPORTED`，明确 `SLPM`/`NL/min`/`Nm³/h` 才可转换。
+- `publicAnalysis` 递归脱敏 `quality.sessionDurationsS` 中的 `sourceFile/source_file/sessionId/session_id`，并把 `excel-workflow.mjs` 纳入 source/public runtime parity 门；批次 API 不再从 quality 旁路泄露客户端文件路径。
+- 研究 `evidence.jsonl` 补齐 18/18 runtime evidence 对应的 `standard_id`，消除 12 条账本同构观察项；不增加标准 claims，不填充企业批准记录。
+- 测试与真实 T02 coverage 重放正在以本轮最新代码重新收口；标准边界仍为 `DEMO_ONLY`。
+
+## 2026-08-24 · 数值/隐私/账本综合收口轮
+
+- 电堆无单位阳极/阴极气体流量现在 fail-closed，不再以 implicit SLPM 计算计量比；明确标准状态单位才可进入流量/计量比路径。
+- 车辆非正单体电压 raw 保留、物理 KPI 排除；公共 quality 深层脱敏来源文件名；`excel-workflow.mjs` 纳入 source/public parity。
+- 研究证据图补齐 18/18 runtime `standard_id`，提交门新增 `t02:standard-id-reconciliation`；本轮门控为 `npm test` 186/186、`npm run check:submission` 139/139，T02 coverage 重放仍 198/198 unchanged。
+
 ## 2026-08-24 · v3.5.38 可信审批包哈希绑定轮
 
 - 运行时对完整 profile package 做确定性 SHA-256：`approvalStatus` 与 `approvalEvidence` 均纳入绑定，只排除运行时生成的 `trustedApprovalBinding`；API、浏览器 profile 导入和 `batch-watch` 统一传入受控哈希，审批包被改写时 trusted ledger fail-closed。

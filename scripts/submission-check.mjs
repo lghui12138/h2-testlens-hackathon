@@ -126,7 +126,7 @@ const standardEvidenceLedger = await readFile(join(root, 'config/standard-eviden
 const publicStandardEvidenceLedger = await readFile(join(root, 'public/config/standard-evidence-ledger.v1.json'), 'utf8');
 const trustedApprovalLedger = await readFile(join(root, 'config/trusted-approval-ledger.v1.json'), 'utf8');
 const publicTrustedApprovalLedger = await readFile(join(root, 'public/config/trusted-approval-ledger.v1.json'), 'utf8');
-const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'metric-trace.mjs', 'profiles.mjs', 'standard-evidence.mjs', 'approval-ledger.mjs', 'structured-evidence.mjs'];
+const browserRuntimeModules = ['app.mjs', 'analyzer.mjs', 'ai-draft.mjs', 'enterprise-adapters.mjs', 'excel-workflow.mjs', 'metric-trace.mjs', 'profiles.mjs', 'standard-evidence.mjs', 'approval-ledger.mjs', 'structured-evidence.mjs'];
 const browserRuntimeParity = await Promise.all(browserRuntimeModules.map(async (file) => {
   const source = await readFile(join(root, 'src', file), 'utf8');
   const publicCopy = await readFile(join(root, 'public/src', file), 'utf8');
@@ -186,6 +186,9 @@ checks.push({ id: 'current-version:documentation', pass: readme.includes(`当前
 checks.push({ id: 't02:source-integrity-contract', pass: packageJson.scripts?.['t02:integrity'] === 'node scripts/t02-source-integrity.mjs' && sourceIntegrity.includes('compareSourceToAudit') && sourceIntegrity.includes('sha256') && sourceIntegrity.includes('drift') });
 checks.push({ id: 'profile:standard-reference-provenance', pass: profileSource.includes('standardReferenceReadiness') && profileSource.includes('effectiveDate_before_publicationDate') && enterpriseConfig.includes('methodSource') && enterpriseConfig.includes('publicationDate') && enterpriseConfig.includes('effectiveDate') });
 checks.push({ id: 't02:evidence-ledger-closure', pass: sourcesLedgerParsed.errors.length === 0 && evidenceLedgerParsed.errors.length === 0 && claimsLedgerParsed.errors.length === 0 && evidenceLedger.ready });
+const runtimeEvidenceRows = JSON.parse(standardEvidenceLedger).evidenceRows || [];
+const researchEvidenceById = new Map(evidenceLedgerParsed.rows.map((row) => [row.evidence_id, row]));
+checks.push({ id: 't02:standard-id-reconciliation', pass: runtimeEvidenceRows.filter((row) => row.standard_id).every((row) => researchEvidenceById.get(row.evidence_id)?.standard_id === row.standard_id) });
 checks.push({ id: 'profile:method-source-evidence-binding', pass: profileEvidenceBindings.ready });
 checks.push({ id: 'security:workbook-size-boundary', pass: excelWorkflow.includes('MAX_WORKBOOK_BYTES') && excelWorkflow.includes('workbookInputSafety') && excelWorkflow.includes('超过 ${MAX_WORKBOOK_BYTES / 1024 / 1024} MiB') && securityBoundaries.includes('64 MiB 压缩输入') && securityBoundaries.includes('不是 GB/T、ISO 或企业验收限值') });
 checks.push({ id: 'security:workbook-zip-preflight', pass: excelWorkflow.includes('MAX_WORKBOOK_UNCOMPRESSED_BYTES') && excelWorkflow.includes('MAX_WORKBOOK_ZIP_ENTRIES') && excelWorkflow.includes('MAX_WORKBOOK_COMPRESSION_RATIO') && excelWorkflow.includes('ZIP64') && excelWorkflow.includes('中央目录') && securityBoundaries.includes('256 MiB 声明展开大小') && securityBoundaries.includes('2048 个 ZIP 条目') && securityBoundaries.includes('200:1 压缩比') });

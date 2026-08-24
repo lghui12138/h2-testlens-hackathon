@@ -73,9 +73,11 @@ function explicitHeaderUnit(header) {
   return match ? normalizeUnit(match[1]) : null;
 }
 
-function unitSpec(header, field) {
+function unitSpec(header, field, options = {}) {
+  const requireExplicit = options.requireExplicit === true;
+  if (!header) return { field, status: 'not_configured', factor: null, label: '未配置', rawUnit: null };
   const rawUnit = explicitHeaderUnit(header);
-  if (!rawUnit) return { field, status: 'implicit', factor: 1, label: '未声明（按 canonical 单位）', rawUnit: null };
+  if (!rawUnit) return { field, status: requireExplicit ? 'unsupported' : 'implicit', factor: requireExplicit ? null : 1, label: requireExplicit ? '流量单位未声明，不能默认按标准状态流量' : '未声明（按 canonical 单位）', rawUnit: null };
   const factor = UNIT_DEFINITIONS[field]?.[rawUnit];
   if (!Number.isFinite(factor)) return { field, status: 'unsupported', factor: null, label: '不支持的单位 ' + rawUnit, rawUnit };
   return { field, status: 'declared', factor, label: (UNIT_DISPLAY[rawUnit] || rawUnit) + '→canonical', rawUnit };
@@ -1397,14 +1399,13 @@ function buildVehicle(rows, config) {
   const vehicleUnitEvidenceRequired = config.vehicleUnitEvidenceRequired === true;
   const unresolvedUnitFields = new Set();
   const invalidSentinelCounts = {};
+  const nonPositiveCellVoltageCounts = {};
   const normalizeVehicleCellVoltage = (value, field) => {
     const raw = num(value);
     if (raw === null) return null;
     const declared = vehicleSignalUnits[field];
     const unit = typeof declared === 'string' ? declared : declared?.sourceUnit;
-    if (unit === 'mV') return raw / 1000;
-    if (unit === 'V') return raw;
-    if (vehicleUnitEvidenceRequired && ['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field)) {
+    if (vehicleUnitEvidenceRequired && ['min_cell_voltage_v', 'avg_cell_voltage_v', 'cell_voltage_variance'].includes(field) && !['mV', 'V'].includes(unit)) {
       unresolvedUnitFields.add(field);
       return null;
     }
@@ -1412,11 +1413,16 @@ function buildVehicle(rows, config) {
       invalidSentinelCounts[field] = (invalidSentinelCounts[field] || 0) + 1;
       return null;
     }
-    if (['min_cell_voltage_v', 'avg_cell_voltage_v'].includes(field) && (raw < -2.5 || raw > 2.5)) {
+    const normalized = unit === 'mV' ? raw / 1000 : raw;
+    if (!['mV', 'V'].includes(unit) && ['min_cell_voltage_v', 'avg_cell_voltage_v'].includes(field) && (raw < -2.5 || raw > 2.5)) {
       unresolvedUnitFields.add(field);
       return null;
     }
-    return raw;
+    if (['min_cell_voltage_v', 'avg_cell_voltage_v'].includes(field) && normalized <= 0) {
+      nonPositiveCellVoltageCounts[field] = (nonPositiveCellVoltageCounts[field] || 0) + 1;
+      return null;
+    }
+    return normalized;
   };
   const dynamicCommandSource = String(dynamicConfig.commandSource || 'FC_SysLoadCurr');
   const missing = Object.entries(mapping).filter(([, source]) => !source).map(([field]) => field);
@@ -1543,11 +1549,12 @@ function buildVehicle(rows, config) {
   if (quality.duplicateTimestampCount || quality.nonMonotonicCount) issues.push({ severity: 'warn', code: 'VEHICLE_TIME_SEQUENCE', title: '车辆时间轴需要复核', evidence: `重复时间戳 ${quality.duplicateTimestampCount} 条，逆序 ${quality.nonMonotonicCount} 次`, recommendation: '确认多文件拼接、采样时钟和时区口径。' });
   if (requestedWindow && !analysisRows.length) issues.push({ severity: 'warn', code: 'VEHICLE_WINDOW_EMPTY', title: '时间窗口没有记录', evidence: `请求窗口 ${windowStartS}–${windowEndS} s 未找到记录；本次不回退到全量数据，也不生成该窗口 KPI`, recommendation: '调整起止时间，或先确认时间戳转换和多文件拼接顺序。' });
   if (unresolvedUnitFields.size) issues.push({ severity: 'warn', code: 'VEHICLE_UNIT_UNRESOLVED', title: '车辆单体电压单位未确认', evidence: `${[...unresolvedUnitFields].join('、')} 的原始值超出 V 口径可直接解释的范围，已不进入单体电压均值/趋势；原始值保留在 raw 字段`, recommendation: '在企业 profile 中提供 vehicleSignalUnits.sourceUnit（V 或 mV）及证据后重新分析；不按数量级自动换算。' });
+  if (Object.keys(nonPositiveCellVoltageCounts).length) issues.push({ severity: 'warn', code: 'VEHICLE_NONPOSITIVE_CELL_VOLTAGE_FILTERED', title: '非正单体电压不进入物理电压 KPI', evidence: Object.entries(nonPositiveCellVoltageCounts).map(([field, count]) => `${field}=${count}`).join('；') + '；原始值仍保留在 raw 字段', recommendation: '确认企业无效码/停机态定义；当前只从单体电压均值、趋势和性能点派生 KPI 中排除非正值，不把它直接判为标准不合格。' });
   if (excludedPerformanceStatusCount) issues.push({ severity: 'info', code: 'VEHICLE_PERFORMANCE_STATUS_EXCLUDED', title: '车辆非活动状态未进入正式性能点', evidence: `${excludedPerformanceStatusCount} 条状态 ${[...new Set(rowsForAnalysis.filter((row) => !activeStatuses.includes(row.main_status)).map((row) => row.main_status))].join('、')} 记录被排除；正式目标电流性能点只使用活动状态 ${activeStatuses.join('、')}`, recommendation: '确认企业 FC_MainSts 状态字典；状态 8 等非活动记录可保留作状态/绝缘描述性统计，不进入正式性能点。' });
   if (Object.keys(invalidSentinelCounts).length) issues.push({ severity: 'info', code: 'VEHICLE_INVALID_SENTINEL_FILTERED', title: '车辆字段包含已识别无效哨兵值', evidence: Object.entries(invalidSentinelCounts).map(([field, count]) => `${field}=${count}`).join('；'), recommendation: '确认企业无效码表和状态定义；当前只排除明确的 65535 方差哨兵，不外推其他字段规则。' });
   const invalidIsolation = isolationExcludedMissing + isolationExcludedNonPositive + isolationCensoredAboveRange;
   if (invalidIsolation || isolationExcludedByStatus) issues.push({ severity: 'info', code: 'ISOLATION_FILTERED', title: '绝缘阻值按状态/值类型分层过滤', evidence: `状态外 ${isolationExcludedByStatus} 条；状态4/8内缺失 ${isolationExcludedMissing} 条；非正值 ${isolationExcludedNonPositive} 条；量程上限/哨兵 ${isolationCensoredAboveRange} 条；有效进入10分钟最小值 ${isolationRows.length} 条`, recommendation: '正式报告中保留各类计数，并由企业 profile 确认 9999/10000/65535 的量程或无效码含义。' });
-  if (signalDiagnostics.reviewSignalCount) issues.push({ severity: 'warn', code: 'SIGNAL_VALUE_SEMANTICS_REVIEW', title: '原始信号值分布需要语义复核', evidence: `${signalDiagnostics.reviewSignalCount} 个核心/交叉核对字段存在负值、零值集中、常量值或数值解析混合；示例：${signalDiagnostics.reviewSignals.slice(0, 4).map((item) => `${item.source}（${item.reasons.join('、')}）`).join('；')}`, recommendation: '先确认字段单位、设备状态和企业无效码表；系统不自动删除负值/零值，也不把该提示直接转为不合格。' });
+  if (signalDiagnostics.reviewSignalCount) issues.push({ severity: 'warn', code: 'SIGNAL_VALUE_SEMANTICS_REVIEW', title: '原始信号值分布需要语义复核', evidence: `${signalDiagnostics.reviewSignalCount} 个核心/交叉核对字段存在负值、零值集中、常量值或数值解析混合；示例：${signalDiagnostics.reviewSignals.slice(0, 4).map((item) => `${item.source}（${item.reasons.join('、')}）`).join('；')}`, recommendation: '先确认字段单位、设备状态和企业无效码表；原始值保留，只有明确的物理量可解释性过滤才影响对应 KPI，不把该提示直接转为不合格。' });
   if (dynamicAnalysis.enabled && dynamicAnalysis.status === 'not_available') issues.push({ severity: 'info', code: 'VEHICLE_DYNAMIC_FIELDS_MISSING', title: '车辆动态事件分析未执行', evidence: dynamicAnalysis.evidence, recommendation: `补充 ${dynamicCommandSource} 设定信号或在企业 profile 中关闭该可选分析。` });
   if (dynamicAnalysis.enabled && dynamicAnalysis.dataGapCount > 0) issues.push({ severity: 'warn', code: 'VEHICLE_DYNAMIC_DATA_GAP', title: '车辆动态事件存在采样缺口', evidence: `识别 ${dynamicAnalysis.dataGapCount} 个超过配置上限的间隔；最大观测间隔 ${dynamicAnalysis.maximumIntervalS ?? '—'} s`, recommendation: '复核采集计划、时钟同步和文件边界；不以插值替代原始记录。' });
   if (!targetCurrents.length) issues.push({ severity: 'warn', code: 'VEHICLE_TARGETS_MISSING', title: '未提供性能统计目标电流', evidence: `已发现 ${inferredSegments.length} 个连续电流候选区间，但这些区间仅按实际数据推断，未生成正式目标电流性能点`, recommendation: '导入企业批准的目标电流、允许波动范围和最短持续时间后重新分析；当前候选只用于描述性复核。' });
@@ -1588,7 +1595,7 @@ function buildVehicle(rows, config) {
     sessionCount: sessionTime.sessions.length,
     signalCatalog,
     signalDiagnostics,
-    unitDiagnostics: { required: vehicleUnitEvidenceRequired, unresolvedFields: [...unresolvedUnitFields], invalidSentinelCounts, sourceUnits: vehicleSignalUnits, boundary: '未提供企业单位证据时，不按数量级自动换算；超出可解释范围或 profile 要求单位却未声明时，单体电压不进入 V KPI，原始值保留。' },
+    unitDiagnostics: { required: vehicleUnitEvidenceRequired, unresolvedFields: [...unresolvedUnitFields], invalidSentinelCounts, nonPositiveCellVoltageCounts, sourceUnits: vehicleSignalUnits, boundary: '未提供企业单位证据时，不按数量级自动换算；超出可解释范围或非正单体电压不进入 V KPI，原始值保留。' },
     coverage: coverageSummary(signalCatalog),
     contextSignals,
     crossChecks: vehicleCrossChecks,
@@ -2167,8 +2174,8 @@ function buildStack(rows, config) {
     max_cell_voltage_v: unitSpec(mapping.max_cell_voltage_v, 'voltage_v'),
     pressure_kpa: unitSpec(mapping.pressure_kpa, 'pressure_kpa'),
     flow_slpm: unitSpec(mapping.flow_slpm, 'flow_slpm'),
-    anode_flow_slpm: unitSpec(mapping.anode_flow_slpm, 'flow_slpm'),
-    cathode_flow_slpm: unitSpec(mapping.cathode_flow_slpm, 'flow_slpm'),
+    anode_flow_slpm: unitSpec(mapping.anode_flow_slpm, 'flow_slpm', { requireExplicit: true }),
+    cathode_flow_slpm: unitSpec(mapping.cathode_flow_slpm, 'flow_slpm', { requireExplicit: true }),
     temperature_c: unitSpec(mapping.temperature_c, 'temperature_c'),
     leak_ppm: unitSpec(mapping.leak_ppm, 'leak_ppm')
   };

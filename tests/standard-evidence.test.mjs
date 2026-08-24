@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { parseJsonlLedger, validateEvidenceLedger, validateMethodSourceBinding, validateStandardReferenceBinding } from '../src/standard-evidence.mjs';
 import { canonicalApprovalPayload, validateTrustedApprovalBinding } from '../src/approval-ledger.mjs';
 
@@ -73,6 +74,14 @@ test('approval package canonicalization binds self-declared approval fields but 
   changed.profiles[0].approvalStatus = base.profiles[0].approvalStatus;
   changed.profiles[0].thresholds.maxTemperatureC = 81;
   assert.notEqual(canonicalApprovalPayload(base), canonicalApprovalPayload(changed));
+});
+
+test('research evidence graph reconciles every runtime standard_id', async () => {
+  const runtime = JSON.parse(await readFile(new URL('../config/standard-evidence-ledger.v1.json', import.meta.url), 'utf8'));
+  const research = parseJsonlLedger(await readFile(new URL('../.research/ignite_t02_standards_20260821/evidence.jsonl', import.meta.url), 'utf8'), 'evidence');
+  const byId = new Map(research.rows.map((row) => [row.evidence_id, row]));
+  const missing = (runtime.evidenceRows || []).filter((row) => row.standard_id && byId.get(row.evidence_id)?.standard_id !== row.standard_id).map((row) => row.evidence_id);
+  assert.deepEqual(missing, []);
 });
 
 test('trusted approval ledger accepts the exact package hash and blocks a mismatch', () => {

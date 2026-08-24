@@ -1151,7 +1151,13 @@ async function loadReleaseSummary() {
 }
 
 async function loadLegacySample() {
-  await loadCsv(assetUrl('sample-data/test_run_legacy_cn.csv'), '中文单位样本 · legacy_run_cn.csv');
+  try {
+    await loadCsv(assetUrl('sample-data/test_run_legacy_cn.csv'), '中文单位样本 · legacy_run_cn.csv');
+  } catch (error) {
+    setAnalysisStatus(`中文/单位样本读取失败：${error.message}`, 'error');
+    const notice = $('#schema-notice');
+    if (notice) notice.textContent = '请刷新页面、检查 Pages 资源，或改为手动导入 CSV/TXT。';
+  }
 }
 
 $('#file-input').addEventListener('change', async (event) => {

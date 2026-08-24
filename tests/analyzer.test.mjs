@@ -565,6 +565,9 @@ test('public analysis removes raw rows before integration responses', () => {
   assert.equal(JSON.stringify(datasetSafe).includes('secret-issue-evidence'), false);
   assert.equal(JSON.stringify(datasetSafe).includes('secret-file.csv'), false);
   assert.equal(datasetSafe.dataset.reports[0].metadataPresent['当前用户'], true);
+  const batchQualitySafe = publicAnalysis({ ...result, quality: { sessionDurationsS: [{ sourceFile: '/private/customer/run.csv', sessionId: 'file:/private/customer/run.csv', durationS: 1 }] } });
+  assert.equal(batchQualitySafe.quality.sessionDurationsS[0].durationS, 1);
+  assert.equal(JSON.stringify(batchQualitySafe).includes('/private/customer/run.csv'), false);
 });
 
 test('approved profiles fail closed on missing object traceability and manual edit audit evidence', () => {
@@ -1688,7 +1691,7 @@ test('retains every enterprise vehicle signal in the coverage catalog and applie
   assert.ok(workbook.SheetNames.includes('车辆交叉核对'));
 });
 
-test('exposes field-level value diagnostics without silently filtering raw values', () => {
+test('exposes field diagnostics while filtering nonpositive normalized cell-voltage KPIs and preserving raw values', () => {
   const header = 'Timestamp,FC_MainSts,FC_CurrOut,FC_VoltOut,FC_NetPwrOut,FC_MinCellVoltage,FC_MinVoltageChannel,FC_AvgCellVoltage,FC_AvgCellDev,FC_VARVoltage,FC_VehicleIsolationR,FC_RunTime_Hours';
   const rows = parseCSV([header,
     '0,4,10,320,3.2,-2,3,0,8,0,500,1',
@@ -1703,7 +1706,13 @@ test('exposes field-level value diagnostics without silently filtering raw value
   assert.equal(avgCell.zeroDominant, true);
   assert.ok(result.dataset.signalDiagnostics.reviewSignalCount >= 2);
   assert.ok(result.issues.some((item) => item.code === 'SIGNAL_VALUE_SEMANTICS_REVIEW'));
-  assert.equal(result.rows[0].min_cell_voltage_v, -2);
+  assert.equal(result.dataset.unitDiagnostics.nonPositiveCellVoltageCounts.min_cell_voltage_v, 2);
+  assert.equal(result.dataset.unitDiagnostics.nonPositiveCellVoltageCounts.avg_cell_voltage_v, 2);
+  assert.ok(result.issues.some((item) => item.code === 'VEHICLE_NONPOSITIVE_CELL_VOLTAGE_FILTERED'));
+  assert.equal(result.rows[0].min_cell_voltage_raw, -2);
+  assert.equal(result.rows[0].min_cell_voltage_v, null);
+  assert.equal(result.rows[0].avg_cell_voltage_v, null);
+  assert.equal(result.rows[0].avg_cell_voltage_raw, 0);
 });
 
 test('applies an explicitly declared vehicle mV unit without guessing from magnitude', () => {
@@ -1712,7 +1721,7 @@ test('applies an explicitly declared vehicle mV unit without guessing from magni
     '0,4,10,320,3.2,700,3,740,8,12,500,1',
     '1,4,10,320,3.2,701,3,741,8,12,500,1'
   ].join('\n'));
-  const result = analyzeRows(rows, { vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'mV' }, avg_cell_voltage_v: { sourceUnit: 'mV' } } });
+  const result = analyzeRows(rows, { vehicleUnitEvidenceRequired: true, vehicleSignalUnits: { min_cell_voltage_v: { sourceUnit: 'mV' }, avg_cell_voltage_v: { sourceUnit: 'mV' }, cell_voltage_variance: { sourceUnit: 'mV' } } });
   assert.equal(result.dataset.unitDiagnostics.unresolvedFields.length, 0);
   assert.equal(result.rows[0].avg_cell_voltage_v, 0.74);
   assert.ok(Math.abs(result.metrics.steadyVoltageMeanV - 0.7405) < 1e-12);
@@ -2082,6 +2091,19 @@ test('blocks stack stoichiometry when gas flow headers declare actual L/min', ()
   assert.equal(result.dataset.metrics.hydrogenStoich.mean, null);
   assert.equal(result.dataset.metrics.airStoich.mean, null);
   assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED' && /anode_flow_slpm/.test(item.evidence)));
+});
+
+test('blocks stack stoichiometry when gas flow headers omit standard-state units', () => {
+  const result = analyzeRows(parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,阳极气体流量,阴极气体流量',
+    '00:00:00,1.4,10,0.014,0.7,0.69,60,120',
+    '00:00:01,1.4,10,0.014,0.7,0.69,60,120'
+  ].join('\n')));
+  assert.equal(result.quality.usable, false);
+  assert.equal(result.rows[0].anode_flow_slpm, null);
+  assert.equal(result.rows[0].cathode_flow_slpm, null);
+  assert.equal(result.dataset.metrics.hydrogenStoich.mean, null);
+  assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED' && /单位未声明/.test(item.evidence)));
 });
 
 test('keeps repeated current platforms separate and uses the terminal 120-second window for long stable runs', () => {

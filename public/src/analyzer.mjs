@@ -1607,7 +1607,7 @@ function publicIssues(issues = [], datasetType = null) {
 
 export function publicAnalysis(result) {
   const { rows, config, dataset, metricTrace, ...safeResult } = result;
-  return { ...safeResult, issues: publicIssues(safeResult.issues, safeResult.datasetType || dataset?.kind || null), compliance: publicCompliance(safeResult.compliance), config: publicConfig(config), dataset: publicDataset(dataset), metricTrace: publicMetricTrace(metricTrace) };
+  return { ...safeResult, quality: redactPublicDatasetValue(safeResult.quality), issues: publicIssues(safeResult.issues, safeResult.datasetType || dataset?.kind || null), compliance: publicCompliance(safeResult.compliance), config: publicConfig(config), dataset: publicDataset(dataset), metricTrace: publicMetricTrace(metricTrace) };
 }
 
 function enterpriseReportMarkdown(inputResult, fileName, options = {}) {
