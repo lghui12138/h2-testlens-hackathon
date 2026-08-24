@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.40**。本轮完成计算准确性与边界处理改进：电流平台识别加入分箱容差、稳定窗口加入浮点容差、绝缘阻值过滤改为显式谓词、性能趋势升级为 Theil-Sen 鲁棒回归；新增 4 条回归测试，`npm test` 当前为 **194/194** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点新增独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html)，公开摘要、核心功能与边界说明与仓库同步更新。
+当前交付版本：**v3.5.41**。本轮完成企业数据适配与集成测试闭环：修复 CSV 时间戳 `2026/6/23 14:30` 解析与 BOM 预处理顺序、整车短时样本平台/稳态窗口识别配置、耐久性单元电压前缀发现；集成测试与回归测试全部通过，`npm test` 当前为 **222/222** 全绿。Python 配套仓库同步升级至 **90/90** 测试全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。GitHub Pages 站点新增独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html)，公开摘要、核心功能与边界说明与仓库同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
