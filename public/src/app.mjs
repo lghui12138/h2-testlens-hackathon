@@ -1008,7 +1008,27 @@ function renderComplianceHistory() {
   const approvalDetail = compliance.approvalEvidence?.ready ? '审批证据已形成' : (compliance.approvalEvidence?.evidence || '审批证据未形成');
   const standardDetail = compliance.standardReferenceEvidence?.ready ? '标准引用证据已形成' : (compliance.standardReferenceEvidence?.evidence || '标准引用证据未形成');
   const methodDetail = compliance.methodImplementationEvidence?.ready ? '方法实施证据已形成' : (compliance.methodImplementationEvidence?.evidence || '方法实施证据未形成');
-  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span></div>${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
+  const gateEntries = [
+    ['scope', compliance.scope],
+    ['instruments', compliance.instruments],
+    ['acceptance', compliance.acceptance],
+    ['report', compliance.report],
+    ['testStages', compliance.testStages],
+    ['testSystem', compliance.testSystem],
+    ['testConditions', compliance.testConditions],
+    ['environmentConditions', compliance.environmentConditions],
+    ['measurementMethods', compliance.measurementMethods],
+    ['phaseResults', compliance.phaseResults],
+    ['efficiency', compliance.efficiency],
+    ['measurements', compliance.measurements],
+    ['phases', compliance.phases],
+    ['acquisition', compliance.acquisition],
+    ['preCheck', compliance.preCheck],
+    ['dataQuality', compliance.dataQuality]
+  ].filter(([, value]) => value && typeof value === 'object');
+  const readyGateCount = gateEntries.filter(([, value]) => value.ready).length;
+  const gateSummary = gateEntries.length ? `<span><b>证据门控</b>${readyGateCount}/${gateEntries.length} 项就绪</span>` : '';
+  const complianceSection = `<div class="compliance-evidence"><h3>标准符合性证据</h3><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
