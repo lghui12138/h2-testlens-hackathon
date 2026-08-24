@@ -2024,6 +2024,20 @@ test('derives hydrogen and air stoichiometry with traceable physical constants w
   assert.match(result.dataset.sourceFieldMap.h2_stoich, /计算/);
 });
 
+test('blocks stack stoichiometry when gas flow headers declare actual L/min', () => {
+  const result = analyzeRows(parseCSV([
+    '时间,电堆电压,电堆电流,电堆功率,平均电压,CELL1,阳极气体流量(L/Min),阴极气体流量(L/Min)',
+    '00:00:00,1.4,10,0.014,0.7,0.69,60,120',
+    '00:00:01,1.4,10,0.014,0.7,0.69,60,120'
+  ].join('\n')));
+  assert.equal(result.quality.usable, false);
+  assert.equal(result.rows[0].anode_flow_slpm, null);
+  assert.equal(result.rows[0].cathode_flow_slpm, null);
+  assert.equal(result.dataset.metrics.hydrogenStoich.mean, null);
+  assert.equal(result.dataset.metrics.airStoich.mean, null);
+  assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED' && /anode_flow_slpm/.test(item.evidence)));
+});
+
 test('keeps repeated current platforms separate and uses the terminal 120-second window for long stable runs', () => {
   const parameterConfig = {
     ok: true,

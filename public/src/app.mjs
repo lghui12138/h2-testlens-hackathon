@@ -930,8 +930,10 @@ function render(result) {
   $('#file-name').textContent = state.fileName;
   const inputSummary = state.inputSummary || {};
   const inputNote = (inputSummary.totalFiles || 1) > 1
-    ? ` · ${inputSummary.totalFiles} 文件：${inputSummary.processed} 数据 / ${inputSummary.referenceOnly} 参考 / ${inputSummary.blockedBinary} 阻断`
-    : '';
+    ? ` · ${inputSummary.totalFiles} 文件：${inputSummary.processed} 数据 / ${inputSummary.referenceOnly} 参考 / ${inputSummary.blockedBinary} 阻断 / ${inputSummary.parserErrors || 0} 解析错误`
+    : inputSummary.parserErrors
+      ? ` · ${inputSummary.parserErrors} 解析错误`
+      : '';
   $('#source-count').textContent = `${result.metrics.sampleCount} 条记录 · ${fmt(result.metrics.durationS, 0)} 秒${result.dataset?.label ? ` · ${result.dataset.label}` : ''}${inputNote}`;
   const convertedUnits = Object.values(result.schema.conversions).filter((item) => item.mode !== 'identity').length;
   const phaseFallback = result.schema.missingOptionalHeaders.includes('phase') ? ' · 工况字段缺失，使用活动窗口' : '';

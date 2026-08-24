@@ -33,8 +33,8 @@ test('method source binding rejects cross-source evidence ids', () => {
 
 test('each declared standard reference requires its own ledger source and evidence ids', () => {
   const rows = [
-    { evidence_id: 'ev-std-1', source_id: 'std-1', evidence_type: 'official', locator: 'scope' },
-    { evidence_id: 'ev-std-2', source_id: 'std-2', evidence_type: 'official', locator: 'status' }
+    { evidence_id: 'ev-std-1', source_id: 'std-1', standard_id: 'STD-1', evidence_type: 'official', locator: 'scope' },
+    { evidence_id: 'ev-std-2', source_id: 'std-2', standard_id: 'STD-2', evidence_type: 'official', locator: 'status' }
   ];
   const ready = validateStandardReferenceBinding({ id: 'STD-1', evidenceSourceId: 'std-1', evidenceIds: ['ev-std-1'] }, 0, rows);
   assert.equal(ready.ready, true);
@@ -46,4 +46,7 @@ test('each declared standard reference requires its own ledger source and eviden
   assert.equal(missing.ready, false);
   assert.ok(missing.missing.includes('standardRefs[0].evidenceSourceId'));
   assert.ok(missing.missing.includes('standardRefs[0].evidenceIds'));
+  const wrongStandard = validateStandardReferenceBinding({ id: 'STD-1', evidenceSourceId: 'std-2', evidenceIds: ['ev-std-2'] }, 0, rows);
+  assert.equal(wrongStandard.ready, false);
+  assert.ok(wrongStandard.malformed.some((item) => item.includes('standardMismatch')));
 });

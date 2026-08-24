@@ -1,5 +1,12 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · T02 逐文件回指与电堆流量安全轮
+
+- 六智能体发现覆盖审计虽保存 198 个 SHA-256，integration report 逐文件表却没有显示；现在报告逐行输出源 SHA-256，198/198 可直接回指，GitHub Pages T02 卡片新增“全包接入报告（含逐文件 SHA-256）”入口。
+- 电堆阳极/阴极气体流量的显式 `L/Min` 现在复用 canonical flow unit gate，不能再进入氢气/空气计量比；无标准状态/温压基准时保持空值并触发 `UNIT_UNSUPPORTED`。
+- 标准 ledger 新增 canonical `standard_id`，错绑 GB/T 与 ISO 的证据会 fail-closed；混合批次的 `parserErrors` 现在显示在公开摘要中。
+- 针对性回归：T02 7/7、标准/analyzer/输入面合计 143/143；最终门控 `npm test` 176/176、`npm run check:submission` 132/132、typecheck、Vinext build 5/5、API smoke、AI 4/4 和 T02 198/198 unchanged 均已通过，最终 package receipt 将在提交前重建。
+
 ## 2026-08-24 · 标准逐项 provenance 与流量单位安全轮
 
 - 六智能体审查发现：运行时只绑定 `methodSource` 仍可能让一个 profile 列出多个标准却只证明一个来源；现在每个 `standardRefs[]` 都要求独立 `evidenceSourceId/evidenceIds`，source/public profile 与 compact ledger 同步。

@@ -42,7 +42,7 @@
 - 已实现：标准方法 profile 可声明 `methodSource`、`testSystemRequirements`、`environmentConditionRequirements` 和 `phaseResultRequirements`；系统分别门控测试系统组成、环境条件和方法阶段结果证据，不猜标准全文中的条件、精度、动态速率、效率公式或验收限值。
 - 已实现：标准方法 profile 可声明 `workflowSequence`；流程清单按每个步骤的阶段 id 或结构化证据类别逐项门控，避免用聚合阶段状态掩盖单阶段缺失；报告将执行者与执行者资质/授权依据分开记录。
 - 已实现：profile 可声明 `methodExecutionStatus`、标准状态/发布日期/实施日期和范围/流程证据；公开页面映射使用 `PUBLIC_SCOPE_MAPPING`。带标准引用的 `FULL_METHOD_IMPLEMENTED` 现在必须绑定 `methodImplementationEvidence`，并同时声明企业验收规则、仪器类别要求、`uncertaintyModelRequired: true` 和有效不确定度模型；方法来源、条款/步骤覆盖项、逐项实施证据、验证人、验证日期、验证引用、空的 `openGaps` 或上述前置证据任一缺失时 fail-closed，不进入 `HUMAN_REVIEW_PACKAGE`。
-- 已实现：approved profile 的每个 `standardRefs` 必须有 `id/title/uri/status`；运行时 evidence ledger 还要求每个标准引用独立提供 `evidenceSourceId/evidenceIds`，逐条绑定标准来源。profile 同时必须绑定当前 `methodId`、方法来源定位、范围/流程证据、标准状态、发布日期和实施日期；实施日期早于发布日期、引用重复或证据缺失时 profile 包直接拒绝导入。这是标准引用 provenance 门，不是标准全文或完整试验方法实现。
+- 已实现：approved profile 的每个 `standardRefs` 必须有 `id/title/uri/status`；运行时 evidence ledger 还要求每个标准引用独立提供 `evidenceSourceId/evidenceIds`，并要求 ledger 行的 canonical `standard_id` 与引用 ID 精确一致，防止把一个标准错绑到另一个标准的公开页面。profile 同时必须绑定当前 `methodId`、方法来源定位、范围/流程证据、标准状态、发布日期和实施日期；实施日期早于发布日期、引用重复或证据缺失时 profile 包直接拒绝导入。这是标准引用 provenance 门，不是标准全文或完整试验方法实现。
 - 已实现：质量证据记录中位/最小/最大采样间隔、计划与实际频率偏差、可配置采样缺口和阶段有效覆盖率；只有 profile 声明的质量规则才会阻断 readiness，不猜标准采样率或缺口限值。
 - 已实现：报告交付级别拆分为 `ANALYSIS_DRAFT`、`STANDARD_EVIDENCE_PACKAGE` 和 `HUMAN_REVIEW_PACKAGE`；标准流程证据包不能替代完整试验方法、安全验证或授权签核。
 - 已实现：企业 profile 可声明 `supportedDatasetTypes`、车辆目标电流和耐久预警规则；上传数据集不在批准范围时进入 `BLOCKED_PROFILE_SCOPE`，不复用其他设备方法。

@@ -100,6 +100,8 @@ export function validateStandardReferenceBinding(reference, index, evidenceRows 
     const row = evidenceRows.find((item) => item?.evidence_id === evidenceId);
     if (!row) missing.push(`${label}.evidenceIds.unknown:${evidenceId}`);
     else if (evidenceSourceId && row.source_id !== evidenceSourceId) malformed.push(`${label}.evidenceIds.sourceMismatch:${evidenceId}`);
+    else if (!text(row.standard_id)) missing.push(`${label}.evidenceIds.standardIdMissing:${evidenceId}`);
+    else if (row.standard_id !== ref.id) malformed.push(`${label}.evidenceIds.standardMismatch:${evidenceId}`);
     else matched.push(row);
   }
   const status = malformed.length ? 'malformed' : missing.length ? 'missing' : 'ready';

@@ -2158,6 +2158,8 @@ function buildStack(rows, config) {
     max_cell_voltage_v: unitSpec(mapping.max_cell_voltage_v, 'voltage_v'),
     pressure_kpa: unitSpec(mapping.pressure_kpa, 'pressure_kpa'),
     flow_slpm: unitSpec(mapping.flow_slpm, 'flow_slpm'),
+    anode_flow_slpm: unitSpec(mapping.anode_flow_slpm, 'flow_slpm'),
+    cathode_flow_slpm: unitSpec(mapping.cathode_flow_slpm, 'flow_slpm'),
     temperature_c: unitSpec(mapping.temperature_c, 'temperature_c'),
     leak_ppm: unitSpec(mapping.leak_ppm, 'leak_ppm')
   };
@@ -2210,8 +2212,8 @@ function buildStack(rows, config) {
       air_dewpoint_c: num(row[mapping.air_dewpoint_c]),
       h2_humidifier_water_temp_c: num(row[mapping.h2_humidifier_water_temp_c]),
       air_humidifier_water_temp_c: num(row[mapping.air_humidifier_water_temp_c]),
-      anode_flow_slpm: num(row[mapping.anode_flow_slpm]),
-      cathode_flow_slpm: num(row[mapping.cathode_flow_slpm]),
+      anode_flow_slpm: convertEnterpriseValue(row[mapping.anode_flow_slpm], unitSpecs.anode_flow_slpm),
+      cathode_flow_slpm: convertEnterpriseValue(row[mapping.cathode_flow_slpm], unitSpecs.cathode_flow_slpm),
       h2_stoich: num(row[mapping.h2_stoich]),
       air_stoich: num(row[mapping.air_stoich]),
       coolant_flow_lpm: num(row[mapping.coolant_flow_lpm]),

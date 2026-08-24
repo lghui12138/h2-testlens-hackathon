@@ -47,6 +47,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     assert.match(page, /metric-trace-details/);
     assert.match(page, /metric-trace/);
     assert.match(page, /result-announcement/);
+    assert.match(page, /t02_integration_report_v3\.5\.37\.md/);
   }
   assert.match(app, /ensureBrowserEngines/);
   assert.match(app, /setSpreadsheetEngine/);
@@ -58,6 +59,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
   assert.match(app, /publicBatchAggregation/);
   assert.match(app, /escapeHtml\(profile\.name\)/);
   assert.match(app, /loadReleaseSummary/);
+  assert.match(app, /解析错误/);
   assert.match(app, /updateAccessibleSummaries/);
   assert.match(app, /enterprise-performance-chart-summary/);
   assert.match(app, /ensureStandardEvidenceLedger/);

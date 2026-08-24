@@ -160,6 +160,8 @@ test('T02 integration report exposes every file ledger and preserves non-conform
   const report = buildT02IntegrationReport({ coverage, reference });
   assert.equal((report.match(/^\| \d+ \| /gm) || []).length, coverage.totalFiles);
   assert.match(report, /全文件使用台账/);
+  assert.match(report, /源 SHA-256/);
+  assert.equal((report.match(/\| [0-9a-f]{64} \|/g) || []).length, coverage.totalFiles);
   assert.match(report, /blocked_binary/);
   assert.match(report, /declared_no_upload/);
   assert.match(report, /不证明 GB\/T 45541-2025/);
