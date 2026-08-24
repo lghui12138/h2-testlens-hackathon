@@ -1450,6 +1450,93 @@ $('#download-json').addEventListener('click', () => { if (!state.result) { $('#r
 $('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
+
+function showLoading(message = '分析中…') {
+  const overlay = $('#loading-overlay');
+  const msg = $('#loading-message');
+  if (overlay) { overlay.hidden = false; overlay.setAttribute('aria-hidden', 'false'); }
+  if (msg) msg.textContent = message;
+}
+function hideLoading() {
+  const overlay = $('#loading-overlay');
+  if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
+}
+function showQuickStart() {
+  const overlay = $('#quick-start-overlay');
+  if (overlay && !window.localStorage.getItem('h2-testlens-quick-start-dismissed')) { overlay.hidden = false; }
+}
+function dismissQuickStart() {
+  const overlay = $('#quick-start-overlay');
+  if (overlay) { overlay.hidden = true; }
+  try { window.localStorage.setItem('h2-testlens-quick-start-dismissed', 'true'); } catch {}
+}
+function setDragOverState(active) {
+  const zone = $('#drop-zone');
+  if (!zone) return;
+  if (active) { zone.classList.add('drag-over'); zone.setAttribute('aria-dropeffect', 'copy'); }
+  else { zone.classList.remove('drag-over'); zone.removeAttribute('aria-dropeffect'); }
+}
+
+const dropZone = $('#drop-zone');
+if (dropZone) {
+  dropZone.addEventListener('dragover', (event) => { event.preventDefault(); event.stopPropagation(); setDragOverState(true); });
+  dropZone.addEventListener('dragleave', (event) => { event.preventDefault(); event.stopPropagation(); setDragOverState(false); });
+  dropZone.addEventListener('drop', async (event) => {
+    event.preventDefault(); event.stopPropagation(); setDragOverState(false);
+    const files = [...event.dataTransfer.files];
+    if (!files.length) return;
+    const input = $('#file-input');
+    try {
+      const loaded = await readSelectedDataFiles(files);
+      await bindRawDataHash(loaded.hashText);
+      state.durabilityReports = loaded.durabilityReports;
+      state.currentManifest = loaded.manifest;
+      state.inputEntries = loaded.entries;
+      const workbookEntries = loaded.entries.filter((entry) => entry.workbookEvidence);
+      state.workbookEvidence = workbookEntries.length === 1 ? workbookEntries[0].workbookEvidence : null;
+      state.batchDeclarationInput = null;
+      state.batchValidation = null;
+      state.batchSummaries = [];
+      state.inputSummary = loaded.inputSummary;
+      state.incrementalDiff = diffManifests(readBatchManifest(window.localStorage), state.currentManifest);
+      state.stackSelectionOverrides = {};
+      state.rows = loaded.rows;
+      state.fileName = loaded.entries.length === 1 ? loaded.entries[0].name : `多文件批次 · ${loaded.entries.length} 个文件`;
+      if (!state.rows.length) {
+        setAnalysisStatus(`已读取 ${loaded.entries.length} 个文件，但没有可分析的时序数据；参考资料已保留，二进制文本已阻断。`, 'error');
+        const blockedReasons = loaded.entries.filter((entry) => entry.status === 'blocked_binary').map((entry) => entry.binaryReason || 'unknown');
+        $('#schema-notice').textContent = `参考资料 ${loaded.inputSummary.referenceOnly} 份 · 阻断二进制 ${loaded.inputSummary.blockedBinary} 份（${blockedReasons.join('、') || 'unknown'}） · 解析错误 ${loaded.inputSummary.parserErrors} 份`;
+        return;
+      }
+      await analyzeCurrent('导入分析');
+    } catch (error) {
+      setAnalysisStatus(`导入失败：${error.message}`, 'error');
+      $('#schema-notice').textContent = `导入失败：${error.message}`;
+    }
+  });
+}
+
+const originalAnalyzeCurrent = analyzeCurrent;
+analyzeCurrent = async function(reason = '重新分析') {
+  showLoading(`${reason}：准备中…`);
+  try { await originalAnalyzeCurrent(reason); }
+  finally { hideLoading(); }
+};
+
+$('#close-quick-start')?.addEventListener('click', dismissQuickStart);
+$('#quick-start-overlay')?.addEventListener('click', (event) => { if (event.target.classList.contains('overlay-backdrop')) dismissQuickStart(); });
+
+const originalReadSelectedDataFiles = readSelectedDataFiles;
+readSelectedDataFiles = async function(files) {
+  try { return await originalReadSelectedDataFiles(files); }
+  catch (error) {
+    const hint = files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name) && file.size < 200)
+      ? '文件过小或为空，请确认包含表头和时序数据。'
+      : '请确认文件未加密、未损坏，且格式与示例一致。';
+    throw new Error(`${error.message}；${hint}`);
+  }
+};
+
 ensureExtendedMetadataFields();
 renderProfileOptions();
 applyProfile('electrolyzer-demo');
