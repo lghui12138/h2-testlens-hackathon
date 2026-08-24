@@ -18,9 +18,26 @@
   --font-body: "SF Pro Text", "Avenir Next", "PingFang SC", "Helvetica Neue", sans-serif;
   --font-mono: "SFMono-Regular", "Roboto Mono", monospace;
 }
+[data-theme="light"] {
+  --bg: #f4f7f8;
+  --panel: #ffffff;
+  --panel-soft: rgba(255, 255, 255, .82);
+  --ink: #0b1d26;
+  --muted: #4a6a73;
+  --muted-strong: #2f4b54;
+  --line: rgba(0, 0, 0, .08);
+  --line-strong: rgba(0, 0, 0, .14);
+  --mint: #0d9f80;
+  --violet: #6d4cbf;
+  --orange: #d17a3e;
+  --amber: #b39235;
+  --danger: #c93b36;
+  --shadow: 0 24px 70px rgba(0, 0, 0, .08);
+}
 * { box-sizing: border-box; }
 html { max-width: 100%; overflow-x: clip; scroll-behavior: smooth; background: var(--bg); }
 body { margin: 0; min-width: 320px; color: var(--ink); background: radial-gradient(circle at 8% -4%, rgba(46,184,161,.17), transparent 28rem), radial-gradient(circle at 94% 6%, rgba(112,88,190,.15), transparent 25rem), var(--bg); font: 14px/1.5 var(--font-body); color-scheme: dark; }
+[data-theme="light"] body { color-scheme: light; }
 button, input, select, textarea { font: inherit; }
 button, label { cursor: pointer; }
 a { color: inherit; }
