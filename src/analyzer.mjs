@@ -510,7 +510,7 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
       validSegmentCount,
       interruptedSegmentCount,
       nonPositiveIntervalCount,
-      validDataCoveragePct: spanS && spanS > 0 ? (durationS / spanS) * 100 : indexes.length >= 2 ? 100 : null,
+      validDataCoveragePct: spanS && spanS > 0 ? (durationS / spanS) * 100 : indexes.length >= 2 && sessionSpans.size === 1 ? 100 : indexes.length >= 2 ? 0 : null,
       labels: item ? [...item.labels] : []
     };
   });
@@ -595,7 +595,7 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       maximumPowerW: maxPower,
       validDataCoveragePct: indexes.length >= 2 && phaseSpanS !== null && phaseSpanS > 0
         ? (durationS / phaseSpanS) * 100
-        : indexes.length >= 2 ? 100 : null
+        : indexes.length >= 2 && phaseSessionSpans.size === 1 ? 100 : indexes.length >= 2 ? 0 : null
     };
     // Wh/NL and kWh/Nm³ are numerically equivalent: both numerator and denominator scale by 1,000.
     if (phase.energyConsumedWh !== null && phase.hydrogenVolumeNl !== null && phase.hydrogenVolumeNl > 0) phase.specificEnergyKWhPerNm3 = phase.energyConsumedWh / phase.hydrogenVolumeNl;
@@ -644,9 +644,20 @@ function dataQualityReadiness(config, quality, phaseCoverage = { required: [] })
 }
 
 function selectSteadyRows(rows, config = {}) {
-  const explicit = rows.filter((row) => isSteadyPhase(row.phase));
+  const steadyAliases = new Set(['steady', 'stabilized', 'stable', '稳态', '稳定', '恒定', ...(config.phaseAliases?.steady || [])].map(normalizePhaseToken));
+  const explicitWithIndex = rows.map((row, index) => ({ row, index })).filter(({ row }) => steadyAliases.has(normalizePhaseToken(row.phase)));
+  const explicit = explicitWithIndex.map(({ row }) => row);
+  if (config.approvalStatus === 'approved') {
+    const groups = [];
+    for (const item of explicitWithIndex) {
+      const previous = groups.at(-1)?.at(-1);
+      if (previous && item.index === previous.index + 1 && sameSession(previous.row, item.row)) groups.at(-1).push(item);
+      else groups.push([item]);
+    }
+    const best = groups.sort((a, b) => b.length - a.length)[0] || [];
+    return best.length >= 2 ? { rows: best.map(({ row }) => row), source: 'phase=steady（连续窗口）' } : { rows: [], source: 'phase=steady（缺少连续窗口，阻断）' };
+  }
   if (explicit.length >= 2) return { rows: explicit, source: 'phase=steady' };
-  if (explicit.length && config.approvalStatus === 'approved') return { rows: [], source: 'phase=steady（样本不足，阻断）' };
   const active = rows.filter((row) => row.current_a !== null && row.current_a > 0 && row.voltage_v !== null);
   const fallback = active.slice(Math.floor(active.length * 0.4));
   return { rows: fallback.length >= 2 ? fallback : rows, source: explicit.length ? 'phase=steady（样本不足，回退活动窗口）' : '活动窗口回退' };

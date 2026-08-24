@@ -1,5 +1,11 @@
 # GitHub 发布轮次记录
 
+## 2026-08-24 · 跨会话 steady 与 phase alias 门修复轮
+
+- approved 稳态 KPI 只接受同一会话内连续的 `steady`/中文稳态/显式 alias 窗口；跨会话各一条、无 steady 阶段和不足窗口不再回退活动数据。
+- 阶段覆盖无正跨度时返回 0/不可用，不再把两条单点记录当成 100% 覆盖；批准原始功率完整性门继续有效。
+- 回归门：`npm test` 164/164、`npm run check:submission` 127/127、typecheck、Vinext build 5/5、package smoke 全通过。
+
 ## 2026-08-24 · 批准功率与稳态样本门修复轮
 
 - approved profile 要求原始 `power_w` 时，部分记录缺失不再通过“至少两条非空”门；新增 partial raw-power regression。

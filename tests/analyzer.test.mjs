@@ -205,7 +205,19 @@ test('approved analysis blocks a one-row explicit steady phase instead of fallin
     '2,ramp,10,2,30,10,3,1'
   ].join('\n')), { approvalStatus: 'approved' });
   assert.equal(result.metrics.steadySampleCount, 0);
-  assert.match(result.metrics.steadyWindow, /样本不足/);
+  assert.match(result.metrics.steadyWindow, /缺少连续窗口/);
+});
+
+test('approved steady KPI requires one continuous session and honors steady aliases', () => {
+  const rows = [
+    { session_id: 'a', timestamp_s: '0', phase: 'steady_state', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' },
+    { session_id: 'b', timestamp_s: '0', phase: 'steady_state', current_a: '1', voltage_v: '2', temperature_c: '30', pressure_bar: '10', flow_slpm: '3', leak_ppm: '1' }
+  ];
+  const result = analyzeRows(rows, { approvalStatus: 'approved', phaseAliases: { steady: ['steady_state'] } });
+  assert.equal(result.metrics.steadySampleCount, 0);
+  assert.match(result.metrics.steadyWindow, /连续窗口/);
+  const coverage = analyzeRows(rows, { requiredPhases: ['steady'], phaseAliases: { steady: ['steady_state'] }, requiredPhaseMetrics: { steady: ['durationS'] } }).phaseCoverage.required[0];
+  assert.equal(coverage.validDataCoveragePct, 0);
 });
 
 test('surfaces a warning for any missing analytical numeric cell instead of allowing a silent clear result', () => {
