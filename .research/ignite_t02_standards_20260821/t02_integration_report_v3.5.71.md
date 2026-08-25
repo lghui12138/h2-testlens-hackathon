@@ -1,8 +1,8 @@
 # T02 设备测试数据分析与自动报告助手 · 全资料包自动接入报告
 
-- 证据版本：3.5.71
-- 覆盖审计：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.71.json`
-- 参考审计：`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.71.json`
+- 证据版本：3.5.72
+- 覆盖审计：`.research/ignite_t02_standards_20260821/t02_coverage_audit_v3.5.72.json`
+- 参考审计：`.research/ignite_t02_standards_20260821/t02_reference_audit_v3.5.72.json`
 - 原始企业文件：未复制进仓库；本报告只使用哈希、解析统计、字段角色、指标名称和边界证据。
 
 ## 结论

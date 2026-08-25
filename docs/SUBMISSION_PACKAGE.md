@@ -8,9 +8,9 @@ npm run package:submission
 
 The command first runs `npm run check:submission`, which recursively runs the unit tests and offline AI grounding suite. Only after those checks pass does it create:
 
-`dist/h2-testlens-submission-v3.5.71.zip`
+`dist/h2-testlens-submission-v3.5.72.zip`
 
-The verified SHA-256 is recorded in the adjacent `dist/h2-testlens-submission-v3.5.71.zip.sha256` sidecar. It is intentionally not repeated here because this document is itself included in the archive and would make an embedded checksum self-referential.
+The verified SHA-256 is recorded in the adjacent `dist/h2-testlens-submission-v3.5.72.zip.sha256` sidecar. It is intentionally not repeated here because this document is itself included in the archive and would make an embedded checksum self-referential.
 
 The archive contains the runnable app, source, tests, sample data, configuration-package example, AI evaluation, submission brief, the current `sources.jsonl`/`evidence.jsonl`/`claims.jsonl` reference graph, and current-version completion evidence. It intentionally excludes local browser history, downloaded reports, raw enterprise files, and historical audit snapshots; only the current T02 evidence and integration report are packaged.
 

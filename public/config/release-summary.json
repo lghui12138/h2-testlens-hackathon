@@ -1,6 +1,6 @@
 {
   "schemaVersion": "h2-testlens.release-summary.v1",
-  "version": "3.5.71",
+  "version": "3.5.72",
   "repository": "lghui12138/h2-testlens-hackathon",
   "commit": null,
   "workflowRunId": null,
@@ -14,7 +14,7 @@
     "build": { "command": "npm run build", "status": "not_bound" },
     "packageSmoke": { "command": "npm run package:submission", "status": "not_bound" }
   },
-  "t02": { "auditVersion": "3.5.71", "totalFiles": 198, "processed": 190, "referenceOnly": 6, "blockedBinary": 1, "declaredNoUpload": 1, "processedRowsOrPoints": 2262283, "formalConformityClaims": 0, "boundary": "文件级解析覆盖与描述性证据，不等于标准符合性或企业放行" },
+  "t02": { "auditVersion": "3.5.72", "totalFiles": 198, "processed": 190, "referenceOnly": 6, "blockedBinary": 1, "declaredNoUpload": 1, "processedRowsOrPoints": 2262283, "formalConformityClaims": 0, "boundary": "文件级解析覆盖与描述性证据，不等于标准符合性或企业放行" },
   "artifact": { "name": null, "bytes": null, "sha256": null, "archiveIntegrity": "not_bound" },
   "externalGates": ["approved enterprise profiles and limits", "instrument calibration and uncertainty budget", "ISO safety evidence", "ISO/IEC 17025 laboratory evidence", "Excel/WPS visual acceptance", "human parallel validation"]
 }

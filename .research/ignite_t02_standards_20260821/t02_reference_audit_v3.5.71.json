@@ -1,6 +1,6 @@
 {
   "audit": "T02 reference-content and implementation mapping audit",
-  "auditVersion": "3.5.71",
+  "auditVersion": "3.5.72",
   "root": "T02_SOURCE_ROOT",
   "sourceRootLabel": "T02_SOURCE_ROOT",
   "pathDisclosure": "redacted",
