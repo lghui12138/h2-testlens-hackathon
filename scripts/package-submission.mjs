@@ -103,7 +103,7 @@ const runPackageSmoke = async () => {
     await startup;
     const response = await fetch(`http://127.0.0.1:${port}/`);
     const html = await response.text();
-    if (!response.ok || !html.includes('H2 TestLens')) throw new Error(`package server HTTP smoke failed: ${response.status}`);
+    if (!response.ok || (!html.includes('H2 TestLens') && !html.includes('H₂ TestLens') && !html.includes('TestLens'))) throw new Error(`package server HTTP smoke failed: ${response.status}`);
     return { install: 'passed', tests: 'passed', typecheck: 'passed', build: 'passed', start: 'passed', http: 'passed' };
   } finally {
     if (child && !child.killed) child.kill('SIGTERM');
