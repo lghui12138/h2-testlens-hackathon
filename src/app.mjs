@@ -52,6 +52,88 @@ const ANALYSIS_WORKER_THRESHOLD = 10000;
 const analysisWorkerState = { worker: null, nextId: 0, pending: new Map() };
 
 const fmt = (value, digits = 1) => value === null || value === undefined || Number.isNaN(value) ? '—' : Number(value).toFixed(digits);
+
+// Nice axis tick step: pick 1/2/5 × 10^k that yields roughly the desired count of ticks.
+function niceStep(rawSpan, targetTicks = 5) {
+  if (rawSpan <= 0 || !Number.isFinite(rawSpan)) return 1;
+  const rough = rawSpan / targetTicks;
+  const pow = 10 ** Math.floor(Math.log10(rough));
+  const norm = rough / pow;
+  let step = pow;
+  if (norm >= 1.5) step = pow * 2;
+  if (norm >= 3.5) step = pow * 5;
+  if (norm >= 7.5) step = pow * 10;
+  return step;
+}
+function tickRange(min, max, targetTicks = 5) {
+  const span = max - min;
+  const step = niceStep(span, targetTicks);
+  const start = Math.floor(min / step) * step;
+  const end = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = start; v <= end + step * 0.5; v += step) {
+    if (v < min - step * 0.05 || v > max + step * 0.05) continue;
+    ticks.push(Number(v.toFixed(10)));
+  }
+  return ticks;
+}
+function formatTick(value, step) {
+  if (!Number.isFinite(value)) return '';
+  const abs = Math.abs(value);
+  if (step >= 1000) return fmt(value, 0);
+  if (step >= 10) return fmt(value, 0);
+  if (step >= 1) return fmt(value, Math.max(0, 2 - Math.floor(Math.log10(step || 1))));
+  const decimals = Math.max(0, -Math.floor(Math.log10(step || 0.1)));
+  return fmt(value, Math.min(decimals, 4));
+}
+// Draw axis spine, tick marks and tick labels.
+// opts: { side:'left'|'right'|'bottom'|'top', min, max, [unit], [color], [tickColor] }
+function drawAxis(ctx, pad, w, h, side, scaleMin, scaleMax, unit = '', { color = '#71838a', spine = 'rgba(154,172,184,.35)' } = {}) {
+  ctx.save();
+  ctx.strokeStyle = spine; ctx.lineWidth = 1;
+  ctx.fillStyle = color; ctx.font = '10px Avenir Next, sans-serif';
+  ctx.textBaseline = 'middle';
+  if (side === 'left' || side === 'right') {
+    const x = side === 'left' ? pad.left : w - pad.right;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, h - pad.bottom); ctx.stroke();
+    const plotH = h - pad.top - pad.bottom;
+    const ticks = tickRange(scaleMin, scaleMax, 5);
+    const step = niceStep(scaleMax - scaleMin, 5);
+    ctx.textAlign = side === 'left' ? 'right' : 'left';
+    for (const t of ticks) {
+      const y = pad.top + ((scaleMax - t) / (scaleMax - scaleMin || 1)) * plotH;
+      ctx.strokeStyle = 'rgba(154,172,184,.16)';
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+      ctx.strokeStyle = spine;
+      ctx.beginPath(); ctx.moveTo(x - (side === 'left' ? 4 : 0), y); ctx.lineTo(x + (side === 'left' ? 0 : 4), y); ctx.stroke();
+      ctx.fillText(formatTick(t, step), x + (side === 'left' ? -8 : 8), y);
+    }
+    if (unit) {
+      ctx.fillStyle = color; ctx.font = '10px Avenir Next, sans-serif';
+      ctx.textAlign = side === 'left' ? 'left' : 'right'; ctx.textBaseline = 'top';
+      const ux = side === 'left' ? pad.left : w - pad.right;
+      ctx.fillText(unit, ux - (side === 'left' ? 0 : 0), pad.top - 14);
+    }
+  } else if (side === 'bottom' || side === 'top') {
+    const y = side === 'bottom' ? h - pad.bottom : pad.top;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    const plotW = w - pad.left - pad.right;
+    const ticks = tickRange(scaleMin, scaleMax, 6);
+    const step = niceStep(scaleMax - scaleMin, 6);
+    ctx.textAlign = 'center'; ctx.textBaseline = side === 'bottom' ? 'top' : 'bottom';
+    for (const t of ticks) {
+      const px = pad.left + ((t - scaleMin) / (scaleMax - scaleMin || 1)) * plotW;
+      ctx.strokeStyle = spine;
+      ctx.beginPath(); ctx.moveTo(px, y - (side === 'bottom' ? 0 : 4)); ctx.lineTo(px, y + (side === 'bottom' ? 4 : 0)); ctx.stroke();
+      ctx.fillStyle = color; ctx.fillText(formatTick(t, step), px, y + (side === 'bottom' ? 7 : -7));
+    }
+    if (unit) {
+      ctx.fillStyle = color; ctx.textAlign = 'right'; ctx.textBaseline = side === 'bottom' ? 'bottom' : 'top';
+      ctx.fillText(unit, w - pad.right, side === 'bottom' ? h - 4 : pad.top + 14);
+    }
+  }
+  ctx.restore();
+}
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 const csvCell = (value) => '"' + String(value ?? '').replaceAll('"', '""') + '"';
 
@@ -733,6 +815,7 @@ function renderHistory(history = state.history) {
 }
 
 function renderSchema(result) {
+  if (!result.schema?.mapping) return; // enterprise datasets render their own field map in the enterprise panel
   const fields = Object.keys(result.schema.mapping);
   $('#schema-table').innerHTML = fields.map((field) => {
     const source = result.schema.mapping[field];
@@ -851,7 +934,7 @@ function drawChart(result) {
         ? rows.filter((row) => row.timestamp_s >= result.dataset.analysisWindow.startS && row.timestamp_s <= result.dataset.analysisWindow.endS)
         : rows;
       const chartRows = windowedRows.length ? windowedRows : rows;
-      const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+      const pad = { left: 44, right: 44, top: 22, bottom: 34 };
       const x = (index) => pad.left + (index / Math.max(chartRows.length - 1, 1)) * (w - pad.left - pad.right);
       if (result.datasetType === 'vehicle') {
         const axes = [
@@ -866,12 +949,13 @@ function drawChart(result) {
           return { min, max, span: max - min || 1 };
         };
         const scales = Object.fromEntries(axes.map((item) => [item.axis, scale(item.field)]));
+        // Ensure right-axis scale visible even when span near zero
+        if (scales.right && Math.abs(scales.right.span) < 1e-9) { scales.right.min -= 0.5; scales.right.max += 0.5; scales.right.span = 1; }
         const yFor = (axis, value) => h - pad.bottom - ((value - scales[axis].min) / scales[axis].span) * (h - pad.top - pad.bottom);
-        ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
-        for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
-        ctx.font = '10px Avenir Next, sans-serif';
-        ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.left.min, 2)}–${fmt(scales.left.max, 2)}`, 4, pad.top + 10);
-        if (scales.right) { ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.right.min, 2)}–${fmt(scales.right.max, 2)}`, w - 62, pad.top + 10); }
+        const t0 = chartRows[0]?.timestamp_s ?? 0; const t1 = chartRows[chartRows.length - 1]?.timestamp_s ?? 1;
+        drawAxis(ctx, pad, w, h, 'left', scales.left.min, scales.left.max, axes[0].label, { color: axes[0].color });
+        if (scales.right) drawAxis(ctx, pad, w, h, 'right', scales.right.min, scales.right.max, axes[1].label, { color: axes[1].color });
+        drawAxis(ctx, pad, w, h, 'bottom', t0, t1, '时间（s）', { color: '#71838a' });
         axes.forEach((item) => {
           ctx.strokeStyle = item.color; ctx.lineWidth = 1.8; ctx.beginPath(); let started = false; let previousSession = null;
           chartRows.forEach((row, index) => {
@@ -884,38 +968,45 @@ function drawChart(result) {
           }); ctx.stroke();
         });
         ctx.font = '11px Avenir Next, sans-serif';
-        axes.forEach((item, index) => { ctx.fillStyle = item.color; ctx.fillRect(pad.left + index * 130, h - 13, 12, 2); ctx.fillText(`${item.axis === 'left' ? '左轴' : '右轴'} · ${item.label}`, pad.left + 18 + index * 130, h - 9); });
+        axes.forEach((item, index) => { ctx.fillStyle = item.color; ctx.fillRect(pad.left + 4 + index * 160, h - 13, 12, 2); ctx.fillText(`${item.axis === 'left' ? '左轴' : '右轴'} · ${item.label}`, pad.left + 22 + index * 160, h - 9); });
         wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
         canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `车辆趋势图：${chartRows.length.toLocaleString('zh-CN')} 个点，左轴 ${escapeHtml(result.dataset?.selectedSignal || '信号')}${result.dataset?.secondarySignal ? `，右轴 ${escapeHtml(result.dataset.secondarySignal)}` : ''}`);
         return;
       }
-      const series = [['current_a', '#ef8f62', '电流'], ['avg_cell_voltage_v', '#5bd4c0', '平均单片电压'], ['power_kw', '#7c9df2', '功率']];
+      const series = [['current_a', '#ef8f62', '电流（A）'], ['avg_cell_voltage_v', '#5bd4c0', '平均单片电压（V）'], ['power_kw', '#7c9df2', '功率（kW）']];
       const yFor = (field, value) => {
         const values = chartRows.map((row) => row[field]).filter((item) => item !== null);
         const min = Math.min(...values, 0); const max = Math.max(...values, 1); const span = max - min || 1;
         return h - pad.bottom - ((value - min) / span) * (h - pad.top - pad.bottom);
       };
-      ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
-      for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
+      // Three series share one normalized y-scale; show one axis with span across all values.
+      const allValues = chartRows.flatMap((row) => series.map(([f]) => row[f])).filter((item) => item !== null);
+      const yMin = Math.min(...allValues, 0); const yMax = Math.max(...allValues, 1);
+      const t0 = chartRows[0]?.timestamp_s ?? 0; const t1 = chartRows[chartRows.length - 1]?.timestamp_s ?? 1;
+      drawAxis(ctx, pad, w, h, 'left', yMin, yMax, '归一化数值', { color: '#a4b5bd' });
+      drawAxis(ctx, pad, w, h, 'bottom', t0, t1, '时间（s）', { color: '#71838a' });
       series.forEach(([field, color]) => { ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.beginPath(); let started = false; let previousSession = null; chartRows.forEach((row, index) => { if (row[field] === null) { started = false; return; } if (previousSession !== null && row.session_id !== previousSession) started = false; const pointX = x(index); const pointY = yFor(field, row[field]); if (!started) { ctx.moveTo(pointX, pointY); started = true; } else ctx.lineTo(pointX, pointY); previousSession = row.session_id; }); ctx.stroke(); });
       ctx.font = '11px Avenir Next, sans-serif';
-      series.forEach(([field, color, label], index) => { ctx.fillStyle = color; ctx.fillRect(pad.left + index * 86, h - 13, 12, 2); ctx.fillText(label, pad.left + 18 + index * 86, h - 9); });
+      series.forEach(([field, color, label], index) => { ctx.fillStyle = color; ctx.fillRect(pad.left + 4 + index * 108, h - 13, 12, 2); ctx.fillText(label, pad.left + 22 + index * 108, h - 9); });
       wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
       canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `工况趋势图：${chartRows.length.toLocaleString('zh-CN')} 个数据点，电流、平均单片电压和功率`);
       return;
     }
-    const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+    const pad = { left: 44, right: 36, top: 22, bottom: 34 };
     const rows = result.rows.filter((row) => row.timestamp_s !== null);
     const x = (index) => pad.left + (index / Math.max(rows.length - 1, 1)) * (w - pad.left - pad.right);
+    const tMin = rows[0]?.timestamp_s ?? 0; const tMax = rows[rows.length - 1]?.timestamp_s ?? 1;
     const yTemp = (value) => h - pad.bottom - ((value - 20) / 70) * (h - pad.top - pad.bottom);
     const yPressure = (value) => h - pad.bottom - ((value - 20) / 15) * (h - pad.top - pad.bottom);
-    ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
-    for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
+    // Axes: Y-left = temperature (°C), Y-right = pressure (bar), X-bottom = time (s)
+    drawAxis(ctx, pad, w, h, 'left', 20, 90, '温度（°C）', { color: '#ef8f62' });
+    drawAxis(ctx, pad, w, h, 'right', 20, 35, '压力（bar）', { color: '#5bd4c0' });
+    drawAxis(ctx, pad, w, h, 'bottom', tMin, tMax, '时间（s）', { color: '#71838a' });
     const line = (field, color, mapper) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((row, index) => { const value = row[field]; if (value === null) return; const pointX = x(index); const pointY = mapper(value); index ? ctx.lineTo(pointX, pointY) : ctx.moveTo(pointX, pointY); }); ctx.stroke(); };
     line('temperature_c', '#ef8f62', yTemp); line('pressure_bar', '#5bd4c0', yPressure);
-    ctx.font = '11px Avenir Next, sans-serif'; ctx.fillStyle = '#a4b5bd'; ctx.fillText('°C', 8, pad.top + 3); ctx.fillText('bar', w - 28, pad.top + 3);
-    ctx.fillStyle = '#ef8f62'; ctx.fillRect(pad.left, h - 13, 12, 2); ctx.fillText('温度', pad.left + 18, h - 9);
-    ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 70, h - 13, 12, 2); ctx.fillText('压力', pad.left + 88, h - 9);
+    ctx.font = '11px Avenir Next, sans-serif';
+    ctx.fillStyle = '#ef8f62'; ctx.fillRect(pad.left + 4, h - 13, 12, 2); ctx.fillText('温度', pad.left + 22, h - 9);
+    ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 78, h - 13, 12, 2); ctx.fillText('压力', pad.left + 96, h - 9);
     wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
     canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `温度与压力趋势图：${rows.length.toLocaleString('zh-CN')} 条记录`);
   } catch (error) {
@@ -939,42 +1030,43 @@ function drawEnterpriseChart(result) {
     const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245;
     canvas.width = width * dpr; canvas.height = height * dpr;
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
-  const pad = { left: 46, right: 24, top: 20, bottom: 32 };
+  const pad = { left: 52, right: 52, top: 24, bottom: 38 };
   const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom;
-  const grid = () => { ctx.strokeStyle = 'rgba(154,172,184,.16)'; ctx.lineWidth = 1; for (let i = 0; i < 4; i += 1) { const y = pad.top + i * plotH / 3; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke(); } };
   const label = (value, x, y, color = '#71838a') => { ctx.fillStyle = color; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillText(String(value), x, y); };
   if (result.datasetType === 'vehicle') {
     const points = result.dataset.insulation.points || [];
     if (!points.length) { label('暂无有效绝缘阻值窗口', pad.left, pad.top + 20); return; }
-    const values = points.map((point) => point.minimumKohm); const max = Math.max(400, ...values); const min = Math.min(0, ...values); const span = max - min || 1;
-    const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW; const y = (value) => pad.top + (max - value) / span * plotH;
-    grid();
-    for (const threshold of [350, 250]) { ctx.strokeStyle = threshold === 350 ? '#e0aa49' : '#c84e48'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(pad.left, y(threshold)); ctx.lineTo(width - pad.right, y(threshold)); ctx.stroke(); ctx.setLineDash([]); label(`${threshold} kΩ`, width - pad.right - 42, y(threshold) - 4, ctx.strokeStyle); }
+    const values = points.map((point) => point.minimumKohm); const max = Math.max(400, ...values); const min = Math.min(0, ...values);
+    const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW; const y = (value) => pad.top + (max - value) / (max - min || 1) * plotH;
+    drawAxis(ctx, pad, width, height, 'left', min, max, '绝缘阻值（kΩ）', { color: '#5bd4c0' });
+    drawAxis(ctx, pad, width, height, 'bottom', 0, points.length - 1, '时间窗口序号', { color: '#71838a' });
+    for (const threshold of [350, 250]) { ctx.strokeStyle = threshold === 350 ? '#e0aa49' : '#c84e48'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(pad.left, y(threshold)); ctx.lineTo(width - pad.right, y(threshold)); ctx.stroke(); ctx.setLineDash([]); ctx.font = '10px Avenir Next, sans-serif'; ctx.fillStyle = ctx.strokeStyle; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(`${threshold} kΩ`, pad.left + 6, y(threshold) - 3); }
     ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); points.forEach((point, index) => { const px = x(index); const py = y(point.minimumKohm); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
     points.forEach((point, index) => { ctx.fillStyle = point.status === 4 ? '#7c9df2' : '#5bd4c0'; ctx.beginPath(); ctx.arc(x(index), y(point.minimumKohm), 3.2, 0, Math.PI * 2); ctx.fill(); });
-    label('绝缘阻值（kΩ）', pad.left, 12, '#13262d'); label('时间窗口', width - 60, height - 8);
     return;
   }
   if (result.datasetType === 'durability') {
     const points = (result.dataset.points || []).filter((point) => Number.isFinite(point.targetPowerKw) && Number.isFinite(point.averageCellVoltageMv));
     if (!points.length) { label('暂无可绘制的耐久功率点', pad.left, pad.top + 20); return; }
-    const xValues = points.map((point) => point.targetPowerKw); const yValues = points.map((point) => point.averageCellVoltageMv); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 10; const yMax = Math.max(...yValues) + 10; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1;
-    const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
-    grid();
+    const xValues = points.map((point) => point.targetPowerKw); const yValues = points.map((point) => point.averageCellVoltageMv); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 10; const yMax = Math.max(...yValues) + 10;
+    const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
+    drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单体电压（mV）', { color: '#5bd4c0' });
+    drawAxis(ctx, pad, width, height, 'bottom', xMin, xMax, '目标功率（kW）', { color: '#71838a' });
     const sorted = [...points].sort((a, b) => a.targetPowerKw - b.targetPowerKw); ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.targetPowerKw); const py = y(point.averageCellVoltageMv); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
     points.forEach((point) => { const low = result.dataset.rules.minAverageCellVoltageMv !== null && point.averageCellVoltageMv < result.dataset.rules.minAverageCellVoltageMv; const high = result.dataset.rules.maxDeviationMv !== null && point.averageDeviationMv > result.dataset.rules.maxDeviationMv; ctx.fillStyle = low || high ? '#c84e48' : '#127f79'; ctx.beginPath(); ctx.arc(x(point.targetPowerKw), y(point.averageCellVoltageMv), 4, 0, Math.PI * 2); ctx.fill(); });
-    label('平均单体电压（mV）', pad.left, 12, '#13262d'); label('目标功率（kW）', width - 84, height - 8); return;
+    return;
   }
   const points = (result.dataset.performancePoints || []).filter((point) => Number.isFinite(point.averageCellVoltageV));
   if (!points.length) { label('暂无有效极化点；请导入目标工况参数并确认稳定区间', pad.left, pad.top + 20); return; }
   const xValues = points.map((point) => point.averageCurrentDensity ?? point.averageCurrentA).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).filter(Number.isFinite);
-  const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1;
-  const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
-  grid();
+  const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01;
+  const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
+  drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单片电压（V）', { color: '#5bd4c0' });
+  const xUnit = points[0]?.averageCurrentDensity !== undefined ? '电流密度（A/cm²）' : '电流（A）';
+  drawAxis(ctx, pad, width, height, 'bottom', xMin, xMax, xUnit, { color: '#71838a' });
   const sorted = [...points].sort((a, b) => (a.averageCurrentDensity ?? a.averageCurrentA) - (b.averageCurrentDensity ?? b.averageCurrentA));
   ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
   points.forEach((point) => { const px = x(point.averageCurrentDensity ?? point.averageCurrentA); const py = y(point.averageCellVoltageV); ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); });
-  label(`平均单片电压（V）`, pad.left, 12, '#13262d'); label(`电流密度/电流`, width - 86, height - 8);
   } catch (error) {
     if (wrap) {
       wrap.classList.remove('chart-loading', 'chart-ready');
@@ -1003,15 +1095,17 @@ function drawEnterprisePerformanceChart(result) {
   const trend = formal ? result.dataset.performanceTrend?.averageCellVoltageV : result.dataset.descriptiveTrend?.averageCellVoltageV;
   const dpr = window.devicePixelRatio || 1; const width = canvas.clientWidth || 640; const height = canvas.clientHeight || 245; canvas.width = width * dpr; canvas.height = height * dpr;
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
-  const pad = { left: 50, right: 24, top: 20, bottom: 32 }; const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillStyle = '#71838a';
+  const pad = { left: 54, right: 28, top: 24, bottom: 40 }; const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillStyle = '#71838a';
   if (!points.length) { ctx.fillText('暂无可绘制区间；输入企业目标电流后重新分析', pad.left, pad.top + 20); return; }
-  const xValues = points.map((point) => point.trendX); const fittedValues = xValues.map((value) => evaluateChartTrend(trend, value)).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).concat(fittedValues); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const xSpan = xMax - xMin || 1; const ySpan = yMax - yMin || 1; const x = (value) => pad.left + (value - xMin) / xSpan * plotW; const y = (value) => pad.top + (yMax - value) / ySpan * plotH;
-  ctx.strokeStyle = 'rgba(154,172,184,.16)'; for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * plotH / 3; ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right, gy); ctx.stroke(); }
+  const xValues = points.map((point) => point.trendX); const fittedValues = xValues.map((value) => evaluateChartTrend(trend, value)).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).concat(fittedValues); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
+  const xUnit = result.dataset.trendXAxis === 'timestamp' ? '时间（日期序号）' : '运行时长（h）';
+  drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单体电压（V）', { color: '#5bd4c0' });
+  drawAxis(ctx, pad, width, height, 'bottom', xMin, xMax, xUnit, { color: '#71838a' });
   const sorted = [...points].sort((a, b) => a.trendX - b.trendX); ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.8; ctx.beginPath(); sorted.forEach((point, index) => { const px = x(point.trendX); const py = y(point.averageCellVoltageV); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
   if (trend?.status === 'fitted') { const lineX = [xMin, xMax]; ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#e0aa49'; ctx.lineWidth = 1.6; ctx.beginPath(); lineX.forEach((value, index) => { const px = x(value); const py = y(evaluateChartTrend(trend, value)); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke(); ctx.restore(); }
   points.forEach((point) => { ctx.fillStyle = point.status === 'short_stable' ? '#e0aa49' : '#127f79'; ctx.beginPath(); ctx.arc(x(point.trendX), y(point.averageCellVoltageV), 4, 0, Math.PI * 2); ctx.fill(); });
-  const axisLabel = result.dataset.trendXAxis === 'timestamp' ? '实际日期/时间' : '运行时长（h）'; const modelLabel = trend?.model === 'quadratic' ? '二次多项式' : '线性'; const fitLabel = trend?.status === 'fitted' ? `R² ${fmt(trend.rSquared, 3)}` : '点数不足'; const startLabel = result.dataset.trendXAxis === 'timestamp' ? new Date(xMin * 86400000).toISOString().slice(0, 10) : `${fmt(xMin, 1)} h`; const endLabel = result.dataset.trendXAxis === 'timestamp' ? new Date(xMax * 86400000).toISOString().slice(0, 10) : `${fmt(xMax, 1)} h`;
-  ctx.fillStyle = '#13262d'; ctx.fillText(formal ? '平均单体电压（V）' : '描述性候选区间 · 平均单体电压（V）', pad.left, 12); ctx.fillText(`${axisLabel} · ${modelLabel} · ${fitLabel}`, pad.left, height - 20); ctx.textAlign = 'right'; ctx.fillText(endLabel, width - pad.right, height - 8); ctx.textAlign = 'left'; ctx.fillText(startLabel, pad.left, height - 8);
+  const axisLabel = result.dataset.trendXAxis === 'timestamp' ? '实际日期/时间' : '运行时长'; const modelLabel = trend?.model === 'quadratic' ? '二次多项式' : '线性'; const fitLabel = trend?.status === 'fitted' ? `R² ${fmt(trend.rSquared, 3)}` : '点数不足';
+  ctx.fillStyle = '#a4b5bd'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(`${axisLabel} · ${modelLabel} · ${fitLabel}`, pad.left + 4, height - 18);
 }
 
 function generateHistoryThumbnail(result) {
@@ -1050,8 +1144,6 @@ function generateHistoryThumbnail(result) {
   }
 }
 
-function renderReport(result, draft = state.aiDraft) {
-
 function renderComplianceHistory() {
   const container = $('#compliance-history-list');
   if (!container) return;
@@ -1086,6 +1178,8 @@ function renderComplianceHistory() {
   const live = $('#compliance-history-live');
   if (live) live.textContent = `标准符合性历史：${history.length} 条审计快照`;
 }
+
+function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
   const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析草稿';
   const compliance = result.compliance || {};
@@ -1145,7 +1239,7 @@ function renderComplianceHistory() {
   const complianceStatusClass = String(result.compliance.status || '').toLowerCase().replaceAll('_', '-');
   const complianceStatusIcon = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : result.compliance.status === 'NOT_READY' ? '-' : '·';
   const complianceStatusTitle = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : result.compliance.status === 'NOT_READY' ? '资料不完整' : '仅演示';
-  const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows.length ? `<div class="compliance-gate-list">${gateRows.join('')}</div>` : ''}${standardCards ? `<div class="compliance-standard-grid">${standardCards}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
+  const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows ? `<div class="compliance-gate-list">${gateRows}</div>` : ''}${standardCards ? `<div class="compliance-standard-grid">${standardCards}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
@@ -1443,6 +1537,37 @@ async function loadSample() {
   await loadCsv(assetUrl('sample-data/test_run_001.csv'), '演示样本 · electrolyzer_run_017.csv');
 }
 
+// Demo working-condition library: one click (no upload) to load a bundled dataset and its matching profile.
+const SAMPLE_LIBRARY = {
+  'test_run_001.csv': { name: '演示样本 · electrolyzer_run_017.csv', profileId: 'electrolyzer-demo' },
+  'test_run_legacy_cn.csv': { name: '中文单位样本 · legacy_run_cn.csv', profileId: 'electrolyzer-demo' },
+  'test_run_baseline.csv': { name: '演示基线 · baseline_run.csv', profileId: 'electrolyzer-demo' },
+  't02-qingchuan-stack-regression.csv': { name: '清川电堆台架工况 · qingchuan_stack_regression.csv', profileId: 'qingchuan-stack' },
+  't02-hypu-stack-regression.csv': { name: '海珀特电堆台架工况 · hypu_stack_regression.csv', profileId: 'hypu-durability' },
+  't02-qingzhihuli-vehicle-212-real.csv': { name: '氢质氢离整车 212 实车工况 · vehicle_212_real.csv', profileId: 'qingzhihuli-vehicle' },
+  't02-qingzhihuli-vehicle-345-real.csv': { name: '氢质氢离整车 345 实车工况 · vehicle_345_real.csv', profileId: 'qingzhihuli-vehicle' },
+  't02-qingzhihuli-vehicle-regression.csv': { name: '氢质氢离整车工况回归 · vehicle_regression.csv', profileId: 'qingzhihuli-vehicle' }
+};
+
+async function loadLibrarySample(fileName) {
+  const sample = SAMPLE_LIBRARY[fileName];
+  if (!sample) return;
+  try {
+    if (sample.profileId) {
+      const profileSelect = $('#profile-select');
+      if (profileSelect) {
+        profileSelect.value = sample.profileId;
+        applyProfile(sample.profileId);
+      }
+    }
+    await loadCsv(assetUrl(`sample-data/${fileName}`), sample.name);
+  } catch (error) {
+    setAnalysisStatus(`演示工况读取失败：${error.message}`, 'error');
+    const notice = $('#schema-notice');
+    if (notice) notice.textContent = '样本资源读取失败，请刷新页面或改为手动导入文件。';
+  }
+}
+
 async function loadSampleSafely() {
   try {
     await loadSample();
@@ -1617,11 +1742,11 @@ function buildEnhancedMarkdown(result, fileName, schema) {
     `- 数据文件：${fileName}`,
     `- 自动判定：**${result.verdict}**`,
     `- 生成时间：${new Date().toISOString()}`,
-    `- 来源：${schema?.source || 'h2-testlens-hackathon 前端模拟 + ' + schemaNote}`,
+    `- 来源：${schema?.source || 't02-equipment-test-report-assistant 前端分析 + ' + schemaNote}`,
     '',
     '## 结论摘要',
     '',
-    result.narrative || '本次测试完成，未见明确异常。',
+    result.narrative || '分析完成，未见明确异常。',
     '',
     '## 数据质量',
     '',
@@ -1803,6 +1928,10 @@ $('#reanalyze').addEventListener('click', () => { void analyzeCurrent('重新分
 $('#profile-select').addEventListener('change', () => { applyProfile($('#profile-select').value); void analyzeCurrent('切换 profile'); });
 ['max-temperature', 'max-pressure', 'max-leak', 'max-voltage-std', 'max-pressure-drift'].forEach((id) => document.querySelector(`#${id}`).addEventListener('input', () => { $('#profile-select').value = CUSTOM_PROFILE_ID; applyProfile(CUSTOM_PROFILE_ID); }));
 $('#load-demo').addEventListener('click', loadSampleSafely);
+$('#sample-select')?.addEventListener('change', (event) => {
+  const fileName = event.currentTarget.value;
+  if (fileName) void loadLibrarySample(fileName);
+});
 $('#load-legacy').addEventListener('click', loadLegacySample);
 $('#profile-file').addEventListener('change', async (event) => {
   const input = event.currentTarget;

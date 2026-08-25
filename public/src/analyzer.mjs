@@ -262,12 +262,14 @@ function unitTransform(field, header) {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
     if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
+    if (normalized.includes('hpa') || normalized.includes('百帕')) return { mode: 'scale', factor: 0.001, label: 'hPa→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'gas_pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
     if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
+    if (normalized.includes('hpa') || normalized.includes('百帕')) return { mode: 'scale', factor: 0.001, label: 'hPa→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'ambient_pressure_kpa') {
@@ -275,6 +277,7 @@ function unitTransform(field, header) {
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 1000, label: 'MPa→kPa' };
     if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.1, label: 'mbar→kPa' };
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
+    if (normalized.includes('hpa') || normalized.includes('百帕')) return { mode: 'scale', factor: 0.1, label: 'hPa→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
   if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
