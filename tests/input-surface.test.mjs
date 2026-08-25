@@ -24,6 +24,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     read('src/styles.css'),
     read('public/src/app.mjs')
   ]);
+  const packageJson = JSON.parse(await read('package.json'));
   const server = await read('server.mjs');
   const [releaseSource, releasePublic] = await Promise.all([read('config/release-summary.json'), read('public/config/release-summary.json')]);
   const [ledgerSource, ledgerPublic] = await Promise.all([read('config/standard-evidence-ledger.v1.json'), read('public/config/standard-evidence-ledger.v1.json')]);
@@ -47,7 +48,7 @@ test('static and Vinext pages expose the same multi-format T02 input contract', 
     assert.match(page, /metric-trace-details/);
     assert.match(page, /metric-trace/);
     assert.match(page, /result-announcement/);
-    assert.match(page, /t02_integration_report_v3\.5\.71\.md/);
+    assert.match(page, new RegExp(`t02_integration_report_v${packageJson.version}\.md`));
     assert.match(page, /download-coverage-review/);
     assert.match(page, /coverage-review-status/);
   }
