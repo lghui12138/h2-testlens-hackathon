@@ -1441,6 +1441,7 @@ export function profilesFromPackage(payload, options = {}) {
     organization: payload.organization || '未命名企业配置',
     standardEvidenceBinding,
     trustedApprovalBinding,
+    fieldMapping: payload.fieldMapping || {},
     profiles: payload.profiles.map((profile) => ({
       ...profile,
       approvalStatus: profile.approvalStatus || 'pending',

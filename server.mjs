@@ -17,11 +17,11 @@ let standardEvidenceRows = [];
 let trustedApprovalRows = [];
 try {
   const standardEvidence = JSON.parse(await readFile(join(root, 'config/standard-evidence-ledger.v1.json'), 'utf8'));
-  standardEvidenceRows = Array.isArray(standardEvidence.evidenceRows) ? standardEvidence.evidenceRows : [];
+  standardEvidenceRows = Array.isArray(standardEvidence.evidenceRows) ? standardEvidence.evidenceRows : (Array.isArray(standardEvidence.rows) ? standardEvidence.rows : []);
 } catch {}
 try {
   const trustedApproval = JSON.parse(await readFile(join(root, 'config/trusted-approval-ledger.v1.json'), 'utf8'));
-  trustedApprovalRows = Array.isArray(trustedApproval.approvalRows) ? trustedApproval.approvalRows : [];
+  trustedApprovalRows = Array.isArray(trustedApproval.approvalRows) ? trustedApproval.approvalRows : (Array.isArray(trustedApproval.rows) ? trustedApproval.rows : []);
 } catch {}
 const mime = {
   '.html': 'text/html; charset=utf-8',

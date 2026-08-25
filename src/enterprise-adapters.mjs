@@ -2715,7 +2715,7 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   if (headers.includes('target_power_kw') && headers.includes('average_cell_voltage_mv')) return buildDurability(rows, config);
   if (headers.includes('FC_CurrOut') && headers.includes('FC_VoltOut')) return buildVehicle(rows, config);
-  if (headers.some((header) => /实际电流|电堆电流|电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压|电压/.test(String(header)))) return buildStack(rows, config);
+  if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
 

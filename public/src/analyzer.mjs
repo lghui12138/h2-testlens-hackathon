@@ -146,7 +146,9 @@ const parseCSVLine = (line, delimiter = ',') => {
 };
 
 export function parseCSV(text) {
-  const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
+  const rawStr = String(text ?? '');
+  if (rawStr.includes('\0')) return [];
+  const lines = rawStr.replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return [];
   const delimiter = (lines[0].match(/\t/g) || []).length > (lines[0].match(/,/g) || []).length ? '\t' : ',';
   const headers = parseCSVLine(lines[0], delimiter).map((header) => header.trim());
@@ -202,34 +204,40 @@ function unitTransform(field, header) {
     if (normalized.includes('min') || normalized.includes('分钟')) return { mode: 'scale', factor: 60, label: 'min→s' };
   }
   if (field === 'power_w' || field === 'power_setpoint_w') {
+    if (/\bM[Ww]\b/.test(String(header ?? '')) || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
+    if (/(?:^|[^a-zA-Z])m[Ww](?:[^a-zA-Z]|$)/.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
     if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
-    if (normalized.includes('mw') || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
   }
+  if (field === 'current_a' && (/(?:^|[^a-zA-Z])(?:µ|u)A(?:[^a-zA-Z]|$)/.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µA→A' };
   if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };
   if (field === 'current_a' && (normalized.includes('ka') || normalized.includes('千安'))) return { mode: 'scale', factor: 1000, label: 'kA→A' };
+  if (field === 'voltage_v' && (/(?:^|[^a-zA-Z])(?:µ|u)V(?:[^a-zA-Z]|$)/.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µV→V' };
   if (field === 'voltage_v' && (normalized.includes('mv') || normalized.includes('毫伏'))) return { mode: 'scale', factor: 0.001, label: 'mV→V' };
   if (field === 'voltage_v' && (normalized.includes('kv') || normalized.includes('千伏'))) return { mode: 'scale', factor: 1000, label: 'kV→V' };
   if (field === 'pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'gas_pressure_bar') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 0.01, label: 'kPa→bar' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 10, label: 'MPa→bar' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mbar→bar' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.00001, label: 'Pa→bar' };
   }
   if (field === 'ambient_pressure_kpa') {
     if (normalized.includes('kpa') || normalized.includes('千帕')) return { mode: 'scale', factor: 1, label: 'kPa→kPa' };
     if (normalized.includes('mpa') || normalized.includes('兆帕')) return { mode: 'scale', factor: 1000, label: 'MPa→kPa' };
+    if (/\bmbar\b/i.test(String(header ?? ''))) return { mode: 'scale', factor: 0.1, label: 'mbar→kPa' };
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
-  if (field === 'flow_slpm' && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
-  if (field === 'flow_slpm' && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
-  if (field === 'flow_slpm' && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
-  if (field === 'flow_slpm' && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
-  if (field === 'flow_slpm' && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
   if (field === 'leak_ppm' && (normalized.includes('ppb') || normalized.includes('十亿'))) return { mode: 'scale', factor: 0.001, label: 'ppb→ppm' };
   if (['temperature_c', 'gas_temperature_c', 'ambient_temperature_c'].includes(field) && (normalized.includes('fahrenheit') || normalized.includes('华氏') || normalized.endsWith('f'))) return { mode: 'fahrenheit_to_c', factor: 1, label: '°F→°C' };
   return { mode: 'identity', factor: 1, label: '原单位' };
@@ -1251,6 +1259,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     temperature_c: convertValue(row[schema.mapping.temperature_c], schema.conversions.temperature_c),
     pressure_bar: convertValue(row[schema.mapping.pressure_bar], schema.conversions.pressure_bar),
     flow_slpm: convertValue(row[schema.mapping.flow_slpm], schema.conversions.flow_slpm),
+    anode_flow_slpm: convertValue(row[schema.mapping.anode_flow_slpm], schema.conversions.anode_flow_slpm),
+    cathode_flow_slpm: convertValue(row[schema.mapping.cathode_flow_slpm], schema.conversions.cathode_flow_slpm),
     leak_ppm: convertValue(row[schema.mapping.leak_ppm], schema.conversions.leak_ppm),
     hydrogen_purity_pct: convertValue(row[schema.mapping.hydrogen_purity_pct], schema.conversions.hydrogen_purity_pct),
     gas_temperature_c: convertValue(row[schema.mapping.gas_temperature_c], schema.conversions.gas_temperature_c),
@@ -1314,7 +1324,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
   const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600, quality.gapLimitS, integrationEvidence.energyConsumed);
-  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl : null;
+  const specificEnergyKWhPerNm3 = hydrogenVolumeNl !== null && energyConsumedWh !== null && hydrogenVolumeNl > 0 ? energyConsumedWh / hydrogenVolumeNl : null;
   const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel, quality.gapLimitS);
   const scope = scopeReadiness(config);
   const instruments = instrumentReadiness(config);
@@ -1441,6 +1451,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     uncertainty,
     workflow,
     workbookFormulaReview,
+    dataset: null,
     phases: phaseSummary(rows),
     phaseCoverage,
     phaseMetrics,

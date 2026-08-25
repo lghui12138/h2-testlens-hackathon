@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 
 const exec = promisify(execFile);
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-await exec('npm', ['run', 'check:submission'], { cwd: root, maxBuffer: 3_000_000 });
+await exec('npm', ['run', 'check:submission'], { cwd: root, maxBuffer: 50_000_000 });
 const dist = join(root, 'dist');
 await mkdir(dist, { recursive: true });
 const packageManifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
@@ -42,9 +42,9 @@ const archiveEntries = [
   `${researchRoot}/t02_integration_report_v${version}.md`
 ];
 try { await unlink(archive); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-await exec('zip', ['-qr', archive, ...archiveEntries], { cwd: root, maxBuffer: 3_000_000 });
-await exec('unzip', ['-t', archive], { cwd: root, maxBuffer: 3_000_000 });
-const listing = (await exec('unzip', ['-l', archive], { cwd: root, maxBuffer: 3_000_000 })).stdout;
+await exec('zip', ['-qr', archive, ...archiveEntries], { cwd: root, maxBuffer: 50_000_000 });
+await exec('unzip', ['-t', archive], { cwd: root, maxBuffer: 50_000_000 });
+const listing = (await exec('unzip', ['-l', archive], { cwd: root, maxBuffer: 50_000_000 })).stdout;
 const requiredEntries = ['README.md', 'ROADMAP.md', 'package.json', 'package-lock.json', 'server.mjs', 'app/page.tsx', 'public/config/t02-profile.example.json', 'worker/index.ts', 'vite.config.ts', 'tsconfig.json', '.github/workflows/deploy-pages.yml', 'docs/SUBMISSION_BRIEF.md', 'docs/STANDARDS_ALIGNMENT.md', 'docs/T02_REQUIREMENTS_MATRIX.md', 'docs/API.md', 'docs/SECURITY_BOUNDARIES.md', 'docs/AI_EVAL.md', 'config/standard-evidence-ledger.v1.json', 'public/config/standard-evidence-ledger.v1.json', 'config/enterprise-profile.example.json', 'config/t02-profile.example.json', 'config/batch-declaration.example.json', 'src/analyzer.mjs', 'src/dynamic-events.mjs', 'src/structured-evidence.mjs', 'src/profiles.mjs', 'src/metric-trace.mjs', 'src/provenance.mjs', 'src/display-sampling.mjs', 'src/analysis-worker.mjs', 'src/browser-engines.mjs', 'src/input-safety.mjs', 'src/batch-aggregation.mjs', 'src/t02-report.mjs', 'scripts/ai-eval.mjs', 'scripts/api-smoke.mjs', 'scripts/profile-audit.mjs', 'scripts/t02-coverage-audit.mjs', 'scripts/t02-reference-audit.mjs', 'scripts/t02-report.mjs', 'scripts/batch-watch.mjs', 'tests/analyzer.test.mjs', 'tests/input-surface.test.mjs', 'tests/input-safety.test.mjs', 'tests/batch-aggregation.test.mjs', 'tests/batch-watch-cli.test.mjs', 'tests/evaluation-mode.test.mjs', 'tests/t02-audit.test.mjs', '.research/ignite_t02_standards_20260821/claims.jsonl', `.research/ignite_t02_standards_20260821/t02_coverage_audit_v${version}.json`, `.research/ignite_t02_standards_20260821/t02_reference_audit_v${version}.json`, `.research/ignite_t02_standards_20260821/t02_integration_report_v${version}.md`];
 requiredEntries.push(`${researchRoot}/sources.jsonl`, `${researchRoot}/claims.jsonl`, 'src/standard-evidence.mjs', 'src/approval-ledger.mjs', 'config/trusted-approval-ledger.v1.json', 'public/config/trusted-approval-ledger.v1.json');
 requiredEntries.push(`${researchRoot}/evidence.jsonl`, `${researchRoot}/research_report_20260821_ignite_t02_standards.md`);
@@ -69,11 +69,11 @@ const runPackageSmoke = async () => {
   const staging = await mkdtemp(join(tmpdir(), 'h2-testlens-submission-'));
   let child;
   try {
-    await exec('unzip', ['-q', archive, '-d', staging], { cwd: root, maxBuffer: 3_000_000 });
-    await exec('npm', ['ci', '--ignore-scripts'], { cwd: staging, maxBuffer: 3_000_000 });
-    await exec('npm', ['test'], { cwd: staging, maxBuffer: 3_000_000 });
-    await exec('npm', ['run', 'typecheck'], { cwd: staging, maxBuffer: 3_000_000 });
-    await exec('npm', ['run', 'build'], { cwd: staging, maxBuffer: 3_000_000 });
+    await exec('unzip', ['-q', archive, '-d', staging], { cwd: root, maxBuffer: 50_000_000 });
+    await exec('npm', ['ci', '--ignore-scripts'], { cwd: staging, maxBuffer: 50_000_000 });
+    await exec('npm', ['test'], { cwd: staging, maxBuffer: 50_000_000 });
+    await exec('npm', ['run', 'typecheck'], { cwd: staging, maxBuffer: 50_000_000 });
+    await exec('npm', ['run', 'build'], { cwd: staging, maxBuffer: 50_000_000 });
     const port = await getFreePort();
     child = spawn(process.execPath, ['server.mjs'], {
       cwd: staging,

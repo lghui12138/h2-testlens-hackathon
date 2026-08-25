@@ -146,7 +146,9 @@ const parseCSVLine = (line, delimiter = ',') => {
 };
 
 export function parseCSV(text) {
-  const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
+  const rawStr = String(text ?? '');
+  if (rawStr.includes('\0')) return [];
+  const lines = rawStr.replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return [];
   const delimiter = (lines[0].match(/\t/g) || []).length > (lines[0].match(/,/g) || []).length ? '\t' : ',';
   const headers = parseCSVLine(lines[0], delimiter).map((header) => header.trim());

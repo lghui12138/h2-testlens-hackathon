@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -13,6 +14,11 @@ import { decodeTextBuffer, isLikelyBinary } from '../src/input-safety.mjs';
 import { parseInput } from '../scripts/batch-watch.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const resolveT02Path = (relPath) => {
+  const localRelative = join(here, '../../T02_设备测试数据分析与自动报告助手', relPath);
+  const fallbackAbsolute = join('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手', relPath);
+  return process.env.T02_ROOT ? join(process.env.T02_ROOT, relPath) : (existsSync(localRelative) ? localRelative : fallbackAbsolute);
+};
 
 // ---------------------------------------------------------------------------
 // Engine setup
@@ -299,8 +305,8 @@ test('static page exposes mobile navigation and responsive breakpoints', async (
     readFile(join(here, '../src/styles.css'), 'utf8')
   ]);
   assert.match(page, /mobile-nav/);
-  assert.match(css, /@media \(max-width:1080px\)/);
-  assert.match(css, /@media \(max-width:680px\)/);
+  assert.match(css, /@media \(max-width:[ ]?1080px\)/);
+  assert.match(css, /@media \(max-width:[ ]?680px\)/);
   assert.match(css, /@media \(max-width:[ ]?480px\)/);
   assert.match(css, /@media \(max-width:[ ]?420px\)/);
 });
@@ -316,14 +322,14 @@ test('Vinext app page embeds mobile nav and responsive CSS classes', async () =>
 test('CSS switches desktop site nav to mobile nav at small viewports', async () => {
   const css = await readFile(join(here, '../src/styles.css'), 'utf8');
   assert.match(css, /\.mobile-nav \{ display: none; \}/);
-  assert.match(css, /@media \(max-width:680px\) \{[\s\S]*\.mobile-nav \{ display: flex;/);
-  assert.match(css, /@media \(max-width:680px\) \{[\s\S]*\.site-nav \{ display: none;/);
+  assert.match(css, /@media \(max-width:[ ]?680px\) \{[\s\S]*\.mobile-nav \{ display: flex;/);
+  assert.match(css, /@media \(max-width:[ ]?680px\) \{[\s\S]*site-nav \{ display: none;/);
 });
 
 test('metric grid collapses to fewer columns on small screens via CSS', async () => {
   const css = await readFile(join(here, '../src/styles.css'), 'utf8');
   assert.match(css, /\.metric-grid \{ display: grid; grid-template-columns: repeat\(4,minmax\(0,1fr\)\);/);
-  assert.match(css, /@media \(max-width:680px\) \{[\s\S]*\.metric-grid \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\);/);
+  assert.match(css, /@media \(max-width:[ ]?680px\) \{[\s\S]*\.metric-grid \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\);/);
   assert.match(css, /@media \(max-width:[ ]?480px\) \{[\s\S]*\.metric-grid \{ grid-template-columns: 1fr;/);
 });
 
@@ -663,26 +669,26 @@ test('qingchuan-stack real fixture contains no malformed rows that crash adapter
 // ---------------------------------------------------------------------------
 
 test('package 01 氢璞创能 real TXT and XLSX both parse through adapter boundaries', async () => {
-  const txtBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
+  const txtBuf = await readFile(resolveT02Path('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
   const txtDecoded = decodeTextBuffer(txtBuf, 'gb18030');
   const txtRows = parseCSV(txtDecoded.text);
   assert.ok(txtRows.length >= 100, 'hypu txt should have many rows');
   assert.ok('时间' in txtRows[0]);
 
-  const xlsxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx'));
+  const xlsxBuf = await readFile(resolveT02Path('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx'));
   const xlsxResult = parseDataWorkbook(xlsxBuf);
   assert.equal(xlsxResult.ok, true);
   assert.equal(xlsxResult.sheetName, '稳定性');
 });
 
 test('package 02 氢质氢离 real DOCX durability and vehicle CSV both parse through adapter boundaries', async () => {
-  const docxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'));
+  const docxBuf = await readFile(resolveT02Path('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'));
   const docxResult = await parseDurabilityDocx(docxBuf);
   assert.ok(docxResult);
   assert.equal(docxResult.metadata['测试方案'], '耐久0-5');
   assert.ok(docxResult.points.length >= 50);
 
-  const csvBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+  const csvBuf = await readFile(resolveT02Path('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
   const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
   const csvRows = parseCSV(csvText);
   assert.ok(csvRows.length >= 100, 'vehicle csv should have many rows');
@@ -690,21 +696,21 @@ test('package 02 氢质氢离 real DOCX durability and vehicle CSV both parse th
 });
 
 test('package 03 青川易创 real CSV and DOCX both parse through adapter boundaries', async () => {
-  const csvBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+  const csvBuf = await readFile(resolveT02Path('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
   const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
   const csvRows = parseCSV(csvText);
   assert.ok(csvRows.length >= 38000, 'qingchuan csv should have ~38k rows');
   const csvResult = analyzeEnterpriseRows(csvRows, getProfile('qingchuan-stack'));
   assert.equal(csvResult.datasetType, 'stack');
 
-  const docxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx'));
+  const docxBuf = await readFile(resolveT02Path('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx'));
   const docxResult = await parseDurabilityDocx(docxBuf);
   assert.ok(docxResult);
   assert.ok(docxResult.headers.length >= 1);
 });
 
 test('package 04 海珀特 real PDF is detected as binary through shared input boundary', async () => {
-  const buf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包04_海珀特/00_企业资料说明.pdf'));
+  const buf = await readFile(resolveT02Path('企业资料包04_海珀特/00_企业资料说明.pdf'));
   assert.equal(isLikelyBinary(buf), true);
   const decoded = decodeTextBuffer(buf);
   assert.equal(decoded.binary, true);

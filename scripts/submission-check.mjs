@@ -238,7 +238,7 @@ for (const [id, command, args] of [
   ['profile-audit', 'npm', ['run', 'profile:audit', '--', 'config/enterprise-profile.example.json']],
   ['profile-audit-t02', 'npm', ['run', 'profile:audit', '--', 'config/t02-profile.example.json']]
 ]) {
-  try { await exec(command, args, { cwd: root, maxBuffer: 2_000_000 }); checks.push({ id, pass: true }); }
+  try { await exec(command, args, { cwd: root, maxBuffer: 50_000_000 }); checks.push({ id, pass: true }); }
   catch (error) { checks.push({ id, pass: false, detail: error.stdout?.slice(-1000) ?? error.message }); }
 }
 

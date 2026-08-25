@@ -108,15 +108,15 @@ test('parseCSV on CSV with embedded null bytes returns empty array', () => {
 
 test('parseCSV on 50k-row synthetic buffer completes without memory crash', () => {
   const lines = ['timestamp_s,current_a,voltage_v'];
-  for (let i = 0; i < 50_000; i += 1) {
+  for (let i = 0; i < 60_000; i += 1) {
     lines.push(`${i},${(10 + (i % 40)).toFixed(2)},${(1.4 + (i % 20) * 0.02).toFixed(2)}`);
   }
   const csv = lines.join('\n');
   assert.ok(Buffer.byteLength(csv) > 1_000_000, 'synthetic 50k buffer should exceed 1 MB');
   const rows = parseCSV(csv);
-  assert.equal(rows.length, 50_000);
+  assert.equal(rows.length, 60_000);
   assert.equal(rows[0].timestamp_s, '0');
-  assert.equal(rows.at(-1).timestamp_s, '49999');
+  assert.equal(rows.at(-1).timestamp_s, '59999');
 });
 
 // ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ test('decodeTextBuffer on random high-byte data without valid encoding falls bac
 });
 
 test('decodeTextBuffer on valid GB18030 Chinese text preserves characters without replacement', () => {
-  const sample = Buffer.from('时间,电流\n18:56:05,14.7', 'gb18030');
+  const sample = Buffer.from([0xca, 0xb1, 0xbc, 0xe4, 0x2c, 0xb5, 0xe7, 0xc1, 0xf7, 0x0a, 0x31, 0x38, 0x3a, 0x35, 0x36, 0x3a, 0x30, 0x35, 0x2c, 0x31, 0x34, 0x2e, 0x37]);
   const decoded = decodeTextBuffer(sample, 'gb18030');
   assert.equal(decoded.binary, false);
   assert.ok(!decoded.text.includes('\uFFFD'));

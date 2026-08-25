@@ -262,7 +262,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 
 @media (prefers-reduced-motion:reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
-} }
+}
 .overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; }
 .overlay-backdrop { position: absolute; inset: 0; background: rgba(6,19,28,.85); }
 .overlay-content { position: relative; max-width: 520px; width: calc(100% - 32px); max-height: calc(100% - 32px); overflow: auto; padding: 24px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: linear-gradient(160deg, #0d303b, #071a24); box-shadow: var(--shadow); }

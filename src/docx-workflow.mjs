@@ -50,7 +50,17 @@ export async function parseDurabilityDocx(arrayBuffer) {
   const tables = htmlTables(converted.value);
   const rows = tables.flat();
   const headerIndex = rows.findIndex((row) => row.some((cell) => normalized(cell).includes('目标功率')) && row.some((cell) => normalized(cell).includes('平均单体电压')));
-  if (headerIndex < 0) throw new Error('未找到耐久功率点表头');
+  if (headerIndex < 0) {
+    if (rows.length > 0) {
+      return {
+        metadata: parseMetadata(rows),
+        headers: rows[0] || [],
+        points: [],
+        datasetType: 'reference_document'
+      };
+    }
+    throw new Error('未找到耐久功率点表头');
+  }
   const headers = rows[headerIndex];
   const columns = {
     targetPowerKw: fieldIndex(headers, ['目标功率']),

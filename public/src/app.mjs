@@ -747,12 +747,25 @@ function batchNumber(value, digits = 3) {
   return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(digits);
 }
 
+function showBatchSkeletons() {
+  const skeleton = $('#batch-skeleton');
+  if (skeleton) { skeleton.hidden = false; skeleton.setAttribute('aria-hidden', 'false'); }
+  ['batch-observation-summary', 'batch-observation-files', 'batch-observation-issues'].forEach((id) => {
+    const el = $(`#${id}`);
+    if (el) el.innerHTML = '';
+  });
+}
+function hideBatchSkeletons() {
+  const skeleton = $('#batch-skeleton');
+  if (skeleton) { skeleton.hidden = true; skeleton.setAttribute('aria-hidden', 'true'); }
+}
 function renderBatchObservation() {
   const status = $('#batch-observation-status');
   const summary = $('#batch-observation-summary');
   const files = $('#batch-observation-files');
   const issues = $('#batch-observation-issues');
   if (!status || !summary || !files || !issues) return;
+  hideBatchSkeletons();
   if (!state.batchDeclarationInput) {
     status.textContent = '未提供声明';
     status.dataset.tone = 'neutral';
@@ -784,11 +797,12 @@ function renderBatchObservation() {
 }
 
 async function evaluateDeclaredBatch() {
-  if (!state.batchDeclarationInput) { state.batchValidation = null; state.batchSummaries = []; renderBatchObservation(); return; }
+  if (!state.batchDeclarationInput) { state.batchValidation = null; state.batchSummaries = []; hideBatchSkeletons(); renderBatchObservation(); return; }
+  showBatchSkeletons();
   const availableEntries = state.inputEntries.map(({ name, status, rows, contentHash, size }) => ({ name, status, rows, contentHash, size }));
   const validation = validateBatchDeclaration(state.batchDeclarationInput, availableEntries);
   state.batchValidation = validation;
-  if (!validation.ok) { state.batchSummaries = []; renderBatchObservation(); return; }
+  if (!validation.ok) { state.batchSummaries = []; hideBatchSkeletons(); renderBatchObservation(); return; }
   const config = configFromUI();
   const summaries = [];
   for (const group of validation.groups) {

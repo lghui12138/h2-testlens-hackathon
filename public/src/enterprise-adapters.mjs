@@ -62,7 +62,7 @@ const UNIT_DEFINITIONS = Object.freeze({
   voltage_v: { v: 1, volt: 1, volts: 1, 伏: 1, mv: 0.001, 毫伏: 0.001, kv: 1000, 'kV': 1000, 千伏: 1000 },
   power_kw: { kw: 1, mw: 1000, w: 0.001, 瓦: 0.001 },
   pressure_kpa: { kpa: 1, pa: 0.001, mpa: 1000, bar: 100, mbar: 0.1 },
-  flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001 },
+  flow_slpm: { slpm: 1, 'nl/min': 1, nlpm: 1, 'nm3/h': 1000 / 60, 'nm3h': 1000 / 60, 'l/s': 60, 'ml/min': 0.001, 'L/min': 1, 'l/min': 1, 'LPM': 1, 'lpm': 1 },
   temperature_c: { '°c': 1, c: 1, 摄氏度: 1 },
   leak_ppm: { ppm: 1, ppb: 0.001 },
   conductivity_us_cm: { 'μs/cm': 1, 'us/cm': 1 }
@@ -989,11 +989,9 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
   const missingSummary = [...missingProfileFields, ...missingMetadata, ...measurements.missing, ...phases.missing, ...phaseMetrics.missing, ...(dataQuality.missing || [])].filter(Boolean);
   const standardIds = (config.standardRefs || []).map((reference) => String(reference.id || '').trim()).filter(Boolean);
   const standardClauseNote = standardIds.map((id) => {
-    if (id === 'GB/T 45541-2025') return 'GB/T 45541-2025 基本检查、基础测试、性能测试和测试报告';
-    if (id === 'GB/T 46104-2025') return 'GB/T 46104-2025 冷启动、热启动、稳态、变功率动态、停机';
-    if (id === 'ISO 22734-1:2025') return 'ISO 22734-1:2025 安全要求';
-    if (id === 'ISO/IEC 17025:2017') return 'ISO/IEC 17025:2017 实验室能力要求';
-    return null;
+    const clauseRefs = Array.isArray(config.standardClauseRefs?.[id]) ? config.standardClauseRefs[id] : [];
+    if (!clauseRefs.length) return null;
+    return `${id} ${clauseRefs.join('、')}`;
   }).filter(Boolean);
   const baseBoundary = config.approvalStatus !== 'approved'
     ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非 approved 路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
@@ -1018,7 +1016,9 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
       evidence: profileReady
         ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
         : '当前 profile 未批准，不进入标准符合性判定',
-      boundary: `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
+      boundary: clauseRefs.length
+        ? `该标准引用当前仅作公开范围/流程映射演示；具体条款（${clauseRefs.join('、')}）符合性需企业 approved profile 与完整方法实施证据支撑。`
+        : `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
     };
   });
   const evidenceDetails = [
@@ -2715,7 +2715,40 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   if (headers.includes('target_power_kw') && headers.includes('average_cell_voltage_mv')) return buildDurability(rows, config);
   if (headers.includes('FC_CurrOut') && headers.includes('FC_VoltOut')) return buildVehicle(rows, config);
-  if (headers.some((header) => /实际电流|电堆电流|电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压|电压/.test(String(header)))) return buildStack(rows, config);
+  if (headers.some((header) => /实际电流|电堆电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
+
+export function validateProfileFieldMappingCoverage(profile, actualHeaders = []) {
+  const mapping = profile?.fieldMapping && typeof profile.fieldMapping === 'object' ? profile.fieldMapping : {};
+  const headerSet = new Set(actualHeaders.map((header) => String(header).trim()));
+  const missingMappings = [];
+  for (const [field, source] of Object.entries(mapping)) {
+    const trimmed = String(source).trim();
+    if (!trimmed) {
+      missingMappings.push({ field, source: trimmed, reason: 'empty_mapping' });
+    } else if (!headerSet.has(trimmed)) {
+      missingMappings.push({ field, source: trimmed, reason: 'mapped_header_not_found_in_real_data' });
+    }
+  }
+  const acquisition = profile?.acquisitionRequirements;
+  const unsupportedAcquisitionUnits = [];
+  if (acquisition?.requiredChannels && Array.isArray(acquisition.requiredChannels)) {
+    for (const channel of acquisition.requiredChannels) {
+      const definitions = UNIT_DEFINITIONS[channel.field];
+      if (definitions && channel.unit && !Object.keys(definitions).some((key) => String(key).toLowerCase() === String(channel.unit).toLowerCase())) {
+        unsupportedAcquisitionUnits.push({ field: channel.field, unit: channel.unit });
+      }
+    }
+  }
+  return {
+    missingMappings,
+    unsupportedAcquisitionUnits,
+    ready: missingMappings.length === 0 && unsupportedAcquisitionUnits.length === 0,
+    evidence: missingMappings.length === 0 && unsupportedAcquisitionUnits.length === 0
+      ? 'profile fieldMapping 覆盖完整，采集通道单位均可换算'
+      : `发现 ${missingMappings.length} 个缺失或无效映射，${unsupportedAcquisitionUnits.length} 个不支持的采集单位`
+  };
+}
+
 export { compliance };
