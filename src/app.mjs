@@ -1383,7 +1383,7 @@ async function readSelectedDataFiles(files) {
     const file = files[fileIndex];
     const name = file.webkitRelativePath || file.name;
     setAnalysisStatus(`读取文件 ${fileIndex + 1}/${files.length}：${file.name}`, 'busy');
-    setBatchProgress(fileIndex, files.length, '读取中');
+    setBatchProgress(fileIndex, files.length, '读取中', name);
     updateBatchQueueItem(files.map((file, idx) => ({ name: file.webkitRelativePath || file.name, size: file.size, status: idx < fileIndex ? 'processed' : idx === fileIndex ? 'processing' : 'pending' })), fileIndex, { status: 'processing' });
     await yieldToBrowser();
     if (/\.pdf$/i.test(name) || (/\.docx$/i.test(name) && !/耐久原始数据处理/.test(name))) {
@@ -1427,7 +1427,7 @@ async function readSelectedDataFiles(files) {
       inputSummary.referenceOnly += 1;
     }
   }
-  setBatchProgress(files.length, files.length, '整理来源边界');
+  setBatchProgress(files.length, files.length, '整理来源边界', files[files.length - 1]?.webkitRelativePath || files[files.length - 1]?.name);
   setAnalysisStatus(`整理 ${entries.length} 个文件的来源边界…`, 'busy');
   await yieldToBrowser();
   const rows = entries.flatMap((entry) => entry.rows.map((row, sourceRowIndex) => ({
@@ -2174,20 +2174,21 @@ document.addEventListener('keydown', (event) => {
 });
 
 // Batch progress indicator.
-function setBatchProgress(current, total, message) {
+function setBatchProgress(current, total, message, fileName) {
   const bar = $('#batch-progress-fill');
   const text = $('#batch-progress-text');
   const container = $('#batch-progress');
   if (!bar || !text) return;
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   bar.style.width = `${pct}%`;
-  text.textContent = `${message} ${current}/${total}`;
+  const fileLabel = fileName ? ` · ${escapeHtml(fileName)}` : '';
+  text.textContent = `${message} ${current}/${total}${fileLabel}`;
   if (container) {
     container.setAttribute('role', 'progressbar');
     container.setAttribute('aria-valuenow', String(pct));
     container.setAttribute('aria-valuemin', '0');
     container.setAttribute('aria-valuemax', '100');
-    container.setAttribute('aria-label', message || '批量处理进度');
+    container.setAttribute('aria-label', `${message || '批量处理进度'}${fileLabel}`);
   }
 }
 function resetBatchProgress() {
