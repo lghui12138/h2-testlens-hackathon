@@ -231,11 +231,11 @@ function unitTransform(field, header) {
     if (normalized.includes('bar')) return { mode: 'scale', factor: 100, label: 'bar→kPa' };
     if (normalized.endsWith('pa') || normalized.includes('帕')) return { mode: 'scale', factor: 0.001, label: 'Pa→kPa' };
   }
-  if (field === 'flow_slpm' && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
-  if (field === 'flow_slpm' && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
-  if (field === 'flow_slpm' && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
-  if (field === 'flow_slpm' && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
-  if (field === 'flow_slpm' && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
   if (field === 'leak_ppm' && (normalized.includes('ppb') || normalized.includes('十亿'))) return { mode: 'scale', factor: 0.001, label: 'ppb→ppm' };
   if (['temperature_c', 'gas_temperature_c', 'ambient_temperature_c'].includes(field) && (normalized.includes('fahrenheit') || normalized.includes('华氏') || normalized.endsWith('f'))) return { mode: 'fahrenheit_to_c', factor: 1, label: '°F→°C' };
   return { mode: 'identity', factor: 1, label: '原单位' };
@@ -1257,6 +1257,8 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     temperature_c: convertValue(row[schema.mapping.temperature_c], schema.conversions.temperature_c),
     pressure_bar: convertValue(row[schema.mapping.pressure_bar], schema.conversions.pressure_bar),
     flow_slpm: convertValue(row[schema.mapping.flow_slpm], schema.conversions.flow_slpm),
+    anode_flow_slpm: convertValue(row[schema.mapping.anode_flow_slpm], schema.conversions.anode_flow_slpm),
+    cathode_flow_slpm: convertValue(row[schema.mapping.cathode_flow_slpm], schema.conversions.cathode_flow_slpm),
     leak_ppm: convertValue(row[schema.mapping.leak_ppm], schema.conversions.leak_ppm),
     hydrogen_purity_pct: convertValue(row[schema.mapping.hydrogen_purity_pct], schema.conversions.hydrogen_purity_pct),
     gas_temperature_c: convertValue(row[schema.mapping.gas_temperature_c], schema.conversions.gas_temperature_c),

@@ -486,16 +486,14 @@ test('qingchuan-stack real fixture 212 and 345 vehicle data do not regress adapt
    assert.deepEqual(missing, [], `hypu-stack mapped headers missing from real data: ${missing.join('、')}`);
  });
 
- test('hypu-stack adapter flags real 氢璞创能 T02 fixture L/min units as unsupported without standard-state declaration', async () => {
+ test('hypu-stack adapter accepts real 氢璞创能 T02 fixture L/min units as SLPM', async () => {
    const fixture = await readFile(join(here, '../sample-data/t02-hypu-stack-regression.csv'), 'utf8');
    const rows = parseCSV(fixture);
    const profile = getProfile('hypu-stack');
    const result = analyzeEnterpriseRows(rows, profile);
    assert.ok(result, 'analyzeEnterpriseRows should return a result for real hypu stack data');
    assert.equal(result.datasetType, 'stack');
-   const unsupported = result.issues.filter((issue) => issue.code === 'UNIT_UNSUPPORTED');
-   assert.ok(unsupported.length > 0, 'real hypu fixture should trigger unsupported unit errors for L/min without standard-state declaration');
-   assert.ok(unsupported.some((issue) => /l\/min/.test(issue.evidence.toLowerCase())), 'unsupported unit evidence should mention l/min');
+   assert.ok(!result.issues.some((issue) => issue.code === 'UNIT_UNSUPPORTED'), 'real hypu fixture should not trigger unsupported unit errors for recognized L/min');
  });
 
  test('haperte profile remains example_unapproved with ENTERPRISE_PROFILE_REQUIRED status', () => {
