@@ -12,6 +12,7 @@ import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
 import { decodeTextBuffer } from '../src/input-safety.mjs';
 import { loadXlsx } from '../src/xlsx-node-loader.mjs';
 
+const here = dirname(fileURLToPath(import.meta.url));
 const SheetJS = await loadXlsx();
 const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
 const { runInThisContext } = await import('node:vm');
@@ -19,7 +20,6 @@ runInThisContext(mammothSource);
 const mammoth = globalThis.mammoth;
 
 const CI = String(process.env.CI || '').toLowerCase() === 'true';
-const here = dirname(fileURLToPath(import.meta.url));
 const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
 
 const readRaw = async (relativePath) => readFile(join(T02_ROOT, relativePath));

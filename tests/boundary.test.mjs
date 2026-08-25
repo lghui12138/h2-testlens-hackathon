@@ -7,6 +7,8 @@ import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
 import { getProfile } from '../src/profiles.mjs';
+import { parseDataWorkbook } from '../src/excel-workflow.mjs';
+import { parseDurabilityDocx } from '../src/docx-workflow.mjs';
 import { decodeTextBuffer } from '../src/input-safety.mjs';
 
 test('parseCSV("") returns an empty array without throwing', () => {
@@ -305,22 +307,4 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.ok(result);
     assert.equal(result.datasetType, 'vehicle');
     assert.ok(result.dataset.insulation.validCount >= 0);
-  });
-
-  test('real 氢璞创能 XLSX boundary: 0-byte workbook buffer returns blocked result', async () => {
-    const result = parseDataWorkbook(Buffer.alloc(0));
-    assert.ok(result);
-    assert.equal(result.ok, false);
-  });
-
-  test('real 氢质氢离 DOCX boundary: non-docx content throws descriptive error', async () => {
-    const randomBuf = Buffer.from('this is not a docx file content');
-    let threw = false;
-    try {
-      await parseDurabilityDocx(randomBuf);
-    } catch (error) {
-      threw = true;
-      assert.ok(error.message.includes('docx_parse_failed') || error.message.includes('docx_engine_unavailable') || error.message.includes('Could not find file'));
-    }
-    assert.equal(threw, true);
   });

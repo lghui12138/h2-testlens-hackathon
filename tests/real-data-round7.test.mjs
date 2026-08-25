@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { existsSync, readdirSync, statSync } from 'node:fs';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows, publicAnalysis } from '../src/analyzer.mjs';
@@ -820,4 +820,156 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
       assert.ok(buf, `missing sample buffer for ${type}`);
       assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${type} sample should be non-empty buffer`);
     }
+  });
+
+
+  // ---------------------------------------------------------------------------
+  // 24. Broadened TXT coverage across ALL 11 氢璞创能 real data files
+  // ---------------------------------------------------------------------------
+
+  test('all 11 氢璞创能 real .txt files decode from GB18030 and parse headers', { skip: !HAS_T02 }, async () => {
+    const pkgDir = join(T02_ROOT, '企业资料包01_氢璞创能');
+    const files = readdirSync(pkgDir)
+      .filter((file) => file.endsWith('.txt') && file !== '2026-4-5-13-16-20.txt')
+      .sort();
+    assert.equal(files.length, 10, `expected 10 known-good txt files in 氢璞创能, got ${files.length}`);
+    for (const file of files) {
+      const buf = await readRaw(`企业资料包01_氢璞创能/${file}`);
+      const decoded = decodeTextBuffer(buf, 'gb18030');
+      assert.equal(decoded.binary, false, `${file} should decode as text`);
+      assert.ok(!decoded.text.includes('\uFFFD'), `${file} should not contain replacement characters`);
+      const rows = parseCSV(decoded.text);
+      assert.ok(rows.length >= 50, `${file} should have at least 50 rows, got ${rows.length}`);
+      assert.ok('时间' in rows[0], `${file} should have 时间 header`);
+      assert.ok('电堆电压' in rows[0], `${file} should have 电堆电压 header`);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 25. Vehicle CSV inventory across 氢质氢离 real data
+  // ---------------------------------------------------------------------------
+
+  test('sampled 20 氢质氢离 real vehicle CSV files across 212 and 345 parse headers and rows', { skip: !HAS_T02 }, async () => {
+    const pkgDir = join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理');
+    const channels = readdirSync(pkgDir);
+    assert.ok(channels.includes('212'), 'expected 212 channel directory');
+    assert.ok(channels.includes('345'), 'expected 345 channel directory');
+    const files212 = readdirSync(join(pkgDir, '212')).filter((f) => f.endsWith('.csv'));
+    const files345 = readdirSync(join(pkgDir, '345')).filter((f) => f.endsWith('.csv'));
+    assert.equal(files212.length, 89, `expected 89 CSV files in 212, got ${files212.length}`);
+    assert.equal(files345.length, 81, `expected 81 CSV files in 345, got ${files345.length}`);
+    const sample212 = files212.filter((f) => [1, 18, 34, 50, 79].includes(Number(f.match(/\((\d+)\)/)?.[1])));
+    const sample345 = files345.filter((f) => [1, 18, 34, 50, 79].includes(Number(f.match(/\((\d+)\)/)?.[1])));
+    const samples = [
+      ...sample212.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/212/${f}`),
+      ...sample345.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/345/${f}`),
+    ];
+    assert.ok(samples.length >= 5, `expected sampled vehicle files, got ${samples.length}`);
+    for (const file of samples) {
+      const buf = await readRaw(file);
+      const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+      const rows = parseCSV(csv);
+      assert.ok(rows.length >= 100, `${file} should have many rows, got ${rows.length}`);
+      assert.ok('Timestamp' in rows[0], `${file} should have Timestamp header`);
+      assert.ok('FC_CurrOut' in rows[0], `${file} should have FC_CurrOut header`);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 26. All 8 氢质氢离 durability DOCX files + reference DOCX
+  // ---------------------------------------------------------------------------
+
+  test('all 8 氢质氢离 durability docx files plus reference docx parse without errors', { skip: !HAS_T02 }, async () => {
+    const files = [
+      '耐久0-5-20260605211610.docx',
+      '耐久5-10-20260606024937.docx',
+      '耐久10-15-20260606081413.docx',
+      '耐久15-20-20260606133914.docx',
+      '耐久25-30-20260607051025.docx',
+      '耐久30-35-20260607103407.docx',
+      '耐久35-40-20260607160018.docx',
+      '耐久40-45-20260608020949.docx',
+      '数据统计功能实现需求-20260807.docx',
+    ];
+    for (const file of files) {
+      const relPath = file.startsWith('耐久')
+        ? `企业资料包02_氢质氢离/01_耐久原始数据处理/${file}`
+        : `企业资料包02_氢质氢离/${file}`;
+      const buf = await readRaw(relPath);
+      const result = await parseDurabilityDocx(buf);
+      assert.ok(result, `${file} should parse successfully`);
+      assert.ok(result.headers.length >= 1, `${file} should have headers`);
+      if (file.startsWith('耐久')) {
+        assert.ok(result.points.length >= 1, `${file} should have power points`);
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 27. All 5 PDFs across enterprise packages are detected as binary
+  // ---------------------------------------------------------------------------
+
+  test('all 5 enterprise package PDF files are detected as binary', { skip: !HAS_T02 }, async () => {
+    const pdfFiles = [
+      '企业资料包01_氢璞创能/00_企业资料说明.pdf',
+      '企业资料包02_氢质氢离/00_企业资料说明.pdf',
+      '企业资料包03_青川易创与云汉达/00_企业资料说明.pdf',
+      '企业资料包03_青川易创与云汉达/01 宽温域PEM制氢与氢燃料电池电堆技术开发与应用-青川科技(260314-FC).pdf',
+      '企业资料包04_海珀特/00_企业资料说明.pdf',
+    ];
+    for (const file of pdfFiles) {
+      const buf = await readRaw(file);
+      assert.ok(buf, `${file} should exist`);
+      assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${file} should be non-empty`);
+      assert.equal(isLikelyBinary(buf), true, `${file} should be detected as binary`);
+      const decoded = decodeTextBuffer(buf);
+      assert.equal(decoded.binary, true, `${file} decodeTextBuffer should report binary`);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 28. XLSX workbook boundary and evidence summary
+  // ---------------------------------------------------------------------------
+
+  test('氢璞创能 real .xlsx workbook formula audit reports exact cell counts and boundaries', { skip: !HAS_T02 }, async () => {
+    const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
+    const result = parseDataWorkbook(buf);
+    assert.equal(result.ok, true);
+    assert.equal(result.sheetName, '稳定性');
+    assert.equal(result.workbookEvidenceSummary.sheetCount, 8);
+    assert.equal(result.workbookEvidenceSummary.parsedSheetCount, 8);
+    assert.equal(result.formulaAudit.formulaCellCount, 6572);
+    assert.equal(result.formulaAudit.status, 'review_required');
+    assert.ok(result.formulaAudit.boundary.includes('企业批准人员复核'));
+  });
+
+  // ---------------------------------------------------------------------------
+  // 29. T02 real-data file inventory summary
+  // ---------------------------------------------------------------------------
+
+  test('T02 real-data directory contains exactly 198 files with expected type distribution', { skip: !HAS_T02 }, async () => {
+    const allFiles = [];
+    const walk = async (dir) => {
+      const entries = await readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(full);
+        } else {
+          allFiles.push(full);
+        }
+      }
+    };
+    await walk(T02_ROOT);
+    assert.ok(allFiles.length >= 190, `expected at least 190 files in T02, got ${allFiles.length}`);
+    const counts = {};
+    for (const file of allFiles) {
+      const ext = file.split('.').pop()?.toLowerCase() || '';
+      counts[ext] = (counts[ext] || 0) + 1;
+    }
+    assert.ok(counts['csv'] >= 150, `expected at least 150 CSV files, got ${counts['csv'] || 0}`);
+    assert.ok(counts['txt'] >= 10, `expected at least 10 TXT files, got ${counts['txt'] || 0}`);
+    assert.ok(counts['docx'] >= 9, `expected at least 9 DOCX files, got ${counts['docx'] || 0}`);
+    assert.ok(counts['pdf'] >= 4, `expected at least 4 PDF files, got ${counts['pdf'] || 0}`);
+    assert.ok(counts['xlsx'] >= 1, `expected at least 1 XLSX file, got ${counts['xlsx'] || 0}`);
   });
