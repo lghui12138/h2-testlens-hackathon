@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { readFile, readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
+import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
+import { getProfile } from '../src/profiles.mjs';
 import { decodeTextBuffer } from '../src/input-safety.mjs';
 
 test('parseCSV("") returns an empty array without throwing', () => {
@@ -243,4 +249,78 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     const decoded = decodeTextBuffer(Buffer.alloc(0));
     assert.equal(decoded.binary, false);
     assert.equal(decoded.text, '');
+  });
+
+  // ---------------------------------------------------------------------------
+  // 15. Real-file boundary injections
+  // ---------------------------------------------------------------------------
+
+  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const injected = Buffer.concat([buf.subarray(0, 100), Buffer.from([0x00]), buf.subarray(100)]);
+    const decoded = decodeTextBuffer(injected);
+    assert.equal(decoded.binary, true);
+  });
+
+  test('truncated real Qingchuan CSV with only header parses as empty rows', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const truncated = csv.split('\n').slice(0, 1).join('\n');
+    assert.deepEqual(parseCSV(truncated), []);
+  });
+
+  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包01_氢璞创能/2026-4-5-13-16-20.txt'));
+    const decoded = decodeTextBuffer(buf, 'utf-8');
+    assert.equal(decoded.binary, true);
+    assert.ok(decoded.binaryReason?.length > 0);
+  });
+
+  test('0-byte buffer for each format is handled without throwing', () => {
+    assert.deepEqual(parseCSV(Buffer.alloc(0)), []);
+    const decoded = decodeTextBuffer(Buffer.alloc(0));
+    assert.equal(decoded.binary, false);
+    assert.equal(decoded.text, '');
+  });
+
+  test('real Qingchuan CSV boundary values at exact defaults do not crash adapter', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+    assert.ok(result);
+    assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
+  });
+
+  test('real 氢质氢离 vehicle CSV boundary: exact zero isolation values do not crash adapter', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(result);
+    assert.equal(result.datasetType, 'vehicle');
+    assert.ok(result.dataset.insulation.validCount >= 0);
+  });
+
+  test('real 氢璞创能 XLSX boundary: 0-byte workbook buffer returns blocked result', async () => {
+    const result = parseDataWorkbook(Buffer.alloc(0));
+    assert.ok(result);
+    assert.equal(result.ok, false);
+  });
+
+  test('real 氢质氢离 DOCX boundary: non-docx content throws descriptive error', async () => {
+    const randomBuf = Buffer.from('this is not a docx file content');
+    let threw = false;
+    try {
+      await parseDurabilityDocx(randomBuf);
+    } catch (error) {
+      threw = true;
+      assert.ok(error.message.includes('docx_parse_failed') || error.message.includes('docx_engine_unavailable') || error.message.includes('Could not find file'));
+    }
+    assert.equal(threw, true);
   });

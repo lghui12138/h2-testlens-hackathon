@@ -1,11 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
 import { getProfile } from '../src/profiles.mjs';
+import { parseDataWorkbook, setSpreadsheetEngine } from '../src/excel-workflow.mjs';
+import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
+import { decodeTextBuffer } from '../src/input-safety.mjs';
+import { loadXlsx } from '../src/xlsx-node-loader.mjs';
+
+const SheetJS = await loadXlsx();
+const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
+const { runInThisContext } = await import('node:vm');
+runInThisContext(mammothSource);
+const mammoth = globalThis.mammoth;
 
 const CI = String(process.env.CI || '').toLowerCase() === 'true';
 const here = dirname(fileURLToPath(import.meta.url));

@@ -7,7 +7,7 @@ const DASHBOARD_HTML = String.raw`
 <div class="shell">
   <a class="skip-link" href="#top">跳转到主内容</a>
   <header class="topbar">
-    <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试智报</small></span></a>
+    <a class="brand" href="#top"><span class="brand-mark">H₂</span><span><b>TestLens</b><small>氢能测试数据分析系统</small></span></a>
     <div class="topbar-meta"><span class="live-dot"></span><span>PUBLIC ANALYSIS</span><span class="divider"></span><span id="last-run">等待数据</span></div>
     <nav class="site-nav" aria-label="页面导航"><a href="#top">分析台</a><a href="#workflow">流程</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav><nav class="mobile-nav" aria-label="移动端页面导航"><a href="#top">分析台</a><a href="#enterprise-panel">数据</a><a href="#workflow">流程</a><a href="https://github.com/lghui12138/h2-testlens-hackathon" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
   </header>

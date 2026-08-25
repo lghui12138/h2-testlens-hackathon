@@ -915,8 +915,8 @@ function enterprisePhaseMetricReadiness(config, rows) {
       peakPowerW: safeMax(powers),
       minimumPowerW: safeMin(powers),
       maximumPowerW: safeMax(powers),
-      maxRampUpWPerS: rampRates.length ? Math.max(0, ...rampRates) : null,
-      maxRampDownWPerS: rampRates.length ? Math.max(0, ...rampRates.map((rate) => -rate)) : null,
+      maxRampUpWPerS: rampRates.length ? safeMax(rampRates, 0) : null,
+      maxRampDownWPerS: rampRates.length ? safeMax(rampRates.map((rate) => -rate), 0) : null,
       validDataCoveragePct: spanS !== null && spanS > 0 ? (durationS / spanS) * 100 : phaseRows.length >= 2 ? 100 : null,
       validSegments,
       interruptedSegmentCount,
@@ -1061,8 +1061,8 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
         ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
         : '当前 profile 未批准，不进入标准符合性判定',
       boundary: clauseRefs.length
-        ? `该标准引用当前仅作公开范围/流程映射演示；具体条款（${clauseRefs.join('、')}）符合性需企业 approved profile 与完整方法实施证据支撑。`
-        : `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
+        ? `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款（${clauseRefs.join('、')}）需企业 approved profile 与完整方法实施证据支撑。`
+        : `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款需企业 approved profile 与完整方法实施证据支撑。`
     };
   });
   const evidenceDetails = [
