@@ -463,3 +463,24 @@ test('sample rows keep first and last rows for every detected session', () => {
   assert.ok(sampled.rows.some((row) => row.timestamp_s === '0' && row.session_id === 'a'));
   assert.ok(sampled.rows.some((row) => row.timestamp_s === '3' && row.session_id === 'b'));
 });
+
+test('large steady-phase array computes ramp rates without spread-based max crash', () => {
+  const rows = Array.from({ length: 5000 }, (_, i) => ({
+    测试时间: String(i * 2),
+    phase: 'steady',
+    电堆电流: String(10 + (i % 50)),
+    实际电压: '2',
+    功率: String(20 + (i % 100))
+  }));
+  const result = analyzeEnterpriseRows(rows, {
+    datasetType: 'stack',
+    requiredPhases: ['steady'],
+    requiredPhaseMetrics: { steady: ['maxRampUpWPerS', 'maxRampDownWPerS'] }
+  });
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  const steadyMetrics = result.compliance?.phaseMetrics?.phases?.steady;
+  assert.ok(steadyMetrics, 'steady phase metrics should exist');
+  assert.ok(Number.isFinite(steadyMetrics.maxRampUpWPerS));
+  assert.ok(Number.isFinite(steadyMetrics.maxRampDownWPerS));
+});
