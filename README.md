@@ -1,8 +1,8 @@
-# H₂ TestLens｜氢能测试智报
+# H₂ TestLens｜氢能测试数据分析系统
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
-[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-392%2F392-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-433%2F433-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
 
 ## 公开演示
 
@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.72**。本轮完成全量真实 T02 资料包利用收尾与 Pages 同步：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部闭环，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **392** 条测试，其中 **392** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.72**。本轮完成全量真实 T02 资料包利用收尾与 Pages 同步：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部完成，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **433** 条测试，其中 **433** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -173,7 +173,7 @@ GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #
 - v3.5.26：新增源资料完整性核对器，逐文件重新计算当前资料目录的大小和 SHA-256，并对新增、缺失、变更文件 fail-closed；这证明版本化审计仍对应当前目录，但不改变原始数据、参考资料和标准符合性边界。
 - v3.5.27：源资料完整性核对器新增审计根目录、记录总数和重复路径 fail-closed 校验，并补齐三类审计形状回归；T02 原始资料、参考内容和标准符合性边界不变。
 - v3.5.38 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；已声明物理单体电压时，归一化后的非正值从物理电压 KPI 排除而 raw 保留并计数；电堆阳极/阴极气体流量无标准状态单位或使用实际 `L/min` 时不进入计量比，直接 `UNIT_UNSUPPORTED` 阻断；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；T02 覆盖卡现在可下载前 5 个字段值复核重点的聚合 CSV，供企业确认字段语义/无效码，但不含原始行、不自动判定异常；公共 API 的质量会话摘要递归脱敏来源文件名，Excel workflow 也纳入 source/public parity；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
-- v3.5.68：六智能体进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **318** 条测试、**318** 通过、**0** 条失败，`npm run check:submission` **259/259**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已闭环，Pages 自定义域仍不可达。
+- v3.5.68：多轮优化进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **318** 条测试、**318** 通过、**0** 条失败，`npm run check:submission` **259/259**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已完成，Pages 自定义域仍不可达。
 - v3.5.68：标准符合性 UI 与证据追踪收尾：compliance-evidence 增加证据就绪进度条与边界文本细化，`auditTrail` 可视化进入页面/报告/Excel 链路；enterprise adapter 真实数据 fieldMapping 验证与 public/src 全量同步保持字节 parity；青川/氢质氢离/氢璞创能企业 profile 继续扩展真实字段映射，公开 Pages 项目页与主仓库描述同步更新。当前门：`npm test` **318** 条测试、**318** 通过、**0** 条失败，`npm run check:submission` **259/259**、API smoke、AI 4/4。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
@@ -228,7 +228,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 项目已用真实企业资料完成回归验证，不依赖演示样本替代证据。
 
-- 青川科技电堆时序：**38,257 行**真实数据成功识别 **61 个**电流平台候选；**127 列**字段映射已完整闭环，温度/压力/电流/电压等核心通道全部命中 canonicals。
+- 青川科技电堆时序：**38,257 行**真实数据成功识别 **61 个**电流平台候选；**127 列**字段映射已全部完成，温度/压力/电流/电压等核心通道全部命中 canonicals。
 - 压力语义统一：`kPa` / `bar` 等不同压力单位已完成语义对齐，统计与告警口径保持一致，不因单位差异造成重复或遗漏判定。
 - 功率转换验证：原始 `kW` 已按企业 profile 要求转换到 `W`，与电流×电压交叉核算通过，不把未经溯源的原始功率直接写进正式 KPI。
 - 氢质氢离车辆数据：**212/345 车**识别出 **29/13 个**绝缘窗口，边界仍标记为 `descriptive_only`，不自动升级为标准符合性或企业放行结论。
@@ -266,7 +266,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## 边界测试覆盖
 
-- 当前测试套件共 **392 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 当前测试套件共 **433 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
 - 运行方式：`npm test`。
 - 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
 

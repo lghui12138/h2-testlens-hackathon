@@ -789,3 +789,35 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
    assert.ok(rows.length >= 10, 'mixed line endings should still yield rows');
    assert.ok('实际电流（A）' in rows[0]);
  });
+
+  // ---------------------------------------------------------------------------
+  // 22. Broadened DOCX coverage for 氢质氢离 reference document
+  // ---------------------------------------------------------------------------
+
+  test('氢质氢离 real DOCX 数据统计功能实现需求 parses as reference document with headers and no durability points', { skip: !HAS_T02 }, async () => {
+    const buf = await readRaw('企业资料包02_氢质氢离/数据统计功能实现需求-20260807.docx');
+    const result = await parseDurabilityDocx(buf);
+    assert.ok(result);
+    assert.ok(result.headers.length >= 1, 'expected headers from reference docx');
+    assert.ok(result.headers.includes('信号名称'), 'expected 信号名称 header in reference docx');
+    assert.equal(result.points.length, 0, 'reference docx should not produce durability points');
+    assert.ok(Object.keys(result.metadata).length >= 1, 'expected metadata from reference docx');
+  });
+
+  // ---------------------------------------------------------------------------
+  // 23. Cross-package file-type coverage summary
+  // ---------------------------------------------------------------------------
+
+  test('all 5 real-data file types are exercised across the 4 enterprise packages', { skip: !HAS_T02 }, async () => {
+    const typeCoverage = {
+      txt: await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'),
+      xlsx: await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx'),
+      docx: await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'),
+      csv: await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'),
+      pdf: await readRaw('企业资料包04_海珀特/00_企业资料说明.pdf'),
+    };
+    for (const [type, buf] of Object.entries(typeCoverage)) {
+      assert.ok(buf, `missing sample buffer for ${type}`);
+      assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${type} sample should be non-empty buffer`);
+    }
+  });

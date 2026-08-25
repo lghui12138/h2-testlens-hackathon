@@ -51,7 +51,7 @@ v3.5.72 实际重放结果：覆盖审计 198/198 文件、190 processed、6 ref
 | 03 | 1 个 127 列 CSV、1 个任务 DOCX、2 个 PDF | 38,257 行；包含最多 40 个单片电压列；资料明确要求字段映射、平台/稳定区间、单片一致性、异常清单和 Excel 输出 | 127 列电堆时序识别、单片通道结构校核、字段映射、时间戳质量、阳极/阴极/冷却流阻、冷却温差和一致性摘要 |
 | 04 | 仅 1 个说明 PDF | 企业明确未上传实际资料，要求线下补充 | 不虚构企业数据，不启用依赖资料的实现 |
 
-v3.5.72 当前机器证据：46/127/422 个源字段角色并集均为完整覆盖，未分类字段与多角色冲突均为 0；包 01 XLSX 的 8/8 工作表证据完整；7 个参考文件的 21 条声明关键词证据全部完整，且 7/7 参考边界文件已按相对路径交叉链接；8 份耐久报告的跨报告可比性筛查已进入 `businessAggregation`、闭环字段和全包报告；源资料完整性核对无漂移。当前引用的覆盖、参考和全包报告均为 `.research/ignite_t02_standards_20260821/*_v3.5.72.*`，旧版本文件仅保留历史回放用途。
+v3.5.72 当前机器证据：46/127/422 个源字段角色并集均为完整覆盖，未分类字段与多角色冲突均为 0；包 01 XLSX 的 8/8 工作表证据完整；7 个参考文件的 21 条声明关键词证据全部完整，且 7/7 参考边界文件已按相对路径交叉链接；8 份耐久报告的跨报告可比性筛查已进入 `businessAggregation`、完整字段和全包报告；源资料完整性核对无漂移。当前引用的覆盖、参考和全包报告均为 `.research/ignite_t02_standards_20260821/*_v3.5.72.*`，旧版本文件仅保留历史回放用途。
 
 ## 页面侧已实现
 
@@ -91,18 +91,18 @@ v3.5.72 当前机器证据还明确记录：46/127/422 个源字段角色并集�
 - 配置形状：`config/enterprise-profile.example.json` 顶层为对象，键是 canonical 字段，值是 1–160 字符的企业原始表头或列名；同一 canonical 可保留多组企业别名，但运行时需通过 profile 包显式提供。
 - 校验门控：`profilesFromPackage()` 会校验 `fieldMapping` 必须是对象、键必须属于允许的 canonical 集合、值必须为非空字符串且长度不超过 160；未知字段、空值或数组类型会直接拒绝导入。
 - 运行绑定：浏览器 profile 切换时把 `profile.fieldMapping` 写入会话状态，`renderSchema()` 展示映射表与单位换算证据；企业适配器在解析企业数据时优先采用该映射，不再退回通用别名匹配。
-- 覆盖证据：T02 覆盖审计会逐文件记录映射命中、未分类字段、多角色冲突和字段角色并集；青川 127 列 CSV、氢质氢离 46 列 CSV 和 01 包 422 列 TXT 均已完成映射闭环。
+- 覆盖证据：T02 覆盖审计会逐文件记录映射命中、未分类字段、多角色冲突和字段角色并集；青川 127 列 CSV、氢质氢离 46 列 CSV 和 01 包 422 列 TXT 映射已全部完成。
 ## fieldMapping 覆盖总览（四包 198 文件）
 
 当前版本已为全部 4 个企业资料包建立 profile 级 fieldMapping，并在浏览器、API、batch-watch、T02 覆盖审计和全包报告中保持同一套校验与输出口径。
 
 | 资料包 | 企业 | 适配 profile | 已映射 canonicals | 关键映射字段 | 状态 |
 |---|---|---|---|---|---|
-| 企业资料包 01 | 氢璞创能 | hypu-durability | 3 | timestamp_s、current_a、voltage_v | 已闭环 |
-| 企业资料包 02 | 氢质氢离 | qingzhihuli-vehicle | 12 | timestamp_s、current_a、voltage_v、net_power_kw、main_status、min_cell_voltage_v、min_cell_channel、avg_cell_voltage_v、avg_cell_dev_mv、cell_voltage_variance、isolation_kohm、runtime_h | 已闭环 |
-| 企业资料包 03 | 青川易创与云汉达 | qingchuan-stack | 33 | timestamp_s、current_a、voltage_v、temperature_c、pressure_bar、flow_slpm、leak_ppm、power_kw、cell_count、avg_cell_voltage_v、min_cell_voltage_v、max_cell_voltage_v、current_density_mAcm2、h2_dewpoint_c、air_dewpoint_c、coolant_dt、h2_stoich、air_stoich、internal_resistance、anode_out_temp_c、cathode_in_temp_c、cathode_out_temp_c、coolant_in_temp_c、coolant_out_temp_c、anode_out_pressure_kpa、cathode_in_pressure_kpa、cathode_out_pressure_kpa、coolant_in_pressure_kpa、coolant_out_pressure_kpa、h2_humidifier_water_temp_c、air_humidifier_water_temp_c、coolant_flow_lpm、coolant_conductivity_us_cm | 已闭环 |
+| 企业资料包 01 | 氢璞创能 | hypu-durability | 3 | timestamp_s、current_a、voltage_v | 已完成 |
+| 企业资料包 02 | 氢质氢离 | qingzhihuli-vehicle | 12 | timestamp_s、current_a、voltage_v、net_power_kw、main_status、min_cell_voltage_v、min_cell_channel、avg_cell_voltage_v、avg_cell_dev_mv、cell_voltage_variance、isolation_kohm、runtime_h | 已完成 |
+| 企业资料包 03 | 青川易创与云汉达 | qingchuan-stack | 33 | timestamp_s、current_a、voltage_v、temperature_c、pressure_bar、flow_slpm、leak_ppm、power_kw、cell_count、avg_cell_voltage_v、min_cell_voltage_v、max_cell_voltage_v、current_density_mAcm2、h2_dewpoint_c、air_dewpoint_c、coolant_dt、h2_stoich、air_stoich、internal_resistance、anode_out_temp_c、cathode_in_temp_c、cathode_out_temp_c、coolant_in_temp_c、coolant_out_temp_c、anode_out_pressure_kpa、cathode_in_pressure_kpa、cathode_out_pressure_kpa、coolant_in_pressure_kpa、coolant_out_pressure_kpa、h2_humidifier_water_temp_c、air_humidifier_water_temp_c、coolant_flow_lpm、coolant_conductivity_us_cm | 已完成 |
 | 企业资料包 04 | 说明文件 | — | 0 | 无实际资料文件 | declared_no_upload |
-| 合计 | — | 3 个企业 profile | 48 个唯一 canonicals | 覆盖时序、电气、热管理、气体、冷却、绝缘与耐久维度 | 全量闭环 |
+| 合计 | — | 3 个企业 profile | 48 个唯一 canonicals | 覆盖时序、电气、热管理、气体、冷却、绝缘与耐久维度 | 全部完成 |
 
 校验门控：profilesFromPackage() 会校验 fieldMapping 必须是对象、键必须属于允许的 canonical 集合、值必须为非空字符串且长度不超过 160；未知字段、空值或数组类型会直接拒绝导入。运行绑定：浏览器 profile 切换时把 profile.fieldMapping 写入会话状态，renderSchema() 展示映射表与单位换算证据；企业适配器在解析企业数据时优先采用该映射，不再退回通用别名匹配。
 

@@ -95,7 +95,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
-      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] },
+      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
     ],
     methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
@@ -245,7 +246,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardClauseRefs: {
       'GB/T 46104-2025': ['术语和定义', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
       'GB/T 29729-2022': ['氢系统安全基本要求', '风险评价', '安全装置', '操作与维护'],
-      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应']
+      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应'],
+      'ISO/IEC 17025:2017': ['范围', '术语', '组织要求', '资源要求', '过程要求', '管理体系要求']
     }
   },
   {
@@ -261,7 +263,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [
       { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
-      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] },
+      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
     ],
     methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
     status: 'current',
@@ -330,7 +333,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardClauseRefs: {
       'GB/T 45541-2025': ['术语和定义', '安全要求', '试验条件', '仪器设备', '基本检查', '基础测试', '性能测试', '测试报告'],
       'GB/T 29729-2022': ['氢系统安全基本要求', '风险评价', '安全装置', '操作与维护'],
-      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应']
+      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应'],
+      'ISO/IEC 17025:2017': ['范围', '术语', '组织要求', '资源要求', '过程要求', '管理体系要求']
     }
   },
   {
@@ -526,7 +530,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
-      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
+      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] },
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
     status: 'current',
     publicationDate: '2025-08-29',
@@ -602,7 +607,8 @@ export const DEVICE_PROFILES = Object.freeze([
     standardClauseRefs: {
       'GB/T 46104-2025': ['术语和定义', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
       'GB/T 29729-2022': ['氢系统安全基本要求', '风险评价', '安全装置', '操作与维护'],
-      'ISO/IEC 17025:2017': ['范围', '管理体系', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性']
+      'ISO/IEC 17025:2017': ['范围', '管理体系', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性'],
+      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应']
     }
   },
   {
@@ -620,7 +626,8 @@ export const DEVICE_PROFILES = Object.freeze([
     supportedDatasetTypes: ['durability'],
     standardRefs: [
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
-      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
+      { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] },
+      { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] }
     ],
     status: 'current',
     publicationDate: '2025-08-29',
@@ -678,7 +685,8 @@ export const DEVICE_PROFILES = Object.freeze([
     },
     standardClauseRefs: {
       'GB/T 46104-2025': ['术语和定义', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
-      'ISO/IEC 17025:2017': ['范围', '管理体系', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性']
+      'ISO/IEC 17025:2017': ['范围', '管理体系', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性'],
+      'ISO 22734-1:2025': ['范围', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应']
     }
   },
   {
