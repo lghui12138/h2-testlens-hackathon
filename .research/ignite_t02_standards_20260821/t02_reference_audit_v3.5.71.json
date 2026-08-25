@@ -1,0 +1,605 @@
+{
+  "audit": "T02 reference-content and implementation mapping audit",
+  "auditVersion": "3.5.71",
+  "root": "T02_SOURCE_ROOT",
+  "sourceRootLabel": "T02_SOURCE_ROOT",
+  "pathDisclosure": "redacted",
+  "rawReferenceFilesCopiedIntoRepository": false,
+  "totalReferenceFiles": 7,
+  "parserErrors": 0,
+  "claimStatusCounts": {
+    "implemented": 11,
+    "implemented_with_boundary": 2,
+    "partial": 3,
+    "reference_only": 1,
+    "used_as_boundary": 4
+  },
+  "sourceEvidenceSummary": {
+    "claimsTotal": 21,
+    "completeClaims": 21,
+    "incompleteClaims": 0,
+    "completenessPct": 100,
+    "incompleteSourceEvidence": [],
+    "boundary": "关键词完整性只是机器抽取证据；不完整不等于需求不存在，必须人工回看原始 PDF/DOCX 后才能宣称该映射已完整复核。"
+  },
+  "boundary": "该审计只保存文件哈希、提取统计、关键词命中和实现映射；不保存原始 PDF/DOCX 正文，也不把需求材料写成国家标准符合性结论。",
+  "records": [
+    {
+      "path": "企业资料包01_氢璞创能/00_企业资料说明.pdf",
+      "category": "enterprise_brief",
+      "extension": ".pdf",
+      "bytes": 300566,
+      "sha256": "9deb5fb5d4d07866aeb04b7361ed0eb6e6e9eac1907c99cbc0cbed6ee7d9f98b",
+      "parser": "pdftotext layout text",
+      "status": "extracted_reference",
+      "textCharacterCount": 940,
+      "sourceKeywordHits": [
+        "支持命题",
+        "敏感性",
+        "资料不足时的补充规则",
+        "资料清单",
+        "赛事"
+      ],
+      "claims": [
+        {
+          "id": "scope_and_boundary",
+          "sourceRequirement": "资料包用于 T02 命题；需求/参考材料不等于标准全文或企业放行规则。",
+          "keywords": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "implementationEvidence": [
+            "docs/T02_REQUIREMENTS_MATRIX.md",
+            "docs/ENTERPRISE_READINESS.md"
+          ],
+          "status": "used_as_boundary",
+          "boundary": "只用于产品范围和证据边界，不生成标准限值。",
+          "sourceMatches": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "source_inventory",
+          "sourceRequirement": "企业说明中的资料清单和原始数据类型必须进入覆盖盘点。",
+          "keywords": [
+            "资料清单"
+          ],
+          "implementationEvidence": [
+            "scripts/t02-coverage-audit.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "implemented",
+          "boundary": "记录文件、哈希、解析器和状态；不把说明文件当作时序 KPI。",
+          "sourceMatches": [
+            "资料清单"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "data_use_boundary",
+          "sourceRequirement": "资料仅限赛事用途，原始文件不应随产品公开传播。",
+          "keywords": [
+            "敏感性",
+            "赛事"
+          ],
+          "implementationEvidence": [
+            "docs/ENTERPRISE_DATA_INTEGRATION.md",
+            "scripts/package-submission.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "仓库只保存脱敏样例和派生审计，不复制原始企业资料。",
+          "sourceMatches": [
+            "敏感性",
+            "赛事"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包02_氢质氢离/00_企业资料说明.pdf",
+      "category": "enterprise_brief",
+      "extension": ".pdf",
+      "bytes": 363371,
+      "sha256": "285dd6d30c149eb4f5d384df4cc6d5f98aebb13bb1499209aa049d5088904031",
+      "parser": "pdftotext layout text",
+      "status": "extracted_reference",
+      "textCharacterCount": 1524,
+      "sourceKeywordHits": [
+        "支持命题",
+        "敏感性",
+        "资料不足时的补充规则",
+        "资料清单",
+        "赛事"
+      ],
+      "claims": [
+        {
+          "id": "scope_and_boundary",
+          "sourceRequirement": "资料包用于 T02 命题；需求/参考材料不等于标准全文或企业放行规则。",
+          "keywords": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "implementationEvidence": [
+            "docs/T02_REQUIREMENTS_MATRIX.md",
+            "docs/ENTERPRISE_READINESS.md"
+          ],
+          "status": "used_as_boundary",
+          "boundary": "只用于产品范围和证据边界，不生成标准限值。",
+          "sourceMatches": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "source_inventory",
+          "sourceRequirement": "企业说明中的资料清单和原始数据类型必须进入覆盖盘点。",
+          "keywords": [
+            "资料清单"
+          ],
+          "implementationEvidence": [
+            "scripts/t02-coverage-audit.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "implemented",
+          "boundary": "记录文件、哈希、解析器和状态；不把说明文件当作时序 KPI。",
+          "sourceMatches": [
+            "资料清单"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "data_use_boundary",
+          "sourceRequirement": "资料仅限赛事用途，原始文件不应随产品公开传播。",
+          "keywords": [
+            "敏感性",
+            "赛事"
+          ],
+          "implementationEvidence": [
+            "docs/ENTERPRISE_DATA_INTEGRATION.md",
+            "scripts/package-submission.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "仓库只保存脱敏样例和派生审计，不复制原始企业资料。",
+          "sourceMatches": [
+            "敏感性",
+            "赛事"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包02_氢质氢离/数据统计功能实现需求-20260807.docx",
+      "category": "vehicle_requirements",
+      "extension": ".docx",
+      "bytes": 1656438,
+      "sha256": "dbee58dd75050cb5a69f115a9d85b67b3de69d82ae8b3165e3b9e69bff5fbc27",
+      "parser": "pandoc plain text",
+      "status": "extracted_reference",
+      "textCharacterCount": 3464,
+      "sourceKeywordHits": [
+        "180s",
+        "33/58.5/117/156/175.5/195",
+        "350/250",
+        "65535",
+        "FC_CurrOut",
+        "双纵轴",
+        "平均值",
+        "时间范围",
+        "每10min",
+        "每日会新增",
+        "飞书"
+      ],
+      "claims": [
+        {
+          "id": "vehicle_signal_dashboard",
+          "sourceRequirement": "车辆关键信号按时间展示，并支持选择信号和双纵轴。",
+          "keywords": [
+            "FC_CurrOut",
+            "双纵轴",
+            "时间范围"
+          ],
+          "implementationEvidence": [
+            "src/enterprise-adapters.mjs",
+            "src/app.mjs",
+            "src/analyzer.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "双轴是展示/核对能力，不把不同量纲混入 KPI。",
+          "sourceMatches": [
+            "FC_CurrOut",
+            "双纵轴",
+            "时间范围"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "vehicle_target_segments",
+          "sourceRequirement": "目标电流±波动范围、连续超过 180 s 后形成一个统计段。",
+          "keywords": [
+            "180s",
+            "FC_CurrOut",
+            "平均值"
+          ],
+          "implementationEvidence": [
+            "src/enterprise-adapters.mjs",
+            "tests/analyzer.test.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "目标、容差和最短持续时间由配置传入；不足时不形成正式性能点。",
+          "sourceMatches": [
+            "180s",
+            "FC_CurrOut",
+            "平均值"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "vehicle_insulation_forecast",
+          "sourceRequirement": "状态 4/8 分组、无效码过滤、10 分钟最小值和 350/250 kΩ 趋势。",
+          "keywords": [
+            "65535",
+            "350/250",
+            "每10min"
+          ],
+          "implementationEvidence": [
+            "src/enterprise-adapters.mjs",
+            "src/app.mjs",
+            "src/excel-workflow.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "350/250 kΩ 来自企业功能需求，不是 ISO/GB 安全认证限值。",
+          "sourceMatches": [
+            "65535",
+            "350/250",
+            "每10min"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "durability_alert_and_increment",
+          "sourceRequirement": "耐久目标功率、异常预警、飞书通知和每日新增检测。",
+          "keywords": [
+            "33/58.5/117/156/175.5/195",
+            "飞书",
+            "每日会新增"
+          ],
+          "implementationEvidence": [
+            "src/docx-workflow.mjs",
+            "src/feishu-alerts.mjs",
+            "scripts/batch-watch.mjs"
+          ],
+          "status": "partial",
+          "boundary": "功率点、dry-run/确认发送和受控 once/interval 扫描已实现；企业调度器、群策略和工单闭环未接入。",
+          "sourceMatches": [
+            "33/58.5/117/156/175.5/195",
+            "飞书",
+            "每日会新增"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包03_青川易创与云汉达/00_企业资料说明.pdf",
+      "category": "enterprise_brief",
+      "extension": ".pdf",
+      "bytes": 195657,
+      "sha256": "ece31055f0c33a992d099ed7c215744432fb0c4a0b8a776a977a58b48f9a14aa",
+      "parser": "pdftotext layout text",
+      "status": "extracted_reference",
+      "textCharacterCount": 1393,
+      "sourceKeywordHits": [
+        "支持命题",
+        "敏感性",
+        "资料不足时的补充规则",
+        "资料清单",
+        "赛事"
+      ],
+      "claims": [
+        {
+          "id": "scope_and_boundary",
+          "sourceRequirement": "资料包用于 T02 命题；需求/参考材料不等于标准全文或企业放行规则。",
+          "keywords": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "implementationEvidence": [
+            "docs/T02_REQUIREMENTS_MATRIX.md",
+            "docs/ENTERPRISE_READINESS.md"
+          ],
+          "status": "used_as_boundary",
+          "boundary": "只用于产品范围和证据边界，不生成标准限值。",
+          "sourceMatches": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "source_inventory",
+          "sourceRequirement": "企业说明中的资料清单和原始数据类型必须进入覆盖盘点。",
+          "keywords": [
+            "资料清单"
+          ],
+          "implementationEvidence": [
+            "scripts/t02-coverage-audit.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "implemented",
+          "boundary": "记录文件、哈希、解析器和状态；不把说明文件当作时序 KPI。",
+          "sourceMatches": [
+            "资料清单"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "data_use_boundary",
+          "sourceRequirement": "资料仅限赛事用途，原始文件不应随产品公开传播。",
+          "keywords": [
+            "敏感性",
+            "赛事"
+          ],
+          "implementationEvidence": [
+            "docs/ENTERPRISE_DATA_INTEGRATION.md",
+            "scripts/package-submission.mjs"
+          ],
+          "status": "implemented",
+          "boundary": "仓库只保存脱敏样例和派生审计，不复制原始企业资料。",
+          "sourceMatches": [
+            "敏感性",
+            "赛事"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包03_青川易创与云汉达/01 宽温域PEM制氢与氢燃料电池电堆技术开发与应用-青川科技(260314-FC).pdf",
+      "category": "product_technical_reference",
+      "extension": ".pdf",
+      "bytes": 5615151,
+      "sha256": "2d0904bb2b3b2fd3da6ac0502cbec0050d4cb1c5a60ad91819c7e6a45a7db90d",
+      "parser": "pdftotext layout text",
+      "status": "extracted_reference",
+      "textCharacterCount": 19469,
+      "sourceKeywordHits": [
+        "PEM",
+        "燃料电池",
+        "电堆"
+      ],
+      "claims": [
+        {
+          "id": "product_context_only",
+          "sourceRequirement": "产品介绍提供企业/产品背景和技术语境。",
+          "keywords": [
+            "PEM",
+            "燃料电池",
+            "电堆"
+          ],
+          "implementationEvidence": [
+            "docs/T02_REQUIREMENTS_MATRIX.md",
+            "docs/ENTERPRISE_READINESS.md"
+          ],
+          "status": "reference_only",
+          "boundary": "不把宣传材料中的性能描述当作测试验收限值或标准证据。",
+          "sourceMatches": [
+            "PEM",
+            "燃料电池",
+            "电堆"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx",
+      "category": "stack_requirements",
+      "extension": ".docx",
+      "bytes": 60351,
+      "sha256": "90428ce3a61873b0763e0bcd586a8ac8d7cfb7b9fe23fffce526d356d4333376",
+      "parser": "pandoc plain text",
+      "status": "extracted_reference",
+      "textCharacterCount": 20796,
+      "sourceKeywordHits": [
+        "120",
+        "14",
+        "60",
+        "±1 A",
+        "不得固化",
+        "人工修改",
+        "内阻",
+        "单片电压",
+        "参数代码",
+        "可追溯性要求",
+        "可配置参数",
+        "工作表",
+        "数据质量",
+        "流阻",
+        "重复电流点"
+      ],
+      "claims": [
+        {
+          "id": "configurable_parameters",
+          "sourceRequirement": "识别阈值、稳定阈值、截取规则和异常阈值必须可配置，不得固化。",
+          "keywords": [
+            "可配置参数",
+            "不得固化",
+            "参数代码"
+          ],
+          "implementationEvidence": [
+            "src/excel-workflow.mjs",
+            "src/profiles.mjs",
+            "src/enterprise-adapters.mjs"
+          ],
+          "status": "implemented_with_boundary",
+          "boundary": "系统提供配置入口和默认模板；正式值必须来自企业批准参数表。",
+          "sourceMatches": [
+            "可配置参数",
+            "不得固化",
+            "参数代码"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "platform_stability_rules",
+          "sourceRequirement": "电流±1 A、60 s 平台/稳定判定、60–120 s 警告、≥120 s 末端截取、重复点分开。",
+          "keywords": [
+            "±1 A",
+            "60",
+            "120",
+            "重复电流点"
+          ],
+          "implementationEvidence": [
+            "src/enterprise-adapters.mjs",
+            "src/excel-workflow.mjs",
+            "tests/analyzer.test.mjs"
+          ],
+          "status": "implemented_with_boundary",
+          "boundary": "数值作为任务说明书默认模板并可由参数表覆盖；不能当作国家标准通用限值。",
+          "sourceMatches": [
+            "±1 A",
+            "60",
+            "120",
+            "重复电流点"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "stack_metrics_and_quality",
+          "sourceRequirement": "电流/电压/单片一致性/内阻/工况/流阻统计和数据质量问题进入报告。",
+          "keywords": [
+            "内阻",
+            "流阻",
+            "单片电压",
+            "数据质量"
+          ],
+          "implementationEvidence": [
+            "src/enterprise-adapters.mjs",
+            "src/excel-workflow.mjs",
+            "src/analyzer.mjs"
+          ],
+          "status": "partial",
+          "boundary": "已有可映射字段的指标、目录和日志；未提供企业规则的扩展曲线不自动判定。",
+          "sourceMatches": [
+            "内阻",
+            "流阻",
+            "单片电压",
+            "数据质量"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "excel_and_traceability",
+          "sourceRequirement": "14 个工作表、图表引用、参数覆盖、排除区间和人工修改过程可追溯。",
+          "keywords": [
+            "14",
+            "工作表",
+            "可追溯性要求",
+            "人工修改"
+          ],
+          "implementationEvidence": [
+            "src/excel-workflow.mjs",
+            "src/xlsx-charts.mjs",
+            "src/incremental.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "partial",
+          "boundary": "14 表、公式、图表结构、哈希和处理日志已实现；企业对象存储、人工签改系统和 Excel/WPS 视觉验收仍待接入。",
+          "sourceMatches": [
+            "14",
+            "工作表",
+            "可追溯性要求",
+            "人工修改"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    },
+    {
+      "path": "企业资料包04_海珀特/00_企业资料说明.pdf",
+      "category": "enterprise_brief",
+      "extension": ".pdf",
+      "bytes": 337201,
+      "sha256": "d55435848d6ddce6f129c4994bfc3ea26c4d63e72debcf89bc971302c2cdf611",
+      "parser": "pdftotext layout text",
+      "status": "extracted_reference",
+      "textCharacterCount": 1137,
+      "sourceKeywordHits": [
+        "企业未上传",
+        "支持命题",
+        "资料不足时的补充规则",
+        "资料到位前",
+        "资料清单"
+      ],
+      "claims": [
+        {
+          "id": "scope_and_boundary",
+          "sourceRequirement": "资料包用于 T02 命题；需求/参考材料不等于标准全文或企业放行规则。",
+          "keywords": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "implementationEvidence": [
+            "docs/T02_REQUIREMENTS_MATRIX.md",
+            "docs/ENTERPRISE_READINESS.md"
+          ],
+          "status": "used_as_boundary",
+          "boundary": "只用于产品范围和证据边界，不生成标准限值。",
+          "sourceMatches": [
+            "支持命题",
+            "资料不足时的补充规则"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "source_inventory",
+          "sourceRequirement": "企业说明中的资料清单和原始数据类型必须进入覆盖盘点。",
+          "keywords": [
+            "资料清单"
+          ],
+          "implementationEvidence": [
+            "scripts/t02-coverage-audit.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "implemented",
+          "boundary": "记录文件、哈希、解析器和状态；不把说明文件当作时序 KPI。",
+          "sourceMatches": [
+            "资料清单"
+          ],
+          "sourceEvidenceComplete": true
+        },
+        {
+          "id": "no_upload_boundary",
+          "sourceRequirement": "企业说明未提供原始资料时，只能按说明记录未上传状态，不能用虚构资料补齐企业功能。",
+          "keywords": [
+            "企业未上传",
+            "资料到位前"
+          ],
+          "implementationEvidence": [
+            "scripts/t02-coverage-audit.mjs",
+            "docs/ENTERPRISE_DATA_INTEGRATION.md"
+          ],
+          "status": "implemented",
+          "boundary": "记录 declared_no_upload；不把命题描述或虚构样例当作企业测试数据。",
+          "sourceMatches": [
+            "企业未上传",
+            "资料到位前"
+          ],
+          "sourceEvidenceComplete": true
+        }
+      ],
+      "error": null
+    }
+  ]
+}
