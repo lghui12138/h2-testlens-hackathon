@@ -904,7 +904,9 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
   // 11. Explicit 4-package real-file regression summary
   // ---------------------------------------------------------------------------
 
-  test('each enterprise package has at least one real file that enters the adapter or binary boundary', async (t) => {
+  const HAS_REAL_T02 = Boolean(resolveT02Path('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
+
+  test('each enterprise package has at least one real file that enters the adapter or binary boundary', { skip: !HAS_REAL_T02 }, async (t) => {
     const packages = {
       '企业资料包01_氢璞创能': [
         '2026-4-4-18-56-04.txt',
@@ -930,6 +932,7 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
         assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${pkg}/${file} should be non-empty`);
       }
     }
+  });
 
   test('unitTransform preserves hPa precision for pressure_bar gas_pressure_bar and ambient_pressure_kpa', () => {
     const hpaStack = parseCSV([
