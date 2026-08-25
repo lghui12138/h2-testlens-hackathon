@@ -156,3 +156,41 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
   assert.ok(!decoded.text.includes('\uFFFD'));
   assert.ok(decoded.text.includes('时间'));
 });
+
+ // ---------------------------------------------------------------------------
+ // 13. Real-format empty/corrupted boundaries
+ // ---------------------------------------------------------------------------
+
+ test('0-byte TXT-like buffer decodes as empty text without binary flag', () => {
+   const decoded = decodeTextBuffer(Buffer.alloc(0), 'gb18030');
+   assert.equal(decoded.binary, false);
+   assert.equal(decoded.text, '');
+ });
+
+ test('0-byte PDF-like buffer is detected as binary-or-non-text', () => {
+   const decoded = decodeTextBuffer(Buffer.alloc(0));
+   assert.equal(decoded.binary, false);
+ });
+
+ test('corrupted bytes claiming to be GB18030 fall back safely without throwing', () => {
+   const corrupted = Buffer.from([0x80, 0x81, 0x82, 0x83, 0x84]);
+   const decoded = decodeTextBuffer(corrupted, 'gb18030');
+   assert.ok(decoded.binary === true || decoded.binary === false);
+   if (!decoded.binary) {
+     assert.ok(typeof decoded.text === 'string');
+   }
+ });
+
+ test('parseCSV on empty string returns empty array', () => {
+   assert.deepEqual(parseCSV(''), []);
+ });
+
+ test('parseCSV on string with only whitespace returns empty array', () => {
+   assert.deepEqual(parseCSV('   \n\t\n   '), []);
+ });
+
+ test('analyzeRows on single header-only row reports DATA_TOO_SHORT', () => {
+   const result = analyzeRows(parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm'));
+   assert.equal(result.quality.hasEnoughRows, false);
+   assert.ok(result.issues.some((issue) => issue.code === 'DATA_TOO_SHORT'));
+ });

@@ -139,3 +139,27 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
   assert.ok(elapsedMs < 30_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
   recordBenchmark('test_analyze_real_qingchuan_38k_csv', 'ok', elapsedMs, rows.length, heap.heapUsed / 1024 / 1024);
 });
+
+ test('test_parse_real_qingchuan_38k_csv_with_adapter', { skip: CI }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const start = process.hrtime.bigint();
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+   assert.ok(elapsedMs < 20_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
+   recordBenchmark('test_parse_real_qingchuan_38k_csv_with_adapter', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+ });
+
+ test('test_analyze_real_qingchuan_38k_csv_with_profile', { skip: CI }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   const start = process.hrtime.bigint();
+   const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+   assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
+   assert.equal(result.datasetType, 'stack');
+   assert.ok(elapsedMs < 20_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
+   recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+ });

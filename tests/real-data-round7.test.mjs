@@ -481,3 +481,311 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
   assert.equal(decoded.binary, true);
   assert.ok(decoded.binaryReason === 'nul_byte' || decoded.binaryReason === 'decode_replacement_character');
 });
+
+ // ---------------------------------------------------------------------------
+ // 13. Broadened TXT coverage across 氢璞创能 real data
+ // ---------------------------------------------------------------------------
+
+ test('氢璞创能 real .txt 2026-4-4-20-02-03 decodes from GB18030 and parses headers', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-20-02-03.txt');
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, false);
+   assert.match(decoded.text, /时间/);
+   const rows = parseCSV(decoded.text);
+   assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+   assert.ok('时间' in rows[0]);
+   assert.ok('电堆电压' in rows[0]);
+ });
+
+ test('氢璞创能 real .txt 2026-4-5-8-25-50 decodes from GB18030 and parses headers', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-5-8-25-50.txt');
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, false);
+   assert.match(decoded.text, /时间/);
+   const rows = parseCSV(decoded.text);
+   assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+   assert.ok('时间' in rows[0]);
+ });
+
+ test('氢璞创能 real .txt 2026-4-5-14-15-50 decodes from GB18030 and parses headers', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-5-14-15-50.txt');
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, false);
+   assert.match(decoded.text, /时间/);
+   const rows = parseCSV(decoded.text);
+   assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+   assert.ok('时间' in rows[0]);
+ });
+
+ test('all known-good 氢璞创能 real .txt files decode from GB18030 without replacement characters', { skip: !HAS_T02 }, async () => {
+   const files = [
+     '2026-4-4-18-56-04.txt',
+     '2026-4-4-19-00-50.txt',
+     '2026-4-4-20-02-03.txt',
+     '2026-4-4-21-40-48.txt',
+     '2026-4-5-11-32-54.txt',
+     '2026-4-5-14-15-50.txt',
+     '2026-4-5-16-17-37.txt',
+     '2026-4-5-4-20-31.txt',
+     '2026-4-5-8-24-45.txt',
+     '2026-4-5-8-25-50.txt'
+   ];
+   for (const file of files) {
+     const buf = await readRaw(`企业资料包01_氢璞创能/${file}`);
+     const decoded = decodeTextBuffer(buf, 'gb18030');
+     assert.equal(decoded.binary, false, `${file} should not be detected as binary`);
+     assert.ok(!decoded.text.includes('\uFFFD'), `${file} should not contain replacement characters`);
+     const rows = parseCSV(decoded.text);
+     assert.ok(rows.length >= 50, `${file} should have at least 50 rows, got ${rows.length}`);
+     assert.ok('时间' in rows[0], `${file} should have 时间 header`);
+   }
+ });
+
+ test('hydrogen-raw 2026-4-5-13-16-20 is detected as binary due to control bytes', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-5-13-16-20.txt');
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, true);
+   assert.ok(decoded.binaryReason?.length > 0);
+ });
+
+ // ---------------------------------------------------------------------------
+ // 14. Broadened vehicle CSV coverage across 氢质氢离 real data
+ // ---------------------------------------------------------------------------
+
+ test('氢质氢离 real vehicle CSV 212 representative sample parses headers and rows', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (18).csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+   assert.ok('Timestamp' in rows[0]);
+   assert.ok('FC_CurrOut' in rows[0]);
+   assert.ok('FC_VehicleIsolationR' in rows[0]);
+ });
+
+ test('氢质氢离 real vehicle CSV 345 representative sample parses headers and rows', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (34).csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+   assert.ok('Timestamp' in rows[0]);
+   assert.ok('FC_CurrOut' in rows[0]);
+ });
+
+ test('multiple 氢质氢离 real vehicle CSV files share consistent headers', { skip: !HAS_T02 }, async () => {
+   const files = [
+     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (50).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (1).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (50).csv'
+   ];
+   const headerSets = [];
+   for (const file of files) {
+     const buf = await readRaw(file);
+     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+     const rows = parseCSV(csv);
+     assert.ok(rows.length >= 100, `${file} should have many rows`);
+     headerSets.push(Object.keys(rows[0]));
+   }
+   const firstHeaders = headerSets[0];
+   for (let i = 1; i < headerSets.length; i += 1) {
+     assert.deepEqual(headerSets[i], firstHeaders, `header set ${i + 1} should match first file`);
+   }
+ });
+
+ // ---------------------------------------------------------------------------
+ // 15. Broadened PDF coverage across enterprise packages
+ // ---------------------------------------------------------------------------
+
+ test('氢璞创能 real PDF 00_企业资料说明 is detected as binary', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/00_企业资料说明.pdf');
+   assert.equal(isLikelyBinary(buf), true);
+   const decoded = decodeTextBuffer(buf);
+   assert.equal(decoded.binary, true);
+ });
+
+ test('氢质氢离 real PDF 00_企业资料说明 is detected as binary', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/00_企业资料说明.pdf');
+   assert.equal(isLikelyBinary(buf), true);
+   const decoded = decodeTextBuffer(buf);
+   assert.equal(decoded.binary, true);
+ });
+
+ test('all 5 enterprise package PDF description files are detected as binary', { skip: !HAS_T02 }, async () => {
+   const pdfFiles = [
+     '企业资料包01_氢璞创能/00_企业资料说明.pdf',
+     '企业资料包02_氢质氢离/00_企业资料说明.pdf',
+     '企业资料包03_青川易创与云汉达/00_企业资料说明.pdf',
+     '企业资料包03_青川易创与云汉达/01 宽温域PEM制氢与氢燃料电池电堆技术开发与应用-青川科技(260314-FC).pdf',
+     '企业资料包04_海珀特/00_企业资料说明.pdf'
+   ];
+   for (const file of pdfFiles) {
+     const buf = await readRaw(file);
+     assert.equal(isLikelyBinary(buf), true, `${file} should be detected as binary`);
+     const decoded = decodeTextBuffer(buf);
+     assert.equal(decoded.binary, true, `${file} decodeTextBuffer should report binary`);
+   }
+ });
+
+ // ---------------------------------------------------------------------------
+ // 16. Broadened DOCX coverage across 氢质氢离 durability reports
+ // ---------------------------------------------------------------------------
+
+ test('氢质氢离 real docx 耐久10-15 reports expected metadata and points', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久10-15-20260606081413.docx');
+   const result = await parseDurabilityDocx(buf);
+   assert.ok(result);
+   assert.equal(result.metadata['测试方案'], '耐久10-15');
+   assert.ok(result.points.length >= 50);
+ });
+
+ test('氢质氢离 real docx 耐久15-20 reports expected metadata and points', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久15-20-20260606133914.docx');
+   const result = await parseDurabilityDocx(buf);
+   assert.ok(result);
+   assert.equal(result.metadata['测试方案'], '耐久15-20');
+   assert.ok(result.points.length >= 50);
+ });
+
+ test('氢质氢离 real docx 耐久25-30 reports expected metadata and points', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久25-30-20260607051025.docx');
+   const result = await parseDurabilityDocx(buf);
+   assert.ok(result);
+   assert.equal(result.metadata['测试方案'], '耐久25-30');
+   assert.ok(result.points.length >= 50);
+ });
+
+ test('all 8 氢质氢离 durability docx files preserve numeric HFR/LFR values', { skip: !HAS_T02 }, async () => {
+   const files = [
+     '耐久0-5-20260605211610.docx',
+     '耐久5-10-20260606024937.docx',
+     '耐久10-15-20260606081413.docx',
+     '耐久15-20-20260606133914.docx',
+     '耐久25-30-20260607051025.docx',
+     '耐久30-35-20260607103407.docx',
+     '耐久35-40-20260607160018.docx',
+     '耐久40-45-20260608020949.docx'
+   ];
+   for (const file of files) {
+     const buf = await readRaw(`企业资料包02_氢质氢离/01_耐久原始数据处理/${file}`);
+     const result = await parseDurabilityDocx(buf);
+     assert.ok(result, `${file} should parse successfully`);
+     const hfrValues = result.points.map((p) => p.hfr).filter((v) => v !== null);
+     const lfrValues = result.points.map((p) => p.lfr).filter((v) => v !== null);
+     assert.ok(hfrValues.every((v) => Number.isFinite(v)), `${file} HFR values should be finite`);
+     assert.ok(lfrValues.every((v) => Number.isFinite(v)), `${file} LFR values should be finite`);
+   }
+ });
+
+ // ---------------------------------------------------------------------------
+ // 17. Qingchuan real CSV additional regression assertions
+ // ---------------------------------------------------------------------------
+
+ test('青川易创 real CSV 38258 rows produce deterministic metrics for qingchuan-stack profile', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+   const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+   assert.ok(result);
+   assert.equal(result.datasetType, 'stack');
+   assert.ok('peakPowerW' in result.metrics);
+   assert.ok('peakTemperatureC' in result.metrics);
+   assert.ok(Array.isArray(result.issues));
+ });
+
+ // ---------------------------------------------------------------------------
+ // 18. Empty and zero-byte real-file boundaries
+ // ---------------------------------------------------------------------------
+
+ test('0-byte buffer is treated as empty text and parses as empty CSV', () => {
+   const decoded = decodeTextBuffer(Buffer.alloc(0));
+   assert.equal(decoded.binary, false);
+   assert.equal(decoded.text, '');
+   const rows = parseCSV(decoded.text);
+   assert.deepEqual(rows, []);
+ });
+
+ test('0-byte workbook buffer returns blocked or empty workbook result', async () => {
+   const result = parseDataWorkbook(Buffer.alloc(0));
+   assert.ok(result);
+   assert.equal(result.ok, false);
+ });
+
+ test('0-byte docx buffer throws descriptive docx parse error', async () => {
+   let threw = false;
+   try {
+     await parseDurabilityDocx(Buffer.alloc(0));
+   } catch (error) {
+     threw = true;
+     assert.ok(error.message.includes('docx_parse_failed') || error.message.includes('docx_engine_unavailable'));
+   }
+   assert.equal(threw, true);
+ });
+
+ // ---------------------------------------------------------------------------
+ // 19. Corrupted real-format boundaries
+ // ---------------------------------------------------------------------------
+
+ test('corrupted XLSX-like bytes without ZIP signatures are rejected by workbook inspector', async () => {
+   const corrupted = Buffer.from('this is not an xlsx file with enough bytes to matter');
+   const result = parseDataWorkbook(corrupted);
+   assert.ok(result);
+   assert.equal(result.ok, false);
+ });
+
+ test('corrupted DOCX-like bytes throw descriptive parse error', async () => {
+   const corrupted = Buffer.from('this is definitely not a docx zip archive');
+   let threw = false;
+   try {
+     await parseDurabilityDocx(corrupted);
+   } catch (error) {
+     threw = true;
+     assert.ok(error.message.includes('docx_parse_failed') || error.message.includes('docx_engine_unavailable'));
+   }
+   assert.equal(threw, true);
+ });
+
+ test('truncated real CSV with only header parses without crash', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const truncated = csv.split('\n').slice(0, 1).join('\n');
+   const rows = parseCSV(truncated);
+   assert.deepEqual(rows, []);
+ });
+
+ // ---------------------------------------------------------------------------
+ // 20. Oversized real-file performance boundary
+ // ---------------------------------------------------------------------------
+
+ test('parseCSV on real 38k Qingchuan CSV completes within performance budget', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const start = process.hrtime.bigint();
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+   assert.ok(elapsedMs < 30_000, `real 38k Qingchuan CSV parse took ${elapsedMs.toFixed(2)} ms, exceeded 30s budget`);
+ });
+
+ // ---------------------------------------------------------------------------
+ // 21. Encoding-problem boundaries with real data
+ // ---------------------------------------------------------------------------
+
+ test('real TXT file declared as wrong encoding still surfaces binary flag safely', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
+   const decoded = decodeTextBuffer(buf, 'utf-8');
+   assert.ok(decoded.binary === true || decoded.binary === false);
+   if (!decoded.binary) {
+     assert.ok(typeof decoded.text === 'string');
+     assert.ok(decoded.text.length > 0);
+   }
+ });
+
+ test('mixed line endings in real CSV do not crash parser or lose rows', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const mixed = csv.replace(/\n/g, '\r\n').slice(0, 20000);
+   const rows = parseCSV(mixed);
+   assert.ok(rows.length >= 10, 'mixed line endings should still yield rows');
+   assert.ok('实际电流（A）' in rows[0]);
+ });

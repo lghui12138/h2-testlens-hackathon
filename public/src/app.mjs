@@ -529,6 +529,10 @@ function showMetricSkeletons() {
       wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
     }
   });
+  const enterprisePanel = $('#enterprise-panel');
+  if (enterprisePanel && !enterprisePanel.querySelector('.enterprise-skeleton')) {
+    enterprisePanel.insertAdjacentHTML('beforeend', `<div class="enterprise-skeleton empty-state" style="padding:18px;"><strong>企业数据适配</strong><span>导入企业资料后将显示专用统计与图表</span><div class="skeleton-text short" style="width:60%"></div><div class="skeleton-text" style="width:80%"></div><div class="skeleton-text" style="width:40%"></div></div>`);
+  }
 }
 
 function renderMetrics(result) {
@@ -648,16 +652,23 @@ function renderMetricTrace(result) {
   element.innerHTML = '<p class="metric-trace-note">trace 只显示 canonical 字段、证据 ID、输入 hash 状态和脱敏定位；它用于工程复核，不等于标准符合性或企业放行证据。</p><div class="metric-trace-scroll"><table><thead><tr><th>指标</th><th>来源字段</th><th>evidenceId</th><th>hash</th><th>定位</th><th>关系</th><th>状态</th></tr></thead><tbody>' + body + '</tbody></table></div>';
 }
 
+function qualityBadge(completenessPct) {
+  const pct = Number.isFinite(completenessPct) ? Math.max(0, Math.min(100, completenessPct)) : null;
+  if (pct === null) return '';
+  const label = pct >= 98 ? '完整' : pct >= 90 ? '缺口' : '缺口';
+  const tone = pct >= 98 ? 'good' : pct >= 90 ? 'warn' : 'danger';
+  return `<span class="quality-badge ${tone}" aria-label="数据完整率 ${pct}%">${label} ${pct}%</span>`;
+}
 function renderIssues(result) {
   const severityLabel = { critical: '高优先级', warn: '建议复核', info: '信息' };
   const list = $('#issue-list');
   if (!list) return;
   if (!result.issues.length) {
-    list.innerHTML = '<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或建议复核项；正式结论仍需工程师签核。</p><small>建议动作：继续执行企业复核流程，或调整阈值后重新分析。</small></div></div>';
+    list.innerHTML = `<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或建议复核项；正式结论仍需工程师签核。</p><small>建议动作：继续执行企业复核流程，或调整阈值后重新分析。</small>${qualityBadge(result.quality?.completenessPct)}</div></div>`;
     $('#issue-count').textContent = '0 项需要关注';
     return;
   }
-  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '!' : item.severity === 'warn' ? '~' : 'i'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span></div><p>${escapeHtml(item.evidence)}</p><small>建议动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
+  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '!' : item.severity === 'warn' ? '~' : 'i'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>建议动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
   $('#issue-count').textContent = `${result.issues.filter((item) => item.severity !== 'info').length} 项需要关注`;
 }
 
@@ -1985,15 +1996,22 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+let lastFocusedElement = null;
 function showLoading(message = '分析中…') {
+  lastFocusedElement = document.activeElement;
   const overlay = $('#loading-overlay');
   const msg = $('#loading-message');
   if (overlay) { overlay.hidden = false; overlay.setAttribute('aria-hidden', 'false'); }
   if (msg) msg.textContent = message;
+  document.body.setAttribute('aria-busy', 'true');
 }
 function hideLoading() {
   const overlay = $('#loading-overlay');
   if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
+  document.body.removeAttribute('aria-busy');
+  if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+    try { lastFocusedElement.focus(); } catch {}
+  }
 }
 async function withLoading(promise, message = '处理中…') {
   showLoading(message);
@@ -2008,6 +2026,9 @@ function dismissQuickStart() {
   const overlay = $('#quick-start-overlay');
   if (overlay) { overlay.hidden = true; }
   try { window.localStorage.setItem('h2-testlens-quick-start-dismissed', 'true'); } catch {}
+  if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+    try { lastFocusedElement.focus(); } catch {}
+  }
 }
 function setDragOverState(active) {
   const zone = $('#drop-zone');
@@ -2106,6 +2127,9 @@ function showKeyboardShortcuts() {
 function dismissKeyboardShortcuts() {
   const overlay = $('#keyboard-shortcuts-overlay');
   if (overlay) overlay.hidden = true;
+  if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+    try { lastFocusedElement.focus(); } catch {}
+  }
 }
 document.addEventListener('keydown', (event) => {
   const active = document.activeElement;

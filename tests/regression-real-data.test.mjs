@@ -745,3 +745,157 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
   assert.equal(result.status, 'blocked_binary');
   assert.ok(result.binaryReason?.length > 0);
 });
+
+ // ---------------------------------------------------------------------------
+ // 10. All 4 enterprise packages expanded real-file regression
+ // ---------------------------------------------------------------------------
+
+
+ test('package 01 氢璞创能 known-good real TXT files parse with stable headers and GB18030 decoding', async (t) => {
+   const files = [
+     '2026-4-4-18-56-04.txt',
+     '2026-4-4-19-00-50.txt',
+     '2026-4-4-20-02-03.txt',
+     '2026-4-4-21-40-48.txt',
+     '2026-4-5-11-32-54.txt',
+     '2026-4-5-14-15-50.txt',
+     '2026-4-5-16-17-37.txt',
+     '2026-4-5-4-20-31.txt',
+     '2026-4-5-8-24-45.txt',
+     '2026-4-5-8-25-50.txt'
+   ];
+   const expectedHeaders = ['时间', '电堆电压', '电堆电流', '电堆功率'];
+   for (const file of files) {
+     const path = resolveT02Path(`企业资料包01_氢璞创能/${file}`);
+     if (!path) {
+       if (t?.skip) t.skip('T02 dataset not present in environment');
+       return;
+     }
+     const buf = await readFile(path);
+     const decoded = decodeTextBuffer(buf, 'gb18030');
+     assert.equal(decoded.binary, false, `${file} should decode as text`);
+     const rows = parseCSV(decoded.text);
+     assert.ok(rows.length >= 50, `${file} should have many rows`);
+     for (const header of expectedHeaders) {
+       assert.ok(header in rows[0], `${file} should include ${header}`);
+     }
+   }
+ });
+
+ test('package 01 氢璞创能 raw 2026-4-5-13-16-20 is detected as binary due to control bytes', async (t) => {
+   const path = resolveT02Path('企业资料包01_氢璞创能/2026-4-5-13-16-20.txt');
+   if (!path) {
+     if (t?.skip) t.skip('T02 dataset not present in environment');
+     return;
+   }
+   const buf = await readFile(path);
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, true);
+   assert.ok(decoded.binaryReason?.length > 0);
+ });
+
+ test('package 01 氢璞创能 real XLSX workbook reports stable formula audit and sheet selection', async (t) => {
+   const path = resolveT02Path('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
+   if (!path) {
+     if (t?.skip) t.skip('T02 dataset not present in environment');
+     return;
+   }
+   const buf = await readFile(path);
+   const result = parseDataWorkbook(buf);
+   assert.equal(result.ok, true);
+   assert.equal(result.sheetName, '稳定性');
+   assert.equal(result.formulaAudit.status, 'review_required');
+   assert.ok(result.formulaAudit.formulaCellCount >= 6000);
+ });
+
+ test('package 02 氢质氢离 all real DOCX durability files parse with stable metadata', async (t) => {
+   const files = [
+     '耐久0-5-20260605211610.docx',
+     '耐久5-10-20260606024937.docx',
+     '耐久10-15-20260606081413.docx',
+     '耐久15-20-20260606133914.docx',
+     '耐久25-30-20260607051025.docx',
+     '耐久30-35-20260607103407.docx',
+     '耐久35-40-20260607160018.docx',
+     '耐久40-45-20260608020949.docx'
+   ];
+   for (const file of files) {
+     const path = resolveT02Path(`企业资料包02_氢质氢离/01_耐久原始数据处理/${file}`);
+     if (!path) {
+       if (t?.skip) t.skip('T02 dataset not present in environment');
+       return;
+     }
+     const buf = await readFile(path);
+     const result = await parseDurabilityDocx(buf);
+     assert.ok(result, `${file} should parse`);
+     assert.ok(result.points.length >= 50, `${file} should have many points`);
+     assert.ok(result.headers.length >= 10, `${file} should have many headers`);
+   }
+ });
+
+ test('package 02 氢质氢离 multiple real vehicle CSV files parse with stable headers', async (t) => {
+   const files = [
+     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (18).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (34).csv'
+   ];
+   const expectedHeaders = ['Timestamp', 'FC_MainSts', 'FC_CurrOut', 'FC_VoltOut', 'FC_NetPwrOut', 'FC_VehicleIsolationR'];
+   for (const file of files) {
+     const path = resolveT02Path(file);
+     if (!path) {
+       if (t?.skip) t.skip('T02 dataset not present in environment');
+       return;
+     }
+     const buf = await readFile(path);
+     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+     const rows = parseCSV(csv);
+     assert.ok(rows.length >= 100, `${file} should have many rows`);
+     for (const header of expectedHeaders) {
+       assert.ok(header in rows[0], `${file} should include ${header}`);
+     }
+   }
+ });
+
+ test('package 03 青川易创 real CSV and DOCX produce stable adapter outputs', async (t) => {
+   const csvPath = resolveT02Path('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const docxPath = resolveT02Path('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx');
+   if (!csvPath || !docxPath) {
+     if (t?.skip) t.skip('T02 dataset not present in environment');
+     return;
+   }
+   const csvBuf = await readFile(csvPath);
+   const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
+   const csvRows = parseCSV(csvText);
+   assert.ok(csvRows.length >= 38000, 'qingchuan csv should have ~38k rows');
+   const csvResult = analyzeEnterpriseRows(csvRows, getProfile('qingchuan-stack'));
+   assert.equal(csvResult.datasetType, 'stack');
+   assert.ok(csvResult.metrics.peakPowerW >= 0 || csvResult.metrics.peakPowerW === null);
+
+   const docxBuf = await readFile(docxPath);
+   const docxResult = await parseDurabilityDocx(docxBuf);
+   assert.ok(docxResult);
+   assert.ok(docxResult.headers.length >= 1);
+ });
+
+ test('package 04 海珀特 real PDF remains blocked_binary through parseInput boundary', async (t) => {
+   const pdfPath = resolveT02Path('企业资料包04_海珀特/00_企业资料说明.pdf');
+   if (!pdfPath) {
+     if (t?.skip) t.skip('T02 dataset not present in environment');
+     return;
+   }
+   const buf = await readFile(pdfPath);
+   assert.equal(isLikelyBinary(buf), true);
+   const result = await parseInput('haperte-description.pdf', buf);
+   assert.equal(result.status, 'blocked_binary');
+   assert.ok(result.binaryReason?.length > 0);
+ });
+
+ test('all 4 enterprise packages report example_unapproved and ENTERPRISE_PROFILE_REQUIRED', () => {
+   const enterpriseProfiles = DEVICE_PROFILES.filter((profile) =>
+     ['qingchuan-stack', 'qingzhihuli-vehicle', 'hypu-durability', 'hypu-stack', 'haperte'].includes(profile.id)
+   );
+   assert.ok(enterpriseProfiles.length >= 4, 'enterprise T02 profiles should be present');
+   for (const profile of enterpriseProfiles) {
+     assert.equal(profile.approvalStatus, 'example_unapproved', `${profile.id} must stay example_unapproved`);
+     assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED', `${profile.id} must keep ENTERPRISE_PROFILE_REQUIRED`);
+   }
+ });
