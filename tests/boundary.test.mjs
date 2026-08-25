@@ -194,3 +194,53 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
    assert.equal(result.quality.hasEnoughRows, false);
    assert.ok(result.issues.some((issue) => issue.code === 'DATA_TOO_SHORT'));
  });
+
+  // ---------------------------------------------------------------------------
+  // 14. Real-file boundary injections
+  // ---------------------------------------------------------------------------
+
+  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname } = await import('node:path');
+    const here = dirname(fileURLToPath(import.meta.url));
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const injected = Buffer.concat([buf.subarray(0, 100), Buffer.from([0x00]), buf.subarray(100)]);
+    const decoded = decodeTextBuffer(injected);
+    assert.equal(decoded.binary, true);
+  });
+
+  test('truncated real Qingchuan CSV with only header parses as empty rows', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname } = await import('node:path');
+    const here = dirname(fileURLToPath(import.meta.url));
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const truncated = csv.split('\n').slice(0, 1).join('\n');
+    assert.deepEqual(parseCSV(truncated), []);
+  });
+
+  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname } = await import('node:path');
+    const here = dirname(fileURLToPath(import.meta.url));
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包01_氢璞创能/2026-4-5-13-16-20.txt'));
+    const decoded = decodeTextBuffer(buf, 'utf-8');
+    assert.equal(decoded.binary, true);
+    assert.ok(decoded.binaryReason?.length > 0);
+  });
+
+  test('0-byte buffer for each format is handled without throwing', () => {
+    assert.deepEqual(parseCSV(Buffer.alloc(0)), []);
+    const decoded = decodeTextBuffer(Buffer.alloc(0));
+    assert.equal(decoded.binary, false);
+    assert.equal(decoded.text, '');
+  });

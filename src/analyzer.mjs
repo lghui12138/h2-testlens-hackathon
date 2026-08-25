@@ -123,15 +123,37 @@ const number = (value) => {
 };
 
 const mean = (values) => {
-  const usable = values.filter((value) => Number.isFinite(value));
-  return usable.length ? usable.reduce((sum, value) => sum + value, 0) / usable.length : null;
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  return count ? sum / count : null;
 };
 
 const std = (values) => {
-  const usable = values.filter((value) => Number.isFinite(value));
-  if (usable.length < 2) return usable.length ? 0 : null;
-  const average = mean(usable);
-  return Math.sqrt(mean(usable.map((value) => (value - average) ** 2)));
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  if (count < 2) return count ? 0 : null;
+  const average = sum / count;
+  let sqSum = 0;
+  let sqCount = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sqSum += (value - average) ** 2;
+    sqCount += 1;
+  }
+  return Math.sqrt(sqSum / sqCount);
 };
 
 const safeMax = (values, fallback = null) => {
@@ -1312,7 +1334,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     unit: dynamicPowerConfig.unit || 'W',
     powerUnit: dynamicPowerConfig.powerUnit || 'W'
   });
-  const valueList = (field, selectedRows = rows) => selectedRows.map((row) => row[field]).filter((value) => Number.isFinite(value));
+  const valueList = (field, selectedRows = rows) => selectedRows.map((row) => row[field]).filter((value) => value !== null);
   const steadySelection = selectSteadyRows(rows, config);
   const steadyRows = steadySelection.rows;
   const timestamps = valueList('timestamp_s');

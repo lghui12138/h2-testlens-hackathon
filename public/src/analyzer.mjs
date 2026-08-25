@@ -122,12 +122,56 @@ const number = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const mean = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+const mean = (values) => {
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  return count ? sum / count : null;
+};
 
 const std = (values) => {
-  if (values.length < 2) return 0;
-  const average = mean(values);
-  return Math.sqrt(mean(values.map((value) => (value - average) ** 2)));
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  if (count < 2) return count ? 0 : null;
+  const average = sum / count;
+  let sqSum = 0;
+  let sqCount = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sqSum += (value - average) ** 2;
+    sqCount += 1;
+  }
+  return Math.sqrt(sqSum / sqCount);
+};
+
+const safeMax = (values, fallback = null) => {
+  let maximum = fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
+  }
+  return maximum;
+};
+
+const safeMin = (values, fallback = null) => {
+  let minimum = fallback === undefined ? null : fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    minimum = minimum === null || minimum === undefined ? value : Math.min(minimum, value);
+  }
+  return minimum;
 };
 
 const parseCSVLine = (line, delimiter = ',') => {
@@ -311,7 +355,8 @@ const slopePerMinute = (rows, field) => {
     const numerator = points.reduce((sum, [x, y]) => sum + (x - xMean) * (y - yMean), 0);
     const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
     if (!denominator) return null;
-    return { slopePerMinute: (numerator / denominator) * 60, spanS: Math.max(...points.map(([x]) => x)) - Math.min(...points.map(([x]) => x)) };
+    const xValues = points.map(([x]) => x);
+    return { slopePerMinute: (numerator / denominator) * 60, spanS: safeMax(xValues) - safeMin(xValues) };
   }).filter(Boolean);
   if (!fits.length) return 0;
   const weight = fits.reduce((sum, fit) => sum + Math.max(fit.spanS, 1), 0);
@@ -420,8 +465,8 @@ function qualityReport(rows, schema, config = {}) {
     nonMonotonicCount,
     nonPositiveIntervalCount,
     observedIntervalCount: positiveIntervals.length,
-    minimumIntervalS: positiveIntervals.length ? Math.min(...positiveIntervals) : null,
-    maximumIntervalS: positiveIntervals.length ? Math.max(...positiveIntervals) : null,
+    minimumIntervalS: safeMin(positiveIntervals),
+    maximumIntervalS: safeMax(positiveIntervals),
     medianIntervalS,
     plannedSamplingFrequencyHz: plannedSamplingFrequencyHz > 0 ? plannedSamplingFrequencyHz : null,
     plannedIntervalS,
@@ -459,8 +504,8 @@ function powerCrossCheck(rows) {
     missingPowerCount,
     powerCoveragePct: rows.length ? (rawRows.length / rows.length) * 100 : null,
     comparableCount: comparable.length,
-    maxAbsoluteDifferenceW: differences.length ? Math.max(...differences) : null,
-    maxRelativeDifferencePct: relativeDifferences.length ? Math.max(...relativeDifferences) : null,
+    maxAbsoluteDifferenceW: safeMax(differences),
+    maxRelativeDifferencePct: safeMax(relativeDifferences),
     status: rawRows.length === 0 ? 'derived_only' : missingPowerCount > 0 ? 'mixed' : comparable.length ? 'checked' : 'raw_only',
     evidence: rawRows.length
       ? missingPowerCount > 0
@@ -506,8 +551,8 @@ function phaseCoverageReport(config, rows, maxIntervalS = null) {
       durationS += deltaS;
       validSegmentCount += 1;
     }
-    const startS = timestamps.length ? Math.min(...timestamps) : null;
-    const endS = timestamps.length ? Math.max(...timestamps) : null;
+    const startS = safeMin(timestamps);
+    const endS = safeMax(timestamps);
     const sessionSpans = new Map();
     for (const index of indexes) {
       const timestamp = rows[index].timestamp_s;
@@ -543,9 +588,9 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
   for (const phaseId of phaseIds) {
     const aliases = [phaseId, ...(config.phaseAliases?.[phaseId] || [])].map(normalizePhaseToken);
     const indexes = rows.map((row, index) => ({ row, index })).filter(({ row }) => aliases.includes(normalizePhaseToken(row.phase))).map(({ index }) => index);
-    const powerValues = indexes.map((index) => electricalPower(rows[index])).filter((value) => value !== null);
-    const maxPower = powerValues.length ? Math.max(...powerValues) : null;
-    const minPower = powerValues.length ? Math.min(...powerValues) : null;
+    const powerValues = indexes.map((index) => electricalPower(rows[index])).filter((value) => Number.isFinite(value));
+    const maxPower = safeMax(powerValues);
+    const minPower = safeMin(powerValues);
     let durationS = 0;
     let energyConsumedWh = 0;
     let hydrogenVolumeNl = 0;
@@ -606,8 +651,8 @@ function phaseMetricReport(config, rows, maxIntervalS = null) {
       skippedGapCount,
       skippedSessionBoundaryCount,
       powerRangeW: maxPower !== null && minPower !== null ? maxPower - minPower : null,
-      maxRampUpWPerS: rampRates.length ? Math.max(0, ...rampRates) : null,
-      maxRampDownWPerS: rampRates.length ? Math.max(0, ...rampRates.map((rate) => -rate)) : null,
+      maxRampUpWPerS: safeMax(rampRates, 0),
+      maxRampDownWPerS: safeMax(rampRates.map((rate) => -rate), 0),
       peakPowerW: maxPower,
       minimumPowerW: minPower,
       maximumPowerW: maxPower,
@@ -1300,19 +1345,19 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const powerEvidence = powerCrossCheck(rows);
   const powers = rows.map((row) => electricalPower(row)).filter((value) => value !== null);
   const peakWithTimes = (field) => {
-    const values = rows.map((row) => row[field]).filter((value) => value !== null);
+    const values = rows.map((row) => row[field]).filter((value) => Number.isFinite(value));
     if (!values.length) return { value: null, atS: [] };
-    const value = Math.max(...values);
+    const value = safeMax(values);
     return { value, atS: rows.filter((row) => row[field] === value && row.timestamp_s !== null).map((row) => row.timestamp_s) };
   };
   const peakTemperature = peakWithTimes('temperature_c');
   const peakPressure = peakWithTimes('pressure_bar');
   const peakLeak = peakWithTimes('leak_ppm');
-  const purityValues = rows.map((row) => row.hydrogen_purity_pct).filter((value) => value !== null);
+  const purityValues = rows.map((row) => row.hydrogen_purity_pct).filter((value) => Number.isFinite(value));
   const minimumWithTimes = (field) => {
-    const values = rows.map((row) => row[field]).filter((value) => value !== null);
+    const values = rows.map((row) => row[field]).filter((value) => Number.isFinite(value));
     if (!values.length) return { value: null, atS: [] };
-    const value = Math.min(...values);
+    const value = safeMin(values);
     return { value, atS: rows.filter((row) => row[field] === value && row.timestamp_s !== null).map((row) => row.timestamp_s) };
   };
   const minimumPurity = minimumWithTimes('hydrogen_purity_pct');
@@ -1347,7 +1392,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
     sessionDurationS: sessionSummary.totalDurationS,
     sessionCount: sessionSummary.sessionCount,
     completenessPct: quality.completenessPct,
-    peakPowerW: powers.length ? Math.max(...powers) : null,
+    peakPowerW: safeMax(powers),
     powerSource: powerEvidence.status,
     powerCrossCheck: powerEvidence,
     integrationEvidence,

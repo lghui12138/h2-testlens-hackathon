@@ -38,12 +38,12 @@
         <div class="eyebrow">T02 · 设备测试数据分析与自动报告</div>
         <h1>测试日志，形成<br><em>可复核的工程结论。</em></h1>
         <p class="hero-copy">面向氢能设备测试工程师的测试数据分析台：识别工况、计算 KPI、定位异常证据，并输出带方法、数据和签核字段的报告初稿。</p>
-        <div class="hero-actions" id="drop-zone" role="region" aria-label="拖放区域，可点击按钮或拖放文件到此处"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" aria-label="选择测试数据文件"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button" aria-label="载入演示样本">载入演示样本</button><button id="load-legacy" class="quiet-button" aria-label="载入中文单位样本">中文/单位样本</button><button id="retry-analysis" class="quiet-button" hidden aria-label="重试分析">重试分析</button></div>
+        <div class="hero-actions" id="drop-zone" role="region" aria-label="拖放区域，可点击按钮或拖放文件到此处"><label class="upload-button"><input id="file-input" type="file" multiple accept=".csv,.txt,.tsv,.xlsx,.xlsm,.docx,.pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" aria-label="选择测试数据文件"><span>导入测试 CSV / TXT / Excel / DOCX<br class="mobile-break">（可多选；PDF 作为参考资料）</span></label><button id="load-demo" class="quiet-button" aria-label="加载演示样本">加载演示样本</button><button id="load-legacy" class="quiet-button" aria-label="加载中文单位样本">中文/单位样本</button><button id="retry-analysis" class="quiet-button" hidden aria-label="重试分析">重试分析</button></div>
         <div id="batch-queue" class="batch-queue" hidden></div>
         <div id="batch-progress" class="batch-progress" hidden><div id="batch-progress-fill" class="batch-progress-fill"></div><div id="batch-progress-text" class="batch-progress-text"></div></div>
         <div class="upload-hint">Ctrl+O 打开文件</div>
         <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
-        <div class="hero-shortcuts"><small>快捷键：Ctrl+O 打开文件 · Ctrl+Enter 重新分析 · Ctrl+L 载入演示 · Esc 关闭弹窗 · Ctrl+Z/Y 撤销/重做</small></div>
+        <div class="hero-shortcuts"><small>快捷键：Ctrl+O 打开文件 · Ctrl+Enter 重新分析 · Ctrl+L 加载演示 · Esc 关闭弹窗 · Ctrl+Z/Y 撤销/重做</small></div>
         <div id="recent-files" class="recent-files"><div class="recent-header"><span>最近文件</span><button id="clear-recent" class="quiet-button" type="button" aria-label="清除最近文件列表">清除</button></div><div id="recent-files-list" class="recent-files-list"><div class="recent-empty">暂无最近文件</div></div></div>
         <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：加载中 · DEMO_ONLY</div>
         <div id="result-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -69,7 +69,7 @@
           </section>
           <section class="section-block trend-section">
             <div class="section-label"><span>02</span><div><b>工况趋势</b><small>温度与压力沿时间轴的同屏证据</small></div><span class="legend-note">演示数据 · 可替换为真实 CSV</span></div>
-            <div class="chart-wrap"><canvas id="trend-chart" aria-label="温度与压力趋势图" aria-describedby="trend-chart-summary"></canvas><p id="trend-chart-summary" class="chart-summary">载入数据后显示温度、压力的范围和记录数。</p><div id="chart-tooltip" class="chart-tooltip" hidden></div></div>
+            <div class="chart-wrap"><canvas id="trend-chart" aria-label="温度与压力趋势图" aria-describedby="trend-chart-summary"></canvas><p id="trend-chart-summary" class="chart-summary">加载数据后显示温度、压力的范围和记录数。</p><div id="chart-tooltip" class="chart-tooltip" hidden></div></div>
           </section>
           <section id="enterprise-panel" class="section-block enterprise-panel" hidden>
             <div class="section-label"><span>03</span><div><b id="enterprise-title">企业数据适配</b><small id="enterprise-subtitle">识别到企业资料结构后显示专用统计</small></div><span id="enterprise-contract" class="legend-note"></span></div>
@@ -89,7 +89,7 @@
           <section class="side-card report-card">
             <div class="card-kicker">REPORT PREVIEW <span id="report-status">—</span></div>
             <h2>报告预览</h2>
-            <button id="generate-ai" class="ai-button" aria-label="生成工程报告初稿">生成工程报告初稿</button>
+            <button id="generate-ai" class="ai-button" aria-label="生成报告初稿">生成报告初稿</button>
             <div id="report-preview" class="report-preview"></div>
             <div class="button-row"><button id="download-report" class="primary-button">下载 Markdown 报告</button><button id="download-xlsx" class="icon-button" title="下载 Excel 报告" aria-label="下载 Excel 报告">XLSX</button><button id="download-json" class="icon-button" title="下载分析证据 JSON" aria-label="下载分析证据 JSON">JSON</button><button id="download-enhanced" class="quiet-button" aria-label="生成增强报告">生成增强报告</button><button id="download-compliance-report" class="quiet-button" title="导出标准符合性报告" aria-label="导出标准符合性报告">导出符合性报告</button></div>
             <small id="enhanced-report-note" class="enhanced-report-note muted">完整 Python/Excel 报告引擎已开源，见 t02-equipment-test-report-assistant 仓库。</small>
@@ -107,8 +107,8 @@
             <label class="profile-label">设备模板<select id="profile-select"></select></label>
             <small id="profile-note" class="profile-note">等待模板</small>
             <label class="profile-import">导入企业配置 JSON<input id="profile-file" type="file" accept="application/json,.json"></label>
-            <button id="load-profile-demo" class="quiet-button profile-demo-button" aria-label="载入示例企业配置">载入示例企业配置</button>
-            <button id="load-t02-profiles" class="quiet-button profile-demo-button" aria-label="载入 T02 描述性 profiles">载入 T02 描述性 profiles</button>
+            <button id="load-profile-demo" class="quiet-button profile-demo-button" aria-label="加载示例企业配置">加载示例企业配置</button>
+            <button id="load-t02-profiles" class="quiet-button profile-demo-button" aria-label="加载 T02 描述性 profiles">加载 T02 描述性 profiles</button>
             <a class="template-link" href="../config/t02-profile.example.json" download>下载 T02 profile 示例包</a>
             <small id="profile-import-status" class="profile-import-status">当前使用内置演示配置</small>
             <label class="profile-import">导入参数/目标工况 Excel<input id="parameter-file" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
@@ -190,7 +190,7 @@
           <section id="workflow" class="side-card workflow-card">
             <div class="card-kicker">STANDARD WORKFLOW <span id="workflow-status">未评估</span></div>
             <h2>测试流程完成度</h2>
-            <p id="workflow-next" class="side-intro">载入数据后生成从 profile、数据质量到人工签核的流程清单。</p>
+            <p id="workflow-next" class="side-intro">加载数据后生成从 profile、数据质量到人工签核的流程清单。</p>
             <div id="workflow-list" class="workflow-list"></div>
           </section>
           <section class="side-card phase-card">
@@ -201,7 +201,7 @@
           <section class="side-card compare-card">
             <div class="card-kicker">BATCH COMPARISON <span id="compare-status">未加载基线</span></div>
             <h2>当前 vs 基线</h2>
-            <p id="compare-summary" class="side-intro">载入演示基线，查看当前批次相对变化。</p>
+            <p id="compare-summary" class="side-intro">加载演示基线，查看当前批次相对变化。</p>
             <button id="compare-demo" class="outline-button" aria-label="载入演示基线并对比">载入演示基线并对比</button>
             <div id="compare-table" class="compare-table"></div>
             <div id="compare-risks" class="compare-risks"></div>

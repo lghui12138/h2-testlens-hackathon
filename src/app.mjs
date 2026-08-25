@@ -251,7 +251,7 @@ async function analyzeRowsAsync(rows, config, onStage) {
 async function analyzeCurrent(reason = '重新分析') {
   if (!state.rows.length) return;
   const token = ++state.analysisToken;
-  setAnalysisStatus(`${reason}：准备中…`, 'busy');
+  setAnalysisStatus(`${reason}：准备中`, 'busy');
   document.body.setAttribute('aria-busy', 'true');
   await yieldToBrowser();
   try {
@@ -1884,7 +1884,7 @@ $('#save-history').addEventListener('click', () => {
 });
 $('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
-  if (!state.result) { $('#compare-status').textContent = '请先加载并分析数据'; return; }
+  if (!state.result) { $('#compare-status').textContent = '请先载入并分析数据'; return; }
   const button = $('#compare-demo');
   button.disabled = true;
   button.textContent = '对比中';
@@ -1899,14 +1899,14 @@ $('#compare-demo').addEventListener('click', async () => {
     $('#compare-summary').textContent = error.message;
   } finally {
     button.disabled = false;
-    button.textContent = '载入演示基线并对比';
+    button.textContent = '加载演示基线并对比';
   }
 });
 $('#generate-ai').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
-  button.textContent = '处理中…';
+  button.textContent = '处理中';
   const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
   try {
     const response = await fetch('api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
@@ -1922,23 +1922,23 @@ $('#generate-ai').addEventListener('click', async () => {
   }
 });
 $('#copy-report').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
   const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
   try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制'; }
 });
 $('#print-report').addEventListener('click', () => {
   const preview = $('#report-preview');
-  if (!preview || !state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; }
+  if (!preview || !state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
   const win = window.open('', '_blank');
-  if (!win) { $('#report-status').textContent = '弹窗被拦截，请允许打印窗口'; return; }
+  if (!win) { $('#report-status').textContent = '打印窗口被拦截，请允许弹出'; return; }
   win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
   win.document.close();
   win.focus();
   win.print();
 });
-$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-xlsx').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
   try {
     await ensureBrowserEngines({ spreadsheet: true });
     setSpreadsheetEngine(globalThis.XLSX);
@@ -1951,9 +1951,9 @@ $('#download-xlsx').addEventListener('click', async () => {
     $('#report-status').textContent = `Excel 导出失败：${error.message}`;
   }
 });
-$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
-$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先加载并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
+$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
+$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 
@@ -1997,7 +1997,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 let lastFocusedElement = null;
-function showLoading(message = '分析中…') {
+function showLoading(message = '正在分析') {
   lastFocusedElement = document.activeElement;
   const overlay = $('#loading-overlay');
   const msg = $('#loading-message');
@@ -2013,7 +2013,7 @@ function hideLoading() {
     try { lastFocusedElement.focus(); } catch {}
   }
 }
-async function withLoading(promise, message = '处理中…') {
+async function withLoading(promise, message = '处理中') {
   showLoading(message);
   try { return await promise; }
   finally { hideLoading(); }
@@ -2082,7 +2082,7 @@ if (dropZone) {
 
 const originalAnalyzeCurrent = analyzeCurrent;
 analyzeCurrent = async function(reason = '重新分析') {
-  showLoading(`${reason}：准备中…`);
+  showLoading(`${reason}：准备中`);
   try { await originalAnalyzeCurrent(reason); }
   finally { hideLoading(); }
 };
@@ -2102,7 +2102,7 @@ $('#recent-files-list')?.addEventListener('click', (event) => {
   const chip = event.target.closest('.recent-file-chip');
   if (!chip) return;
   const name = chip.dataset.name;
-  setAnalysisStatus(`最近文件：${name}；请重新导入该文件进行分析。`, 'neutral');
+  setAnalysisStatus(`最近文件：${name}；请重新导入该文件。`, 'neutral');
 });
 
 const originalReadSelectedDataFiles = readSelectedDataFiles;
@@ -2111,7 +2111,7 @@ readSelectedDataFiles = async function(files) {
   catch (error) {
     const hasCsv = files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name));
     const baseHint = hasCsv && files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name) && file.size < 200)
-      ? '文件过小或为空，请确认包含表头和时序数据。'
+      ? '文件过小或为空，请确认包含表头与时序数据。'
       : '请确认文件未加密、未损坏，且格式与示例一致。';
     const missingHeaders = hasCsv ? '常见缺失表头：timestamp、current_a、avg_cell_voltage_v、power_kw、temperature_c、pressure_bar。' : '';
     const hint = missingHeaders ? `${baseHint} ${missingHeaders}` : baseHint;
@@ -2207,7 +2207,7 @@ function applyEnterpriseConfig(vendor) {
   profileSelect.value = profileId;
   applyProfile(profileId);
   if (state.rows.length) void analyzeCurrent(`应用${vendor}配置`);
-  else setAnalysisStatus(`已切换至 ${vendor} 配置模板，导入数据后将自动应用。`, 'neutral');
+  else setAnalysisStatus(`已切换至 ${vendor} 配置模板；导入数据后自动应用。`, 'neutral');
 }
 
 // Improved drag-and-drop feedback.
@@ -2246,7 +2246,7 @@ function renderBatchQueue(entries) {
     const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
     const size = entry.size ? `${(entry.size / 1024).toFixed(1)} KB` : '—';
     const hint = entry.parseHint ? ` · ${escapeHtml(entry.parseHint)}` : '';
-    const retryHint = (entry.status === 'parser_error' || entry.status === 'blocked_binary') ? '<div class="batch-retry-hint">点击“重试”后，请在弹出的文件选择框中重新选择该文件；也可点击“移除所有失败”清空列表。</div>' : '';
+    const retryHint = (entry.status === 'parser_error' || entry.status === 'blocked_binary') ? '<div class="batch-retry-hint">点击“重试”后，在弹出的文件选择框中重新选择该文件；也可点击“移除所有失败”清空列表。</div>' : '';
     const actions = entry.status === 'parser_error' || entry.status === 'blocked_binary' ? `<button data-retry="${index}" aria-label="重试">重试</button><button data-remove="${index}" aria-label="移除">移除</button>` : (entry.status === 'pending' ? `<button data-remove="${index}" aria-label="移除">移除</button>` : '');
     return `<div class="batch-queue-item ${entry.status === 'pending' || entry.status === 'processing' ? 'processing' : ''}" data-index="${index}"><div class="file-info"><span class="file-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</span><div class="file-meta"><span>${size}</span><span class="status-chip ${statusClass}">${statusLabel}</span>${hint ? `<span class="muted">${hint}</span>` : ''}</div>${retryHint}</div><div class="batch-queue-actions">${actions}</div></div>`;
   }).join('');
@@ -2271,7 +2271,7 @@ $('#batch-queue')?.addEventListener('click', async (event) => {
     const index = Number(retryButton.dataset.retry);
     const entry = state.inputEntries?.[index];
     const name = entry?.name || '该文件';
-    setAnalysisStatus(`请重新选择 ${name} 进行导入；失败条目已保留在列表中，移除后需手动清空。`, 'neutral');
+    setAnalysisStatus(`请重新选择 ${name} 进行导入；失败条目已保留在列表中。`, 'neutral');
     $('#file-input').click();
   } else if (removeButton) {
     const index = Number(removeButton.dataset.remove);

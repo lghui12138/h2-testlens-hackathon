@@ -899,3 +899,35 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
      assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED', `${profile.id} must keep ENTERPRISE_PROFILE_REQUIRED`);
    }
  });
+
+  // ---------------------------------------------------------------------------
+  // 11. Explicit 4-package real-file regression summary
+  // ---------------------------------------------------------------------------
+
+  test('each enterprise package has at least one real file that enters the adapter or binary boundary', async (t) => {
+    const packages = {
+      '企业资料包01_氢璞创能': [
+        '2026-4-4-18-56-04.txt',
+        '299-001-D_出厂检测报告.xlsx',
+      ],
+      '企业资料包02_氢质氢离': [
+        '01_耐久原始数据处理/耐久0-5-20260605211610.docx',
+        '02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+      ],
+      '企业资料包03_青川易创与云汉达': [
+        '02 样例数据-青川科技.csv',
+        '03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx',
+      ],
+      '企业资料包04_海珀特': [
+        '00_企业资料说明.pdf',
+      ],
+    };
+    for (const [pkg, files] of Object.entries(packages)) {
+      for (const file of files) {
+        const path = resolveT02Path(`${pkg}/${file}`);
+        assert.ok(path, `real file should exist for regression: ${pkg}/${file}`);
+        const buf = await readFile(path);
+        assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${pkg}/${file} should be non-empty`);
+      }
+    }
+  });

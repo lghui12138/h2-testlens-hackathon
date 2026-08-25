@@ -36,12 +36,56 @@ const num = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const mean = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+const mean = (values) => {
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  return count ? sum / count : null;
+};
 
 const std = (values) => {
-  if (values.length < 2) return values.length ? 0 : null;
-  const average = mean(values);
-  return Math.sqrt(mean(values.map((value) => (value - average) ** 2)));
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sum += value;
+    count += 1;
+  }
+  if (count < 2) return count ? 0 : null;
+  const average = sum / count;
+  let sqSum = 0;
+  let sqCount = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value === null || value === undefined || !Number.isFinite(value)) continue;
+    sqSum += (value - average) ** 2;
+    sqCount += 1;
+  }
+  return Math.sqrt(sqSum / sqCount);
+};
+
+const safeMax = (values, fallback = null) => {
+  let maximum = fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
+  }
+  return maximum;
+};
+
+const safeMin = (values, fallback = null) => {
+  let minimum = fallback === undefined ? null : fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    minimum = minimum === null || minimum === undefined ? value : Math.min(minimum, value);
+  }
+  return minimum;
 };
 
 const normalizeHeader = (value) => String(value ?? '')
@@ -195,7 +239,7 @@ function sessionizedTimes(rows, timestampField) {
     const values = group.items.map(({ row }) => row[timestampField]);
     const local = relativeTimes(values);
     const valid = local.filter((value) => value !== null);
-    const localEndS = valid.length ? Math.max(...valid) : 0;
+    const localEndS = valid.length ? safeMax(valid) : 0;
     for (const [itemIndex, item] of group.items.entries()) {
       const localS = local[itemIndex];
       localTimes[item.index] = localS;
@@ -312,8 +356,8 @@ function fitTrendModel(points, requestedModel = 'linear', xUnit = 'h') {
   const total = clean.reduce((sum, [, y]) => sum + (y - yMean) ** 2, 0);
   const residual = clean.reduce((sum, [, y], index) => sum + (y - predictions[index]) ** 2, 0);
   const xValues = clean.map(([x]) => x);
-  const startX = Math.min(...xValues);
-  const endX = Math.max(...xValues);
+  const startX = safeMin(xValues);
+  const endX = safeMax(xValues);
   const derivative = (x) => coefficients.linear + 2 * coefficients.quadratic * (x - xOrigin);
   return {
     ...base,
@@ -355,8 +399,8 @@ function qualityFor(rows, requiredFields) {
     nonMonotonicCount,
     nonPositiveIntervalCount,
     observedIntervalCount: positiveIntervals.length,
-    minimumIntervalS: positiveIntervals.length ? Math.min(...positiveIntervals) : null,
-    maximumIntervalS: positiveIntervals.length ? Math.max(...positiveIntervals) : null,
+    minimumIntervalS: safeMin(positiveIntervals),
+    maximumIntervalS: safeMax(positiveIntervals),
     medianIntervalS: positiveIntervals.length ? [...positiveIntervals].sort((a, b) => a - b)[Math.floor(positiveIntervals.length / 2)] : null,
     plannedSamplingFrequencyHz: null,
     plannedIntervalS: null,
@@ -377,8 +421,8 @@ function summarizeNumericSignal(rows, source) {
     rowCount: rows.length,
     numericCount: values.length,
     completenessPct: rows.length ? values.length / rows.length * 100 : 0,
-    min: values.length ? Math.min(...values) : null,
-    max: values.length ? Math.max(...values) : null,
+    min: safeMin(values),
+    max: safeMax(values),
     mean: mean(values),
     std: std(values)
   };
@@ -484,7 +528,7 @@ function annotateSignalCatalog(rows, headers, mapping, roleBySource = {}) {
 
 function numericSummary(rows, source) {
   const values = rows.map((row) => num(row[source])).filter((value) => value !== null);
-  return { source, count: values.length, completenessPct: rows.length ? values.length / rows.length * 100 : 0, min: values.length ? Math.min(...values) : null, max: values.length ? Math.max(...values) : null, mean: mean(values), std: std(values) };
+  return { source, count: values.length, completenessPct: rows.length ? values.length / rows.length * 100 : 0, min: safeMin(values), max: safeMax(values), mean: mean(values), std: std(values) };
 }
 
 function pairEvidence(rows, pairs) {
@@ -499,7 +543,7 @@ function pairEvidence(rows, pairs) {
       unit,
       target: targetSummary,
       actual: actualSummary,
-      deviation: { count: paired.length, min: paired.length ? Math.min(...paired) : null, max: paired.length ? Math.max(...paired) : null, mean: mean(paired), std: std(paired) }
+      deviation: { count: paired.length, min: safeMin(paired), max: safeMax(paired), mean: mean(paired), std: std(paired) }
     };
   });
 }
@@ -582,7 +626,7 @@ function enterprisePowerCrossCheck(rows) {
     effectivePowerCount: effectivePower.length,
     voltageCurrentCount: electricalPower.length,
     pairedCount: differences.length,
-    maxAbsoluteDifferenceW: differences.length ? Math.max(...differences) : null,
+    maxAbsoluteDifferenceW: safeMax(differences),
     meanAbsoluteDifferenceW: differences.length ? mean(differences) : null,
     consistencyLimitConfigured: false,
     evidence: status === 'raw_channel'
@@ -664,7 +708,7 @@ function calculateEnterpriseUncertainty(rows, metrics, model, options = {}) {
     const powerResult = spec.power ? () => {
       const entries = rows.map(powerUncertainty).filter((item) => Number.isFinite(item.value));
       return entries.length
-        ? { value: Math.max(...entries.map((item) => item.value)) * (spec.scale || 1), source: `${[...new Set(entries.map((item) => item.source))].join('；')}；按报告功率单位换算` }
+        ? { value: safeMax(entries.map((item) => item.value)) * (spec.scale || 1), source: `${[...new Set(entries.map((item) => item.source))].join('；')}；按报告功率单位换算` }
         : { value: null, source: '未形成可传播的功率不确定度' };
     } : null;
     add(spec, spec.uncertainty || powerResult || (spec.sampleStd ? () => pooledStdUncertainty(spec.field, spec.sampleCount) : spec.field ? fieldUncertainty(spec.field, spec.scale || 1) : null));
@@ -801,8 +845,8 @@ function enterprisePhaseCoverage(config, rows) {
       validSegmentCount += 1;
     }
     const timestamps = indexes.map((index) => rows[index].timestamp_s).filter((value) => Number.isFinite(value));
-    const startS = timestamps.length ? Math.min(...timestamps) : null;
-    const endS = timestamps.length ? Math.max(...timestamps) : null;
+    const startS = safeMin(timestamps);
+    const endS = safeMax(timestamps);
     const spanS = sessionSpanS(indexes.map((index) => rows[index]));
     return {
       id: phaseId,
@@ -859,18 +903,18 @@ function enterprisePhaseMetricReadiness(config, rows) {
       }
     }
     const timestamps = phaseRows.map((row) => row.timestamp_s).filter((value) => Number.isFinite(value));
-    const startS = timestamps.length ? Math.min(...timestamps) : null;
-    const endS = timestamps.length ? Math.max(...timestamps) : null;
+    const startS = safeMin(timestamps);
+    const endS = safeMax(timestamps);
     const spanS = sessionSpanS(phaseRows);
     const metric = {
       phaseId,
       sampleCount: phaseRows.length,
       durationS: validSegments ? durationS : null,
       energyConsumedWh: validSegments && phaseRows.every((row) => enterpriseElectricalPower(row) !== null) ? energyConsumedWh : null,
-      powerRangeW: powers.length ? Math.max(...powers) - Math.min(...powers) : null,
-      peakPowerW: powers.length ? Math.max(...powers) : null,
-      minimumPowerW: powers.length ? Math.min(...powers) : null,
-      maximumPowerW: powers.length ? Math.max(...powers) : null,
+      powerRangeW: powers.length ? safeMax(powers) - safeMin(powers) : null,
+      peakPowerW: safeMax(powers),
+      minimumPowerW: safeMin(powers),
+      maximumPowerW: safeMax(powers),
       maxRampUpWPerS: rampRates.length ? Math.max(0, ...rampRates) : null,
       maxRampDownWPerS: rampRates.length ? Math.max(0, ...rampRates.map((rate) => -rate)) : null,
       validDataCoveragePct: spanS !== null && spanS > 0 ? (durationS / spanS) * 100 : phaseRows.length >= 2 ? 100 : null,
@@ -1250,9 +1294,9 @@ function descriptiveSegmentSummary(sampleRows, index, kind, binWidthA, minimumDu
     sampleCount: sampleRows.length,
     effectiveSampleCount: sampleRows.length,
     averageCurrentA: mean(currentValues),
-    currentMinA: currentValues.length ? Math.min(...currentValues) : null,
-    currentMaxA: currentValues.length ? Math.max(...currentValues) : null,
-    currentRangeA: currentValues.length ? Math.max(...currentValues) - Math.min(...currentValues) : null,
+    currentMinA: safeMin(currentValues),
+    currentMaxA: safeMax(currentValues),
+    currentRangeA: currentValues.length ? safeMax(currentValues) - safeMin(currentValues) : null,
     averageCellVoltageV: mean(values('avg_cell_voltage_v')),
     averageCellDeviationMv: mean(values('avg_cell_dev_mv')),
     averageCellVariance: mean(values('cell_voltage_variance')),
@@ -1293,8 +1337,8 @@ function continuousCurrentSegments(rows, { kind, minimumDurationS, binWidthA, ac
     if (active && gap > gapLimitS) close();
     if (active) {
       const activeCurrents = active.rows.map((r) => r.current_a).filter(Number.isFinite);
-      const activeMin = Math.min(...activeCurrents);
-      const activeMax = Math.max(...activeCurrents);
+      const activeMin = safeMin(activeCurrents);
+      const activeMax = safeMax(activeCurrents);
       const tolerance = binWidthA / 2;
       const outOfRange = current < activeMin - tolerance || current > activeMax + tolerance;
       if (active.bucket !== bucket || outOfRange) close();
@@ -1375,10 +1419,10 @@ function descriptiveStableWindows(sampleRows, stability, minimumDurationS) {
       const values = windowRows.map((row) => row[rule.field]).filter(Number.isFinite);
       if (!values.length) return { ...rule, count: 0, status: rule.required ? 'missing' : 'ignored' };
       const center = stability.center === 'median' ? median(values) : mean(values);
-      const minimum = Math.min(...values);
-      const maximum = Math.max(...values);
+      const minimum = safeMin(values);
+      const maximum = safeMax(values);
       const range = maximum - minimum;
-      const maxAbsoluteDeviation = Math.max(...values.map((value) => Math.abs(value - center)));
+      const maxAbsoluteDeviation = safeMax(values.map((value) => Math.abs(value - center)));
       return {
         ...rule,
         count: values.length,
@@ -1519,7 +1563,7 @@ function buildDurability(rows, config) {
   const meanMetric = (field) => mean(normalized.map((point) => point[field]).filter((value) => value !== null));
   const powerValues = normalized.map((point) => point.net_power_kw).filter((value) => value !== null);
   const temperatureValues = normalized.map((point) => point.temperature_c).filter((value) => value !== null);
-  const metrics = { sampleCount: normalized.length, durationS: 0, completenessPct: quality.completenessPct, peakPowerW: powerValues.length ? Math.max(...powerValues) * 1000 : null, steadyVoltageMeanV: meanMetric('average_cell_voltage_mv') === null ? null : meanMetric('average_cell_voltage_mv') / 1000, steadyVoltageStdV: std(normalized.map((point) => point.average_cell_voltage_mv).filter((value) => value !== null)) / 1000, peakTemperatureC: temperatureValues.length ? Math.max(...temperatureValues) : null, peakPressureBar: null, peakLeakPpm: null, hydrogenVolumeNl: null, energyConsumedWh: null, specificEnergyKWhPerNm3: null, minimumHydrogenPurityPct: null, pressureDriftBarPerMin: 0, steadyWindow: '台架耐久功率点', steadySampleCount: normalized.length };
+  const metrics = { sampleCount: normalized.length, durationS: 0, completenessPct: quality.completenessPct, peakPowerW: powerValues.length ? safeMax(powerValues) * 1000 : null, steadyVoltageMeanV: meanMetric('average_cell_voltage_mv') === null ? null : meanMetric('average_cell_voltage_mv') / 1000, steadyVoltageStdV: std(normalized.map((point) => point.average_cell_voltage_mv).filter((value) => value !== null)) / 1000, peakTemperatureC: safeMax(temperatureValues), peakPressureBar: null, peakLeakPpm: null, hydrogenVolumeNl: null, energyConsumedWh: null, specificEnergyKWhPerNm3: null, minimumHydrogenPurityPct: null, pressureDriftBarPerMin: 0, steadyWindow: '台架耐久功率点', steadySampleCount: normalized.length };
   const schema = commonSchema({ ...mapping, ...efficiencyFields }, Object.keys(mapping).length + Object.keys(efficiencyFields).length);
   const uncertainty = calculateEnterpriseUncertainty(normalized, metrics, config.uncertaintyModel, {
     metricSpecs: [
@@ -1643,7 +1687,7 @@ function buildVehicle(rows, config) {
   quality.sessionBoundaryCount = Math.max(0, sessionTime.sessions.length - 1);
   quality.sessionDurationsS = sessionTime.sessions.map((session) => ({ sessionId: session.sessionId, sourceFile: session.sourceFile, durationS: session.durationS, rowCount: session.rowCount }));
   const windowStartS = Number.isFinite(requestedStartS) ? Math.max(0, requestedStartS) : 0;
-  const observedEndS = Math.max(...normalized.map(vehicleTimeOf).filter((value) => value !== null), 0);
+  const observedEndS = safeMax(normalized.map(vehicleTimeOf).filter((value) => value !== null), 0);
   const windowEndS = Number.isFinite(requestedEndS) ? Math.min(observedEndS, Math.max(windowStartS, requestedEndS)) : observedEndS;
   const analysisRows = normalized.filter((row) => vehicleTimeOf(row) !== null && vehicleTimeOf(row) >= windowStartS && vehicleTimeOf(row) <= windowEndS);
   const requestedWindow = Number.isFinite(requestedStartS) || Number.isFinite(requestedEndS);
@@ -1668,7 +1712,7 @@ function buildVehicle(rows, config) {
     const current = buckets.get(key) || { bucket, sessionId: row.session_id, status: row.main_status, values: [], startS: timeS, endS: timeS };
     current.values.push(row.isolation_kohm); current.startS = Math.min(current.startS, timeS); current.endS = Math.max(current.endS, timeS); buckets.set(key, current);
   }
-  const insulationPoints = [...buckets.values()].map((item) => ({ bucket: item.bucket, sessionId: item.sessionId, status: item.status, startS: item.startS, endS: item.endS, minimumKohm: Math.min(...item.values), sampleCount: item.values.length })).sort((a, b) => a.startS - b.startS);
+  const insulationPoints = [...buckets.values()].map((item) => ({ bucket: item.bucket, sessionId: item.sessionId, status: item.status, startS: item.startS, endS: item.endS, minimumKohm: safeMin(item.values), sampleCount: item.values.length })).sort((a, b) => a.startS - b.startS);
   const insulationForecast = Object.fromEntries([350, 250].map((threshold) => {
     const points = insulationPoints.map((point) => [point.endS, point.minimumKohm]);
     const crossSessionBoundary = sessionTime.sessions.length > 1 ? '多会话未声明批次关系，不跨会话拟合绝缘趋势或触达预测' : null;
@@ -1735,7 +1779,7 @@ function buildVehicle(rows, config) {
     sampleCount: rowsForAnalysis.length,
     durationS: !rowsForAnalysis.length || sessionTime.sessions.length > 1 ? null : windowEndS - windowStartS,
     completenessPct: quality.completenessPct,
-    peakPowerW: (() => { const values = rowsForAnalysis.map((row) => row.net_power_kw).filter((value) => value !== null); return values.length ? Math.max(...values) * 1000 : null; })(),
+    peakPowerW: (() => { const values = rowsForAnalysis.map((row) => row.net_power_kw).filter((value) => value !== null); return values.length ? safeMax(values) * 1000 : null; })(),
     steadyVoltageMeanV: mean(rowsForAnalysis.map((row) => row.avg_cell_voltage_v).filter((value) => value !== null)),
     steadyVoltageStdV: std(rowsForAnalysis.map((row) => row.avg_cell_voltage_v).filter((value) => value !== null)),
     peakTemperatureC: null,
@@ -1875,8 +1919,8 @@ function conditionComparison(rule, condition, rows, samplePeriodS) {
     exceedDurationS: 0,
     exceedRatioPct: null,
     actualMean: mean(observed),
-    actualMin: observed.length ? Math.min(...observed) : null,
-    actualMax: observed.length ? Math.max(...observed) : null,
+    actualMin: safeMin(observed),
+    actualMax: safeMax(observed),
     actualStd: std(observed),
     absoluteDeviation: null,
     relativeDeviationPct: null,
@@ -2259,13 +2303,13 @@ function summarizeDurabilityReports(reports) {
       firstAverageCellVoltageMv: first?.averageCellVoltageMv ?? null,
       lastAverageCellVoltageMv: last?.averageCellVoltageMv ?? null,
       averageCellVoltageDeltaMv: analysisEligible ? numericDelta(first?.averageCellVoltageMv, last?.averageCellVoltageMv) : null,
-      minimumAverageCellVoltageMv: voltage.length ? Math.min(...voltage) : null,
-      maximumAverageCellVoltageMv: voltage.length ? Math.max(...voltage) : null,
+      minimumAverageCellVoltageMv: safeMin(voltage),
+      maximumAverageCellVoltageMv: safeMax(voltage),
       firstAverageDeviationMv: first?.averageDeviationMv ?? null,
       lastAverageDeviationMv: last?.averageDeviationMv ?? null,
       averageDeviationDeltaMv: analysisEligible ? numericDelta(first?.averageDeviationMv, last?.averageDeviationMv) : null,
       deltaStatus: analysisEligible ? 'eligible_descriptive_delta' : 'suppressed_not_comparable',
-      maximumAverageDeviationMv: deviation.length ? Math.max(...deviation) : null,
+      maximumAverageDeviationMv: safeMax(deviation),
       series
     };
   });
@@ -2414,7 +2458,7 @@ function buildStack(rows, config) {
     };
   });
   const configuredCellCountHint = Number(config.stoichConfig?.cellCount ?? config.cellCount ?? config.testMetadata?.cellCount);
-  const observedCellCount = Math.max(...normalized.map((row) => row.cell_count).filter((value) => value !== null && value > 0), 0);
+  const observedCellCount = safeMax(normalized.map((row) => row.cell_count).filter((value) => Number.isFinite(value) && value > 0), 0);
   const inferredCellCount = configuredCellCountHint > 0 ? configuredCellCountHint : observedCellCount > 0 ? observedCellCount : cellHeaders.length;
   const stoichConfig = {
     ...DEFAULT_STOICH_CONFIG,
@@ -2461,14 +2505,14 @@ function buildStack(rows, config) {
   const cellValues = normalized.flatMap(validActiveCellValues);
   const rawActiveCellValues = normalized.flatMap(activeCellValues);
   const invalidCellValueCount = rawActiveCellValues.filter((value) => value <= 0).length;
-  const configuredCellCount = Math.max(...normalized.map((row) => row.cell_count).filter((value) => value !== null), 0);
+  const configuredCellCount = safeMax(normalized.map((row) => row.cell_count).filter((value) => Number.isFinite(value)), 0);
   const rowsWithConfiguredCount = normalized.filter((row) => row.cell_count !== null).length;
   const powerValues = normalized.map((row) => row.power_w).filter((value) => value !== null);
   const averageCellValues = normalized.map((row) => row.avg_cell_voltage_v).filter((value) => value !== null);
   const powerCrossCheck = enterprisePowerCrossCheck(normalized);
   const cellSpread = normalized.map((row) => {
     const values = validActiveCellValues(row);
-    return values.length ? Math.max(...values) - Math.min(...values) : null;
+    return values.length ? safeMax(values) - safeMin(values) : null;
   }).filter((value) => value !== null);
   const cellTimeSeriesStats = cellHeaders.map((source, index) => {
     const field = `cell_${index + 1}_v`;
@@ -2481,16 +2525,16 @@ function buildStack(rows, config) {
       missingCount: normalized.length - values.length,
       completenessPct: normalized.length ? values.length / normalized.length * 100 : 0,
       mean: mean(values),
-      min: values.length ? Math.min(...values) : null,
-      max: values.length ? Math.max(...values) : null,
-      range: values.length ? Math.max(...values) - Math.min(...values) : null,
+      min: safeMin(values),
+      max: safeMax(values),
+      range: values.length ? safeMax(values) - safeMin(values) : null,
       std: std(values),
       boundary: '原始电堆时序逐片描述性统计；不含企业限值或标准符合性判定'
     };
   });
   const summary = (field) => {
     const values = normalized.map((row) => row[field]).filter((value) => value !== null);
-    return { count: values.length, mean: mean(values), min: values.length ? Math.min(...values) : null, max: values.length ? Math.max(...values) : null, std: std(values) };
+    return { count: values.length, mean: mean(values), min: safeMin(values), max: safeMax(values), std: std(values) };
   };
   const parameterConfig = config.parameterConfig || null;
   const hasUsableTargetConditions = Boolean(parameterConfig?.ok && parameterConfig.targetConditions?.length);
@@ -2576,9 +2620,9 @@ function buildStack(rows, config) {
     metrics: {
       averageCurrentA: mean(normalized.map((row) => row.current_a).filter((value) => value !== null)),
       averageVoltageV: mean(normalized.map((row) => row.voltage_v).filter((value) => value !== null)),
-      peakPowerKw: powerValues.length ? Math.max(...powerValues) / 1000 : null,
+      peakPowerKw: powerValues.length ? safeMax(powerValues) / 1000 : null,
       averageCellVoltageV: mean(averageCellValues),
-      cellSpreadMaxV: cellSpread.length ? Math.max(...cellSpread) : null,
+      cellSpreadMaxV: safeMax(cellSpread),
       cellSpreadMeanV: mean(cellSpread),
       cellValueStdV: std(cellValues),
       currentDensityMean: mean(normalized.map((row) => row.current_density_mAcm2).filter((value) => value !== null)),
@@ -2626,18 +2670,18 @@ function buildStack(rows, config) {
   };
   const metrics = {
     sampleCount: normalized.length,
-    durationS: Math.max(...normalized.map((row) => row.timestamp_s).filter((value) => value !== null), 0),
+    durationS: safeMax(normalized.map((row) => row.timestamp_s).filter((value) => Number.isFinite(value)), 0),
     sessionCount: sessionTime.sessions.length,
     sessionDurationS: sessionTime.sessions.reduce((sum, session) => sum + session.durationS, 0),
     completenessPct: quality.completenessPct,
-    peakPowerW: powerValues.length ? Math.max(...powerValues) : null,
+    peakPowerW: safeMax(powerValues),
     powerSource: powerCrossCheck.status,
     powerCrossCheck,
     steadyVoltageMeanV: mean(averageCellValues),
     steadyVoltageStdV: std(averageCellValues),
-    peakTemperatureC: (() => { const values = normalized.map((row) => row.temperature_c).filter((value) => value !== null); return values.length ? Math.max(...values) : null; })(),
-    peakPressureBar: (() => { const values = normalized.map((row) => row.pressure_kpa).filter((value) => value !== null); return values.length ? Math.max(...values) / 100 : null; })(),
-    peakLeakPpm: (() => { const values = normalized.map((row) => row.leak_ppm).filter((value) => value !== null); return values.length ? Math.max(...values) : null; })(),
+    peakTemperatureC: (() => { const values = normalized.map((row) => row.temperature_c).filter((value) => value !== null); return values.length ? safeMax(values) : null; })(),
+    peakPressureBar: (() => { const values = normalized.map((row) => row.pressure_kpa).filter((value) => value !== null); return values.length ? safeMax(values) / 100 : null; })(),
+    peakLeakPpm: (() => { const values = normalized.map((row) => row.leak_ppm).filter((value) => Number.isFinite(value)); return values.length ? safeMax(values) : null; })(),
     hydrogenVolumeNl: null,
     energyConsumedWh: null,
     specificEnergyKWhPerNm3: null,

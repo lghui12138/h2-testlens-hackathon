@@ -1,3 +1,21 @@
+
+const safeMax = (values, fallback = null) => {
+  let maximum = fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
+  }
+  return maximum;
+};
+
+const safeMin = (values, fallback = null) => {
+  let minimum = fallback === undefined ? null : fallback;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    minimum = minimum === null || minimum === undefined ? value : Math.min(minimum, value);
+  }
+  return minimum;
+};
 const finite = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
 const timeOf = (row) => finite(row?.session_timestamp_s ?? row?.timestamp_s);
 
@@ -31,8 +49,8 @@ const rateSummary = (points, valueField) => {
     rates.push((currentValue - previousValue) / deltaS);
   }
   return {
-    maxRampUpPerS: rates.length ? Math.max(0, ...rates) : null,
-    maxRampDownPerS: rates.length ? Math.max(0, ...rates.map((rate) => -rate)) : null
+    maxRampUpPerS: safeMax(rates, 0),
+    maxRampDownPerS: safeMax(rates.map((rate) => -rate), 0)
   };
 };
 
@@ -48,7 +66,7 @@ const gapSummary = (points, maxGapS) => {
   const gapCount = Number.isFinite(maxGapS) ? intervals.filter((deltaS) => deltaS > maxGapS).length : 0;
   return {
     intervalCount: intervals.length,
-    maximumIntervalS: intervals.length ? Math.max(...intervals) : null,
+    maximumIntervalS: safeMax(intervals),
     gapCount
   };
 };
@@ -164,7 +182,7 @@ export function analyzeSetpointEvents(inputRows, options = {}) {
     const actualRate = rateSummary(eventPoints, actualField);
     const actualPowerRate = actualPowerField ? rateSummary(eventPoints, actualPowerField) : { maxRampUpPerS: null, maxRampDownPerS: null };
     const gaps = gapSummary(eventPoints, maxGapS);
-    const targetError = actualValues.length ? Math.max(...actualValues.map((value) => Math.abs(value - to))) : null;
+    const targetError = actualValues.length ? safeMax(actualValues.map((value) => Math.abs(value - to))) : null;
     const actualAtCommand = finite(points[index].row[actualField]);
     const durationS = timeOf(points.at(-1)?.row) !== null && commandStartS !== null ? Math.max(0, timeOf(points.at(-1).row) - commandStartS) : null;
     const validSpanS = eventPoints.length >= 2 ? eventPoints.reduce((sum, point, pointIndex) => {
@@ -186,8 +204,8 @@ export function analyzeSetpointEvents(inputRows, options = {}) {
       responseBand,
       settleWindowS,
       actualAtCommand,
-      actualMinimum: actualValues.length ? Math.min(...actualValues) : null,
-      actualMaximum: actualValues.length ? Math.max(...actualValues) : null,
+      actualMinimum: safeMin(actualValues),
+      actualMaximum: safeMax(actualValues),
       maximumAbsoluteError: targetError,
       responseTimeS: settled && settled.settledAtS !== null ? settled.settledAtS - commandStartS : null,
       settledAtS: settled?.settledAtS ?? null,
@@ -198,8 +216,8 @@ export function analyzeSetpointEvents(inputRows, options = {}) {
       maximumIntervalS: gaps.maximumIntervalS,
       maxActualRampUpPerS: actualRate.maxRampUpPerS,
       maxActualRampDownPerS: actualRate.maxRampDownPerS,
-      actualPowerMinimum: actualPowerValues.length ? Math.min(...actualPowerValues) : null,
-      actualPowerMaximum: actualPowerValues.length ? Math.max(...actualPowerValues) : null,
+      actualPowerMinimum: safeMin(actualPowerValues),
+      actualPowerMaximum: safeMax(actualPowerValues),
       maxActualPowerRampUpPerS: actualPowerRate.maxRampUpPerS,
       maxActualPowerRampDownPerS: actualPowerRate.maxRampDownPerS,
       status
