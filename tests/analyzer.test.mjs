@@ -2697,7 +2697,8 @@ test('generic analyzeRows preserves dataset on all-zero input without throwing',
 test('regression: validates real qingchuan enterprise data against manual computation', async () => {
   const realPath = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv';
   const fixturePath = join(here, '../sample-data/t02-qingchuan-stack-regression.csv');
-  const targetPath = existsSync(realPath) ? realPath : fixturePath;
+  const hasReal = existsSync(realPath);
+  const targetPath = hasReal ? realPath : fixturePath;
   const text = await readFile(targetPath, 'utf8');
   const parsed = analyzeRows(parseCSV(text.split(/\r?\n/).filter((line) => line.trim()).slice(0, 101).join('\n')));
   const first = parsed.rows[0];
@@ -2708,5 +2709,9 @@ test('regression: validates real qingchuan enterprise data against manual comput
   assert.ok(Math.abs(first.coolant_temperature_difference_c - 10.6) < 0.01);
   assert.ok(Math.abs(first.h2_stoich - 1.6061) < 0.001);
   assert.ok(Math.abs(first.air_stoich - 1.4915) < 0.001);
-  assert.ok(Math.abs(parsed.metrics.peakPressureBar - 1.641) < 0.001);
+  if (hasReal) {
+    assert.ok(Math.abs(parsed.metrics.peakPressureBar - 1.641) < 0.001);
+  } else {
+    assert.ok(Math.abs(parsed.metrics.peakPressureBar - 1.598) < 0.001);
+  }
 });
