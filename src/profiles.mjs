@@ -413,6 +413,11 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
       { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
     ],
+    status: 'current',
+    publicationDate: '2025-03-28',
+    effectiveDate: '2025-07-01',
+    scopeEvidence: '官方标准页面与官方解读公开适用范围；具体标准条文、仪器精度和验收计算仍需企业批准资料。',
+    workflowEvidence: '官方解读公开描述基本检查、基础测试、性能测试和测试报告四类流程；ISO/IEC 17025:2017 公开描述实验室能力、公正性和保密性要求。',
     methodSource: { sourceId: 'qingchuan_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_qingchuan_field_mapping'] },
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     traceabilityRequirements: {
@@ -520,6 +525,11 @@ export const DEVICE_PROFILES = Object.freeze([
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] }
     ],
+    status: 'current',
+    publicationDate: '2025-08-29',
+    effectiveDate: '2025-12-01',
+    scopeEvidence: '官方国家标准项目页面公开范围与主要技术内容；不是标准全文。',
+    workflowEvidence: '公开项目技术内容列出测试计划、采集计划、前检查、仪器/测量、冷/热启动、稳态、动态、停机和报告字段；GB/T 29729-2022 公开描述氢系统安全基本要求。',
     methodSource: { sourceId: 'qingzhihuli_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_qingzhihuli_field_mapping'] },
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     traceabilityRequirements: {
@@ -585,6 +595,10 @@ export const DEVICE_PROFILES = Object.freeze([
     },
     dataQualityRequirements: {
       maxIntervalMultiplier: 5
+    },
+    standardClauseRefs: {
+      'GB/T 46104-2025': ['测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
+      'GB/T 29729-2022': ['氢系统安全基本要求']
     }
   },
   {
@@ -603,6 +617,11 @@ export const DEVICE_PROFILES = Object.freeze([
     standardRefs: [
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] }
     ],
+    status: 'current',
+    publicationDate: '2025-08-29',
+    effectiveDate: '2025-12-01',
+    scopeEvidence: '官方国家标准项目页面公开范围与主要技术内容；不是标准全文。',
+    workflowEvidence: '公开项目技术内容列出测试计划、采集计划、前检查、仪器/测量、冷/热启动、稳态、动态、停机和报告字段。',
     methodSource: { sourceId: 'hypu_field_mapper_2026', locator: 'T02 企业资料字段审计', evidenceType: 'enterprise_field_mapping', evidenceIds: ['ev_hypu_field_mapping'] },
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     traceabilityRequirements: {
@@ -651,6 +670,9 @@ export const DEVICE_PROFILES = Object.freeze([
     },
     dataQualityRequirements: {
       maxIntervalS: 5
+    },
+    standardClauseRefs: {
+      'GB/T 46104-2025': ['测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告']
     }
   },
   {

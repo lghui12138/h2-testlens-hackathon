@@ -989,11 +989,9 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
   const missingSummary = [...missingProfileFields, ...missingMetadata, ...measurements.missing, ...phases.missing, ...phaseMetrics.missing, ...(dataQuality.missing || [])].filter(Boolean);
   const standardIds = (config.standardRefs || []).map((reference) => String(reference.id || '').trim()).filter(Boolean);
   const standardClauseNote = standardIds.map((id) => {
-    if (id === 'GB/T 45541-2025') return 'GB/T 45541-2025 基本检查、基础测试、性能测试和测试报告';
-    if (id === 'GB/T 46104-2025') return 'GB/T 46104-2025 冷启动、热启动、稳态、变功率动态、停机';
-    if (id === 'ISO 22734-1:2025') return 'ISO 22734-1:2025 安全要求';
-    if (id === 'ISO/IEC 17025:2017') return 'ISO/IEC 17025:2017 实验室能力要求';
-    return null;
+    const clauseRefs = Array.isArray(config.standardClauseRefs?.[id]) ? config.standardClauseRefs[id] : [];
+    if (!clauseRefs.length) return null;
+    return `${id} ${clauseRefs.join('、')}`;
   }).filter(Boolean);
   const baseBoundary = config.approvalStatus !== 'approved'
     ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非 approved 路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
@@ -1018,7 +1016,9 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
       evidence: profileReady
         ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
         : '当前 profile 未批准，不进入标准符合性判定',
-      boundary: `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
+      boundary: clauseRefs.length
+        ? `该标准引用当前仅作公开范围/流程映射演示；具体条款（${clauseRefs.join('、')}）符合性需企业 approved profile 与完整方法实施证据支撑。`
+        : `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
     };
   });
   const evidenceDetails = [

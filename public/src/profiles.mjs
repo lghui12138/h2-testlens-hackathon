@@ -746,6 +746,8 @@ export function standardReferenceReadiness(profile = {}) {
     if (!revision) missing.push('revision');
     if (methodId && !references.some((reference) => String(reference?.id || '').trim() === methodId)) missing.push('methodId.standardRefs');
     if (!['current', 'published', 'draft', 'unknown', 'withdrawn'].includes(String(profile.status || '').trim())) missing.push('status');
+  }
+  if (references.length) {
     const source = profile.methodSource;
     if (!source || typeof source !== 'object' || Array.isArray(source)) missing.push('methodSource');
     else for (const field of ['sourceId', 'locator', 'evidenceType']) if (!String(source[field] || '').trim()) missing.push(`methodSource.${field}`);
