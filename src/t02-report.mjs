@@ -142,7 +142,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
   const blockedRows = blocked.map((record) => `| ${cell(record.path)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${cell(record.usageLedger?.boundary || record.note)} |`).join('\n') || '| — | — | — | — |';
   const claims = referenceClaimRows(referenceRecords).join('\n') || '| — | — | — | — | — |';
   const lines = [
-    '# T02 设备测试数据分析与自动报告助手 · 全资料包自动接入报告',
+    '# T02 设备测试数据分析与自动报告系统 · 全资料包接入报告',
     '',
     `- 证据版本：${version}`,
     `- 覆盖审计：\`${coveragePath}\``,
