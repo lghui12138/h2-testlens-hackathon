@@ -207,7 +207,9 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
   // 14. Real-file boundary injections
   // ---------------------------------------------------------------------------
 
-  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', async () => {
+  const HAS_T02 = existsSync('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手');
+
+  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', { skip: !HAS_T02 }, async () => {
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { fileURLToPath } = await import('node:url');
@@ -220,7 +222,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(decoded.binary, true);
   });
 
-  test('truncated real Qingchuan CSV with only header parses as empty rows', async () => {
+  test('truncated real Qingchuan CSV with only header parses as empty rows', { skip: !HAS_T02 }, async () => {
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { fileURLToPath } = await import('node:url');
@@ -233,7 +235,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.deepEqual(parseCSV(truncated), []);
   });
 
-  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', async () => {
+  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', { skip: !HAS_T02 }, async () => {
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
     const { fileURLToPath } = await import('node:url');
@@ -257,7 +259,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
   // 15. Real-file boundary injections
   // ---------------------------------------------------------------------------
 
-  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', async () => {
+  test('real Qingchuan CSV with injected null byte is detected as binary-or-non-text', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
     const injected = Buffer.concat([buf.subarray(0, 100), Buffer.from([0x00]), buf.subarray(100)]);
@@ -265,7 +267,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(decoded.binary, true);
   });
 
-  test('truncated real Qingchuan CSV with only header parses as empty rows', async () => {
+  test('truncated real Qingchuan CSV with only header parses as empty rows', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
@@ -273,7 +275,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.deepEqual(parseCSV(truncated), []);
   });
 
-  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', async () => {
+  test('real 氢璞创能 TXT declared as UTF-8 surfaces binary flag due to control bytes', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包01_氢璞创能/2026-4-5-13-16-20.txt'));
     const decoded = decodeTextBuffer(buf, 'utf-8');
@@ -288,7 +290,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(decoded.text, '');
   });
 
-  test('real Qingchuan CSV boundary values at exact defaults do not crash adapter', async () => {
+  test('real Qingchuan CSV boundary values at exact defaults do not crash adapter', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
@@ -298,7 +300,7 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
   });
 
-  test('real 氢质氢离 vehicle CSV boundary: exact zero isolation values do not crash adapter', async () => {
+  test('real 氢质氢离 vehicle CSV boundary: exact zero isolation values do not crash adapter', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
