@@ -930,4 +930,33 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
         assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${pkg}/${file} should be non-empty`);
       }
     }
+
+  test('unitTransform preserves hPa precision for pressure_bar gas_pressure_bar and ambient_pressure_kpa', () => {
+    const hpaStack = parseCSV([
+      'timestamp_s,current_a,voltage_v,temperature_c,压力（hPa）,flow_slpm,leak_ppm',
+      '0,10,20,30,1013,6,1',
+      '60,10,20,30,1013,6,1'
+    ].join('\n'));
+    const hpaStackResult = analyzeRows(hpaStack);
+    assert.equal(hpaStackResult.schema.conversions.pressure_bar.factor, 0.001);
+    assert.equal(hpaStackResult.schema.conversions.pressure_bar.label, 'hPa→bar');
+
+    const hpaGas = parseCSV([
+      'timestamp_s,current_a,voltage_v,temperature_c,gas_temperature_c,出口压力（hPa）,flow_slpm,leak_ppm',
+      '0,10,20,30,40,500,6,1',
+      '60,10,20,30,40,500,6,1'
+    ].join('\n'));
+    const hpaGasResult = analyzeRows(hpaGas);
+    assert.equal(hpaGasResult.schema.conversions.gas_pressure_bar.factor, 0.001);
+    assert.equal(hpaGasResult.schema.conversions.gas_pressure_bar.label, 'hPa→bar');
+
+    const hpaAmbient = parseCSV([
+      'timestamp_s,current_a,voltage_v,temperature_c,环境压力（hPa）,flow_slpm,leak_ppm',
+      '0,10,20,30,1013,6,1',
+      '60,10,20,30,1013,6,1'
+    ].join('\n'));
+    const hpaAmbientResult = analyzeRows(hpaAmbient);
+    assert.equal(hpaAmbientResult.schema.conversions.ambient_pressure_kpa.factor, 0.1);
+    assert.equal(hpaAmbientResult.schema.conversions.ambient_pressure_kpa.label, 'hPa→kPa');
+  });
   });
