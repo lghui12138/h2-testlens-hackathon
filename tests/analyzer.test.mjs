@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -2694,7 +2695,10 @@ test('generic analyzeRows preserves dataset on all-zero input without throwing',
 });
 
 test('regression: validates real qingchuan enterprise data against manual computation', async () => {
-  const text = await readFile('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv', 'utf8');
+  const realPath = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv';
+  const fixturePath = join(here, '../sample-data/t02-qingchuan-stack-regression.csv');
+  const targetPath = existsSync(realPath) ? realPath : fixturePath;
+  const text = await readFile(targetPath, 'utf8');
   const parsed = analyzeRows(parseCSV(text.split(/\r?\n/).filter((line) => line.trim()).slice(0, 101).join('\n')));
   const first = parsed.rows[0];
   assert.equal(first.power_kw, 4.382);

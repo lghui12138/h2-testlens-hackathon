@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -13,7 +14,10 @@ import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
 import { parseInput } from '../scripts/batch-watch.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+const T02_ROOT = existsSync("/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手")
+  ? "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手"
+  : (process.env.T02_ROOT || null);
+const HAS_T02 = Boolean(T02_ROOT && existsSync(T02_ROOT));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,18 +26,23 @@ const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报
 const SheetJS = await loadXlsx();
 setSpreadsheetEngine(SheetJS);
 
-const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
-const { runInThisContext } = await import('node:vm');
+const mammothSource = await readFile(join(here, "../src/vendor/mammoth.browser.min.js"), "utf8");
+const { runInThisContext } = await import("node:vm");
 runInThisContext(mammothSource);
 setDocxEngine(globalThis.mammoth);
 
-const readRaw = async (relativePath) => readFile(join(T02_ROOT, relativePath));
+const readRaw = async (relativePath) => {
+  if (!HAS_T02) return null;
+  const fullPath = join(T02_ROOT, relativePath);
+  if (!existsSync(fullPath)) return null;
+  return readFile(fullPath);
+};
 
 // ---------------------------------------------------------------------------
 // 1. 青川易创与云汉达 real CSV
 // ---------------------------------------------------------------------------
 
-test('青川易创 real CSV parses all 127 header columns without crashing', async () => {
+test('青川易创 real CSV parses all 127 header columns without crashing', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const rows = parseCSV(csv);
@@ -58,7 +67,7 @@ test('青川易创 real CSV empty trailing fields become empty strings', () => {
 // 2. 氢璞创能 real .txt files
 // ---------------------------------------------------------------------------
 
-test('氢璞创能 real ISO-8859 .txt decodes to UTF-8 and parses as tab-delimited table', async () => {
+test('氢璞创能 real ISO-8859 .txt decodes to UTF-8 and parses as tab-delimited table', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   assert.equal(decoded.binary, false);
@@ -70,7 +79,7 @@ test('氢璞创能 real ISO-8859 .txt decodes to UTF-8 and parses as tab-delimit
   assert.equal(rows[0]['时间'], '18:56:05');
 });
 
-test('氢璞创能 real .txt preserves high-precision numeric values from raw data', async () => {
+test('氢璞创能 real .txt preserves high-precision numeric values from raw data', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   const rows = parseCSV(decoded.text);
@@ -80,7 +89,7 @@ test('氢璞创能 real .txt preserves high-precision numeric values from raw da
   assert.equal(firstRow['电堆功率'], '0.000000');
 });
 
-test('氢璞创能 real .txt 2026-4-4-19-00-50 decodes from GB18030 and parses headers', async () => {
+test('氢璞创能 real .txt 2026-4-4-19-00-50 decodes from GB18030 and parses headers', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-19-00-50.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   assert.equal(decoded.binary, false);
@@ -91,7 +100,7 @@ test('氢璞创能 real .txt 2026-4-4-19-00-50 decodes from GB18030 and parses h
   assert.ok('电堆电压' in rows[0]);
 });
 
-test('氢璞创能 real .txt 2026-4-5-11-32-54 decodes from GB18030 and parses headers', async () => {
+test('氢璞创能 real .txt 2026-4-5-11-32-54 decodes from GB18030 and parses headers', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-5-11-32-54.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   assert.equal(decoded.binary, false);
@@ -101,7 +110,7 @@ test('氢璞创能 real .txt 2026-4-5-11-32-54 decodes from GB18030 and parses h
   assert.ok('时间' in rows[0]);
 });
 
-test('氢璞创能 real .txt zero power values are retained and do not trigger NaN', async () => {
+test('氢璞创能 real .txt zero power values are retained and do not trigger NaN', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   const rows = parseCSV(decoded.text);
@@ -113,7 +122,7 @@ test('氢璞创能 real .txt zero power values are retained and do not trigger N
 // 3. 氢璞创能 real .xlsx workbook
 // ---------------------------------------------------------------------------
 
-test('氢璞创能 real .xlsx workbook parses 8 sheets and selects 稳定性 as time series', async () => {
+test('氢璞创能 real .xlsx workbook parses 8 sheets and selects 稳定性 as time series', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
   const result = parseDataWorkbook(buf);
   assert.equal(result.ok, true);
@@ -124,7 +133,7 @@ test('氢璞创能 real .xlsx workbook parses 8 sheets and selects 稳定性 as 
   assert.ok(result.rows.length >= 1000, `expected many rows, got ${result.rows.length}`);
 });
 
-test('氢璞创能 real .xlsx workbook formula audit reports review_required with cached values', async () => {
+test('氢璞创能 real .xlsx workbook formula audit reports review_required with cached values', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
   const result = parseDataWorkbook(buf);
   assert.equal(result.formulaAudit.status, 'review_required');
@@ -133,7 +142,7 @@ test('氢璞创能 real .xlsx workbook formula audit reports review_required wit
   assert.equal(result.formulaAudit.uncachedFormulaCellCount, 0);
 });
 
-test('氢璞创能 real .xlsx workbook evidence summary contains factory report metadata', async () => {
+test('氢璞创能 real .xlsx workbook evidence summary contains factory report metadata', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
   const result = parseDataWorkbook(buf);
   assert.equal(result.workbookEvidenceSummary.reportEvidenceSheetCount, 1);
@@ -145,7 +154,7 @@ test('氢璞创能 real .xlsx workbook evidence summary contains factory report 
 // 3b. 青川易创 real .docx task specification
 // ---------------------------------------------------------------------------
 
-test('青川易创 real DOCX task specification parses metadata and table content', async () => {
+test('青川易创 real DOCX task specification parses metadata and table content', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx');
   const result = await parseDurabilityDocx(buf);
   assert.ok(result);
@@ -157,7 +166,7 @@ test('青川易创 real DOCX task specification parses metadata and table conten
 // 4. 氢质氢离 real .docx durability reports
 // ---------------------------------------------------------------------------
 
-test('氢质氢离 real durability docx extracts metadata and 60 power points', async () => {
+test('氢质氢离 real durability docx extracts metadata and 60 power points', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx');
   const result = await parseDurabilityDocx(buf);
   assert.ok(result);
@@ -170,7 +179,7 @@ test('氢质氢离 real durability docx extracts metadata and 60 power points', 
   assert.equal(result.points[0].average_cell_voltage_mv, 813);
 });
 
-test('氢质氢离 real durability docx 耐久5-10 reports 未通过 with correct metadata', async () => {
+test('氢质氢离 real durability docx 耐久5-10 reports 未通过 with correct metadata', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久5-10-20260606024937.docx');
   const result = await parseDurabilityDocx(buf);
   assert.ok(result);
@@ -179,7 +188,7 @@ test('氢质氢离 real durability docx 耐久5-10 reports 未通过 with correc
   assert.ok(result.points.length >= 50);
 });
 
-test('氢质氢离 all 8 real durability docx files parse without errors', async () => {
+test('氢质氢离 all 8 real durability docx files parse without errors', { skip: !HAS_T02 }, async () => {
   const files = [
     '耐久0-5-20260605211610.docx',
     '耐久5-10-20260606024937.docx',
@@ -199,7 +208,7 @@ test('氢质氢离 all 8 real durability docx files parse without errors', async
   }
 });
 
-test('氢质氢离 real docx preserves HFR and LFR numeric values', async () => {
+test('氢质氢离 real docx preserves HFR and LFR numeric values', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx');
   const result = await parseDurabilityDocx(buf);
   const hfrValues = result.points.map((p) => p.hfr).filter((v) => v !== null);
@@ -214,7 +223,7 @@ test('氢质氢离 real docx preserves HFR and LFR numeric values', async () => 
 // 4b. 氢质氢离 real vehicle CSV 212 and 345
 // ---------------------------------------------------------------------------
 
-test('氢质氢离 real vehicle CSV 212 parses headers and many rows', async () => {
+test('氢质氢离 real vehicle CSV 212 parses headers and many rows', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const rows = parseCSV(csv);
@@ -224,7 +233,7 @@ test('氢质氢离 real vehicle CSV 212 parses headers and many rows', async () 
   assert.ok('FC_VehicleIsolationR' in rows[0]);
 });
 
-test('氢质氢离 real vehicle CSV 345 parses headers and many rows', async () => {
+test('氢质氢离 real vehicle CSV 345 parses headers and many rows', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (1).csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const rows = parseCSV(csv);
@@ -237,14 +246,14 @@ test('氢质氢离 real vehicle CSV 345 parses headers and many rows', async () 
 // 5. 海珀特 real PDF
 // ---------------------------------------------------------------------------
 
-test('海珀特 real PDF is detected as binary before any parser attempts text extraction', async () => {
+test('海珀特 real PDF is detected as binary before any parser attempts text extraction', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包04_海珀特/00_企业资料说明.pdf');
   assert.equal(isLikelyBinary(buf), true);
   const decoded = decodeTextBuffer(buf);
   assert.equal(decoded.binary, true);
 });
 
-test('海珀特 real PDF returns blocked_binary from shared input boundary', async () => {
+test('海珀特 real PDF returns blocked_binary from shared input boundary', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包04_海珀特/00_企业资料说明.pdf');
   const result = await parseInput('haipte-description.pdf', buf);
   assert.equal(result.status, 'blocked_binary');
@@ -256,7 +265,7 @@ test('海珀特 real PDF returns blocked_binary from shared input boundary', asy
 // 6. Edge cases found in real data
 // ---------------------------------------------------------------------------
 
-test('青川易创 real CSV 38258 rows produce deterministic analysis without overflow', async () => {
+test('青川易创 real CSV 38258 rows produce deterministic analysis without overflow', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const rows = parseCSV(csv);
@@ -268,7 +277,7 @@ test('青川易创 real CSV 38258 rows produce deterministic analysis without ov
   assert.ok(result.quality.usable || result.verdict === 'WARN' || result.verdict === 'FAIL');
 });
 
-test('氢璞创能 real .txt tab-delimited header with 300+ columns parses without truncation', async () => {
+test('氢璞创能 real .txt tab-delimited header with 300+ columns parses without truncation', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   const rows = parseCSV(decoded.text);
@@ -276,7 +285,7 @@ test('氢璞创能 real .txt tab-delimited header with 300+ columns parses witho
   assert.ok(Object.keys(firstRow).length >= 250, `expected 250+ columns, got ${Object.keys(firstRow).length}`);
 });
 
-test('氢质氢离 real docx 耐久0-5 reports 未通过 and preserves 系统名称 P30_482', async () => {
+test('氢质氢离 real docx 耐久0-5 reports 未通过 and preserves 系统名称 P30_482', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx');
   const result = await parseDurabilityDocx(buf);
   assert.equal(result.metadata['测试结果'], '未通过');
@@ -288,14 +297,14 @@ test('氢质氢离 real docx 耐久0-5 reports 未通过 and preserves 系统名
 // 6b. 青川易创 real PDF
 // ---------------------------------------------------------------------------
 
-test('青川易创 real PDF 00_企业资料说明 is detected as binary', async () => {
+test('青川易创 real PDF 00_企业资料说明 is detected as binary', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/00_企业资料说明.pdf');
   assert.equal(isLikelyBinary(buf), true);
   const decoded = decodeTextBuffer(buf);
   assert.equal(decoded.binary, true);
 });
 
-test('青川易创 real PDF 01 宽温域PEM is detected as binary', async () => {
+test('青川易创 real PDF 01 宽温域PEM is detected as binary', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/01 宽温域PEM制氢与氢燃料电池电堆技术开发与应用-青川科技(260314-FC).pdf');
   assert.equal(isLikelyBinary(buf), true);
   const decoded = decodeTextBuffer(buf);
@@ -313,7 +322,7 @@ test('malformed UTF-8 bytes in a nominally real CSV are flagged as binary-or-non
   assert.ok(decoded.binaryReason?.length > 0);
 });
 
-test('truncated real CSV missing final column still parses first rows without crash', async () => {
+test('truncated real CSV missing final column still parses first rows without crash', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const truncated = csv.split('\n').slice(0, 10).join('\n');
@@ -322,7 +331,7 @@ test('truncated real CSV missing final column still parses first rows without cr
   assert.ok('实际电流（A）' in rows[0]);
 });
 
-test('real CSV with mixed CRLF and LF line endings parses correctly', async () => {
+test('real CSV with mixed CRLF and LF line endings parses correctly', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const mixed = csv.replace(/\n/g, '\r\n').slice(0, 5000);
@@ -334,7 +343,7 @@ test('real CSV with mixed CRLF and LF line endings parses correctly', async () =
 // 8. Boundary conditions with real values
 // ---------------------------------------------------------------------------
 
-test('氢璞创能 real .txt zero power values are recorded as exact zeros', async () => {
+test('氢璞创能 real .txt zero power values are recorded as exact zeros', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
   const decoded = decodeTextBuffer(buf, 'gb18030');
   const rows = parseCSV(decoded.text);
@@ -353,7 +362,7 @@ test('青川易创 real CSV boundary values at exact defaults do not crash analy
   assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
 });
 
-test('氢质氢离 real docx boundary: first power point target 33 kW is minimum observed', async () => {
+test('氢质氢离 real docx boundary: first power point target 33 kW is minimum observed', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx');
   const result = await parseDurabilityDocx(buf);
   const powers = result.points.map((p) => p.target_power_kw);
@@ -366,7 +375,7 @@ test('氢质氢离 real docx boundary: first power point target 33 kW is minimum
 // 9. Error handling with real data
 // ---------------------------------------------------------------------------
 
-test('real xlsx workbook with 6572 formula cells reports review_required boundary', async () => {
+test('real xlsx workbook with 6572 formula cells reports review_required boundary', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
   const result = parseDataWorkbook(buf);
   assert.equal(result.formulaAudit.formulaCellCount, 6572);
@@ -374,7 +383,7 @@ test('real xlsx workbook with 6572 formula cells reports review_required boundar
   assert.ok(result.formulaAudit.boundary.includes('企业批准人员复核'));
 });
 
-test('real PDF binary detection prevents parser crash on enterprise description file', async () => {
+test('real PDF binary detection prevents parser crash on enterprise description file', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包04_海珀特/00_企业资料说明.pdf');
   const result = await parseInput('haipte-description.pdf', buf);
   assert.equal(result.status, 'blocked_binary');
@@ -388,7 +397,7 @@ test('real docx durability report with non-docx content throws descriptive error
     await parseDurabilityDocx(randomBuf);
   } catch (error) {
     threw = true;
-    assert.ok(error.message.includes('docx_engine_unavailable') || error.message.includes('Could not find file'));
+    assert.ok(error.message.includes('docx_parse_failed') || error.message.includes('docx_engine_unavailable') || error.message.includes('Could not find file'));
   }
   assert.equal(threw, true);
 });
@@ -465,7 +474,7 @@ test('random bytes with invalid UTF-8 sequences are flagged as binary', () => {
   assert.ok(decoded.binaryReason?.length > 0);
 });
 
-test('real CSV with embedded null bytes is detected as binary-or-non-text', async () => {
+test('real CSV with embedded null bytes is detected as binary-or-non-text', { skip: !HAS_T02 }, async () => {
   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
   const injected = Buffer.concat([buf.subarray(0, 100), Buffer.from([0x00]), buf.subarray(100)]);
   const decoded = decodeTextBuffer(injected);

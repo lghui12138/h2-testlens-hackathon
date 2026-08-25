@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 test('青川 127 列样本缺失单片电压列时降级为电堆堆级分析并告警', () => {
   const headers = [
@@ -133,7 +138,10 @@ test('混合逗号与制表符分隔时按首行 majority delimiter 解析', () 
 });
 
 test('青川真实样例数据 100 行可进入电堆分析且压力字段正确映射', async () => {
-  const text = await readFile('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv', 'utf8');
+  const realPath = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv';
+  const fixturePath = join(here, '../sample-data/t02-qingchuan-stack-regression.csv');
+  const targetPath = existsSync(realPath) ? realPath : fixturePath;
+  const text = await readFile(targetPath, 'utf8');
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
   const sliced = lines.slice(0, 101).join('\n');
   const result = analyzeRows(parseCSV(sliced));

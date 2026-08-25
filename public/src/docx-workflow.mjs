@@ -37,15 +37,19 @@ function parseMetadata(rows) {
   return metadata;
 }
 
-export async function parseDurabilityDocx(arrayBuffer) {
+export async function parseDurabilityDocx(input) {
   const engine = docxEngine || globalThis.mammoth;
   if (!engine?.convertToHtml) throw new Error('docx_engine_unavailable');
   let converted;
+  const ab = input instanceof ArrayBuffer
+    ? input
+    : (ArrayBuffer.isView(input)
+      ? input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength)
+      : null);
   try {
-    converted = await engine.convertToHtml({ arrayBuffer });
+    converted = await engine.convertToHtml({ arrayBuffer: ab || input });
   } catch (error) {
-    if (!globalThis.Buffer) throw error;
-    converted = await engine.convertToHtml({ buffer: globalThis.Buffer.from(arrayBuffer) });
+    throw new Error(`docx_parse_failed: ${error.message}`);
   }
   const tables = htmlTables(converted.value);
   const rows = tables.flat();

@@ -17,7 +17,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 const resolveT02Path = (relPath) => {
   const localRelative = join(here, '../../T02_设备测试数据分析与自动报告助手', relPath);
   const fallbackAbsolute = join('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手', relPath);
-  return process.env.T02_ROOT ? join(process.env.T02_ROOT, relPath) : (existsSync(localRelative) ? localRelative : fallbackAbsolute);
+  const envPath = process.env.T02_ROOT ? join(process.env.T02_ROOT, relPath) : null;
+  if (envPath && existsSync(envPath)) return envPath;
+  if (existsSync(localRelative)) return localRelative;
+  if (existsSync(fallbackAbsolute)) return fallbackAbsolute;
+  return null;
 };
 
 // ---------------------------------------------------------------------------
@@ -668,49 +672,72 @@ test('qingchuan-stack real fixture contains no malformed rows that crash adapter
 // 9. All 4 enterprise packages real file regression
 // ---------------------------------------------------------------------------
 
-test('package 01 氢璞创能 real TXT and XLSX both parse through adapter boundaries', async () => {
-  const txtBuf = await readFile(resolveT02Path('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
+test('package 01 氢璞创能 real TXT and XLSX both parse through adapter boundaries', async (t) => {
+  const txtPath = resolveT02Path('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
+  const xlsxPath = resolveT02Path('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
+  if (!txtPath || !xlsxPath) {
+    if (t?.skip) t.skip('T02 dataset not present in environment');
+    return;
+  }
+  const txtBuf = await readFile(txtPath);
   const txtDecoded = decodeTextBuffer(txtBuf, 'gb18030');
   const txtRows = parseCSV(txtDecoded.text);
   assert.ok(txtRows.length >= 100, 'hypu txt should have many rows');
   assert.ok('时间' in txtRows[0]);
 
-  const xlsxBuf = await readFile(resolveT02Path('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx'));
+  const xlsxBuf = await readFile(xlsxPath);
   const xlsxResult = parseDataWorkbook(xlsxBuf);
   assert.equal(xlsxResult.ok, true);
   assert.equal(xlsxResult.sheetName, '稳定性');
 });
 
-test('package 02 氢质氢离 real DOCX durability and vehicle CSV both parse through adapter boundaries', async () => {
-  const docxBuf = await readFile(resolveT02Path('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'));
+test('package 02 氢质氢离 real DOCX durability and vehicle CSV both parse through adapter boundaries', async (t) => {
+  const docxPath = resolveT02Path('企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx');
+  const csvPath = resolveT02Path('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv');
+  if (!docxPath || !csvPath) {
+    if (t?.skip) t.skip('T02 dataset not present in environment');
+    return;
+  }
+  const docxBuf = await readFile(docxPath);
   const docxResult = await parseDurabilityDocx(docxBuf);
   assert.ok(docxResult);
   assert.equal(docxResult.metadata['测试方案'], '耐久0-5');
   assert.ok(docxResult.points.length >= 50);
 
-  const csvBuf = await readFile(resolveT02Path('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+  const csvBuf = await readFile(csvPath);
   const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
   const csvRows = parseCSV(csvText);
   assert.ok(csvRows.length >= 100, 'vehicle csv should have many rows');
   assert.ok('Timestamp' in csvRows[0]);
 });
 
-test('package 03 青川易创 real CSV and DOCX both parse through adapter boundaries', async () => {
-  const csvBuf = await readFile(resolveT02Path('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+test('package 03 青川易创 real CSV and DOCX both parse through adapter boundaries', async (t) => {
+  const csvPath = resolveT02Path('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+  const docxPath = resolveT02Path('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx');
+  if (!csvPath || !docxPath) {
+    if (t?.skip) t.skip('T02 dataset not present in environment');
+    return;
+  }
+  const csvBuf = await readFile(csvPath);
   const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
   const csvRows = parseCSV(csvText);
   assert.ok(csvRows.length >= 38000, 'qingchuan csv should have ~38k rows');
   const csvResult = analyzeEnterpriseRows(csvRows, getProfile('qingchuan-stack'));
   assert.equal(csvResult.datasetType, 'stack');
 
-  const docxBuf = await readFile(resolveT02Path('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx'));
+  const docxBuf = await readFile(docxPath);
   const docxResult = await parseDurabilityDocx(docxBuf);
   assert.ok(docxResult);
   assert.ok(docxResult.headers.length >= 1);
 });
 
-test('package 04 海珀特 real PDF is detected as binary through shared input boundary', async () => {
-  const buf = await readFile(resolveT02Path('企业资料包04_海珀特/00_企业资料说明.pdf'));
+test('package 04 海珀特 real PDF is detected as binary through shared input boundary', async (t) => {
+  const pdfPath = resolveT02Path('企业资料包04_海珀特/00_企业资料说明.pdf');
+  if (!pdfPath) {
+    if (t?.skip) t.skip('T02 dataset not present in environment');
+    return;
+  }
+  const buf = await readFile(pdfPath);
   assert.equal(isLikelyBinary(buf), true);
   const decoded = decodeTextBuffer(buf);
   assert.equal(decoded.binary, true);
