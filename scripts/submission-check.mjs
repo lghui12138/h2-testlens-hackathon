@@ -239,7 +239,12 @@ for (const [id, command, args] of [
   ['profile-audit-t02', 'npm', ['run', 'profile:audit', '--', 'config/t02-profile.example.json']]
 ]) {
   try { await exec(command, args, { cwd: root, maxBuffer: 50_000_000 }); checks.push({ id, pass: true }); }
-  catch (error) { checks.push({ id, pass: false, detail: error.stdout?.slice(-1000) ?? error.message }); }
+  catch (error) {
+    const stdout = error.stdout || '';
+    const failureLines = stdout.split('\n').filter((l) => l.startsWith('not ok') || l.includes('Error:') || l.includes('location:'));
+    const detail = failureLines.length > 0 ? failureLines.join('\n') : (stdout.slice(-2000) || error.message);
+    checks.push({ id, pass: false, detail });
+  }
 }
 
 const passed = checks.filter((check) => check.pass).length;
