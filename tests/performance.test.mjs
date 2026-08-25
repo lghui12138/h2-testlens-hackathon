@@ -1,8 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
+import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
+import { getProfile } from '../src/profiles.mjs';
 
 const CI = String(process.env.CI || '').toLowerCase() === 'true';
+const here = dirname(fileURLToPath(import.meta.url));
+const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+
+const readRaw = async (relativePath) => readFile(join(T02_ROOT, relativePath));
 
 const HEADERS = 'timestamp_s,phase,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,hydrogen_purity_pct';
 
@@ -103,4 +112,30 @@ test('performance benchmark summary', { skip: CI }, () => {
   const summary = summarizeBenchmark();
   console.log(summary);
   assert.ok(summary.includes('test_name'), 'benchmark reporter should emit a header row');
+});
+
+test('test_parse_real_qingchuan_38k_csv', { skip: CI }, async () => {
+  const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+  const start = process.hrtime.bigint();
+  const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+  const rows = parseCSV(csv);
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+  const heap = process.memoryUsage();
+  assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+  assert.ok(elapsedMs < 30_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
+  recordBenchmark('test_parse_real_qingchuan_38k_csv', 'ok', elapsedMs, rows.length, heap.heapUsed / 1024 / 1024);
+});
+
+test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
+  const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+  const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+  const rows = parseCSV(csv);
+  const start = process.hrtime.bigint();
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+  const heap = process.memoryUsage();
+  assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
+  assert.equal(result.datasetType, 'stack');
+  assert.ok(elapsedMs < 30_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
+  recordBenchmark('test_analyze_real_qingchuan_38k_csv', 'ok', elapsedMs, rows.length, heap.heapUsed / 1024 / 1024);
 });

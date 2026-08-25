@@ -875,6 +875,8 @@ export function standardReferenceReadiness(profile = {}) {
     if (!revision) missing.push('revision');
     if (methodId && !references.some((reference) => String(reference?.id || '').trim() === methodId)) missing.push('methodId.standardRefs');
     if (!['current', 'published', 'draft', 'unknown', 'withdrawn'].includes(String(profile.status || '').trim())) missing.push('status');
+  }
+  if (references.length) {
     const source = profile.methodSource;
     if (!source || typeof source !== 'object' || Array.isArray(source)) missing.push('methodSource');
     else for (const field of ['sourceId', 'locator', 'evidenceType']) if (!String(source[field] || '').trim()) missing.push(`methodSource.${field}`);
@@ -896,7 +898,7 @@ export function standardReferenceReadiness(profile = {}) {
     malformed: [...new Set(malformed)],
     duplicateIds: [...new Set(duplicateIds)],
     evidence: status === 'ready'
-      ? `${references.length} 个标准引用均有 id/title/uri/status；approved profile 的方法、范围、日期和 methodId 绑定完整`
+      ? `${references.length} 个标准引用均有 id/title/uri/status；profile 的方法、范围、日期和 methodId 绑定完整`
       : status === 'malformed'
         ? `标准引用格式或重复 id 非法：${[...new Set([...malformed, ...duplicateIds])].join('、')}`
         : `标准引用证据缺失：${[...new Set(missing)].join('、')}`

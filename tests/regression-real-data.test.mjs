@@ -7,8 +7,24 @@ import { analyzeRows, parseCSV, reportMarkdown, publicAnalysis } from '../src/an
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
 import { DEVICE_PROFILES, getProfile, profilesFromPackage } from '../src/profiles.mjs';
 import { sampleRowsForDisplay } from '../src/display-sampling.mjs';
+import { parseDataWorkbook, setSpreadsheetEngine, inspectWorkbookFormulaAudit } from '../src/excel-workflow.mjs';
+import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
+import { decodeTextBuffer, isLikelyBinary } from '../src/input-safety.mjs';
+import { parseInput } from '../scripts/batch-watch.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// ---------------------------------------------------------------------------
+// Engine setup
+// ---------------------------------------------------------------------------
+
+const SheetJS = await import('../src/xlsx-node-loader.mjs').then((m) => m.loadXlsx());
+setSpreadsheetEngine(SheetJS);
+
+const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
+const { runInThisContext } = await import('node:vm');
+runInThisContext(mammothSource);
+setDocxEngine(globalThis.mammoth);
 
 // ---------------------------------------------------------------------------
 // 1. Enterprise adapter edge cases
@@ -640,4 +656,59 @@ test('qingchuan-stack real fixture contains no malformed rows that crash adapter
   assert.equal(result.datasetType, 'stack');
   assert.ok(result.quality.rowCount > 0, 'should parse at least one row');
   assert.ok(result.metrics.sampleCount > 0, 'should have sample count');
+});
+
+// ---------------------------------------------------------------------------
+// 9. All 4 enterprise packages real file regression
+// ---------------------------------------------------------------------------
+
+test('package 01 氢璞创能 real TXT and XLSX both parse through adapter boundaries', async () => {
+  const txtBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
+  const txtDecoded = decodeTextBuffer(txtBuf, 'gb18030');
+  const txtRows = parseCSV(txtDecoded.text);
+  assert.ok(txtRows.length >= 100, 'hypu txt should have many rows');
+  assert.ok('时间' in txtRows[0]);
+
+  const xlsxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx'));
+  const xlsxResult = parseDataWorkbook(xlsxBuf);
+  assert.equal(xlsxResult.ok, true);
+  assert.equal(xlsxResult.sheetName, '稳定性');
+});
+
+test('package 02 氢质氢离 real DOCX durability and vehicle CSV both parse through adapter boundaries', async () => {
+  const docxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'));
+  const docxResult = await parseDurabilityDocx(docxBuf);
+  assert.ok(docxResult);
+  assert.equal(docxResult.metadata['测试方案'], '耐久0-5');
+  assert.ok(docxResult.points.length >= 50);
+
+  const csvBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+  const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
+  const csvRows = parseCSV(csvText);
+  assert.ok(csvRows.length >= 100, 'vehicle csv should have many rows');
+  assert.ok('Timestamp' in csvRows[0]);
+});
+
+test('package 03 青川易创 real CSV and DOCX both parse through adapter boundaries', async () => {
+  const csvBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+  const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
+  const csvRows = parseCSV(csvText);
+  assert.ok(csvRows.length >= 38000, 'qingchuan csv should have ~38k rows');
+  const csvResult = analyzeEnterpriseRows(csvRows, getProfile('qingchuan-stack'));
+  assert.equal(csvResult.datasetType, 'stack');
+
+  const docxBuf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx'));
+  const docxResult = await parseDurabilityDocx(docxBuf);
+  assert.ok(docxResult);
+  assert.ok(docxResult.headers.length >= 1);
+});
+
+test('package 04 海珀特 real PDF is detected as binary through shared input boundary', async () => {
+  const buf = await readFile(join(here, '../../T02_设备测试数据分析与自动报告助手/企业资料包04_海珀特/00_企业资料说明.pdf'));
+  assert.equal(isLikelyBinary(buf), true);
+  const decoded = decodeTextBuffer(buf);
+  assert.equal(decoded.binary, true);
+  const result = await parseInput('haperte-description.pdf', buf);
+  assert.equal(result.status, 'blocked_binary');
+  assert.ok(result.binaryReason?.length > 0);
 });

@@ -28,7 +28,7 @@
 
 ## 2026-08-24 · GitHub Actions Run 101 回读轮
 
-- `c00e582` 已由 Run `32712931265` 成功构建/部署；`build` 46 秒、`deploy` 16 秒，Pages artifact 715 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- `c00e582` 已由 Run `32712931265` 成功构建/部署；`build` 46 秒、`deploy` 16 秒，Pages artifact 715 KB，部署 job 返回 `https://lghui12138.github.io/projects/h2-testlens.html`。
 - 云端门控覆盖 188/188 测试、139/139 提交检查、T02 coverage 198/198 unchanged、18/18 standard-id reconciliation、无单位流量阻断、public quality 脱敏和 Excel parity。
 - 当前仍不宣称标准认证、企业放行或自定义域 HTTPS；六智能体分片已全部收齐，下一轮继续处理方差单位建模、输入前大小门和 outbound redirect 关闭等残余。
 
@@ -48,19 +48,19 @@
 
 ## 2026-08-24 · GitHub Actions Run 94 回读轮
 
-- `be607cb` 已由 Run `32706813818` 成功构建/部署；`build` 47 秒、`deploy` 19 秒，Pages 产物 714 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- `be607cb` 已由 Run `32706813818` 成功构建/部署；`build` 47 秒、`deploy` 19 秒，Pages 产物 714 KB，部署 job 返回 `https://lghui12138.github.io/projects/h2-testlens.html`。
 - 云端 run 与本地 183/183、136/136、package smoke 证据一致；公开提交页已包含 v3.5.38 三份 T02 审计文件。
 - GitHub 仍报告 `configure-pages@v5`、`upload-artifact` 和 `deploy-pages@v4` 触发 Node 20 弃用警告；该 workflow 变更需要下一轮单独处理，不能与本轮代码门混淆。
 
 ## 2026-08-24 · GitHub Actions Run 96 回读轮
 
-- `b133adf` 已由 Run `32707872160` 成功构建/部署；`build` 41 秒、`deploy` 10 秒，Pages 产物 714 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- `b133adf` 已由 Run `32707872160` 成功构建/部署；`build` 41 秒、`deploy` 10 秒，Pages 产物 714 KB，部署 job 返回 `https://lghui12138.github.io/projects/h2-testlens.html`。
 - 云端回读与本地 184/184、136/136、package smoke 证据一致；错哈希阻断测试已进入 GitHub main。
 - Node 20 弃用警告仍存在于旧 Pages action 版本；下一轮单独升级 workflow，并重新通过提交门和 Pages 回读。
 
 ## 2026-08-24 · GitHub Actions Run 98 回读轮
 
-- `c991286` 已由 Run `32708603239` 成功构建/部署；`build` 43 秒、`deploy` 9 秒，Pages 产物 714 KB，部署 job 返回 `http://lghui.top/h2-testlens-hackathon/`。
+- `c991286` 已由 Run `32708603239` 成功构建/部署；`build` 43 秒、`deploy` 9 秒，Pages 产物 714 KB，部署 job 返回 `https://lghui12138.github.io/projects/h2-testlens.html`。
 - workflow 已固定 `checkout@v6`、`setup-node@v6`、`configure-pages@v6`、`upload-pages-artifact@v5`、`deploy-pages@v5` 的官方完整 SHA；新增 138/138 提交门后云端成功，Run98 不再报告 Node20 弃用警告。
 - 当前残余收敛为自定义域 HTTPS/可达性、真实企业批准 profile/限值/计量证据和六智能体运行时线程上限；均未伪造为已完成。
 
@@ -87,7 +87,7 @@
 ## 2026-08-24 · GitHub 远端与 Actions 回读轮
 
 - 提交 `3f83261` 已成功推送到 `main`；GitHub Actions Run 82 已成功，`build` 与 `deploy` 均通过。
-- Pages 项目 URL 仍 301 到 `lghui.top`，自定义域当前不可达；这属于 GitHub Pages/CNAME 外部状态，未修改 DNS、代理或 VPN。
+- Pages 官方地址已改为 GitHub Pages 官方 URL；如果仍跳转到 lghui.top，请在 GitHub 仓库 Settings > Pages 中移除自定义域名。
 - 云端 workflow 仍只执行 typecheck/submission/static preparation，未执行 `package:submission`；因此线上静态 receipt 仍可能是 commit/run 已绑定但 package 未执行，未宣称 artifact SHA 已线上回读。
 
 ## 2026-08-24 · T02 逐文件回指与电堆流量安全轮
