@@ -962,4 +962,4 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
     assert.equal(hpaAmbientResult.schema.conversions.ambient_pressure_kpa.factor, 0.1);
     assert.equal(hpaAmbientResult.schema.conversions.ambient_pressure_kpa.label, 'hPa→kPa');
   });
-  });
+
