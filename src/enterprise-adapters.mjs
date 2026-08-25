@@ -883,7 +883,9 @@ function enterprisePhaseMetricReadiness(config, rows) {
     for (let position = 1; position < indexes.length; position += 1) {
       const previousIndex = indexes[position - 1];
       const currentIndex = indexes[position];
-      if (currentIndex !== previousIndex + 1 || rows[currentIndex]?.session_id !== rows[previousIndex]?.session_id) {
+      const contiguous = currentIndex === previousIndex + 1;
+      const sameSession = rows[currentIndex]?.session_id === rows[previousIndex]?.session_id;
+      if (!contiguous || !sameSession) {
         interruptedSegmentCount += 1;
         continue;
       }
