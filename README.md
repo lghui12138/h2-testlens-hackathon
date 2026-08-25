@@ -2,7 +2,7 @@
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
-[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-222%2F222-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-392%2F392-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
 
 ## 公开演示
 
@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 把设备测试 CSV 变成工程师可以复核、可以行动的中文报告：自动识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.71**。本轮完成全量真实 T02 资料包利用收尾与 Pages 同步：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部闭环，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **365** 条测试，其中 **365** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.71**。本轮完成全量真实 T02 资料包利用收尾与 Pages 同步：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部闭环，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **392** 条测试，其中 **392** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -266,7 +266,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## 边界测试覆盖
 
-- 当前测试套件共 **365 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 当前测试套件共 **392 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
 - 运行方式：`npm test`。
 - 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
 
