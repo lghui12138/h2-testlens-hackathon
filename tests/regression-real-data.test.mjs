@@ -474,3 +474,139 @@ test('qingchuan-stack real fixture 212 and 345 vehicle data do not regress adapt
   assert.ok(result212.dataset.insulation.validCount >= 1);
   assert.ok(result345.dataset.insulation.validCount >= 1);
 });
+
+// ---------------------------------------------------------------------------
+// 8. Deep computation accuracy audit with all real T02 enterprise data
+// ---------------------------------------------------------------------------
+
+test('hypu-durability peakPowerW is null (not 0) when all net_power_kw values are missing', () => {
+  const rows = [
+    { target_power_kw: '100', average_cell_voltage_mv: '500', average_deviation_mv: '10', voltage_variance: '5', net_power_kw: null, temperature_c: null },
+    { target_power_kw: '100', average_cell_voltage_mv: '500', average_deviation_mv: '10', voltage_variance: '5', net_power_kw: null, temperature_c: null }
+  ];
+  const result = analyzeEnterpriseRows(rows, getProfile('hypu-durability'));
+  assert.ok(result);
+  assert.equal(result.metrics.peakPowerW, null, 'peakPowerW must be null when no valid net_power_kw records exist');
+});
+
+test('qingzhihuli-vehicle peakPowerW is null (not 0) when all net_power_kw values are missing', () => {
+  const rows = [
+    { Timestamp: '2026-07-07 18:20:52', FC_MainSts: '4', FC_CurrOut: '50', FC_VoltOut: '320', FC_NetPwrOut: null, FC_MinCellVoltage: '3.1', FC_AvgCellVoltage: '3.15', FC_VARVoltage: '0.01', FC_VehicleIsolationR: '639', FC_RunTime_Hours: '10' },
+    { Timestamp: '2026-07-07 18:20:53', FC_MainSts: '4', FC_CurrOut: '50', FC_VoltOut: '320', FC_NetPwrOut: null, FC_MinCellVoltage: '3.1', FC_AvgCellVoltage: '3.15', FC_VARVoltage: '0.01', FC_VehicleIsolationR: '639', FC_RunTime_Hours: '10' }
+  ];
+  const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+  assert.ok(result);
+  assert.equal(result.metrics.peakPowerW, null, 'peakPowerW must be null when no valid net_power_kw records exist');
+});
+
+test('hypu-durability peakTemperatureC preserves legitimate 0°C instead of coercing to null', () => {
+  const rows = [
+    { target_power_kw: '100', average_cell_voltage_mv: '500', average_deviation_mv: '10', voltage_variance: '5', net_power_kw: '50', temperature_c: '0' },
+    { target_power_kw: '100', average_cell_voltage_mv: '500', average_deviation_mv: '10', voltage_variance: '5', net_power_kw: '50', temperature_c: '25' }
+  ];
+  const result = analyzeEnterpriseRows(rows, getProfile('hypu-durability'));
+  assert.ok(result);
+  assert.equal(result.metrics.peakTemperatureC, 25, 'peakTemperatureC must return the actual max, not null for 0°C');
+});
+
+test('qingchuan-stack peakTemperatureC preserves legitimate 0°C instead of coercing to null', () => {
+  const headers = ['测试时间', '实际电流（A）', '实际电压（V）', '阳极入堆温度（℃）', '循环水入堆压力（kPa）', '阳极流量（SLPM）', '柜内氢气浓度（ppm）'].join(',');
+  const rows = [
+    { '测试时间': '2026/6/23 14:30', '实际电流（A）': '10', '实际电压（V）': '180', '阳极入堆温度（℃）': '0', '循环水入堆压力（kPa）': '100', '阳极流量（SLPM）': '10', '柜内氢气浓度（ppm）': '0' },
+    { '测试时间': '2026/6/23 14:31', '实际电流（A）': '10', '实际电压（V）': '180', '阳极入堆温度（℃）': '25', '循环水入堆压力（kPa）': '100', '阳极流量（SLPM）': '10', '柜内氢气浓度（ppm）': '0' }
+  ];
+  const result = analyzeEnterpriseRows(parseCSV(`${headers}\n${rows.map((row) => Object.values(row).join(',')).join('\n')}`), getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.metrics.peakTemperatureC, 25, 'peakTemperatureC must return the actual max, not null for 0°C');
+});
+
+test('qingchuan-stack adapter computes flow resistance from real header pairs', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  const anodeResistance = result.dataset.metrics.anodeFlowResistanceKpa;
+  assert.ok(anodeResistance, 'anode flow resistance should be calculated');
+  assert.ok(Number.isFinite(anodeResistance.mean), 'anode flow resistance mean should be finite');
+  assert.ok(anodeResistance.mean > 0, 'anode inlet should be higher than outlet for positive flow resistance');
+});
+
+test('qingchuan-stack adapter computes stoichiometry from real current and flow data', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  const h2Stoich = result.dataset.metrics.hydrogenStoich;
+  const airStoich = result.dataset.metrics.airStoich;
+  assert.ok(h2Stoich, 'hydrogen stoichiometry should be calculated');
+  assert.ok(airStoich, 'air stoichiometry should be calculated');
+  assert.ok(Number.isFinite(h2Stoich.mean), 'h2 stoich mean should be finite');
+  assert.ok(Number.isFinite(airStoich.mean), 'air stoich mean should be finite');
+  assert.ok(h2Stoich.mean > 0, 'h2 stoich should be positive');
+  assert.ok(airStoich.mean > 0, 'air stoich should be positive');
+});
+
+test('qingchuan-stack adapter computes coolant temperature difference from real data', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  const coolantDt = result.dataset.metrics.coolantTemperatureDifferenceC;
+  assert.ok(coolantDt, 'coolant temperature difference should be calculated');
+  assert.ok(Number.isFinite(coolantDt.mean), 'coolant dt mean should be finite');
+});
+
+test('qingchuan-stack unit conversion handles explicit kW header and preserves factor', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  assert.equal(result.schema.conversions.power_w.factor, 1000, 'kW->W conversion factor should be 1000');
+  assert.equal(result.schema.conversions.power_w.label, 'kW→W', 'power conversion label should indicate kW→W');
+});
+
+test('qingzhihuli-vehicle real fixture 212 preserves session boundaries and computes deterministic insulation windows', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-212-real.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'vehicle');
+  assert.ok(result.dataset.sessionCount >= 1, 'should detect at least one session');
+  assert.ok(result.dataset.insulation.validCount >= 1, 'should have valid insulation points');
+  assert.ok(result.metrics.peakPowerW >= 0 || result.metrics.peakPowerW === null, 'peakPowerW should be non-negative or null');
+});
+
+test('analyzer specificEnergyKWhPerNm3 uses explicit zero-guard instead of truthiness', () => {
+  const rows = parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,30,10,0,1',
+    '60,10,2,30,10,0,1'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.metrics.hydrogenVolumeNl, 0);
+  assert.equal(result.metrics.specificEnergyKWhPerNm3, null, 'specific energy must be null when hydrogen volume is zero');
+});
+
+test('analyzer peakTemperatureC preserves 0°C as a valid peak instead of coercing to null', () => {
+  const rows = parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,0,10,6,1',
+    '60,10,2,25,10,6,1'
+  ].join('\n'));
+  const result = analyzeRows(rows);
+  assert.equal(result.metrics.peakTemperatureC, 25, 'peakTemperatureC must return actual max including values above 0');
+});
+
+test('qingchuan-stack real fixture contains no malformed rows that crash adapter', async () => {
+  const fixture = await readFile(join(here, '../sample-data/t02-qingchuan-stack-regression.csv'), 'utf8');
+  const rows = parseCSV(fixture);
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  assert.ok(result);
+  assert.equal(result.datasetType, 'stack');
+  assert.ok(result.quality.rowCount > 0, 'should parse at least one row');
+  assert.ok(result.metrics.sampleCount > 0, 'should have sample count');
+});

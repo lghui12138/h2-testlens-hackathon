@@ -139,3 +139,64 @@ test('compliance history snapshot captures enriched fields for UI rendering', ()
   assert.ok(snapshot.datasetRowCount === 10);
   assert.ok(snapshot.evaluationMode === null);
 });
+
+test('compliance exposes per-standard breakdown with clause refs and unapproved boundary', () => {
+  const result = compliance({
+    approvalStatus: 'example_unapproved',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    methodId: 'GB/T 45541-2025',
+    revision: '2025',
+    standardRefs: [
+      { id: 'GB/T 45541-2025', title: 'PEM', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current' },
+      { id: 'ISO 22734-1:2025', title: 'ISO', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published' }
+    ],
+    standardClauseRefs: {
+      'GB/T 45541-2025': ['基本检查', '基础测试', '性能测试', '测试报告'],
+      'ISO 22734-1:2025': ['安全要求']
+    },
+    requiredMetadata: [],
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    testMetadata: {}
+  }, 'stack', {}, { rowCount: 10, completenessPct: 100, usable: true }, [], {});
+  assert.ok(Array.isArray(result.standardBreakdown));
+  assert.equal(result.standardBreakdown.length, 2);
+  const pem = result.standardBreakdown.find((item) => item.id === 'GB/T 45541-2025');
+  assert.ok(pem, 'PEM standard breakdown present');
+  assert.deepEqual(pem.clauseRefs, ['基本检查', '基础测试', '性能测试', '测试报告']);
+  assert.ok(!pem.ready, 'unapproved profile should not mark standard ready');
+  assert.ok(result.boundary.includes('GB/T 45541-2025'));
+  assert.ok(result.boundary.includes('基本检查'));
+  assert.ok(result.boundary.includes('ISO 22734-1:2025'));
+  assert.ok(result.boundary.includes('安全要求'));
+});
+
+test('compliance standard breakdown marks approved evidence-ready standards as ready', () => {
+  const result = compliance({
+    approvalStatus: 'approved',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    methodId: 'GB/T 46104-2025',
+    revision: '2025',
+    status: 'current',
+    standardRefs: [{ id: 'GB/T 46104-2025', title: 'test', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current' }],
+    standardClauseRefs: { 'GB/T 46104-2025': ['冷启动', '稳态'] },
+    methodSource: { sourceId: 'SRC', locator: 'LOC', evidenceType: 'register' },
+    scopeEvidence: 'scope',
+    workflowEvidence: 'workflow',
+    publicationDate: '2025-01-01',
+    effectiveDate: '2025-06-01',
+    requiredMetadata: ['operator'],
+    testMetadata: { operator: 'engineer-1' },
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    requiredMeasurements: [],
+    requiredPhases: [],
+    dataQualityRequirements: {}
+  }, 'stack', {}, { rowCount: 10, completenessPct: 100, usable: true }, [], {});
+  const standard = result.standardBreakdown?.[0];
+  assert.ok(standard, 'standard breakdown entry exists');
+  assert.equal(standard.id, 'GB/T 46104-2025');
+  assert.deepEqual(standard.clauseRefs, ['冷启动', '稳态']);
+  assert.ok(standard.ready, 'approved profile with evidence should be ready');
+  assert.ok(standard.evidence.includes('已形成'));
+});

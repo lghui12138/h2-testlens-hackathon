@@ -241,7 +241,12 @@ export const DEVICE_PROFILES = Object.freeze([
     supportedDatasetTypes: ['generic'],
     uncertaintyModelRequired: false,
     uncertaintyModel: null,
-    thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+    thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    standardClauseRefs: {
+      'GB/T 46104-2025': ['测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
+      'GB/T 29729-2022': ['氢系统安全基本要求'],
+      'ISO 22734-1:2025': ['安全要求']
+    }
   },
   {
     id: 'electrolyzer-pem-performance-demo',
@@ -321,7 +326,12 @@ export const DEVICE_PROFILES = Object.freeze([
     supportedDatasetTypes: ['generic'],
     uncertaintyModelRequired: false,
     uncertaintyModel: null,
-    thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 }
+    thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    standardClauseRefs: {
+      'GB/T 45541-2025': ['基本检查', '基础测试', '性能测试', '测试报告'],
+      'GB/T 29729-2022': ['氢系统安全基本要求'],
+      'ISO 22734-1:2025': ['安全要求']
+    }
   },
   {
     id: 't02-vehicle-descriptive',
@@ -487,6 +497,10 @@ export const DEVICE_PROFILES = Object.freeze([
     },
     dataQualityRequirements: {
       maxIntervalS: 1
+    },
+    standardClauseRefs: {
+      'GB/T 45541-2025': ['基本检查', '基础测试', '性能测试', '测试报告'],
+      'ISO/IEC 17025:2017': ['实验室能力要求', '公正性', '保密性']
     }
   },
   {
@@ -575,11 +589,11 @@ export const DEVICE_PROFILES = Object.freeze([
   },
   {
     id: 'hypu-durability',
-    name: '氢璞创能 · 耐久测试数据 profile',
+    name: '耐久测试 · 企业资料 profile',
     source: 'T02 企业资料字段审计（未审批）',
-    description: '针对氢璞创能耐久报告（XLSX/DOCX）的字段映射与描述性统计；基于出厂检测报告解析与功率点分析。不执行企业预警阈值或放行判定。',
+    description: '针对耐久台架/出厂检测报告（DOCX/XLSX）的字段映射与描述性统计；基于功率点分析与跨报告可比性边界。不执行企业预警阈值或放行判定。',
     approvalStatus: 'example_unapproved',
-    applicationScope: '氢璞创能燃料电池耐久台架测试与出厂检测数据',
+    applicationScope: '燃料电池耐久台架测试与出厂检测数据',
     intendedUse: '耐久功率点统计、电芯电压趋势、跨报告可比性描述、预警检测；需企业批准规则和方法版本才可进入风险筛查',
     methodId: 'HYPU-durability-rule-set',
     revision: '2026-08',
@@ -638,6 +652,135 @@ export const DEVICE_PROFILES = Object.freeze([
     dataQualityRequirements: {
       maxIntervalS: 5
     }
+  },
+  {
+    id: 'hypu-stack',
+    name: '氢璞创能 · 电堆时序测试 profile',
+    source: 'T02 企业资料字段审计（未审批）',
+    description: '针对氢璞创能电堆时序 TXT 数据的字段映射与描述性统计；基于真实数据包 11 份 TXT、1 份 XLSX 回归验证。不执行企业目标工况符合性或正式放行判定。',
+    approvalStatus: 'example_unapproved',
+    applicationScope: '氢璞创能燃料电池电堆稳态/动态时序测试数据',
+    intendedUse: '电流平台识别、单片电压统计、温度/压力趋势、候选稳定区间描述；需企业批准参数工作簿才可进入目标工况路径',
+    methodId: 'HYPU-stack-rule-set',
+    revision: 'hypu-stack-v1',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    evaluationMode: 'descriptive_only',
+    supportedDatasetTypes: ['stack'],
+    standardRefs: [],
+    methodSource: null,
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    traceabilityRequirements: {
+      required: true,
+      requireEvidenceRef: true,
+      fields: [
+        { id: 'testRunId', label: '测试运行编号', valueType: 'reference' },
+        { id: 'deviceId', label: '设备编号', valueType: 'reference' },
+        { id: 'testType', label: '测试类型', valueType: 'text' },
+        { id: 'testDate', label: '测试日期', valueType: 'date' },
+        { id: 'cellCount', label: '单片数量', valueType: 'number' }
+      ]
+    },
+    requiredMeasurements: ['current_a', 'voltage_v', 'temperature_c', 'pressure_kpa', 'flow_slpm'],
+    acquisitionRequirements: {
+      requireSamplingFrequency: true,
+      requireSynchronization: true,
+      requireEvidenceRef: true,
+      requiredChannels: [
+        { field: 'timestamp_s', unit: 's' },
+        { field: 'current_a', unit: 'A' },
+        { field: 'voltage_v', unit: 'V' },
+        { field: 'temperature_c', unit: '°C' },
+        { field: 'pressure_kpa', unit: 'kPa' },
+        { field: 'flow_slpm', unit: 'SLPM' }
+      ]
+    },
+    preCheckRequirements: [
+      { id: 'device_identity', label: '设备身份与电堆编号', required: true },
+      { id: 'test_bench', label: '测试台与气液路状态', required: true },
+      { id: 'instruments', label: '仪器与采集系统状态', required: true },
+      { id: 'safety', label: '安全联锁与报警状态', required: true }
+    ],
+    requiredPhases: ['steady', 'dynamic'],
+    requiredPhaseMetrics: {
+      steady: ['durationS', 'avgCellVoltageV', 'voltageVariance'],
+      dynamic: ['durationS', 'currentRangeA']
+    },
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    scopeRules: {
+      maxCellCount: 300,
+      maxTemperatureC: 85,
+      maxPressureBar: 50,
+      description: '氢璞创能电堆时序测试覆盖；具体限值以企业批准资料为准。'
+    },
+    thresholds: { maxTemperatureC: 85, maxPressureBar: 50, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
+    fieldMapping: {
+      timestamp_s: '时间',
+      current_a: '电堆电流',
+      voltage_v: '电堆电压',
+      power_kw: '电堆功率',
+      current_density_mAcm2: '电流密度',
+      temperature_c: '冷却水入口温度(℃)',
+      pressure_kpa: '阳极气源压力(kpa)',
+      flow_slpm: '阳极气体流量(L/Min)',
+      leak_ppm: '氢气浓度',
+      avg_cell_voltage_v: '平均电压',
+      min_cell_voltage_v: '单片电压最小值',
+      max_cell_voltage_v: '单片电压最大值',
+      anode_in_temp_c: '阳极气源温度(℃)',
+      cathode_in_temp_c: '阴极气源温度(℃)',
+      coolant_in_temp_c: '电堆循环水进堆温度(℃)',
+      coolant_out_temp_c: '电堆循环水出堆温度(℃)',
+      coolant_flow_lpm: '电堆循环水流量(L/Min)',
+      coolant_conductivity_us_cm: '电导率',
+      anode_in_pressure_kpa: '阳极气源压力(kpa)',
+      cathode_in_pressure_kpa: '阴极气源压力(kpa)',
+      coolant_in_pressure_kpa: '电堆循环水进堆压力(kpa)',
+      coolant_out_pressure_kpa: '电堆循环水出堆压力(kpa)',
+      anode_out_pressure_kpa: '阳极减压压力(kpa)',
+      cathode_out_pressure_kpa: '阴极减压压力(kpa)'
+    },
+    dataQualityRequirements: {
+      maxIntervalS: 1
+    }
+  },
+  {
+    id: 'haperte',
+    name: '海珀特 · 企业资料 profile',
+    source: 'T02 企业资料字段审计（未审批）',
+    description: '海珀特当前仅提供 PDF 企业说明，无机器可解析数据；profile 作为边界占位，不作正式字段映射或放行判定。',
+    approvalStatus: 'example_unapproved',
+    applicationScope: '海珀特企业资料包（当前仅 PDF 说明，无机器 readable 数据）',
+    intendedUse: '仅作边界占位，不作正式分析；待企业补充可解析数据后替换',
+    methodId: 'HAPERTE-boundary-rule-set',
+    revision: 'haperte-v1',
+    methodExecutionStatus: 'ENTERPRISE_PROFILE_REQUIRED',
+    evaluationMode: 'descriptive_only',
+    supportedDatasetTypes: ['generic'],
+    standardRefs: [],
+    methodSource: null,
+    requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
+    traceabilityRequirements: {
+      required: true,
+      requireEvidenceRef: true,
+      fields: [
+        { id: 'testRunId', label: '测试运行编号', valueType: 'reference' },
+        { id: 'deviceId', label: '设备编号', valueType: 'reference' }
+      ]
+    },
+    requiredMeasurements: [],
+    acquisitionRequirements: null,
+    preCheckRequirements: [],
+    requiredPhases: [],
+    requiredPhaseMetrics: {},
+    acceptanceRules: [],
+    acceptanceCriteria: {},
+    scopeRules: {
+      description: '海珀特资料包当前无可解析机器 readable 数据，profile 仅作占位。'
+    },
+    thresholds: null,
+    fieldMapping: {},
+    dataQualityRequirements: null
   }
 ]);
 

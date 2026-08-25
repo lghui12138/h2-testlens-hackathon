@@ -987,11 +987,40 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
   const formalBlockers = missingProfileFields.length || missingMetadata.length || !approvalEvidence.ready || !standardReferenceEvidence.ready || (standardEvidenceBindingRequired && config.standardEvidenceBinding?.ready !== true) || !methodImplementationEvidence.ready || !fullMethodProfile.ready || !scope.ready || !instruments.ready || !acceptance.ready || !report.ready || !testStages.ready || !testSystem.ready || !testConditions.ready || !environmentConditions.ready || !measurementMethods.ready || !efficiency.ready || !phaseResults.ready || !acquisition.ready || !preCheck.ready || !dataQuality.ready || phaseMetrics.missing.length || !measurements.ready || !phases.ready || (uncertaintyModelRequired && !uncertaintyModelConfigured);
   const status = config.approvalStatus !== 'approved' ? 'DEMO_ONLY' : formalBlockers ? 'NOT_READY' : 'READY_FOR_HUMAN_REVIEW';
   const missingSummary = [...missingProfileFields, ...missingMetadata, ...measurements.missing, ...phases.missing, ...phaseMetrics.missing, ...(dataQuality.missing || [])].filter(Boolean);
-  const boundary = config.approvalStatus !== 'approved'
+  const standardIds = (config.standardRefs || []).map((reference) => String(reference.id || '').trim()).filter(Boolean);
+  const standardClauseNote = standardIds.map((id) => {
+    if (id === 'GB/T 45541-2025') return 'GB/T 45541-2025 基本检查、基础测试、性能测试和测试报告';
+    if (id === 'GB/T 46104-2025') return 'GB/T 46104-2025 冷启动、热启动、稳态、变功率动态、停机';
+    if (id === 'ISO 22734-1:2025') return 'ISO 22734-1:2025 安全要求';
+    if (id === 'ISO/IEC 17025:2017') return 'ISO/IEC 17025:2017 实验室能力要求';
+    return null;
+  }).filter(Boolean);
+  const baseBoundary = config.approvalStatus !== 'approved'
     ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非 approved 路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
     : formalBlockers
       ? `已使用 approved profile，但仍有 ${missingSummary.length} 项标准化资料未完成（${missingSummary.slice(0, 6).join('、')}${missingSummary.length > 6 ? ' 等' : ''}）；当前仅作人工复核前处理，不自动声明符合性。`
       : '已使用企业 approved profile，标准化资料已齐备；仍需工程师人工复核与签核后方可进入正式放行。';
+  const boundary = standardClauseNote.length ? `${baseBoundary} 当前映射覆盖条款/流程：${standardClauseNote.join('；')}。` : baseBoundary;
+  const standardBreakdown = (config.standardRefs || []).map((reference) => {
+    const id = String(reference.id || '').trim();
+    const clauseRefs = Array.isArray(config.standardClauseRefs?.[id]) ? config.standardClauseRefs[id] : [];
+    const profileReady = config.approvalStatus === 'approved';
+    const evidenceReady = standardReferenceEvidence.ready;
+    const methodReady = methodImplementationEvidence.ready;
+    const overallReady = profileReady && evidenceReady && methodReady;
+    return {
+      id,
+      title: reference.title,
+      status: reference.status,
+      uri: reference.uri,
+      clauseRefs,
+      ready: overallReady,
+      evidence: profileReady
+        ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
+        : '当前 profile 未批准，不进入标准符合性判定',
+      boundary: `该标准引用当前仅作公开范围/流程映射演示；具体条款符合性需企业 approved profile 与完整方法实施证据支撑。`
+    };
+  });
   const evidenceDetails = [
     { id: 'approval', label: 'profile 审批与修订证据', ready: approvalEvidence.ready, evidence: approvalEvidence.evidence },
     { id: 'standardReference', label: '标准引用证据', ready: standardReferenceEvidence.ready, evidence: standardReferenceEvidence.evidence },
@@ -1034,7 +1063,7 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
     evidenceTotalCount: evidenceDetails.length,
     evidenceDetails
   };
-  return { status, label: status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? `${datasetLabel} · 标准化资料不完整` : `${datasetLabel} · 可进入人工符合性复核`, boundary, auditTrail, approvalStatus: config.approvalStatus || 'pending', approvalEvidence, standardReferenceEvidence, methodExecutionStatus, methodImplementationEvidence, fullMethodProfile, standardRefs: config.standardRefs || [], standardEvidenceBinding: config.standardEvidenceBinding || { ready: !config.standardRefs?.length, status: config.standardRefs?.length ? 'missing' : 'not_configured' }, methodId: config.methodId || null, revision: config.revision || null, methodSource: config.methodSource || null, standardStatus: config.status || null, publicationDate: config.publicationDate || null, effectiveDate: config.effectiveDate || null, scopeEvidence: config.scopeEvidence || null, workflowEvidence: config.workflowEvidence || null, applicationScope: config.applicationScope || datasetLabel, intendedUse: config.intendedUse || '企业资料结构适配与人工复核前处理', missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: measurements.required, missingMeasurements: measurements.missing, requiredPhases: phases.required, missingPhases: phases.missing, requiredPhaseMetrics: config.requiredPhaseMetrics || {}, missingPhaseMetrics: phases.missingMetrics, phaseMetrics, requiredTestStages: config.requiredTestStages || [], testSystemRequirements: config.testSystemRequirements || [], testConditionRequirements: config.testConditionRequirements || null, environmentConditionRequirements: config.environmentConditionRequirements || null, phaseResultRequirements: config.phaseResultRequirements || [], measurementMethodRequirements: config.measurementMethodRequirements || [], efficiencyRequirement: config.efficiencyRequirement || null, acquisition, preCheck, dataQuality, testStages, testSystem, testConditions, environmentConditions, measurementMethods, phaseResults, efficiency, measurements, phases, acceptanceCriteria: config.acceptanceCriteria || {}, acceptanceRules: config.acceptanceRules || [], scope, instruments, acceptance, report, uncertaintyModelRequired, uncertaintyModelConfigured, uncertainty: uncertaintyModelConfigured ? { status: 'configured_pending_calculation' } : { status: 'not_configured' } };
+  return { status, label: status === 'DEMO_ONLY' ? '仅演示，不作标准符合性判定' : status === 'NOT_READY' ? `${datasetLabel} · 标准化资料不完整` : `${datasetLabel} · 可进入人工符合性复核`, boundary, auditTrail, approvalStatus: config.approvalStatus || 'pending', approvalEvidence, standardReferenceEvidence, methodExecutionStatus, methodImplementationEvidence, fullMethodProfile, standardRefs: config.standardRefs || [], standardEvidenceBinding: config.standardEvidenceBinding || { ready: !config.standardRefs?.length, status: config.standardRefs?.length ? 'missing' : 'not_configured' }, methodId: config.methodId || null, revision: config.revision || null, methodSource: config.methodSource || null, standardStatus: config.status || null, publicationDate: config.publicationDate || null, effectiveDate: config.effectiveDate || null, scopeEvidence: config.scopeEvidence || null, workflowEvidence: config.workflowEvidence || null, applicationScope: config.applicationScope || datasetLabel, intendedUse: config.intendedUse || '企业资料结构适配与人工复核前处理', missingProfileFields, requiredMetadata, missingMetadata, requiredMeasurements: measurements.required, missingMeasurements: measurements.missing, requiredPhases: phases.required, missingPhases: phases.missing, requiredPhaseMetrics: config.requiredPhaseMetrics || {}, missingPhaseMetrics: phases.missingMetrics, phaseMetrics, requiredTestStages: config.requiredTestStages || [], testSystemRequirements: config.testSystemRequirements || [], testConditionRequirements: config.testConditionRequirements || null, environmentConditionRequirements: config.environmentConditionRequirements || null, phaseResultRequirements: config.phaseResultRequirements || [], measurementMethodRequirements: config.measurementMethodRequirements || [], efficiencyRequirement: config.efficiencyRequirement || null, acquisition, preCheck, dataQuality, testStages, testSystem, testConditions, environmentConditions, measurementMethods, phaseResults, efficiency, measurements, phases, acceptanceCriteria: config.acceptanceCriteria || {}, acceptanceRules: config.acceptanceRules || [], scope, instruments, acceptance, report, standardBreakdown, uncertaintyModelRequired, uncertaintyModelConfigured, uncertainty: uncertaintyModelConfigured ? { status: 'configured_pending_calculation' } : { status: 'not_configured' } };
 }
 
 function commonSchema(mapping, fieldCount = Object.keys(mapping).length, conversionOverrides = {}) {
@@ -1488,7 +1517,9 @@ function buildDurability(rows, config) {
     sourceFieldMap: mapping
   };
   const meanMetric = (field) => mean(normalized.map((point) => point[field]).filter((value) => value !== null));
-  const metrics = { sampleCount: normalized.length, durationS: 0, completenessPct: quality.completenessPct, peakPowerW: Math.max(...normalized.map((point) => point.net_power_kw).filter((value) => value !== null), 0) * 1000, steadyVoltageMeanV: meanMetric('average_cell_voltage_mv') === null ? null : meanMetric('average_cell_voltage_mv') / 1000, steadyVoltageStdV: std(normalized.map((point) => point.average_cell_voltage_mv).filter((value) => value !== null)) / 1000, peakTemperatureC: Math.max(...normalized.map((point) => point.temperature_c).filter((value) => value !== null), 0) || null, peakPressureBar: null, peakLeakPpm: null, hydrogenVolumeNl: null, energyConsumedWh: null, specificEnergyKWhPerNm3: null, minimumHydrogenPurityPct: null, pressureDriftBarPerMin: 0, steadyWindow: '台架耐久功率点', steadySampleCount: normalized.length };
+  const powerValues = normalized.map((point) => point.net_power_kw).filter((value) => value !== null);
+  const temperatureValues = normalized.map((point) => point.temperature_c).filter((value) => value !== null);
+  const metrics = { sampleCount: normalized.length, durationS: 0, completenessPct: quality.completenessPct, peakPowerW: powerValues.length ? Math.max(...powerValues) * 1000 : null, steadyVoltageMeanV: meanMetric('average_cell_voltage_mv') === null ? null : meanMetric('average_cell_voltage_mv') / 1000, steadyVoltageStdV: std(normalized.map((point) => point.average_cell_voltage_mv).filter((value) => value !== null)) / 1000, peakTemperatureC: temperatureValues.length ? Math.max(...temperatureValues) : null, peakPressureBar: null, peakLeakPpm: null, hydrogenVolumeNl: null, energyConsumedWh: null, specificEnergyKWhPerNm3: null, minimumHydrogenPurityPct: null, pressureDriftBarPerMin: 0, steadyWindow: '台架耐久功率点', steadySampleCount: normalized.length };
   const schema = commonSchema({ ...mapping, ...efficiencyFields }, Object.keys(mapping).length + Object.keys(efficiencyFields).length);
   const uncertainty = calculateEnterpriseUncertainty(normalized, metrics, config.uncertaintyModel, {
     metricSpecs: [
@@ -1704,7 +1735,7 @@ function buildVehicle(rows, config) {
     sampleCount: rowsForAnalysis.length,
     durationS: !rowsForAnalysis.length || sessionTime.sessions.length > 1 ? null : windowEndS - windowStartS,
     completenessPct: quality.completenessPct,
-    peakPowerW: rowsForAnalysis.length ? Math.max(...rowsForAnalysis.map((row) => row.net_power_kw).filter((value) => value !== null), 0) * 1000 : null,
+    peakPowerW: (() => { const values = rowsForAnalysis.map((row) => row.net_power_kw).filter((value) => value !== null); return values.length ? Math.max(...values) * 1000 : null; })(),
     steadyVoltageMeanV: mean(rowsForAnalysis.map((row) => row.avg_cell_voltage_v).filter((value) => value !== null)),
     steadyVoltageStdV: std(rowsForAnalysis.map((row) => row.avg_cell_voltage_v).filter((value) => value !== null)),
     peakTemperatureC: null,

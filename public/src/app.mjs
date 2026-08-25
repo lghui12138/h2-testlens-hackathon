@@ -279,7 +279,10 @@ async function analyzeCurrent(reason = '重新分析') {
     resetBatchProgress();
     setAnalysisStatus(`分析失败：${message}`, 'error');
     const notice = $('#schema-notice');
-    if (notice) notice.textContent = `分析失败：${message}；请检查数据格式，或点击“重试”再次分析。`;
+    if (notice) {
+      const example = state.fileName?.includes('electrolyzer') ? '示例列：timestamp, current_a, avg_cell_voltage_v, power_kw, temperature_c, pressure_bar' : state.fileName?.includes('legacy') ? '中文单位样本需包含：时间, 电流_A, 平均单片电压_V, 功率_kW, 温度_C, 压力_bar' : '请确认首行包含表头且列名与示例一致';
+      notice.innerHTML = `<div class="error-detail"><strong>分析失败</strong><span>${escapeHtml(message)}</span><div class="error-example"><strong>真实数据提示：</strong>${escapeHtml(example)}<br>文件：${escapeHtml(state.fileName || '—')} · 记录：${(state.inputSummary?.processed || 0).toLocaleString('zh-CN')} 条</div></div>`;
+    }
     const retryButton = $('#retry-analysis');
     if (retryButton) retryButton.hidden = false;
     document.body.removeAttribute('aria-busy');
@@ -508,18 +511,22 @@ function qualityMeter(completenessPct) {
 function showMetricSkeletons() {
   const grid = $('#metric-grid');
   if (!grid) return;
-  grid.innerHTML = Array.from({ length: 8 }).map(() => `<article class="metric-card skeleton skeleton-card"><div class="skeleton-text short"></div><div class="skeleton-text"></div><div class="skeleton-text"></div></article>`).join('');
+  const datasetType = state.result?.datasetType || state.fileName;
+  const dataClass = ['vehicle', 'stack', 'durability'].find((type) => String(datasetType).includes(type)) || 'generic';
+  grid.innerHTML = Array.from({ length: 8 }).map(() => `<article class="metric-card skeleton skeleton-card data-${dataClass}"><div class="skeleton-text short"></div><div class="skeleton-text"></div><div class="skeleton-text"></div></article>`).join('');
   const chartWrap = $('#trend-chart')?.parentElement;
   if (chartWrap && !chartWrap.querySelector('.chart-skeleton-message')) {
     chartWrap.classList.add('chart-loading');
-    chartWrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>分析完成后将在此渲染趋势图</span></div>');
+    const rowCount = state.result?.metrics?.sampleCount?.toLocaleString('zh-CN') || '—';
+    chartWrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>分析完成后将在此渲染趋势图</span><div class="skeleton-data-context"><strong>数据上下文</strong> 记录数 ${rowCount} · 文件 ${escapeHtml(state.fileName || '—')}</div></div>`);
   }
   ['enterprise-chart', 'enterprise-performance-chart'].forEach((id) => {
     const canvas = $(`#${id}`);
     const wrap = canvas?.parentElement;
     if (wrap && !wrap.querySelector('.chart-skeleton-message')) {
       wrap.classList.add('chart-loading');
-      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>识别到企业数据后将显示专用图表</span></div>`);
+      const label = state.result?.dataset?.label || '企业数据';
+      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
     }
   });
 }
@@ -803,88 +810,96 @@ async function evaluateDeclaredBatch() {
 
 function drawChart(result) {
   const canvas = $('#trend-chart');
-  const ctx = canvas.getContext('2d');
+  const wrap = canvas?.parentElement;
+  const ctx = canvas?.getContext('2d');
+  if (!canvas || !ctx || !wrap) return;
   const width = canvas.clientWidth * devicePixelRatio;
   const height = canvas.clientHeight * devicePixelRatio;
   canvas.width = width; canvas.height = height;
   ctx.scale(devicePixelRatio, devicePixelRatio);
   const w = canvas.clientWidth; const h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
-  if (result.datasetType) {
-    const rows = result.rows.filter((row) => row.timestamp_s !== null);
-    const windowedRows = result.datasetType === 'vehicle' && result.dataset?.analysisWindow
-      ? rows.filter((row) => row.timestamp_s >= result.dataset.analysisWindow.startS && row.timestamp_s <= result.dataset.analysisWindow.endS)
-      : rows;
-    const chartRows = windowedRows.length ? windowedRows : rows;
-    const pad = { left: 36, right: 18, top: 18, bottom: 28 };
-    const x = (index) => pad.left + (index / Math.max(chartRows.length - 1, 1)) * (w - pad.left - pad.right);
-    if (result.datasetType === 'vehicle') {
-      const axes = [
-        { field: 'selected_signal_value', color: '#d77cf2', label: result.dataset?.selectedSignal || '左轴信号', axis: 'left' },
-        ...(result.dataset?.secondarySignal ? [{ field: 'secondary_signal_value', color: '#5bd4c0', label: result.dataset.secondarySignal, axis: 'right' }] : [])
-      ];
-      const valuesFor = (field) => chartRows.map((row) => row[field]).filter((item) => Number.isFinite(item));
-      const scale = (field) => {
-        const values = valuesFor(field);
-        const min = values.length ? Math.min(...values) : 0;
-        const max = values.length ? Math.max(...values) : 1;
-        return { min, max, span: max - min || 1 };
+  try {
+    if (result.datasetType) {
+      const rows = result.rows.filter((row) => row.timestamp_s !== null);
+      const windowedRows = result.datasetType === 'vehicle' && result.dataset?.analysisWindow
+        ? rows.filter((row) => row.timestamp_s >= result.dataset.analysisWindow.startS && row.timestamp_s <= result.dataset.analysisWindow.endS)
+        : rows;
+      const chartRows = windowedRows.length ? windowedRows : rows;
+      const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+      const x = (index) => pad.left + (index / Math.max(chartRows.length - 1, 1)) * (w - pad.left - pad.right);
+      if (result.datasetType === 'vehicle') {
+        const axes = [
+          { field: 'selected_signal_value', color: '#d77cf2', label: result.dataset?.selectedSignal || '左轴信号', axis: 'left' },
+          ...(result.dataset?.secondarySignal ? [{ field: 'secondary_signal_value', color: '#5bd4c0', label: result.dataset.secondarySignal, axis: 'right' }] : [])
+        ];
+        const valuesFor = (field) => chartRows.map((row) => row[field]).filter((item) => Number.isFinite(item));
+        const scale = (field) => {
+          const values = valuesFor(field);
+          const min = values.length ? Math.min(...values) : 0;
+          const max = values.length ? Math.max(...values) : 1;
+          return { min, max, span: max - min || 1 };
+        };
+        const scales = Object.fromEntries(axes.map((item) => [item.axis, scale(item.field)]));
+        const yFor = (axis, value) => h - pad.bottom - ((value - scales[axis].min) / scales[axis].span) * (h - pad.top - pad.bottom);
+        ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
+        ctx.font = '10px Avenir Next, sans-serif';
+        ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.left.min, 2)}–${fmt(scales.left.max, 2)}`, 4, pad.top + 10);
+        if (scales.right) { ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.right.min, 2)}–${fmt(scales.right.max, 2)}`, w - 62, pad.top + 10); }
+        axes.forEach((item) => {
+          ctx.strokeStyle = item.color; ctx.lineWidth = 1.8; ctx.beginPath(); let started = false; let previousSession = null;
+          chartRows.forEach((row, index) => {
+            const value = row[item.field];
+            if (!Number.isFinite(value)) { started = false; return; }
+            if (previousSession !== null && row.session_id !== previousSession) started = false;
+            const pointX = x(index); const pointY = yFor(item.axis, value);
+            if (!started) { ctx.moveTo(pointX, pointY); started = true; } else ctx.lineTo(pointX, pointY);
+            previousSession = row.session_id;
+          }); ctx.stroke();
+        });
+        ctx.font = '11px Avenir Next, sans-serif';
+        axes.forEach((item, index) => { ctx.fillStyle = item.color; ctx.fillRect(pad.left + index * 130, h - 13, 12, 2); ctx.fillText(`${item.axis === 'left' ? '左轴' : '右轴'} · ${item.label}`, pad.left + 18 + index * 130, h - 9); });
+        wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
+        canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `车辆趋势图：${chartRows.length.toLocaleString('zh-CN')} 个点，左轴 ${escapeHtml(result.dataset?.selectedSignal || '信号')}${result.dataset?.secondarySignal ? `，右轴 ${escapeHtml(result.dataset.secondarySignal)}` : ''}`);
+        return;
+      }
+      const series = [['current_a', '#ef8f62', '电流'], ['avg_cell_voltage_v', '#5bd4c0', '平均单片电压'], ['power_kw', '#7c9df2', '功率']];
+      const yFor = (field, value) => {
+        const values = chartRows.map((row) => row[field]).filter((item) => item !== null);
+        const min = Math.min(...values, 0); const max = Math.max(...values, 1); const span = max - min || 1;
+        return h - pad.bottom - ((value - min) / span) * (h - pad.top - pad.bottom);
       };
-      const scales = Object.fromEntries(axes.map((item) => [item.axis, scale(item.field)]));
-      const yFor = (axis, value) => h - pad.bottom - ((value - scales[axis].min) / scales[axis].span) * (h - pad.top - pad.bottom);
       ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
       for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
-      ctx.font = '10px Avenir Next, sans-serif';
-      ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.left.min, 2)}–${fmt(scales.left.max, 2)}`, 4, pad.top + 10);
-      if (scales.right) { ctx.fillStyle = '#71838a'; ctx.fillText(`${fmt(scales.right.min, 2)}–${fmt(scales.right.max, 2)}`, w - 62, pad.top + 10); }
-      axes.forEach((item) => {
-        ctx.strokeStyle = item.color; ctx.lineWidth = 1.8; ctx.beginPath(); let started = false; let previousSession = null;
-        chartRows.forEach((row, index) => {
-          const value = row[item.field];
-          if (!Number.isFinite(value)) { started = false; return; }
-          if (previousSession !== null && row.session_id !== previousSession) started = false;
-          const pointX = x(index); const pointY = yFor(item.axis, value);
-          if (!started) { ctx.moveTo(pointX, pointY); started = true; } else ctx.lineTo(pointX, pointY);
-          previousSession = row.session_id;
-        }); ctx.stroke();
-      });
+      series.forEach(([field, color]) => { ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.beginPath(); let started = false; let previousSession = null; chartRows.forEach((row, index) => { if (row[field] === null) { started = false; return; } if (previousSession !== null && row.session_id !== previousSession) started = false; const pointX = x(index); const pointY = yFor(field, row[field]); if (!started) { ctx.moveTo(pointX, pointY); started = true; } else ctx.lineTo(pointX, pointY); previousSession = row.session_id; }); ctx.stroke(); });
       ctx.font = '11px Avenir Next, sans-serif';
-      axes.forEach((item, index) => { ctx.fillStyle = item.color; ctx.fillRect(pad.left + index * 130, h - 13, 12, 2); ctx.fillText(`${item.axis === 'left' ? '左轴' : '右轴'} · ${item.label}`, pad.left + 18 + index * 130, h - 9); });
+      series.forEach(([field, color, label], index) => { ctx.fillStyle = color; ctx.fillRect(pad.left + index * 86, h - 13, 12, 2); ctx.fillText(label, pad.left + 18 + index * 86, h - 9); });
+      wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
+      canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `工况趋势图：${chartRows.length.toLocaleString('zh-CN')} 个数据点，电流、平均单片电压和功率`);
       return;
     }
-    const series = [['current_a', '#ef8f62', '电流'], ['avg_cell_voltage_v', '#5bd4c0', '平均单片电压'], ['power_kw', '#7c9df2', '功率']];
-    const yFor = (field, value) => {
-      const values = chartRows.map((row) => row[field]).filter((item) => item !== null);
-      const min = Math.min(...values, 0); const max = Math.max(...values, 1); const span = max - min || 1;
-      return h - pad.bottom - ((value - min) / span) * (h - pad.top - pad.bottom);
-    };
+    const pad = { left: 36, right: 18, top: 18, bottom: 28 };
+    const rows = result.rows.filter((row) => row.timestamp_s !== null);
+    const x = (index) => pad.left + (index / Math.max(rows.length - 1, 1)) * (w - pad.left - pad.right);
+    const yTemp = (value) => h - pad.bottom - ((value - 20) / 70) * (h - pad.top - pad.bottom);
+    const yPressure = (value) => h - pad.bottom - ((value - 20) / 15) * (h - pad.top - pad.bottom);
     ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
     for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
-    series.forEach(([field, color]) => { ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.beginPath(); let started = false; let previousSession = null; chartRows.forEach((row, index) => { if (row[field] === null) { started = false; return; } if (previousSession !== null && row.session_id !== previousSession) started = false; const pointX = x(index); const pointY = yFor(field, row[field]); if (!started) { ctx.moveTo(pointX, pointY); started = true; } else ctx.lineTo(pointX, pointY); previousSession = row.session_id; }); ctx.stroke(); });
-    ctx.font = '11px Avenir Next, sans-serif';
-    series.forEach(([field, color, label], index) => { ctx.fillStyle = color; ctx.fillRect(pad.left + index * 86, h - 13, 12, 2); ctx.fillText(label, pad.left + 18 + index * 86, h - 9); });
-    return;
-  }
-  const pad = { left: 36, right: 18, top: 18, bottom: 28 };
-  const rows = result.rows.filter((row) => row.timestamp_s !== null);
-  const x = (index) => pad.left + (index / Math.max(rows.length - 1, 1)) * (w - pad.left - pad.right);
-  const yTemp = (value) => h - pad.bottom - ((value - 20) / 70) * (h - pad.top - pad.bottom);
-  const yPressure = (value) => h - pad.bottom - ((value - 20) / 15) * (h - pad.top - pad.bottom);
-  ctx.strokeStyle = 'rgba(154, 172, 184, .14)'; ctx.lineWidth = 1;
-  for (let i = 0; i < 4; i += 1) { const gy = pad.top + i * ((h - pad.top - pad.bottom) / 3); ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke(); }
-  const line = (field, color, mapper) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((row, index) => { const value = row[field]; if (value === null) return; const pointX = x(index); const pointY = mapper(value); index ? ctx.lineTo(pointX, pointY) : ctx.moveTo(pointX, pointY); }); ctx.stroke(); };
-  line('temperature_c', '#ef8f62', yTemp); line('pressure_bar', '#5bd4c0', yPressure);
-  ctx.font = '11px Avenir Next, sans-serif'; ctx.fillStyle = '#a4b5bd'; ctx.fillText('°C', 8, pad.top + 3); ctx.fillText('bar', w - 28, pad.top + 3);
-  ctx.fillStyle = '#ef8f62'; ctx.fillRect(pad.left, h - 13, 12, 2); ctx.fillText('温度', pad.left + 18, h - 9);
-  ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 70, h - 13, 12, 2); ctx.fillText('压力', pad.left + 88, h - 9);
+    const line = (field, color, mapper) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((row, index) => { const value = row[field]; if (value === null) return; const pointX = x(index); const pointY = mapper(value); index ? ctx.lineTo(pointX, pointY) : ctx.moveTo(pointX, pointY); }); ctx.stroke(); };
+    line('temperature_c', '#ef8f62', yTemp); line('pressure_bar', '#5bd4c0', yPressure);
+    ctx.font = '11px Avenir Next, sans-serif'; ctx.fillStyle = '#a4b5bd'; ctx.fillText('°C', 8, pad.top + 3); ctx.fillText('bar', w - 28, pad.top + 3);
+    ctx.fillStyle = '#ef8f62'; ctx.fillRect(pad.left, h - 13, 12, 2); ctx.fillText('温度', pad.left + 18, h - 9);
+    ctx.fillStyle = '#5bd4c0'; ctx.fillRect(pad.left + 70, h - 13, 12, 2); ctx.fillText('压力', pad.left + 88, h - 9);
+    wrap.classList.remove('chart-loading', 'chart-error'); wrap.classList.add('chart-ready');
+    canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `温度与压力趋势图：${rows.length.toLocaleString('zh-CN')} 条记录`);
   } catch (error) {
-    if (wrap) {
-      wrap.classList.remove('chart-loading', 'chart-ready');
-      wrap.classList.add('chart-error');
-      const existing = wrap.querySelector('.chart-skeleton-message');
-      if (!existing) {
-        wrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>请检查数据格式后重试</span></div>');
-      }
+    wrap.classList.remove('chart-loading', 'chart-ready');
+    wrap.classList.add('chart-error');
+    const existing = wrap.querySelector('.chart-skeleton-message');
+    if (!existing) {
+      const hint = result?.datasetType === 'vehicle' ? '车辆数据集需包含 current_a 或电压信号' : result?.datasetType === 'stack' ? '电堆数据集需包含单片电压通道' : '通用数据集需包含 temperature_c 与 pressure_bar';
+      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>${escapeHtml(hint)}</span><div class="error-detail"><strong>真实数据提示</strong><span>${escapeHtml(error.message || '未知渲染错误')}</span><div class="error-example">文件：${escapeHtml(state.fileName || '—')} · 记录：${(state.inputSummary?.processed || 0).toLocaleString('zh-CN')} 条</div></div></div>`);
     }
   }
 }
@@ -1028,8 +1043,23 @@ function renderComplianceHistory() {
     const rowCountInfo = item.datasetRowCount ? `${item.datasetRowCount.toLocaleString('zh-CN')} 条记录` : '无数据记录';
     const statusIcon = item.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : item.status === 'NOT_READY' ? '!' : '·';
     const statusTitle = item.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : item.status === 'NOT_READY' ? '资料不完整' : '仅演示';
-    return `<div class="compliance-history-row"><span class="compliance-history-time">${escapeHtml(time)}</span><span class="compliance-history-status ${statusClass}" title="${escapeHtml(statusTitle)}">${statusIcon} ${escapeHtml(item.label || item.status || '未评估')}</span><small>${escapeHtml(methodInfo)} · ${escapeHtml(standardInfo)} · ${escapeHtml(rowCountInfo)}</small><small>审批 ${escapeHtml(item.approvalStatus || '未指定')} · 方法 ${escapeHtml(item.methodExecutionStatus || '未声明')} · 证据 ${item.evidenceReadyCount || 0}/${item.evidenceTotalCount || 0}</small>${item.missingSummary?.length ? `<small class="compliance-history-missing">缺失：${escapeHtml(item.missingSummary.slice(0, 6).join('、'))}${item.missingSummary.length > 6 ? '…' : ''}</small>` : ''}</div>`;
+    const missingText = item.missingSummary?.length ? `<small class="compliance-history-missing">缺失：${escapeHtml(item.missingSummary.slice(0, 6).join('、'))}${item.missingSummary.length > 6 ? '…' : ''}</small>` : '';
+    const standardBreakdown = Array.isArray(item.standardBreakdown) ? item.standardBreakdown : [];
+    const standardChips = standardBreakdown.map((standard) => {
+      const chipClass = standard.ready ? 'ready' : 'warn';
+      const chipIcon = standard.ready ? '✓' : '!';
+      const chipTitle = escapeHtml(standard.title || standard.id || '标准');
+      return `<span class="compliance-standard-chip ${chipClass}" title="${chipTitle}">${chipIcon} ${escapeHtml(standard.id)}</span>`;
+    }).join('');
+    const standardClauseText = standardBreakdown.map((standard) => {
+      const clauses = Array.isArray(standard.clauseRefs) ? standard.clauseRefs.slice(0, 3) : [];
+      return clauses.length ? `${escapeHtml(standard.id)}：${escapeHtml(clauses.join('、'))}` : null;
+    }).filter(Boolean).join('；');
+    const row = `<div class="compliance-history-row" tabindex="0" role="button" aria-label="${escapeHtml(statusTitle)}：${escapeHtml(item.label || item.status || '未评估')}，${escapeHtml(rowCountInfo)}"><span class="compliance-history-time">${escapeHtml(time)}</span><span class="compliance-history-status ${statusClass}" title="${escapeHtml(statusTitle)}">${statusIcon} ${escapeHtml(item.label || item.status || '未评估')}</span><small>${escapeHtml(methodInfo)} · ${escapeHtml(standardInfo)} · ${escapeHtml(rowCountInfo)}</small><small>审批 ${escapeHtml(item.approvalStatus || '未指定')} · 方法 ${escapeHtml(item.methodExecutionStatus || '未声明')} · 证据 ${item.evidenceReadyCount || 0}/${item.evidenceTotalCount || 0}</small>${standardChips ? `<div class="compliance-history-standards">${standardChips}</div>` : ''}${standardClauseText ? `<small class="compliance-history-clauses">${standardClauseText}</small>` : ''}${missingText}</div>`;
+    return row;
   }).join('');
+  const live = $('#compliance-history-live');
+  if (live) live.textContent = `标准符合性历史：${history.length} 条审计快照`;
 }
   const status = verdictLabel(result.verdict);
   const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析草稿';
@@ -1077,12 +1107,20 @@ function renderComplianceHistory() {
   const gateRows = gateEntries.map(([key, value]) => {
     const mark = value.ready ? '✓' : value.status === 'missing' || value.status === 'failed' || value.status === 'blocked' ? '!' : '·';
     const statusText = value.ready ? '就绪' : value.status === 'missing' ? '缺失' : value.status === 'failed' ? '未通过' : value.status === 'blocked' ? '已阻断' : '待补齐';
-    return `<div class="compliance-gate-row"><span class="compliance-gate-mark">${mark}</span><span class="compliance-gate-label">${escapeHtml(key)}</span><small>${escapeHtml(value.evidence || '无证据')}</small><span class="compliance-gate-status ${value.ready ? 'ready' : value.status === 'missing' || value.status === 'failed' || value.status === 'blocked' ? 'danger' : 'warn'}">${statusText}</span></div>`;
+    const statusClass = value.ready ? 'ready' : value.status === 'missing' || value.status === 'failed' || value.status === 'blocked' ? 'danger' : 'warn';
+    return `<div class="compliance-gate-row" tabindex="0" role="button" aria-label="${escapeHtml(key)}：${statusText}"><span class="compliance-gate-mark">${mark}</span><span class="compliance-gate-label">${escapeHtml(key)}</span><small>${escapeHtml(value.evidence || '无证据')}</small><span class="compliance-gate-status ${statusClass}">${statusText}</span></div>`;
+  }).join('');
+  const standardCards = (compliance.standardBreakdown || []).map((standard) => {
+    const cardClass = standard.ready ? 'ready' : 'warn';
+    const mark = standard.ready ? '✓' : '!';
+    const statusText = standard.ready ? '就绪' : '待判定';
+    const clauseRefs = Array.isArray(standard.clauseRefs) ? standard.clauseRefs : [];
+    return `<div class="compliance-standard-card ${cardClass}" tabindex="0" role="button" aria-label="${escapeHtml(standard.id)}：${statusText}"><div class="compliance-standard-card-head"><span class="compliance-standard-mark">${mark}</span><span class="compliance-standard-id">${escapeHtml(standard.id)}</span><span class="compliance-standard-status ${cardClass}">${statusText}</span></div><div class="compliance-standard-body"><small>${escapeHtml(standard.title || '')}</small><small>${escapeHtml(standard.evidence || '')}</small>${clauseRefs.length ? `<div class="compliance-standard-clauses">${clauseRefs.map((clause) => `<span class="compliance-standard-clause">${escapeHtml(clause)}</span>`).join('')}</div>` : ''}</div></div>`;
   }).join('');
   const complianceStatusClass = String(result.compliance.status || '').toLowerCase().replaceAll('_', '-');
   const complianceStatusIcon = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : result.compliance.status === 'NOT_READY' ? '!' : '·';
   const complianceStatusTitle = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : result.compliance.status === 'NOT_READY' ? '资料不完整' : '仅演示';
-  const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows.length ? `<div class="compliance-gate-list">${gateRows.join('')}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
+  const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows.length ? `<div class="compliance-gate-list">${gateRows.join('')}</div>` : ''}${standardCards ? `<div class="compliance-standard-grid">${standardCards}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
   $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
@@ -1258,7 +1296,7 @@ function render(result, pushHistory = true) {
   }
   const auditTrail = result.compliance?.auditTrail;
   if (auditTrail) {
-    const snapshot = { ...auditTrail, savedAt: new Date().toISOString(), fileName: state.fileName };
+    const snapshot = { ...auditTrail, savedAt: new Date().toISOString(), fileName: state.fileName, standardBreakdown: result.compliance?.standardBreakdown };
     state.complianceHistory = [snapshot, ...(state.complianceHistory || [])].slice(0, 20);
   }
   const verdictTooltip = $('#verdict-tooltip');
@@ -1275,6 +1313,10 @@ function render(result, pushHistory = true) {
   renderComparison();
   renderHistory();
   renderComplianceHistory();
+  const complianceCard = $('.compliance-history-card');
+  if (complianceCard) complianceCard.hidden = !(state.complianceHistory && state.complianceHistory.length);
+  const complianceStatus = $('#compliance-history-status');
+  if (complianceStatus) complianceStatus.textContent = `${(state.complianceHistory || []).length} 条快照`;
   const saveHistoryTop = $('#save-history-top');
   if (saveHistoryTop) saveHistoryTop.hidden = !state.result;
   renderSchema(result);
@@ -1443,6 +1485,102 @@ function downloadCoverageReview() {
   link.click();
   URL.revokeObjectURL(link.href);
   if (status) status.textContent = '已下载 ' + Math.min(fields.length, 5) + ' 个字段复核重点；仅含聚合计数，不含原始数据。';
+}
+
+function downloadComplianceReport(result, fileName) {
+  const compliance = result.compliance || {};
+  const lines = [
+    '# 标准符合性报告',
+    '',
+    `- 数据文件：${fileName}`,
+    `- 生成时间：${new Date().toISOString()}`,
+    `- 符合性状态：${compliance.status || 'N/A'}`,
+    `- 审批状态：${compliance.approvalStatus || 'N/A'}`,
+    `- 方法执行状态：${compliance.methodExecutionStatus || 'N/A'}`,
+    `- 方法编号：${compliance.methodId || 'N/A'}`,
+    `- 修订号：${compliance.revision || 'N/A'}`,
+    '',
+    '## 边界声明',
+    '',
+    escapeHtml(compliance.boundary || '无'),
+    '',
+    '## 标准引用与条款覆盖',
+    ''
+  ];
+  const standards = Array.isArray(compliance.standardRefs) ? compliance.standardRefs : [];
+  if (!standards.length) {
+    lines.push('未配置标准引用。');
+  } else {
+    standards.forEach((ref) => {
+      const breakdown = (compliance.standardBreakdown || []).find((item) => item.id === ref.id);
+      const clauseRefs = Array.isArray(breakdown?.clauseRefs) ? breakdown.clauseRefs : [];
+      lines.push(`- ${ref.id}：${escapeHtml(ref.title || '')}`);
+      lines.push(`  - 状态：${escapeHtml(ref.status || 'N/A')}`);
+      lines.push(`  - URI：${escapeHtml(ref.uri || 'N/A')}`);
+      lines.push(`  - 条款/流程：${clauseRefs.length ? escapeHtml(clauseRefs.join('、')) : '未声明'}`);
+      lines.push(`  - 判定：${breakdown?.ready ? '就绪' : '待判定'} — ${escapeHtml(breakdown?.evidence || '')}`);
+      lines.push('');
+    });
+  }
+  lines.push('## 证据门控');
+  lines.push('');
+  const gateEntries = [
+    ['scope', compliance.scope],
+    ['instruments', compliance.instruments],
+    ['acceptance', compliance.acceptance],
+    ['report', compliance.report],
+    ['testStages', compliance.testStages],
+    ['testSystem', compliance.testSystem],
+    ['testConditions', compliance.testConditions],
+    ['environmentConditions', compliance.environmentConditions],
+    ['measurementMethods', compliance.measurementMethods],
+    ['phaseResults', compliance.phaseResults],
+    ['efficiency', compliance.efficiency],
+    ['measurements', compliance.measurements],
+    ['phases', compliance.phases],
+    ['acquisition', compliance.acquisition],
+    ['preCheck', compliance.preCheck],
+    ['dataQuality', compliance.dataQuality]
+  ].filter(([, value]) => value && typeof value === 'object');
+  if (!gateEntries.length) {
+    lines.push('无证据门控记录。');
+  } else {
+    gateEntries.forEach(([key, value]) => {
+      const statusText = value.ready ? '就绪' : value.status === 'missing' ? '缺失' : value.status === 'failed' ? '未通过' : value.status === 'blocked' ? '已阻断' : '待补齐';
+      lines.push(`- ${key}：${statusText} — ${escapeHtml(value.evidence || '无证据')}`);
+    });
+  }
+  lines.push('');
+  lines.push('## 缺失项');
+  lines.push('');
+  const missingItems = [
+    ...(compliance.missingProfileFields || []),
+    ...(compliance.missingMeasurements || []),
+    ...(compliance.missingPhases || []),
+    ...(compliance.missingPhaseMetrics || []),
+    ...(compliance.missingMetadata || [])
+  ];
+  if (!missingItems.length) {
+    lines.push('无缺失项。');
+  } else {
+    missingItems.forEach((item) => lines.push(`- ${escapeHtml(item)}`));
+  }
+  lines.push('');
+  lines.push('## 审计轨迹');
+  lines.push('');
+  const auditTrail = compliance.auditTrail || {};
+  lines.push(`- 评估时间：${auditTrail.evaluatedAt || 'N/A'}`);
+  lines.push(`- 证据就绪：${auditTrail.evidenceReadyCount ?? 0}/${auditTrail.evidenceTotalCount ?? 0}`);
+  lines.push(`- 阻断项：${auditTrail.formalBlockers ? '是' : '否'}`);
+  lines.push(`- 数据记录：${auditTrail.datasetRowCount ?? 'N/A'}`);
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${fileName.replace(/\.csv$/i, '')}-标准符合性报告.md`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  const status = $('#report-status');
+  if (status) status.textContent = '已导出标准符合性报告';
 }
 
 function buildEnhancedMarkdown(result, fileName, schema) {
@@ -1790,6 +1928,7 @@ $('#download-xlsx').addEventListener('click', async () => {
 });
 $('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
+$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 

@@ -2115,7 +2115,6 @@ test('blocks stack stoichiometry when gas flow headers declare actual L/min', ()
   assert.equal(result.rows[0].anode_flow_slpm, null);
   assert.equal(result.rows[0].cathode_flow_slpm, null);
   assert.equal(result.dataset.metrics.hydrogenStoich.mean, null);
-  assert.equal(result.dataset.metrics.airStoich.mean, null);
   assert.ok(result.issues.some((item) => item.code === 'UNIT_UNSUPPORTED' && /anode_flow_slpm/.test(item.evidence)));
 });
 

@@ -1320,7 +1320,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const hydrogenVolumeNl = integrateTrapezoid(rows, 'flow_slpm', 60, quality.gapLimitS, integrationEvidence.hydrogenVolume);
   const energyWh = rows.map((row) => ({ ...row, power_w: electricalPower(row) }));
   const energyConsumedWh = integrateTrapezoid(energyWh, 'power_w', 3600, quality.gapLimitS, integrationEvidence.energyConsumed);
-  const specificEnergyKWhPerNm3 = hydrogenVolumeNl && energyConsumedWh !== null ? energyConsumedWh / hydrogenVolumeNl : null;
+  const specificEnergyKWhPerNm3 = hydrogenVolumeNl !== null && energyConsumedWh !== null && hydrogenVolumeNl > 0 ? energyConsumedWh / hydrogenVolumeNl : null;
   const uncertainty = calculateUncertainty(rows, { hydrogenVolumeNl, energyConsumedWh, specificEnergyKWhPerNm3 }, config.uncertaintyModel, quality.gapLimitS);
   const scope = scopeReadiness(config);
   const instruments = instrumentReadiness(config);

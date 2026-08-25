@@ -1,6 +1,6 @@
 {
   "schemaVersion": "h2-testlens.t02-coverage-summary.v1",
-  "auditVersion": "3.5.38",
+  "auditVersion": "3.5.68",
   "totalFiles": 198,
   "counts": {
     "blocked_binary": 1,
