@@ -2718,4 +2718,37 @@ export function analyzeEnterpriseRows(inputRows, config = {}) {
   if (headers.some((header) => /实际电流|电堆电流|电流/.test(String(header))) && headers.some((header) => /实际电压|总电压|电堆电压|电压/.test(String(header)))) return buildStack(rows, config);
   return null;
 }
+
+export function validateProfileFieldMappingCoverage(profile, actualHeaders = []) {
+  const mapping = profile?.fieldMapping && typeof profile.fieldMapping === 'object' ? profile.fieldMapping : {};
+  const headerSet = new Set(actualHeaders.map((header) => String(header).trim()));
+  const missingMappings = [];
+  for (const [field, source] of Object.entries(mapping)) {
+    const trimmed = String(source).trim();
+    if (!trimmed) {
+      missingMappings.push({ field, source: trimmed, reason: 'empty_mapping' });
+    } else if (!headerSet.has(trimmed)) {
+      missingMappings.push({ field, source: trimmed, reason: 'mapped_header_not_found_in_real_data' });
+    }
+  }
+  const acquisition = profile?.acquisitionRequirements;
+  const unsupportedAcquisitionUnits = [];
+  if (acquisition?.requiredChannels && Array.isArray(acquisition.requiredChannels)) {
+    for (const channel of acquisition.requiredChannels) {
+      const definitions = UNIT_DEFINITIONS[channel.field];
+      if (definitions && channel.unit && !Object.keys(definitions).some((key) => String(key).toLowerCase() === String(channel.unit).toLowerCase())) {
+        unsupportedAcquisitionUnits.push({ field: channel.field, unit: channel.unit });
+      }
+    }
+  }
+  return {
+    missingMappings,
+    unsupportedAcquisitionUnits,
+    ready: missingMappings.length === 0 && unsupportedAcquisitionUnits.length === 0,
+    evidence: missingMappings.length === 0 && unsupportedAcquisitionUnits.length === 0
+      ? 'profile fieldMapping 覆盖完整，采集通道单位均可换算'
+      : `发现 ${missingMappings.length} 个缺失或无效映射，${unsupportedAcquisitionUnits.length} 个不支持的采集单位`
+  };
+}
+
 export { compliance };

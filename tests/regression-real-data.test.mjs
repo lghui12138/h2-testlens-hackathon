@@ -382,7 +382,7 @@ test('qingzhihuli-vehicle adapter accepts real 氢质氢离 T02 fixture without 
 
 test('enterprise T02 profiles stay example_unapproved with ENTERPRISE_PROFILE_REQUIRED status', () => {
   const enterpriseProfiles = DEVICE_PROFILES.filter((profile) =>
-    ['qingchuan-stack', 'qingzhihuli-vehicle', 'hypu-durability'].includes(profile.id)
+    ['qingchuan-stack', 'qingzhihuli-vehicle', 'hypu-durability', 'hypu-stack', 'haperte'].includes(profile.id)
   );
   assert.ok(enterpriseProfiles.length, 'enterprise T02 profiles should be present');
   for (const profile of enterpriseProfiles) {
@@ -474,6 +474,39 @@ test('qingchuan-stack real fixture 212 and 345 vehicle data do not regress adapt
   assert.ok(result212.dataset.insulation.validCount >= 1);
   assert.ok(result345.dataset.insulation.validCount >= 1);
 });
+ test('hypu-stack profile fieldMapping matches real 氢璞创能 T02 headers', async () => {
+   const fixture = await readFile(join(here, '../sample-data/t02-hypu-stack-regression.csv'), 'utf8');
+   const rows = parseCSV(fixture);
+   assert.ok(rows.length >= 1, 'fixture should have data rows');
+   const headers = Object.keys(rows[0]);
+   const profile = getProfile('hypu-stack');
+   assert.ok(profile, 'hypu-stack profile must exist');
+   const mappedSources = Object.values(profile.fieldMapping || {}).filter(Boolean);
+   const missing = mappedSources.filter((source) => !headers.includes(source));
+   assert.deepEqual(missing, [], `hypu-stack mapped headers missing from real data: ${missing.join('、')}`);
+ });
+
+ test('hypu-stack adapter flags real 氢璞创能 T02 fixture L/min units as unsupported without standard-state declaration', async () => {
+   const fixture = await readFile(join(here, '../sample-data/t02-hypu-stack-regression.csv'), 'utf8');
+   const rows = parseCSV(fixture);
+   const profile = getProfile('hypu-stack');
+   const result = analyzeEnterpriseRows(rows, profile);
+   assert.ok(result, 'analyzeEnterpriseRows should return a result for real hypu stack data');
+   assert.equal(result.datasetType, 'stack');
+   const unsupported = result.issues.filter((issue) => issue.code === 'UNIT_UNSUPPORTED');
+   assert.ok(unsupported.length > 0, 'real hypu fixture should trigger unsupported unit errors for L/min without standard-state declaration');
+   assert.ok(unsupported.some((issue) => /l\/min/.test(issue.evidence.toLowerCase())), 'unsupported unit evidence should mention l/min');
+ });
+
+ test('haperte profile remains example_unapproved with ENTERPRISE_PROFILE_REQUIRED status', () => {
+   const profile = getProfile('haperte');
+   assert.ok(profile, 'haperte profile must exist');
+   assert.equal(profile.approvalStatus, 'example_unapproved');
+   assert.equal(profile.methodExecutionStatus, 'ENTERPRISE_PROFILE_REQUIRED');
+   assert.equal(profile.supportedDatasetTypes[0], 'generic');
+   assert.deepEqual(Object.keys(profile.fieldMapping || {}), []);
+ });
+
 
 // ---------------------------------------------------------------------------
 // 8. Deep computation accuracy audit with all real T02 enterprise data
