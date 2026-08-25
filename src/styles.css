@@ -89,6 +89,11 @@ h1 em { color: var(--mint); font-style: normal; }
 .upload-button, .primary-button { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0 17px; background: var(--mint); color: #052028; font-weight: 800; box-shadow: 0 10px 26px rgba(104,229,202,.13); }
 .upload-button:hover, .primary-button:hover { background: #a4f4df; transform: translateY(-1px); }.upload-button { position: relative; }.upload-button input, .profile-import input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); opacity: 0; }.upload-button > span { display: block; max-width: 100%; overflow-wrap: anywhere; text-align: center; }.upload-button:focus-within, .profile-import:focus-within { outline: 3px solid var(--mint); outline-offset: 3px; }
 .quiet-button { border: 0; padding: 0 4px; background: transparent; color: var(--muted-strong); font-size: 12px; }.quiet-button:hover { color: var(--mint); }.outline-button { width: 100%; border: 1px solid rgba(104,229,202,.42); background: rgba(104,229,202,.03); color: var(--mint); font-weight: 750; font-size: 12px; }.outline-button:hover { border-color: var(--mint); background: rgba(104,229,202,.1); }.icon-button { border: 0; padding: 0 11px; background: #123743; color: var(--muted-strong); font-size: 10px; }.icon-button:hover { background: #1a5360; color: var(--ink); }
+.sample-select { height: 40px; padding: 0 12px; background: #0c242f; border: 1px solid #1f4a56; color: var(--ink); border-radius: 9px; font-size: 12px; font-weight: 700; cursor: pointer; outline: none; transition: border-color .2s ease, background .2s ease; }
+.sample-select:hover { border-color: var(--mint); background: #113442; }
+.sample-select:focus { border-color: var(--mint); box-shadow: 0 0 0 2px rgba(104,229,202,.25); }
+.sample-select optgroup { font-weight: 800; color: var(--mint); background: #081d26; }
+.sample-select option { font-weight: normal; color: var(--ink); background: #0c242f; }
 .upload-hint { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .btn-save-history { border: 0; padding: 0 11px; background: #123743; color: var(--muted-strong); font-size: 10px; }.btn-save-history:hover { background: #1a5360; color: var(--ink); }
 .engine-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 0 0 20px; }
