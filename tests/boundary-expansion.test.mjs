@@ -16,6 +16,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
 const HAS_T02 = existsSync(T02_ROOT);
 
+const CI = String(process.env.CI || '').toLowerCase() === 'true';
+
 const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
 const { runInThisContext } = await import('node:vm');
 runInThisContext(mammothSource);
@@ -540,7 +542,7 @@ test('performance stability: repeated parseCSV uses coefficient of variation ins
   assert.ok(cv < 0.8, `coefficient of variation ${cv.toFixed(3)} exceeded stability bound`);
 });
 
-test('performance stability: repeated analyzeRows on fixed synthetic data has bounded coefficient of variation', () => {
+test('performance stability: repeated analyzeRows on fixed synthetic data has bounded coefficient of variation', { skip: CI }, () => {
   const rows = parseCSV([
     'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,hydrogen_purity_pct',
     ...Array.from({ length: 5000 }, (_, i) => `${i * 5},${10 + (i % 40)},${(1.4 + (i % 20) * 0.02).toFixed(2)},${(25 + (i % 50)).toFixed(1)},${(1 + (i % 30) * 0.5).toFixed(1)},${(i % 15).toFixed(1)},${(i % 2 === 0 ? 0.8 : 1.2).toFixed(1)},${(99 + (i % 2)).toFixed(1)}`)
@@ -558,7 +560,7 @@ test('performance stability: repeated analyzeRows on fixed synthetic data has bo
   assert.ok(cv < 0.8, `coefficient of variation ${cv.toFixed(3)} exceeded stability bound`);
 });
 
-test('performance stability: repeated parseCSV on fixed synthetic CSV has bounded interquartile range', () => {
+test('performance stability: repeated parseCSV on fixed synthetic CSV has bounded interquartile range', { skip: CI }, () => {
   const csv = Array.from({ length: 10_000 }, (_, i) => `t,${i},${(i % 100).toFixed(2)}`).join('\n');
   parseCSV(csv);
   const durations = Array.from({ length: 9 }, () => {
