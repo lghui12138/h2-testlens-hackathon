@@ -1,7 +1,7 @@
 
 const safeMax = (values, fallback = null) => {
   if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
-  let maximum = fallback;
+  let maximum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
     maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);

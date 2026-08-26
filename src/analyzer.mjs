@@ -158,7 +158,7 @@ const std = (values) => {
 
 export const safeMax = (values, fallback = null) => {
   if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
-  let maximum = fallback;
+  let maximum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
     maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
@@ -252,7 +252,7 @@ function unitTransform(field, header) {
   if (field === 'power_w' || field === 'power_setpoint_w') {
     if (/\bM[Ww]\b/.test(String(header ?? '')) || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
     if (/(?:^|[^a-zA-Z])m[Ww](?:[^a-zA-Z]|$)/.test(String(header ?? ''))) return { mode: 'scale', factor: 0.001, label: 'mW→W' };
-    if (normalized.includes('kw') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
+    if (normalized.includes('kw') && !normalized.includes('kwh') || normalized.includes('千瓦')) return { mode: 'scale', factor: 1000, label: 'kW→W' };
   }
   if (field === 'current_a' && (/(?:^|[^a-zA-Z])(?:µ|u)A(?:[^a-zA-Z]|$)/.test(String(header ?? '')))) return { mode: 'scale', factor: 0.000001, label: 'µA→A' };
   if (field === 'current_a' && (normalized.includes('ma') || normalized.includes('毫安'))) return { mode: 'scale', factor: 0.001, label: 'mA→A' };
@@ -341,13 +341,14 @@ function convertValue(rawValue, transform) {
   if (value === null) return null;
   if (transform?.mode === 'unsupported') return null;
   if (transform?.mode === 'fahrenheit_to_c') return (value - 32) * (5 / 9);
-  return value * (transform?.factor ?? 1);
+  const factor = Number(transform?.factor);
+  return Number.isFinite(factor) ? value * factor : null;
 }
 
 const slopePerMinute = (rows, field) => {
   const bySession = new Map();
   rows.forEach((row) => {
-    if (row.timestamp_s === null || row[field] === null) return;
+    if (row.timestamp_s === null || row[field] === null || !Number.isFinite(row.timestamp_s) || !Number.isFinite(row[field])) return;
     const key = sessionKey(row);
     const points = bySession.get(key) || [];
     points.push([row.timestamp_s, row[field]]);
@@ -381,7 +382,7 @@ function sameSession(previous, current) {
 function sessionDurationSummary(rows) {
   const spans = new Map();
   rows.forEach((row) => {
-    if (row.timestamp_s === null) return;
+    if (!Number.isFinite(row.timestamp_s)) return;
     const key = sessionKey(row);
     const span = spans.get(key) || { min: row.timestamp_s, max: row.timestamp_s };
     span.min = Math.min(span.min, row.timestamp_s);
@@ -395,6 +396,7 @@ function sessionDurationSummary(rows) {
 function phaseSummary(rows) {
   const groups = [];
   for (const row of rows) {
+    if (!Number.isFinite(row.timestamp_s)) continue;
     const phase = row.phase || '未标注';
     const last = groups.at(-1);
     const currentSession = sessionKey(row);
@@ -994,10 +996,10 @@ function integrateTrapezoid(rows, field, divisor = 1, maxIntervalS = null, evide
     const previous = rows[index - 1];
     const current = rows[index];
     if (!sameSession(previous, current)) { evidence && (evidence.skippedSessionBoundaryCount += 1); continue; }
-    const deltaS = current.timestamp_s !== null && previous.timestamp_s !== null ? current.timestamp_s - previous.timestamp_s : 0;
+    const deltaS = Number.isFinite(previous.timestamp_s) && Number.isFinite(current.timestamp_s) ? current.timestamp_s - previous.timestamp_s : 0;
     if (deltaS <= 0) { evidence && (evidence.skippedNonPositiveCount += 1); continue; }
     if (maxIntervalS !== null && deltaS > maxIntervalS) { evidence && (evidence.skippedGapCount += 1); continue; }
-    if (previous[field] === null || current[field] === null) { evidence && (evidence.skippedMissingCount += 1); continue; }
+    if (!Number.isFinite(previous[field]) || !Number.isFinite(current[field])) { evidence && (evidence.skippedMissingCount += 1); continue; }
     total += ((previous[field] + current[field]) / 2) * deltaS / divisor;
     segments += 1;
   }

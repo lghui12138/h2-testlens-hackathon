@@ -72,7 +72,7 @@ const std = (values) => {
 
 const safeMax = (values, fallback = null) => {
   if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
-  let maximum = fallback;
+  let maximum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
     maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
@@ -1712,9 +1712,12 @@ function buildVehicle(rows, config) {
   const isolationExcludedNonPositive = isolationStatusRows.filter((row) => row.isolation_kohm !== null && row.isolation_kohm <= 0).length;
   const buckets = new Map();
   for (const row of isolationRows) {
-    const bucket = Math.floor((row.session_timestamp_s ?? row.timestamp_s) / 600);
+    const rawTime = row.session_timestamp_s ?? row.timestamp_s;
+    if (!Number.isFinite(rawTime)) continue;
+    const bucket = Math.floor(rawTime / 600);
     const key = `${row.session_id}:${bucket}:${row.main_status}`;
     const timeS = vehicleTimeOf(row);
+    if (!Number.isFinite(timeS)) continue;
     const current = buckets.get(key) || { bucket, sessionId: row.session_id, status: row.main_status, values: [], startS: timeS, endS: timeS };
     current.values.push(row.isolation_kohm); current.startS = Math.min(current.startS, timeS); current.endS = Math.max(current.endS, timeS); buckets.set(key, current);
   }
