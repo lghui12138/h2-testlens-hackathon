@@ -333,7 +333,7 @@ async function analyzeRowsAsync(rows, config, onStage) {
 async function analyzeCurrent(reason = '重新分析') {
   if (!state.rows.length) return;
   const token = ++state.analysisToken;
-  setAnalysisStatus(`${reason}：准备中`, 'busy');
+  setAnalysisStatus(`${reason}：启动中`, 'busy');
   document.body.setAttribute('aria-busy', 'true');
   await yieldToBrowser();
   try {
@@ -342,7 +342,7 @@ async function analyzeCurrent(reason = '重新分析') {
       if (token !== state.analysisToken) return;
       if (stage === 'worker') setAnalysisStatus(`后台分析：${rowCount.toLocaleString('zh-CN')} 条记录，页面仍可响应`, 'busy');
       else if (stage === 'fallback') setAnalysisStatus(detail === 'worker_unavailable' ? '当前环境不支持 Worker，切换至主线程分析' : 'Worker 分析未通过，切换至主线程分析', 'busy');
-      else setAnalysisStatus('正在计算指标和流程门控', 'busy');
+      else setAnalysisStatus('正在运算指标和流程门控', 'busy');
     });
     if (token !== state.analysisToken) return;
     result.source = { ...result.source, inputSummary: state.inputSummary };
@@ -380,7 +380,7 @@ function ensureExtendedMetadataFields() {
   if (!$('#metadata-acquisition-record')) additions.push('<label>结构化采集记录（JSON）<textarea id="metadata-acquisition-record" rows="6" placeholder=\'{"samplingFrequencyHz":10,"synchronization":{"status":"verified","clockReference":"DAQ-CLK-01"},"channels":[{"field":"current_a","channelId":"CH-01","unit":"A"}],"evidenceRef":"ACQ-001"}\'></textarea></label>');
   if (!$('#metadata-precheck-items')) additions.push('<label>结构化前检查项目（JSON）<textarea id="metadata-precheck-items" rows="6" placeholder=\'[{"id":"device_identity","status":"pass","evidenceRef":"PC-001"}]\'></textarea></label>');
   if (!$('#metadata-test-stages')) additions.push('<label>结构化测试阶段（JSON）<textarea id="metadata-test-stages" rows="7" placeholder=\'[{"id":"test_plan","status":"complete","evidenceRef":"TP-001"}]\'></textarea></label>');
-  if (!$('#metadata-test-system')) additions.push('<label>测试系统组成证据（JSON）<textarea id="metadata-test-system" rows="8" placeholder=\'[{"id":"power_supply","status":"pass","evidenceRef":"SYS-001"}]\'></textarea></label>');
+  if (!$('#metadata-test-system')) additions.push('<label>测试装置组成证据（JSON）<textarea id="metadata-test-system" rows="8" placeholder=\'[{"id":"power_supply","status":"pass","evidenceRef":"SYS-001"}]\'></textarea></label>');
   if (!$('#metadata-test-conditions')) additions.push('<label>结构化测试条件（JSON）<textarea id="metadata-test-conditions" rows="7" placeholder=\'{"testSite":"台架A","ambientTemperatureC":25,"systemConfigurationRef":"CFG-001","abnormalDispositionRef":"ABN-001","evidenceRef":"COND-001"}\'></textarea></label>');
   if (!$('#metadata-environment-conditions')) additions.push('<label>环境条件证据（JSON）<textarea id="metadata-environment-conditions" rows="6" placeholder=\'{"ambientTemperatureC":25,"ambientHumidityPct":50,"ambientPressureKpa":101,"evidenceRef":"ENV-001"}\'></textarea></label>');
   if (!$('#metadata-measurement-methods')) additions.push('<label>结构化测量方法记录（JSON）<textarea id="metadata-measurement-methods" rows="7" placeholder=\'[{"id":"electrical_input","methodRef":"METHOD-E-001","evidenceRef":"MEAS-E-001"}]\'></textarea></label>');
@@ -600,7 +600,7 @@ function showMetricSkeletons() {
   if (chartWrap && !chartWrap.querySelector('.chart-skeleton-message')) {
     chartWrap.classList.add('chart-loading');
     const rowCount = state.result?.metrics?.sampleCount?.toLocaleString('zh-CN') || '—';
-    chartWrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>分析完成后将在此渲染趋势图</span><div class="skeleton-data-context"><strong>数据上下文</strong> 记录数 ${rowCount} · 文件 ${escapeHtml(state.fileName || '—')}</div></div>`);
+    chartWrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表载入中</strong><span>分析完成后将在此渲染趋势图</span><div class="skeleton-data-context"><strong>数据上下文</strong> 记录数 ${rowCount} · 文件 ${escapeHtml(state.fileName || '—')}</div></div>`);
   }
   ['enterprise-chart', 'enterprise-performance-chart'].forEach((id) => {
     const canvas = $(`#${id}`);
@@ -608,7 +608,7 @@ function showMetricSkeletons() {
     if (wrap && !wrap.querySelector('.chart-skeleton-message')) {
       wrap.classList.add('chart-loading');
       const label = state.result?.dataset?.label || '企业数据';
-      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载中</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
+      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表载入中</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
     }
   });
   const enterprisePanel = $('#enterprise-panel');
@@ -1184,7 +1184,7 @@ function renderReport(result, draft = state.aiDraft) {
   const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析预览';
   const compliance = result.compliance || {};
   const standardIds = (Array.isArray(compliance.standardRefs) ? compliance.standardRefs : []).map((reference) => reference.id).filter(Boolean);
-  const reportFacts = `<div class="report-facts"><span><b>标准引用</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>方法状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>合规结论</b>不自动声明</span></div>`;
+  const reportFacts = `<div class="report-facts"><span><b>标准引用</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>方法状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>合规结论</b>不声明</span></div>`;
   const missingItems = [
     ...(compliance.missingProfileFields || []),
     ...(compliance.missingMeasurements || []),
@@ -1256,7 +1256,7 @@ function renderSignalDiagnostics(dataset) {
   const signalRows = reviewSignals.length
     ? `<div class="signal-diagnostic-list">${reviewSignals.map((item) => `<div class="signal-diagnostic-row"><b>${escapeHtml(item.source)}</b><span>${escapeHtml(item.reasons.join('；'))}</span><small>负值 ${Number(item.negativeCount || 0).toLocaleString('zh-CN')} · 零值 ${Number(item.zeroCount || 0).toLocaleString('zh-CN')}${item.zeroPct === null || item.zeroPct === undefined ? '' : ` · ${fmt(item.zeroPct, 1)}%`}</small></div>`).join('')}</div>`
     : '<p class="signal-diagnostic-empty">未发现需要按当前角色提示的值分布复核项。</p>';
-  return `<div class="signal-diagnostics"><div class="signal-diagnostics-head"><span>字段值分布复核</span><small>${diagnostics.reviewSignalCount ? `${diagnostics.reviewSignalCount} 个字段待确认` : '当前分布未触发提示'}</small></div><div class="signal-diagnostic-grid"><span><b>${diagnostics.reviewSignalCount || 0}</b>待复核字段</span><span><b>${diagnostics.negativeSignalCount || 0}</b>含负值字段</span><span><b>${diagnostics.zeroDominantSignalCount || 0}</b>零值集中字段</span><span><b>${diagnostics.constantSignalCount || 0}</b>常量字段</span></div>${signalRows}<p class="signal-diagnostic-boundary">${escapeHtml(diagnostics.boundary || '不自动删除原始负值/零值；需结合企业字段定义和无效码表。')}</p></div>`;
+  return `<div class="signal-diagnostics"><div class="signal-diagnostics-head"><span>字段值分布复核</span><small>${diagnostics.reviewSignalCount ? `${diagnostics.reviewSignalCount} 个字段待确认` : '当前分布未触发提示'}</small></div><div class="signal-diagnostic-grid"><span><b>${diagnostics.reviewSignalCount || 0}</b>待复核字段</span><span><b>${diagnostics.negativeSignalCount || 0}</b>含负值字段</span><span><b>${diagnostics.zeroDominantSignalCount || 0}</b>零值集中字段</span><span><b>${diagnostics.constantSignalCount || 0}</b>常量字段</span></div>${signalRows}<p class="signal-diagnostic-boundary">${escapeHtml(diagnostics.boundary || '不删除原始负值/零值；需结合企业字段定义和无效码表。')}</p></div>`;
 }
 
 function renderEnterprisePanel(result) {
@@ -1298,7 +1298,7 @@ function renderEnterprisePanel(result) {
       try { await navigator.clipboard?.writeText(JSON.stringify(payload, null, 2)); $('#feishu-alert-status').textContent = '告警 JSON 已复制；尚未发送。'; } catch { $('#feishu-alert-status').textContent = '告警 JSON 已生成，但浏览器不允许程序化复制。'; }
     };
     $('#send-feishu').onclick = async () => {
-      $('#feishu-alert-status').textContent = '发送中';
+      $('#feishu-alert-status').textContent = '提交中';
       const directUrl = $('#feishu-webhook').value.trim();
       let response;
       try {
@@ -1318,8 +1318,8 @@ function renderEnterprisePanel(result) {
   const selectionControls = (dataset.platforms || []).map((platform) => {
     const audit = selectionAudit.find((item) => item.platformId === platform.platformId);
     const candidates = (dataset.stableSegments || []).filter((segment) => segment.platformId === platform.platformId && ['stable_valid', 'short_stable'].includes(segment.status));
-    const options = [`<option value="">自动：${escapeHtml(audit?.automaticSegmentId || '无可用区间')}</option>`, ...candidates.map((segment) => `<option value="${escapeHtml(segment.segmentId)}" ${segment.selectedBy === 'manual' ? 'selected' : ''}>${escapeHtml(segment.segmentId)} · ${fmt(segment.startS, 0)}–${fmt(segment.endS, 0)} s · ${escapeHtml(segment.status)}</option>`)].join('');
-    return `<label class="stack-selection-control">${escapeHtml(platform.platformId)} 稳定区间<select data-stack-selection="${escapeHtml(platform.platformId)}" ${candidates.length ? '' : 'disabled'}>${options}</select><small>${audit?.selectionMode === 'manual' ? '当前为人工改选' : '当前为自动选择'}${audit?.selectionError ? ` · ${escapeHtml(audit.selectionError)}` : ''}</small></label>`;
+    const options = [`<option value="">默认：${escapeHtml(audit?.automaticSegmentId || '无可用区间')}</option>`, ...candidates.map((segment) => `<option value="${escapeHtml(segment.segmentId)}" ${segment.selectedBy === 'manual' ? 'selected' : ''}>${escapeHtml(segment.segmentId)} · ${fmt(segment.startS, 0)}–${fmt(segment.endS, 0)} s · ${escapeHtml(segment.status)}</option>`)].join('');
+    return `<label class="stack-selection-control">${escapeHtml(platform.platformId)} 稳定区间<select data-stack-selection="${escapeHtml(platform.platformId)}" ${candidates.length ? '' : 'disabled'}>${options}</select><small>${audit?.selectionMode === 'manual' ? '当前为人工改选' : '当前为程序选择'}${audit?.selectionError ? ` · ${escapeHtml(audit.selectionError)}` : ''}</small></label>`;
   }).join('');
   const selectionNote = selectionAudit.length ? `推荐策略：${escapeHtml(dataset.selectionPolicy || '未声明')} · 人工改选 ${selectionAudit.filter((item) => item.selectionMode === 'manual').length} 个平台` : '尚未形成可选稳定区间';
   const platformRows = dataset.platforms?.length ? dataset.platforms.map((item) => { const audit = selectionAudit.find((entry) => entry.platformId === item.platformId); return `<tr><td>${escapeHtml(item.conditionId)}</td><td>${fmt(item.targetCurrentA, 2)}</td><td>${fmt(item.effectiveDurationS, 0)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(audit?.selectionMode === 'manual' ? '人工改选' : audit?.selectionMode === 'automatic' ? '推荐选定' : '未选定')}</td>`; }).join('') : '<tr><td colspan="5">未形成电流平台；先导入参数工作簿。</td></tr>';
@@ -1603,7 +1603,7 @@ async function loadCoverageSummary() {
     const diagnostics = summary.fieldDiagnostics || {};
     const depth = summary.evidenceDepthCounts || {};
     const diagnosticText = Number.isFinite(Number(diagnostics.reviewSignalFileCount))
-      ? `<br>全包字段复核：${Number(diagnostics.reviewSignalFileCount).toLocaleString('zh-CN')} 个文件、${Number(diagnostics.reviewSignalOccurrenceCount || 0).toLocaleString('zh-CN')} 次提示；不自动删除负值/零值<br>证据深度：描述区间 ${Number(depth.descriptive_interval || 0)} · 动态事件 ${Number(depth.dynamic_event_only || 0)} · 通用统计 ${Number(depth.generic_metrics_only || 0)} · 正式性能点 ${Number(depth.formal_kpi || 0)}`
+      ? `<br>全包字段复核：${Number(diagnostics.reviewSignalFileCount).toLocaleString('zh-CN')} 个文件、${Number(diagnostics.reviewSignalOccurrenceCount || 0).toLocaleString('zh-CN')} 次提示；不删除负值/零值<br>证据深度：描述区间 ${Number(depth.descriptive_interval || 0)} · 动态事件 ${Number(depth.dynamic_event_only || 0)} · 通用统计 ${Number(depth.generic_metrics_only || 0)} · 正式性能点 ${Number(depth.formal_kpi || 0)}`
       : '';
     if (riskFields) {
       const topFields = Array.isArray(diagnostics.topObservedReviewFields) ? diagnostics.topObservedReviewFields.slice(0, 5) : [];
@@ -2035,7 +2035,7 @@ $('#generate-ai').addEventListener('click', async () => {
   if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
-  button.textContent = '处理中';
+  button.textContent = '运算中';
   const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
   try {
     const response = await fetch('api/ai-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evidenceBundle(state.result, state.comparison)) });
@@ -2053,13 +2053,13 @@ $('#generate-ai').addEventListener('click', async () => {
 $('#copy-report').addEventListener('click', async () => {
   if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
-  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制。'; }
+  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，手动复制。'; }
 });
 $('#print-report').addEventListener('click', () => {
   const preview = $('#report-preview');
   if (!preview || !state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const win = window.open('', '_blank');
-  if (!win) { $('#report-status').textContent = '打印窗口被拦截。请允许弹出窗口后重试。'; return; }
+  if (!win) { $('#report-status').textContent = '打印窗口被拦截。允许弹出窗口后重试。'; return; }
   win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
   win.document.close();
   win.focus();
@@ -2126,7 +2126,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 let lastFocusedElement = null;
-function showLoading(message = '正在分析') {
+function showLoading(message = '正在计算') {
   lastFocusedElement = document.activeElement;
   const overlay = $('#loading-overlay');
   const msg = $('#loading-message');
@@ -2142,7 +2142,7 @@ function hideLoading() {
     try { lastFocusedElement.focus(); } catch {}
   }
 }
-async function withLoading(promise, message = '处理中') {
+async function withLoading(promise, message = '运算中') {
   showLoading(message);
   try { return await promise; }
   finally { hideLoading(); }
@@ -2211,7 +2211,7 @@ if (dropZone) {
 
 const originalAnalyzeCurrent = analyzeCurrent;
 analyzeCurrent = async function(reason = '重新分析') {
-  showLoading(`${reason}：准备中`);
+  showLoading(`${reason}：启动中`);
   try { await originalAnalyzeCurrent(reason); }
   finally { hideLoading(); }
 };
@@ -2372,7 +2372,7 @@ function renderBatchQueue(entries) {
   const batchActions = failed ? `<button id="retry-all-failed" aria-label="重试所有失败">重试所有失败 (${failed})</button><button id="remove-all-failed" aria-label="移除所有失败">移除所有失败</button>` : '';
   container.innerHTML = `<div class="batch-queue-header"><span class="batch-summary">${entries.length} 个文件 · ${sizeLabel} · ${processed} 已处理${failed ? ` · ${failed} 失败` : ''}</span><div class="batch-queue-actions">${batchActions}<button id="clear-completed" aria-label="清除已完成">清除已完成</button></div></div>` + entries.map((entry, index) => {
     const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
-    const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+    const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '运算中';
     const size = entry.size ? `${(entry.size / 1024).toFixed(1)} KB` : '—';
     const hint = entry.parseHint ? ` · ${escapeHtml(entry.parseHint)}` : '';
     const retryHint = (entry.status === 'parser_error' || entry.status === 'blocked_binary') ? '<div class="batch-retry-hint">点击“重试”后，在弹出的文件选择框中重新选择该文件；也可点击“移除所有失败”清空列表。</div>' : '';
@@ -2387,7 +2387,7 @@ function updateBatchQueueItem(entries, index, updates) {
   if (!entry) return;
   Object.assign(entry, updates);
   const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
-  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '处理中';
+  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '运算中';
   const chip = item.querySelector('.status-chip');
   if (chip) { chip.className = `status-chip ${statusClass}`; chip.textContent = statusLabel; }
 }

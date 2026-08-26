@@ -55,7 +55,7 @@ a { color: inherit; }
 .site-nav a:hover { color: var(--mint); }
 .mobile-nav { display: none; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: 12px; }
-.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(104,229,202,.12), 0 0 18px rgba(104,229,202,.55); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(104,229,202,.12), 0 0 18px rgba(104,229,202,.55); }
 .divider { width: 1px; height: 13px; background: var(--line-strong); }
 .hero { position: relative; isolation: isolate; overflow: hidden; min-height: 390px; margin: 26px 0 24px; padding: 64px 64px 48px; border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(135deg, rgba(13,50,62,.98), rgba(7,27,38,.98) 62%, rgba(20,34,60,.96)); box-shadow: var(--shadow); }
 .hero::before { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .42; background-image: linear-gradient(rgba(104,229,202,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(104,229,202,.07) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(90deg, #000 0%, rgba(0,0,0,.75) 56%, transparent 100%); }
@@ -457,8 +457,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 /* Batch queue improvements */
 .batch-queue-item.processing { border-color: rgba(104,229,202,.34); }
 .status-chip { position: relative; }
-.status-processing::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); animation: pulse 1.2s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.8); } }
+.status-processing::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); animation: statusPulse 1.2s infinite; }
+@keyframes statusPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.8); } }
 .batch-queue-item .file-meta { flex-wrap: wrap; gap: 6px; }
 .batch-retry-hint { color: var(--muted); font-size: 9px; line-height: 1.4; margin-top: 4px; }
 
@@ -535,9 +535,9 @@ button, .icon-button, .quiet-button, .outline-button, .primary-button, .upload-b
 .error-state { border-color: rgba(255,125,120,.35) !important; }
 .error-state .issue-mark { background: #5a2b31 !important; color: #ffaaa4 !important; }
 
-/* Status pulse for live dot */
-.live-dot { animation: livePulse 2s infinite; }
-@keyframes livePulse {
+/* Status statusPulse for live dot */
+.status-dot { animation: indicatorPulse 2s infinite; }
+@keyframes indicatorPulse {
   0%, 100% { box-shadow: 0 0 0 4px rgba(104,229,202,.12), 0 0 18px rgba(104,229,202,.55); }
   50% { box-shadow: 0 0 0 8px rgba(104,229,202,.18), 0 0 24px rgba(104,229,202,.7); }
 }
