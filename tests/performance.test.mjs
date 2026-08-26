@@ -270,3 +270,24 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
     assert.ok(elapsedMs < 60_000, `real 38k qingchuan analysis with profile took ${elapsedMs.toFixed(2)} ms`);
     recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_full_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
   });
+
+  test('test_parse_real_package02_vehicle_csv_bulk_sample', { skip: CI }, async () => {
+    const samples = [
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (50).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (1).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (50).csv',
+    ];
+    const start = process.hrtime.bigint();
+    for (const file of samples) {
+      const buf = await readRaw(file);
+      const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+      const rows = parseCSV(csv);
+      assert.ok(rows.length >= 100, `${file} should have many rows`);
+      assert.ok('Timestamp' in rows[0], `${file} should have Timestamp header`);
+      assert.ok('FC_CurrOut' in rows[0], `${file} should have FC_CurrOut header`);
+    }
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(elapsedMs < 30_000, `bulk parsing sampled vehicle csv files took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_parse_real_package02_vehicle_csv_bulk_sample', 'ok', elapsedMs, samples.length * 100, process.memoryUsage().heapUsed / 1024 / 1024);
+  });

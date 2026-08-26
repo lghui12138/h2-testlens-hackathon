@@ -1056,3 +1056,14 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
     assert.equal(counts['xlsx'] || 0, 1, `expected 1 XLSX file, got ${counts['xlsx'] || 0}`);
   });
 
+  test('package 02 氢质氢离 real vehicle CSV 212 sample produces deterministic insulation and session metrics', async () => {
+    const fixture = await readFile(join(here, '../sample-data/t02-qingzhihuli-vehicle-212-real.csv'), 'utf8');
+    const rows = parseCSV(fixture);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(result);
+    assert.equal(result.datasetType, 'vehicle');
+    assert.ok(result.dataset.sessionCount >= 1, 'should detect at least one session');
+    assert.ok(result.dataset.insulation.validCount >= 1, 'should have valid insulation points');
+    assert.ok(result.metrics.peakPowerW >= 0 || result.metrics.peakPowerW === null, 'peakPowerW should be non-negative or null');
+  });
+

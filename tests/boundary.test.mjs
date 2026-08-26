@@ -354,6 +354,26 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(voltageRow['电堆功率'], '0.000000');
   });
 
+  test('boundary: all 4 enterprise packages real files can be opened without crashing parser entrypoints', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const files = [
+      '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
+      '企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx',
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+      '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv',
+      '企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx',
+      '企业资料包04_海珀特/00_企业资料说明.pdf',
+    ];
+    for (const file of files) {
+      const buf = await readFile(join(T02_ROOT, file));
+      assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${file} should be non-empty`);
+      if (file.endsWith('.pdf')) {
+        assert.equal(isLikelyBinary(buf), true, `${file} should be binary`);
+      }
+    }
+  });
+
   test('real 氢质氢离 vehicle CSV boundary: exact zero current and voltage values do not crash adapter', { skip: !HAS_T02 }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));

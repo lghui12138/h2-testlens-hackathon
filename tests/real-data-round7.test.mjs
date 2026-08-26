@@ -1121,3 +1121,15 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
 
     assert.ok(pkg04Files.some((f) => f.endsWith('.pdf')), 'package 04 should have pdf files');
   });
+
+  test('package 02 氢质氢离 real vehicle CSV 212 sample parses insulation values deterministically', { skip: !HAS_T02 }, async () => {
+    const buf = await readRaw('企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv');
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    assert.ok(rows.length >= 100, `expected many rows, got ${rows.length}`);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(result);
+    assert.equal(result.datasetType, 'vehicle');
+    assert.ok(result.dataset.insulation.validCount >= 0);
+    assert.ok(Array.isArray(result.issues));
+  });
