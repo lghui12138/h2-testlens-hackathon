@@ -192,7 +192,7 @@ test('report contains verdict, metrics, and recommendations', () => {
   const markdown = reportMarkdown(analyzeRows(parseCSV(csv)), 'demo.csv');
   assert.match(markdown, /判定/);
   assert.match(markdown, /峰值泄漏监测/);
-  assert.match(markdown, /后续动作/);
+  assert.match(markdown, /后续步骤/);
   assert.match(reportMarkdown(analyzeRows(parseCSV(csv)), 'ai-demo.csv', { aiDraft: { mode: 'local-evidence', fallbackReason: 'no_endpoint_configured', draft: 'AI 草稿内容' } }), /AI 草稿内容/);
   assert.match(markdown, /测试流程完成度/);
   assert.match(markdown, /导入企业批准的 profile/);

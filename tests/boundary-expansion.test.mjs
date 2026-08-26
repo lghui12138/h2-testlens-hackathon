@@ -742,5 +742,5 @@ test('regression: reportMarkdown contains deterministic section headers', () => 
   const markdown = reportMarkdown(result, 'regression.csv');
   assert.match(markdown, /判定/);
   assert.match(markdown, /峰值/);
-  assert.match(markdown, /后续动作/);
+  assert.match(markdown, /后续步骤/);
 });

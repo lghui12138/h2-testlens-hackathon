@@ -272,7 +272,7 @@ test('reportMarkdown never crashes on minimal analysis results', () => {
   const minimal = analyzeRows(parseCSV('timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm,hydrogen_purity_pct\n0,10,2,30,10,6,1,99'));
   const markdown = reportMarkdown(minimal, 'edge.csv');
   assert.match(markdown, /判定/);
-  assert.match(markdown, /后续动作/);
+  assert.match(markdown, /后续步骤/);
 });
 
 test('publicAnalysis removes internal rows, source files, and secrets', () => {
