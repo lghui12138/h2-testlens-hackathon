@@ -2403,13 +2403,16 @@ function buildStack(rows, config) {
     temperature_c: unitSpec(mapping.temperature_c, 'temperature_c'),
     leak_ppm: unitSpec(mapping.leak_ppm, 'leak_ppm')
   };
-  const sessionTime = sessionizedTimes(rows, mapping.timestamp_s);
+  const sessionRows = mapping.timestamp_s
+    ? rows.map((row) => ({ ...row, [mapping.timestamp_s]: convertEnterpriseValue(row[mapping.timestamp_s], unitSpecs.timestamp_s) }))
+    : rows;
+  const sessionTime = sessionizedTimes(sessionRows, mapping.timestamp_s);
   const normalized = rows.map((row, index) => {
     const currentA = convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a);
     const voltageV = convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v);
     const powerKw = convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw);
     const rawPowerW = powerKw === null ? null : powerKw * 1000;
-    const derivedPowerW = Number.isFinite(currentA) && Number.isFinite(voltageV) ? currentA * voltageV : null;
+    const derived_power_w = Number.isFinite(currentA) && Number.isFinite(voltageV) ? currentA * voltageV : null;
     return {
       timestamp_s: sessionTime.globalTimes[index],
       session_timestamp_s: sessionTime.localTimes[index],
@@ -2422,7 +2425,7 @@ function buildStack(rows, config) {
       power_kw: powerKw,
       raw_power_w: rawPowerW,
       derived_power_w,
-      power_w: rawPowerW ?? derivedPowerW,
+      power_w: rawPowerW ?? derived_power_w,
       avg_cell_voltage_v: convertEnterpriseValue(row[mapping.avg_cell_voltage_v], unitSpecs.avg_cell_voltage_v),
       min_cell_voltage_v: convertEnterpriseValue(row[mapping.min_cell_voltage_v], unitSpecs.min_cell_voltage_v),
       max_cell_voltage_v: convertEnterpriseValue(row[mapping.max_cell_voltage_v], unitSpecs.max_cell_voltage_v),
