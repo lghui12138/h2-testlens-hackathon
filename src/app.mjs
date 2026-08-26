@@ -750,7 +750,7 @@ function renderIssues(result) {
     $('#issue-count').textContent = '0 项需要关注';
     return;
   }
-  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>后续动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
+  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>后续步骤：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
   $('#issue-count').textContent = `${result.issues.filter((item) => item.severity !== 'info').length} 项需要关注`;
 }
 
@@ -1245,7 +1245,7 @@ function renderReport(result, draft = state.aiDraft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT PREVIEW / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">预览仅引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;
   }
-  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和后续动作可追溯；';
+  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和后续步骤可追溯；';
   $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>计算报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与后续步骤</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
 }
 
@@ -1780,12 +1780,12 @@ function buildEnhancedMarkdown(result, fileName, schema) {
     }
   }
   parts.push('');
-  parts.push('## 异常与后续动作', '');
+  parts.push('## 异常与后续步骤', '');
   if (!(result.issues || []).length) {
     parts.push('- 无异常');
   }
   for (const issue of result.issues || []) {
-    parts.push(`- **${issue.severity}｜${issue.title}**：${issue.evidence}。后续动作：${issue.recommendation}`);
+    parts.push(`- **${issue.severity}｜${issue.title}**：${issue.evidence}。后续步骤：${issue.recommendation}`);
   }
   parts.push('');
   parts.push('## 工况分段', '');
