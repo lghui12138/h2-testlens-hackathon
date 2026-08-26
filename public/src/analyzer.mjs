@@ -1481,10 +1481,10 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const workflow = workflowReadiness(config, quality, schema, compliance, verdict, uncertainty);
   const criticalCount = issues.filter((item) => item.severity === 'critical').length;
   const narrative = verdict === 'FAIL'
-    ? `本次测试自动判定为需复核：发现 ${criticalCount} 项高优先级风险。系统已将异常指标、阈值和建议动作绑定到同一证据链，工程师可先处理安全相关项，再决定是否重测。`
+    ? `本次测试判定为需复核：发现 ${criticalCount} 项高优先级风险。异常指标、阈值和后续动作已绑定到同一证据链，工程师可先处理安全相关项，再决定是否重测。`
     : verdict === 'WARN'
-      ? '本次测试未触发高优先级安全规则，但存在需要工程师复核的趋势或数据质量问题，建议在正式归档前补测。'
-      : '本次测试关键指标未触发当前规则，建议结合企业标准和设备工况完成最终人工签核。';
+      ? '本次测试未触发高优先级安全规则，但存在需要工程师复核的趋势或数据质量问题，后续动作：在正式归档前补测。'
+      : '本次测试关键指标未触发当前规则，后续动作：结合企业标准和设备工况完成最终签核。';
   const result = {
     generatedAt: new Date().toISOString(),
     config,
