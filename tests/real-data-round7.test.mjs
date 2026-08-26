@@ -18,6 +18,7 @@ const T02_ROOT = existsSync("/Users/kili/Downloads/T02_设备测试数据分析�
   ? "/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手"
   : (process.env.T02_ROOT || null);
 const HAS_T02 = Boolean(T02_ROOT && existsSync(T02_ROOT));
+const CI = String(process.env.CI || '').toLowerCase() === 'true';
 
 // ---------------------------------------------------------------------------
 // Helpers
