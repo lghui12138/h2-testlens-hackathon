@@ -320,9 +320,9 @@ function valueOrText(value) {
 }
 
 function numericSummary(values, expectedCount = values.length) {
-  const valid = values.filter((value) => value !== null);
-  const minimum = valid.length ? Math.min(...valid) : null;
-  const maximum = valid.length ? Math.max(...valid) : null;
+  const valid = values.filter(Number.isFinite);
+  const minimum = valid.length ? valid.reduce((m, v) => v < m ? v : m, Infinity) : null;
+  const maximum = valid.length ? valid.reduce((m, v) => v > m ? v : m, -Infinity) : null;
   return {
     validCount: valid.length,
     missingCount: Math.max(0, expectedCount - valid.length),

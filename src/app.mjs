@@ -362,7 +362,7 @@ async function analyzeCurrent(reason = '重新分析') {
     setAnalysisStatus(`分析失败：${message}`, 'error');
     const notice = $('#schema-notice');
     if (notice) {
-      const example = state.fileName?.includes('electrolyzer') ? '示例列：timestamp, current_a, avg_cell_voltage_v, power_kw, temperature_c, pressure_bar' : state.fileName?.includes('legacy') ? '中文单位样本需包含：时间, 电流_A, 平均单片电压_V, 功率_kW, 温度_C, 压力_bar' : '请确认首行包含表头且列名与示例一致';
+      const example = state.fileName?.includes('electrolyzer') ? '示例列：timestamp, current_a, avg_cell_voltage_v, power_kw, temperature_c, pressure_bar' : state.fileName?.includes('legacy') ? '中文单位样本需包含：时间, 电流_A, 平均单片电压_V, 功率_kW, 温度_C, 压力_bar' : '确认首行包含表头且列名与示例一致';
       notice.innerHTML = `<div class="error-detail"><strong>分析失败</strong><span>${escapeHtml(message)}</span><div class="error-example"><strong>数据提示：</strong>${escapeHtml(example)}<br>文件：${escapeHtml(state.fileName || '—')} · 记录：${(state.inputSummary?.processed || 0).toLocaleString('zh-CN')} 条</div></div>`;
     }
     const retryButton = $('#retry-analysis');
@@ -543,7 +543,7 @@ function renderProfileOptions() {
 function applyProfile(profileId) {
   const profile = getProfile(profileId, state.profileCatalog);
   if (profileId !== CUSTOM_PROFILE_ID && !profile) {
-    $('#profile-note').textContent = `未知 profile：${profileId}；切换已阻断，请从当前列表选择 profile。`;
+    $('#profile-note').textContent = `未知 profile：${profileId}；切换已阻断，从当前列表选择 profile。`;
     return;
   }
   $('#profile-select').value = profileId;
@@ -663,8 +663,8 @@ function renderMetrics(result) {
       ['判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '原始耐久结果 + 当前规则'],
       ['功率点记录', `${dataset.points.length}`, 'neutral', `${dataset.targetPowers.length} 个目标功率`],
       ['峰值净功率', `${fmt(metrics.peakPowerW / 1000, 1)} kW`, 'neutral', '净输出功率'],
-      ['最低平均单体', `${fmt(Math.min(...dataset.points.map((point) => point.averageCellVoltageMv).filter((value) => value !== null), 0), 0)} mV`, lowVoltage ? 'warn' : 'good', dataset.rules.minAverageCellVoltageMv === null ? '阈值未配置' : `阈值 ${dataset.rules.minAverageCellVoltageMv} mV`],
-      ['最大离均差', `${fmt(Math.max(...dataset.points.map((point) => point.averageDeviationMv).filter((value) => value !== null), 0), 0)} mV`, highDeviation ? 'warn' : 'good', dataset.rules.maxDeviationMv === null ? '阈值未配置' : `阈值 ${dataset.rules.maxDeviationMv} mV`],
+      ['最低平均单体', `${fmt(dataset.points.map((point) => point.averageCellVoltageMv).filter(Number.isFinite).reduce((min, value) => value < min ? value : min, 0), 0)} mV`, lowVoltage ? 'warn' : 'good', dataset.rules.minAverageCellVoltageMv === null ? '阈值未配置' : `阈值 ${dataset.rules.minAverageCellVoltageMv} mV`],
+      ['最大离均差', `${fmt(dataset.points.map((point) => point.averageDeviationMv).filter(Number.isFinite).reduce((max, value) => value > max ? value : max, 0), 0)} mV`, highDeviation ? 'warn' : 'good', dataset.rules.maxDeviationMv === null ? '阈值未配置' : `阈值 ${dataset.rules.maxDeviationMv} mV`],
       ['原始报告', `${dataset.reports.length}`, 'neutral', dataset.reports.some((report) => String(report.metadata?.测试结果 || '').includes('未通过')) ? '含未通过报告' : '未发现未通过标记']
     ];
     $('#metric-grid').innerHTML = cards.map(([label, value, tone, note]) => `<article class="metric-card ${tone}"><span>${label}</span><strong>${value}${label === '数据完整率' ? qualityMeter(metrics.completenessPct) : ''}</strong><small>${note}</small></article>`).join('');
@@ -750,7 +750,7 @@ function renderIssues(result) {
     $('#issue-count').textContent = '0 项需要关注';
     return;
   }
-  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>建议：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
+  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>后续动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
   $('#issue-count').textContent = `${result.issues.filter((item) => item.severity !== 'info').length} 项需要关注`;
 }
 
@@ -779,7 +779,7 @@ function renderPhases(result) {
   const missingMetrics = result.compliance?.missingPhaseMetrics || [];
   const rows = result.phases || [];
   if (!rows.length) {
-    $('#phase-list').innerHTML = '<div class="phase-empty">未识别到可展示的工况分段。导入含 phase 或时间戳清晰的稳态/动态数据后，系统会自动分段并显示指标。</div>';
+    $('#phase-list').innerHTML = '<div class="phase-empty">未识别到可展示的工况分段。导入含 phase 或时间戳清晰的稳态/动态数据后，分段并显示指标。</div>';
     return;
   }
   $('#phase-list').innerHTML = rows.map((phase) => {
@@ -863,7 +863,7 @@ function renderBatchObservation() {
   if (!state.batchDeclarationInput) {
     status.textContent = '未提供声明';
     status.dataset.tone = 'neutral';
-    summary.innerHTML = '<p class="batch-empty">先导入两个或以上可分析文件，再上传企业提供的批次声明 JSON。系统不会根据文件名或时间戳自行拼接连续试验。</p>';
+    summary.innerHTML = '<p class="batch-empty">先导入两个或以上可分析文件，再上传企业提供的批次声明 JSON。不根据文件名或时间戳拼接连续试验。</p>';
     files.innerHTML = '';
     issues.innerHTML = '';
     return;
@@ -944,8 +944,8 @@ function drawChart(result) {
         const valuesFor = (field) => chartRows.map((row) => row[field]).filter((item) => Number.isFinite(item));
         const scale = (field) => {
           const values = valuesFor(field);
-          const min = values.length ? Math.min(...values) : 0;
-          const max = values.length ? Math.max(...values) : 1;
+          const min = values.reduce((m, v) => v < m ? v : m, 0);
+          const max = values.reduce((m, v) => v > m ? v : m, 1);
           return { min, max, span: max - min || 1 };
         };
         const scales = Object.fromEntries(axes.map((item) => [item.axis, scale(item.field)]));
@@ -975,13 +975,13 @@ function drawChart(result) {
       }
       const series = [['current_a', '#ef8f62', '电流（A）'], ['avg_cell_voltage_v', '#5bd4c0', '平均单片电压（V）'], ['power_kw', '#7c9df2', '功率（kW）']];
       const yFor = (field, value) => {
-        const values = chartRows.map((row) => row[field]).filter((item) => item !== null);
-        const min = Math.min(...values, 0); const max = Math.max(...values, 1); const span = max - min || 1;
+        const values = chartRows.map((row) => row[field]).filter(Number.isFinite);
+        const min = values.reduce((m, v) => v < m ? v : m, 0); const max = values.reduce((m, v) => v > m ? v : m, 1); const span = max - min || 1;
         return h - pad.bottom - ((value - min) / span) * (h - pad.top - pad.bottom);
       };
       // Three series share one normalized y-scale; show one axis with span across all values.
       const allValues = chartRows.flatMap((row) => series.map(([f]) => row[f])).filter((item) => item !== null);
-      const yMin = Math.min(...allValues, 0); const yMax = Math.max(...allValues, 1);
+      const yMin = allValues.reduce((m, v) => v < m ? v : m, 0); const yMax = allValues.reduce((m, v) => v > m ? v : m, 1);
       const t0 = chartRows[0]?.timestamp_s ?? 0; const t1 = chartRows[chartRows.length - 1]?.timestamp_s ?? 1;
       drawAxis(ctx, pad, w, h, 'left', yMin, yMax, '归一化数值', { color: '#a4b5bd' });
       drawAxis(ctx, pad, w, h, 'bottom', t0, t1, '时间（s）', { color: '#71838a' });
@@ -1048,7 +1048,7 @@ function drawEnterpriseChart(result) {
   if (result.datasetType === 'durability') {
     const points = (result.dataset.points || []).filter((point) => Number.isFinite(point.targetPowerKw) && Number.isFinite(point.averageCellVoltageMv));
     if (!points.length) { label('暂无可绘制的耐久功率点', pad.left, pad.top + 20); return; }
-    const xValues = points.map((point) => point.targetPowerKw); const yValues = points.map((point) => point.averageCellVoltageMv); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 10; const yMax = Math.max(...yValues) + 10;
+    const xValues = points.map((point) => point.targetPowerKw); const yValues = points.map((point) => point.averageCellVoltageMv); const xMin = xValues.reduce((m, v) => v < m ? v : m, Infinity); const xMax = xValues.reduce((m, v) => v > m ? v : m, -Infinity); const yMin = yValues.reduce((m, v) => v < m ? v : m, Infinity) - 10; const yMax = yValues.reduce((m, v) => v > m ? v : m, -Infinity) + 10;
     const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
     drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单体电压（mV）', { color: '#5bd4c0' });
     drawAxis(ctx, pad, width, height, 'bottom', xMin, xMax, '目标功率（kW）', { color: '#71838a' });
@@ -1057,9 +1057,9 @@ function drawEnterpriseChart(result) {
     return;
   }
   const points = (result.dataset.performancePoints || []).filter((point) => Number.isFinite(point.averageCellVoltageV));
-  if (!points.length) { label('暂无有效极化点；请导入目标工况参数并确认稳定区间', pad.left, pad.top + 20); return; }
+  if (!points.length) { label('暂无有效极化点；导入目标工况参数并确认稳定区间', pad.left, pad.top + 20); return; }
   const xValues = points.map((point) => point.averageCurrentDensity ?? point.averageCurrentA).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).filter(Number.isFinite);
-  const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01;
+  const xMin = xValues.reduce((m, v) => v < m ? v : m, Infinity); const xMax = xValues.reduce((m, v) => v > m ? v : m, -Infinity); const yMin = yValues.reduce((m, v) => v < m ? v : m, Infinity) - 0.01; const yMax = yValues.reduce((m, v) => v > m ? v : m, -Infinity) + 0.01;
   const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
   drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单片电压（V）', { color: '#5bd4c0' });
   const xUnit = points[0]?.averageCurrentDensity !== undefined ? '电流密度（A/cm²）' : '电流（A）';
@@ -1073,7 +1073,7 @@ function drawEnterpriseChart(result) {
       wrap.classList.add('chart-error');
       const existing = wrap.querySelector('.chart-skeleton-message');
       if (!existing) {
-        wrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>请检查数据格式后重试</span></div>');
+        wrap.insertAdjacentHTML('beforeend', '<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表渲染失败</strong><span>检查数据格式后重试</span></div>');
       }
     }
   }
@@ -1097,7 +1097,7 @@ function drawEnterprisePerformanceChart(result) {
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height);
   const pad = { left: 54, right: 28, top: 24, bottom: 40 }; const plotW = width - pad.left - pad.right; const plotH = height - pad.top - pad.bottom; ctx.font = '10px Avenir Next, sans-serif'; ctx.fillStyle = '#71838a';
   if (!points.length) { ctx.fillText('暂无可绘制区间；输入企业目标电流后重新分析', pad.left, pad.top + 20); return; }
-  const xValues = points.map((point) => point.trendX); const fittedValues = xValues.map((value) => evaluateChartTrend(trend, value)).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).concat(fittedValues); const xMin = Math.min(...xValues); const xMax = Math.max(...xValues); const yMin = Math.min(...yValues) - 0.01; const yMax = Math.max(...yValues) + 0.01; const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
+  const xValues = points.map((point) => point.trendX).filter(Number.isFinite); const fittedValues = xValues.map((value) => evaluateChartTrend(trend, value)).filter(Number.isFinite); const yValues = points.map((point) => point.averageCellVoltageV).concat(fittedValues).filter(Number.isFinite); const xMin = xValues.reduce((m, v) => v < m ? v : m, Infinity); const xMax = xValues.reduce((m, v) => v > m ? v : m, -Infinity); const yMin = yValues.reduce((m, v) => v < m ? v : m, Infinity) - 0.01; const yMax = yValues.reduce((m, v) => v > m ? v : m, -Infinity) + 0.01; const x = (value) => pad.left + (value - xMin) / (xMax - xMin || 1) * plotW; const y = (value) => pad.top + (yMax - value) / (yMax - yMin || 1) * plotH;
   const xUnit = result.dataset.trendXAxis === 'timestamp' ? '时间（日期序号）' : '运行时长（h）';
   drawAxis(ctx, pad, width, height, 'left', yMin, yMax, '平均单体电压（V）', { color: '#5bd4c0' });
   drawAxis(ctx, pad, width, height, 'bottom', xMin, xMax, xUnit, { color: '#71838a' });
@@ -1123,7 +1123,7 @@ function generateHistoryThumbnail(result) {
         if (!points.length) return null;
         const values = points.map((point) => point.averageCellVoltageMv);
         const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW;
-        const y = (value) => { const min = Math.min(...values); const max = Math.max(...values); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
+        const y = (value) => { const min = values.reduce((m, v) => v < m ? v : m, Infinity); const max = values.reduce((m, v) => v > m ? v : m, -Infinity); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
         grid();
         ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.6; ctx.beginPath(); points.forEach((point, index) => { const px = x(index); const py = y(point.averageCellVoltageMv); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
         return { label: '平均单体 mV', color: '#5bd4c0' };
@@ -1131,7 +1131,7 @@ function generateHistoryThumbnail(result) {
       const values = result.rows.map((row) => num(row.current_a)).filter(Number.isFinite);
       if (!values.length) return null;
       const x = (index) => pad.left + index / Math.max(result.rows.length - 1, 1) * plotW;
-      const y = (value) => { const min = Math.min(...values); const max = Math.max(...values); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
+      const y = (value) => { const min = values.reduce((m, v) => v < m ? v : m, Infinity); const max = values.reduce((m, v) => v > m ? v : m, -Infinity); const span = max - min || 1; return pad.top + (max - value) / span * plotH; };
       grid();
       ctx.strokeStyle = '#5bd4c0'; ctx.lineWidth = 1.6; ctx.beginPath(); values.forEach((value, index) => { const px = x(index); const py = y(value); index ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
       return { label: '电流 A', color: '#5bd4c0' };
@@ -1181,10 +1181,10 @@ function renderComplianceHistory() {
 
 function renderReport(result, draft = state.aiDraft) {
   const status = verdictLabel(result.verdict);
-  const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析草稿';
+  const gateLabel = result.releaseGate?.status === 'HUMAN_REVIEW_PACKAGE' ? '人工复核包' : result.releaseGate?.status === 'STANDARD_EVIDENCE_PACKAGE' ? '标准流程证据包' : '分析预览';
   const compliance = result.compliance || {};
   const standardIds = (Array.isArray(compliance.standardRefs) ? compliance.standardRefs : []).map((reference) => reference.id).filter(Boolean);
-  const reportFacts = `<div class="report-facts"><span><b>标准引用</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>方法状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>合规结论</b>不由系统自动声明</span></div>`;
+  const reportFacts = `<div class="report-facts"><span><b>标准引用</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>方法状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>合规结论</b>不自动声明</span></div>`;
   const missingItems = [
     ...(compliance.missingProfileFields || []),
     ...(compliance.missingMeasurements || []),
@@ -1240,13 +1240,13 @@ function renderReport(result, draft = state.aiDraft) {
   const complianceStatusIcon = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '✓' : result.compliance.status === 'NOT_READY' ? '-' : '·';
   const complianceStatusTitle = result.compliance.status === 'READY_FOR_HUMAN_REVIEW' ? '可进入人工复核' : result.compliance.status === 'NOT_READY' ? '资料不完整' : '仅演示';
   const complianceSection = `<div class="compliance-evidence"><div class="compliance-evidence-head"><div><h3>标准符合性证据</h3><small>方法 ${methodId}/${revision} · 标准引用 ${standardRefsDetail} · 审批状态 ${escapeHtml(compliance.approvalStatus || '未指定')}</small></div><span class="compliance-status-badge ${complianceStatusClass}" title="${escapeHtml(complianceStatusTitle)}">${complianceStatusIcon} ${escapeHtml(result.compliance.label || '未评估')}</span></div><div class="compliance-evidence-grid"><span><b>检查标准</b>${escapeHtml(standardIds.length ? standardIds.join('、') : '未配置')}</span><span><b>Profile 审批状态</b>${escapeHtml(compliance.approvalStatus || '未指定')}</span><span><b>方法执行状态</b>${escapeHtml(compliance.methodExecutionStatus || '未声明')}</span><span><b>交付级别</b>${escapeHtml(result.releaseGate?.status || 'ANALYSIS_DRAFT')}</span><span><b>方法编号</b>${methodId}</span><span><b>修订号</b>${revision}</span><span><b>审批证据</b>${escapeHtml(approvalDetail)}</span><span><b>标准引用证据</b>${escapeHtml(standardDetail)}</span><span><b>方法实施证据</b>${escapeHtml(methodDetail)}</span><span><b>边界声明</b>${escapeHtml(compliance.boundary || '')}</span>${gateSummary}</div>${evidenceBar}${gateRows ? `<div class="compliance-gate-list">${gateRows}</div>` : ''}${standardCards ? `<div class="compliance-standard-grid">${standardCards}</div>` : ''}${missingItems.length ? `<p class="compliance-evidence-missing"><b>缺失/待补齐证据：</b>${escapeHtml(missingItems.slice(0, 8).join('、'))}${missingItems.length > 8 ? '…' : ''}</p>` : '<p class="compliance-evidence-ok">已具备基本证据框架。</p>'}</div>`;
-  $('#report-status').textContent = draft ? `${gateLabel} · 结构化初稿` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
+  $('#report-status').textContent = draft ? `${gateLabel} · 结构化预览` : `${gateLabel} · ${status} · ${result.issues.length} 条结论`;
   if (draft?.draft) {
-    $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT DRAFT / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">初稿只引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
+    $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT PREVIEW / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">预览仅引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;
   }
-  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和建议可追溯；';
-  $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>自动报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与建议</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
+  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和后续动作可追溯；';
+  $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>分析报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与后续动作</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
 }
 
 function renderSignalDiagnostics(dataset) {
@@ -1295,7 +1295,7 @@ function renderEnterprisePanel(result) {
     $('#enterprise-controls').innerHTML = `<label>离均差预警 mV（可选）<input id="durability-max-deviation" type="number" value="${dataset.rules.maxDeviationMv ?? ''}" placeholder="企业填写" step="1"></label><label>平均单体电压下限 mV（可选）<input id="durability-min-cell-voltage" type="number" value="${dataset.rules.minAverageCellVoltageMv ?? ''}" placeholder="企业填写" step="1"></label><label>飞书机器人 Webhook（可选）<input id="feishu-webhook" type="url" placeholder="企业批准后填写"></label><label>签名密钥（可选）<input id="feishu-secret" type="password" placeholder="仅当前会话"></label><button id="preview-feishu" class="quiet-button" type="button">预览飞书告警 JSON</button><button id="send-feishu" class="outline-button" type="button">确认发送飞书</button><span id="feishu-alert-status" class="enterprise-note">未发送；默认只生成预览。</span>`;
     $('#preview-feishu').onclick = async () => {
       const payload = durabilityAlertPayload(result, state.fileName);
-      try { await navigator.clipboard?.writeText(JSON.stringify(payload, null, 2)); $('#feishu-alert-status').textContent = '告警 JSON 已复制；尚未发送。'; } catch { $('#feishu-alert-status').textContent = '告警 JSON 已生成，但浏览器不允许自动复制。'; }
+      try { await navigator.clipboard?.writeText(JSON.stringify(payload, null, 2)); $('#feishu-alert-status').textContent = '告警 JSON 已复制；尚未发送。'; } catch { $('#feishu-alert-status').textContent = '告警 JSON 已生成，但浏览器不允许程序化复制。'; }
     };
     $('#send-feishu').onclick = async () => {
       $('#feishu-alert-status').textContent = '发送中';
@@ -1321,9 +1321,9 @@ function renderEnterprisePanel(result) {
     const options = [`<option value="">自动：${escapeHtml(audit?.automaticSegmentId || '无可用区间')}</option>`, ...candidates.map((segment) => `<option value="${escapeHtml(segment.segmentId)}" ${segment.selectedBy === 'manual' ? 'selected' : ''}>${escapeHtml(segment.segmentId)} · ${fmt(segment.startS, 0)}–${fmt(segment.endS, 0)} s · ${escapeHtml(segment.status)}</option>`)].join('');
     return `<label class="stack-selection-control">${escapeHtml(platform.platformId)} 稳定区间<select data-stack-selection="${escapeHtml(platform.platformId)}" ${candidates.length ? '' : 'disabled'}>${options}</select><small>${audit?.selectionMode === 'manual' ? '当前为人工改选' : '当前为自动选择'}${audit?.selectionError ? ` · ${escapeHtml(audit.selectionError)}` : ''}</small></label>`;
   }).join('');
-  const selectionNote = selectionAudit.length ? `自动策略：${escapeHtml(dataset.selectionPolicy || '未声明')} · 人工改选 ${selectionAudit.filter((item) => item.selectionMode === 'manual').length} 个平台` : '尚未形成可选稳定区间';
-  const platformRows = dataset.platforms?.length ? dataset.platforms.map((item) => { const audit = selectionAudit.find((entry) => entry.platformId === item.platformId); return `<tr><td>${escapeHtml(item.conditionId)}</td><td>${fmt(item.targetCurrentA, 2)}</td><td>${fmt(item.effectiveDurationS, 0)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(audit?.selectionMode === 'manual' ? '人工改选' : audit?.selectionMode === 'automatic' ? '自动选定' : '未选定')}</td>`; }).join('') : '<tr><td colspan="5">未形成电流平台；先导入参数工作簿。</td></tr>';
-  const comparisonRows = dataset.performancePoints?.flatMap((point) => (point.parameterComparisons || []).map((comparison) => `<tr><td>${escapeHtml(point.platformId || point.conditionId || '')}</td><td>${escapeHtml(comparison.code)}</td><td>${fmt(comparison.target, 3)}</td><td>${fmt(comparison.actualMean, 3)}</td><td>${fmt(comparison.absoluteDeviation, 3)}</td><td>${fmt(comparison.exceedRatioPct, 1)}</td><td>${escapeHtml(comparison.status || '无法判定')}</td></tr>`)).join('') || '<tr><td colspan="7">未形成目标工况对比；请确认参数表和有效稳定区间。</td></tr>';
+  const selectionNote = selectionAudit.length ? `推荐策略：${escapeHtml(dataset.selectionPolicy || '未声明')} · 人工改选 ${selectionAudit.filter((item) => item.selectionMode === 'manual').length} 个平台` : '尚未形成可选稳定区间';
+  const platformRows = dataset.platforms?.length ? dataset.platforms.map((item) => { const audit = selectionAudit.find((entry) => entry.platformId === item.platformId); return `<tr><td>${escapeHtml(item.conditionId)}</td><td>${fmt(item.targetCurrentA, 2)}</td><td>${fmt(item.effectiveDurationS, 0)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(audit?.selectionMode === 'manual' ? '人工改选' : audit?.selectionMode === 'automatic' ? '推荐选定' : '未选定')}</td>`; }).join('') : '<tr><td colspan="5">未形成电流平台；先导入参数工作簿。</td></tr>';
+  const comparisonRows = dataset.performancePoints?.flatMap((point) => (point.parameterComparisons || []).map((comparison) => `<tr><td>${escapeHtml(point.platformId || point.conditionId || '')}</td><td>${escapeHtml(comparison.code)}</td><td>${fmt(comparison.target, 3)}</td><td>${fmt(comparison.actualMean, 3)}</td><td>${fmt(comparison.absoluteDeviation, 3)}</td><td>${fmt(comparison.exceedRatioPct, 1)}</td><td>${escapeHtml(comparison.status || '无法判定')}</td></tr>`)).join('') || '<tr><td colspan="7">未形成目标工况对比；确认参数表和有效稳定区间。</td></tr>';
   $('#enterprise-controls').innerHTML = `<span class="enterprise-note">${escapeHtml(parameterStatus)} · ${dataset.parameterConfig?.ok ? '平台和稳定区间按参数表计算' : '候选按实际电流连续性发现，仅作 descriptive_only，不作目标符合性判定'}</span>${selectionControls ? `<div class="stack-selection-grid"><h3>稳定区间选择</h3><p class="enterprise-note">${selectionNote}。人工改选只改变统计截取对象，不改变原始数据或参数阈值。</p>${selectionControls}</div>` : ''}`;
   document.querySelectorAll('[data-stack-selection]').forEach((select) => select.addEventListener('change', () => {
     const platformId = select.dataset.stackSelection;
@@ -1349,14 +1349,14 @@ function renderEnterprisePanel(result) {
   const cellRows = (dataset.cellTimeSeriesStats || []).slice(0, 120).map((item) => `<tr><td>${escapeHtml(item.source)}</td><td>${item.count}</td><td>${item.missingCount}</td><td>${fmt(item.completenessPct, 1)}</td><td>${fmt(item.mean, 4)}</td><td>${fmt(item.min, 4)}</td><td>${fmt(item.max, 4)}</td><td>${fmt(item.std, 4)}</td></tr>`).join('') || '<tr><td colspan="8">未形成逐片时序统计</td></tr>';
   const excludedRows = (dataset.excludedIntervals || []).map((item) => `<tr><td>${escapeHtml(item.platformId || '—')}</td><td>${fmt(item.startS, 1)}</td><td>${fmt(item.endS, 1)}</td><td>${fmt(item.durationS, 1)}</td><td>${item.sampleCount ?? '—'}</td><td>${escapeHtml(item.reasonCode || '—')}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`).join('') || '<tr><td colspan="7">没有被记录的排除区间</td></tr>';
   $('#enterprise-summary').innerHTML += `<h3>工程量摘要（统计/核对，不是标准结论）</h3><table><thead><tr><th>工程量</th><th>均值</th><th>单位</th><th>有效记录</th></tr></thead><tbody>${engineeringRows}</tbody></table><h3>原始单片时序统计（描述性）</h3><table><thead><tr><th>源字段</th><th>有效</th><th>缺失</th><th>完整率%</th><th>均值 V</th><th>最小 V</th><th>最大 V</th><th>标准差 V</th></tr></thead><tbody>${cellRows}</tbody></table><p class="enterprise-note">逐片统计只描述原始通道覆盖，不是单片合格判定。入口露点只接受原始字段明确标注为露点的记录；增湿罐水温不能替代露点。</p>`;
-  const coverageRows = dataset.coverage ? `<tr><td>总信号数</td><td>${dataset.coverage.totalSignals}</td><td>—</td><td>—</td></tr><tr><td>分析输入信号</td><td>${dataset.coverage.analysisSignals}</td><td>—</td><td>进入 KPI / 统计 / 交叉核对</td></tr><tr><td>数值信号</td><td>${dataset.coverage.numericSignals}</td><td>—</td><td>可参与描述性统计</td></tr><tr><td>目录保留信号</td><td>${dataset.coverage.catalogOnlySignals?.length || 0}</td><td>—</td><td>仅保留字段目录，不自动生成结论</td></tr>` : '';
+  const coverageRows = dataset.coverage ? `<tr><td>总信号数</td><td>${dataset.coverage.totalSignals}</td><td>—</td><td>—</td></tr><tr><td>分析输入信号</td><td>${dataset.coverage.analysisSignals}</td><td>—</td><td>进入 KPI / 统计 / 交叉核对</td></tr><tr><td>数值信号</td><td>${dataset.coverage.numericSignals}</td><td>—</td><td>可参与描述性统计</td></tr><tr><td>目录保留信号</td><td>${dataset.coverage.catalogOnlySignals?.length || 0}</td><td>—</td><td>仅保留字段目录，不生成结论</td></tr>` : '';
   $('#enterprise-table').innerHTML = `<h3>${dataset.parameterConfig?.ok ? '电流平台与稳定区间' : '描述性候选电流区间（非正式稳定区间/极化点）'}</h3><table><thead><tr><th>工况/候选</th><th>目标电流 A</th><th>有效持续 s</th><th>平台状态</th><th>稳定区间选择</th></tr></thead><tbody>${platformRows}</tbody></table><h3>目标工况对比</h3><table><thead><tr><th>平台</th><th>参数</th><th>目标</th><th>实际均值</th><th>绝对偏差</th><th>超限比例 %</th><th>状态</th></tr></thead><tbody>${comparisonRows}</tbody></table><h3>稳定区间排除证据</h3><table><thead><tr><th>平台</th><th>起始 s</th><th>结束 s</th><th>持续 s</th><th>样本</th><th>原因</th><th>说明</th></tr></thead><tbody>${excludedRows}</tbody></table>${coverageRows ? `<h3>数据覆盖与信号角色</h3><table><thead><tr><th>类别</th><th>数量</th><th>单位</th><th>说明</th></tr></thead><tbody>${coverageRows}</tbody></table>` : ''}<h3>实际字段映射</h3><div class="enterprise-map">${Object.entries(dataset.sourceFieldMap).filter(([, source]) => source).map(([field, source]) => `<span><code>${escapeHtml(field)}</code><b>←</b>${escapeHtml(source)}</span>`).join('')}</div>`;
 }
 
 function updateAccessibleSummaries(result) {
   const numericRange = (field) => {
     const values = result.rows.map((row) => row[field]).filter(Number.isFinite);
-    return values.length ? `${fmt(Math.min(...values), 2)}–${fmt(Math.max(...values), 2)}` : '无有效值';
+    return values.length ? `${fmt(values.reduce((m, v) => v < m ? v : m, Infinity), 2)}–${fmt(values.reduce((m, v) => v > m ? v : m, -Infinity), 2)}` : '无有效值';
   };
   const trendSummary = $('#trend-chart-summary');
   if (trendSummary) trendSummary.textContent = `趋势图摘要：${result.rows.length} 条记录；温度 ${numericRange('temperature_c')} °C；压力 ${numericRange('pressure_bar')} bar；时间轴 ${fmt(result.metrics.durationS, 1)} s。`;
@@ -1397,7 +1397,7 @@ function render(result, pushHistory = true) {
   const phaseFallback = result.schema.missingOptionalHeaders.includes('phase') ? ' · 工况字段缺失，使用活动窗口' : '';
   const purityNotice = result.schema.missingOptionalHeaders.includes('hydrogen_purity_pct') ? ' · 纯度字段未提供' : '';
   const incrementalNotice = state.incrementalDiff ? ` · 批次 +${state.incrementalDiff.added.length}/变${state.incrementalDiff.changed.length}/未变${state.incrementalDiff.unchanged.length}` : '';
-  const schemaMissingWarning = (result.issues || []).some((issue) => issue.code === 'SCHEMA_MISSING') ? ' · 未识别到关键字段，请确认文件包含表头和测试数据列' : '';
+  const schemaMissingWarning = (result.issues || []).some((issue) => issue.code === 'SCHEMA_MISSING') ? ' · 未识别到关键字段，确认文件包含表头和测试数据列' : '';
   $('#schema-notice').textContent = result.dataset ? `${result.dataset.label} · 字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${incrementalNotice}${schemaMissingWarning}` : `字段映射 ${result.schema.mappedCount}/${result.schema.fieldCount}${convertedUnits ? ` · ${convertedUnits} 项单位换算` : ''}${phaseFallback}${purityNotice}${incrementalNotice}${schemaMissingWarning}`;
   $('#verdict-chip').textContent = verdictLabel(result.verdict);
   $('#verdict-chip').className = `verdict-chip ${result.verdict.toLowerCase()}`;
@@ -1424,7 +1424,7 @@ function render(result, pushHistory = true) {
       ? '数据完整率 100%，但时间轴存在重复/非正间隔，已按原始时序做描述性统计，不生成正式稳定区间。'
       : result.quality?.usable
         ? '数据质量通过，已进入正式统计与候选区间生成。'
-        : '数据质量未通过，请检查时间轴和关键字段。';
+        : '数据质量未通过。检查时间轴和关键字段。';
     verdictTooltip.textContent = qualityNote;
     verdictTooltip.hidden = false;
   }
@@ -1564,7 +1564,7 @@ async function loadLibrarySample(fileName) {
   } catch (error) {
     setAnalysisStatus(`演示工况读取失败：${error.message}`, 'error');
     const notice = $('#schema-notice');
-    if (notice) notice.textContent = '样本资源读取失败，请刷新页面或改为手动导入文件。';
+    if (notice) notice.textContent = '样本资源读取失败。刷新页面或改为手动导入文件。';
   }
 }
 
@@ -1573,7 +1573,7 @@ async function loadSampleSafely() {
     await loadSample();
   } catch (error) {
     setAnalysisStatus(`演示样本读取失败：${error.message}`, 'error');
-    $('#schema-notice').textContent = '请刷新页面、检查 Pages 资源，或改为手动导入文件。';
+    $('#schema-notice').textContent = '刷新页面、检查 Pages 资源，或改为手动导入文件。';
   }
 }
 
@@ -1608,7 +1608,7 @@ async function loadCoverageSummary() {
     if (riskFields) {
       const topFields = Array.isArray(diagnostics.topObservedReviewFields) ? diagnostics.topObservedReviewFields.slice(0, 5) : [];
       riskFields.innerHTML = topFields.length
-        ? `<b>字段值复核重点：</b><br>${topFields.map((item) => `${escapeHtml(item.source)}：${Number(item.fileCount || 0).toLocaleString('zh-CN')} 文件，负值 ${Number(item.negativeCount || 0).toLocaleString('zh-CN')}，零值 ${Number(item.zeroCount || 0).toLocaleString('zh-CN')}`).join('<br>')}<br><span class="muted">仅作字段语义/无效码复核提示，不自动判定异常。</span>`
+        ? `<b>字段值复核重点：</b><br>${topFields.map((item) => `${escapeHtml(item.source)}：${Number(item.fileCount || 0).toLocaleString('zh-CN')} 文件，负值 ${Number(item.negativeCount || 0).toLocaleString('zh-CN')}，零值 ${Number(item.zeroCount || 0).toLocaleString('zh-CN')}`).join('<br>')}<br><span class="muted">仅作字段语义/无效码复核提示，不判定异常。</span>`
         : '当前版本未提供字段级复核重点。';
     }
     if (note) note.innerHTML = `处理数据进入适配器：${Number(summary.processedRowsEnteredAdapters || 0).toLocaleString('zh-CN')} 行/功率点 · 正式符合性声明：${Number(summary.formalConformityClaims || 0)}<br>阻断项：${escapeHtml((summary.blockedReasons || ['unknown']).join('、'))}；${escapeHtml(summary.boundary || '保留哈希，不生成测试结论。')}${diagnosticText}`;
@@ -1740,7 +1740,7 @@ function buildEnhancedMarkdown(result, fileName, schema) {
     '# 氢能设备测试增强报告',
     '',
     `- 数据文件：${fileName}`,
-    `- 自动判定：**${result.verdict}**`,
+    `- 判定：**${result.verdict}**`,
     `- 生成时间：${new Date().toISOString()}`,
     `- 来源：${schema?.source || 't02-equipment-test-report-assistant 前端分析 + ' + schemaNote}`,
     '',
@@ -1780,12 +1780,12 @@ function buildEnhancedMarkdown(result, fileName, schema) {
     }
   }
   parts.push('');
-  parts.push('## 异常与建议', '');
+  parts.push('## 异常与后续动作', '');
   if (!(result.issues || []).length) {
     parts.push('- 无异常');
   }
   for (const issue of result.issues || []) {
-    parts.push(`- **${issue.severity}｜${issue.title}**：${issue.evidence}。建议：${issue.recommendation}`);
+    parts.push(`- **${issue.severity}｜${issue.title}**：${issue.evidence}。后续动作：${issue.recommendation}`);
   }
   parts.push('');
   parts.push('## 工况分段', '');
@@ -1865,7 +1865,7 @@ async function loadLegacySample() {
   } catch (error) {
     setAnalysisStatus(`中文/单位样本读取失败：${error.message}`, 'error');
     const notice = $('#schema-notice');
-    if (notice) notice.textContent = '请刷新页面、检查 Pages 资源，或改为手动导入 CSV/TXT。';
+    if (notice) notice.textContent = '刷新页面、检查 Pages 资源，或改为手动导入 CSV/TXT。';
   }
 }
 
@@ -2013,7 +2013,7 @@ $('#save-history').addEventListener('click', () => {
 });
 $('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
-  if (!state.result) { $('#compare-status').textContent = '请先载入并分析数据'; return; }
+  if (!state.result) { $('#compare-status').textContent = '先载入并分析数据'; return; }
   const button = $('#compare-demo');
   button.disabled = true;
   button.textContent = '对比中';
@@ -2032,7 +2032,7 @@ $('#compare-demo').addEventListener('click', async () => {
   }
 });
 $('#generate-ai').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
   button.textContent = '处理中';
@@ -2051,23 +2051,23 @@ $('#generate-ai').addEventListener('click', async () => {
   }
 });
 $('#copy-report').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
-  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制'; }
+  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败。手动复制'; }
 });
 $('#print-report').addEventListener('click', () => {
   const preview = $('#report-preview');
-  if (!preview || !state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  if (!preview || !state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const win = window.open('', '_blank');
-  if (!win) { $('#report-status').textContent = '打印窗口被拦截，请允许弹出'; return; }
+  if (!win) { $('#report-status').textContent = '打印窗口被拦截。允许弹出窗口'; return; }
   win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
   win.document.close();
   win.focus();
   win.print();
 });
-$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-自动报告.md`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-xlsx').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   try {
     await ensureBrowserEngines({ spreadsheet: true });
     setSpreadsheetEngine(globalThis.XLSX);
@@ -2080,9 +2080,9 @@ $('#download-xlsx').addEventListener('click', async () => {
     $('#report-status').textContent = `Excel 导出失败：${error.message}`;
   }
 });
-$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
-$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '请先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
+$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
+$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 
@@ -2231,7 +2231,7 @@ $('#recent-files-list')?.addEventListener('click', (event) => {
   const chip = event.target.closest('.recent-file-chip');
   if (!chip) return;
   const name = chip.dataset.name;
-  setAnalysisStatus(`最近文件：${name}；请重新导入该文件。`, 'neutral');
+  setAnalysisStatus(`最近文件：${name}。重新导入该文件。`, 'neutral');
 });
 
 const originalReadSelectedDataFiles = readSelectedDataFiles;
@@ -2240,8 +2240,8 @@ readSelectedDataFiles = async function(files) {
   catch (error) {
     const hasCsv = files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name));
     const baseHint = hasCsv && files.some((file) => /\.(csv|txt|tsv)$/i.test(file.name) && file.size < 200)
-      ? '文件过小或为空，请确认包含表头与时序数据。'
-      : '请确认文件未加密、未损坏，且格式与示例一致。';
+      ? '文件过小或为空。确认文件包含表头与时序数据。'
+      : '确认文件未加密、未损坏，且格式与示例一致。';
     const missingHeaders = hasCsv ? '常见缺失表头：timestamp、current_a、avg_cell_voltage_v、power_kw、temperature_c、pressure_bar。' : '';
     const hint = missingHeaders ? `${baseHint} ${missingHeaders}` : baseHint;
     throw new Error(`${error.message}；${hint}`);
@@ -2336,7 +2336,7 @@ function applyEnterpriseConfig(vendor) {
   profileSelect.value = profileId;
   applyProfile(profileId);
   if (state.rows.length) void analyzeCurrent(`应用${vendor}配置`);
-  else setAnalysisStatus(`已切换至 ${vendor} 配置模板；导入数据后自动应用。`, 'neutral');
+  else setAnalysisStatus(`已切换至 ${vendor} 配置模板；导入数据后应用。`, 'neutral');
 }
 
 // Improved drag-and-drop feedback.
@@ -2400,7 +2400,7 @@ $('#batch-queue')?.addEventListener('click', async (event) => {
     const index = Number(retryButton.dataset.retry);
     const entry = state.inputEntries?.[index];
     const name = entry?.name || '该文件';
-    setAnalysisStatus(`请重新选择 ${name} 进行导入；失败条目已保留在列表中。`, 'neutral');
+    setAnalysisStatus(`重新选择 ${name} 进行导入；失败条目已保留在列表中。`, 'neutral');
     $('#file-input').click();
   } else if (removeButton) {
     const index = Number(removeButton.dataset.remove);
@@ -2423,7 +2423,7 @@ $('#clear-completed')?.addEventListener('click', () => {
   if (!remaining.length) { const container = $('#batch-queue'); if (container) container.hidden = true; }
 });
 $('#retry-all-failed')?.addEventListener('click', () => {
-  setAnalysisStatus('请重新选择所有失败的文件进行导入；也可单独点击各条目右侧的“重试”。', 'neutral');
+  setAnalysisStatus('重新选择所有失败的文件进行导入；也可单独点击各条目右侧的“重试”。', 'neutral');
   $('#file-input').click();
 });
 $('#remove-all-failed')?.addEventListener('click', () => {
