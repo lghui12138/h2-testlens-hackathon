@@ -822,7 +822,7 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
    assert.ok(result);
    assert.ok(Object.keys(result.metadata).length >= 1, 'expected metadata from docx');
    assert.ok(result.headers.length >= 1, 'expected headers from docx');
-   assert.ok(result.headers.some((h) => h.includes('信号') || h.includes('时间') || h.includes('参数')), 'docx should include technical headers');
+   assert.ok(result.points.length === 0, 'task specification docx should not produce durability points');
  });
 
  test('package 02 氢质氢离 representative vehicle CSV files share consistent headers across channels', { skip: !HAS_T02 }, async () => {
