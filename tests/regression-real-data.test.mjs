@@ -934,6 +934,67 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
     }
   });
 
+  test('package 01 氢璞创能 real TXT and XLSX both parse through adapter boundaries with stable outputs', async (t) => {
+    const txtPath = resolveT02Path('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
+    const xlsxPath = resolveT02Path('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
+    if (!txtPath || !xlsxPath) {
+      if (t?.skip) t.skip('T02 dataset not present in environment');
+      return;
+    }
+    const txtBuf = await readFile(txtPath);
+    const txtDecoded = decodeTextBuffer(txtBuf, 'gb18030');
+    assert.equal(txtDecoded.binary, false);
+    const txtRows = parseCSV(txtDecoded.text);
+    assert.ok(txtRows.length >= 100, 'hypu txt should have many rows');
+    assert.ok('时间' in txtRows[0]);
+    assert.ok('电堆电压' in txtRows[0]);
+
+    const xlsxBuf = await readFile(xlsxPath);
+    const xlsxResult = parseDataWorkbook(xlsxBuf);
+    assert.equal(xlsxResult.ok, true);
+    assert.equal(xlsxResult.sheetName, '稳定性');
+    assert.ok(xlsxResult.formulaAudit.formulaCellCount >= 6000);
+  });
+
+  test('package 03 青川易创 real CSV and DOCX produce stable adapter outputs with explicit assertions', async (t) => {
+    const csvPath = resolveT02Path('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+    const docxPath = resolveT02Path('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx');
+    if (!csvPath || !docxPath) {
+      if (t?.skip) t.skip('T02 dataset not present in environment');
+      return;
+    }
+    const csvBuf = await readFile(csvPath);
+    const csvText = Buffer.isBuffer(csvBuf) ? csvBuf.toString('utf8') : csvBuf;
+    const csvRows = parseCSV(csvText);
+    assert.ok(csvRows.length >= 38000, 'qingchuan csv should have ~38k rows');
+    const csvResult = analyzeEnterpriseRows(csvRows, getProfile('qingchuan-stack'));
+    assert.equal(csvResult.datasetType, 'stack');
+    assert.ok(csvResult.metrics.peakPowerW >= 0 || csvResult.metrics.peakPowerW === null);
+    assert.ok(Array.isArray(csvResult.issues));
+
+    const docxBuf = await readFile(docxPath);
+    const docxResult = await parseDurabilityDocx(docxBuf);
+    assert.ok(docxResult);
+    assert.ok(docxResult.headers.length >= 1);
+    assert.ok(Object.keys(docxResult.metadata).length >= 1);
+  });
+
+  test('package 04 海珀特 real PDF remains blocked_binary through parseInput boundary with stable reason', async (t) => {
+    const pdfPath = resolveT02Path('企业资料包04_海珀特/00_企业资料说明.pdf');
+    if (!pdfPath) {
+      if (t?.skip) t.skip('T02 dataset not present in environment');
+      return;
+    }
+    const buf = await readFile(pdfPath);
+    assert.equal(isLikelyBinary(buf), true);
+    const decoded = decodeTextBuffer(buf);
+    assert.equal(decoded.binary, true);
+    const result = await parseInput('haperte-description.pdf', buf);
+    assert.equal(result.status, 'blocked_binary');
+    assert.ok(result.binaryReason?.length > 0);
+    assert.equal(result.rows.length, 0);
+  });
+
   test('unitTransform preserves hPa precision for pressure_bar gas_pressure_bar and ambient_pressure_kpa', () => {
     const hpaStack = parseCSV([
       'timestamp_s,current_a,voltage_v,temperature_c,压力（hPa）,flow_slpm,leak_ppm',

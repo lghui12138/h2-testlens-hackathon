@@ -626,6 +626,28 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
    }
  });
 
+ test('each enterprise package exposes its expected real-file type mix', { skip: !HAS_T02 }, async () => {
+   const pkg01Files = await readdir(join(T02_ROOT, '企业资料包01_氢璞创能'));
+   const pkg02Files = await readdir(join(T02_ROOT, '企业资料包02_氢质氢离'));
+   const pkg03Files = await readdir(join(T02_ROOT, '企业资料包03_青川易创与云汉达'));
+   const pkg04Files = await readdir(join(T02_ROOT, '企业资料包04_海珀特'));
+
+   assert.ok(pkg01Files.some((f) => f.endsWith('.txt')), 'package 01 should have txt files');
+   assert.ok(pkg01Files.some((f) => f.endsWith('.xlsx')), 'package 01 should have xlsx files');
+   assert.ok(pkg01Files.some((f) => f.endsWith('.pdf')), 'package 01 should have pdf files');
+
+   const pkg02SubDirs = await readdir(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理'));
+   assert.ok(pkg02Files.some((f) => f.endsWith('.docx')), 'package 02 should have docx files');
+   assert.ok(pkg02SubDirs.some((d) => ['212', '345'].includes(d)), 'package 02 should have vehicle data subdirectories');
+   assert.ok(pkg02Files.some((f) => f.endsWith('.pdf')), 'package 02 should have pdf files');
+
+   assert.ok(pkg03Files.some((f) => f.endsWith('.csv')), 'package 03 should have csv files');
+   assert.ok(pkg03Files.some((f) => f.endsWith('.docx')), 'package 03 should have docx files');
+   assert.ok(pkg03Files.some((f) => f.endsWith('.pdf')), 'package 03 should have pdf files');
+
+   assert.ok(pkg04Files.some((f) => f.endsWith('.pdf')), 'package 04 should have pdf files');
+ });
+
  // ---------------------------------------------------------------------------
  // 16. Broadened DOCX coverage across 氢质氢离 durability reports
  // ---------------------------------------------------------------------------
@@ -694,6 +716,47 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
  });
 
  // ---------------------------------------------------------------------------
+ // 17b. Package-specific file-type regression assertions
+ // ---------------------------------------------------------------------------
+
+ test('package 03 青川易创 real CSV contains expected stack headers and parses deterministically', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+   const rows = parseCSV(csv);
+   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+   const headers = Object.keys(rows[0]);
+   assert.ok(headers.some((h) => h.includes('测试时间')), 'csv should include 测试时间');
+   assert.ok(headers.some((h) => h.includes('实际电流')), 'csv should include 实际电流');
+   assert.ok(headers.some((h) => h.includes('实际电压')), 'csv should include 实际电压');
+   assert.ok(headers.some((h) => h.includes('功率')), 'csv should include 功率');
+   const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+   assert.ok(result);
+   assert.equal(result.datasetType, 'stack');
+   assert.ok(typeof result.metrics.peakPowerW === 'number' || result.metrics.peakPowerW === null);
+ });
+
+ test('package 02 氢质氢离 reference DOCX 数据统计功能实现需求 parses headers and metadata without durability points', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包02_氢质氢离/数据统计功能实现需求-20260807.docx');
+   const result = await parseDurabilityDocx(buf);
+   assert.ok(result);
+   assert.ok(result.headers.length >= 1, 'expected headers from reference docx');
+   assert.ok(result.headers.includes('信号名称'), 'expected 信号名称 header in reference docx');
+   assert.equal(result.points.length, 0, 'reference docx should not produce durability points');
+   assert.ok(Object.keys(result.metadata).length >= 1, 'expected metadata from reference docx');
+ });
+
+ test('package 01 氢璞创能 real TXT preserves high-precision decimal boundaries', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包01_氢璞创能/2026-4-4-18-56-04.txt');
+   const decoded = decodeTextBuffer(buf, 'gb18030');
+   assert.equal(decoded.binary, false);
+   const rows = parseCSV(decoded.text);
+   const zeroPowerRows = rows.filter((row) => row['电堆功率'] === '0.000000');
+   assert.ok(zeroPowerRows.length >= 1, 'expected zero-power rows in real hypu data');
+   const voltageRows = rows.filter((row) => row['电堆电压'] === '0.000000');
+   assert.ok(voltageRows.length >= 1, 'expected zero-voltage rows in real hypu data');
+ });
+
+ // ---------------------------------------------------------------------------
  // 18. Empty and zero-byte real-file boundaries
  // ---------------------------------------------------------------------------
 
@@ -751,6 +814,36 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
    const truncated = csv.split('\n').slice(0, 1).join('\n');
    const rows = parseCSV(truncated);
    assert.deepEqual(rows, []);
+ });
+
+ test('package 03 青川易创 real DOCX task specification parses with detailed metadata and table headers', { skip: !HAS_T02 }, async () => {
+   const buf = await readRaw('企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx');
+   const result = await parseDurabilityDocx(buf);
+   assert.ok(result);
+   assert.ok(Object.keys(result.metadata).length >= 1, 'expected metadata from docx');
+   assert.ok(result.headers.length >= 1, 'expected headers from docx');
+   assert.ok(result.headers.some((h) => h.includes('信号') || h.includes('时间') || h.includes('参数')), 'docx should include technical headers');
+ });
+
+ test('package 02 氢质氢离 representative vehicle CSV files share consistent headers across channels', { skip: !HAS_T02 }, async () => {
+   const samples = [
+     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (50).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (1).csv',
+     '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (50).csv',
+   ];
+   const headerSets = [];
+   for (const file of samples) {
+     const buf = await readRaw(file);
+     const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+     const rows = parseCSV(csv);
+     assert.ok(rows.length >= 100, `${file} should have many rows`);
+     headerSets.push(Object.keys(rows[0]));
+   }
+   const firstHeaders = headerSets[0];
+   for (let i = 1; i < headerSets.length; i += 1) {
+     assert.deepEqual(headerSets[i], firstHeaders, `header set ${i + 1} should match first file`);
+   }
  });
 
  // ---------------------------------------------------------------------------

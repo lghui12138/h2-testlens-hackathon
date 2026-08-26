@@ -85,7 +85,7 @@ h1 em { color: var(--mint); font-style: normal; }
 .hero-note { flex-wrap: wrap; margin-top: 25px; letter-spacing: 0; }.muted { color: #67858a; }.schema-notice { color: var(--mint); }
 .signal-bars { display: flex; align-items: end; gap: 2px; height: 13px; margin-right: 2px; }.signal-bars i { display: block; width: 3px; background: var(--mint); }.signal-bars i:nth-child(1) { height: 4px; }.signal-bars i:nth-child(2) { height: 7px; }.signal-bars i:nth-child(3) { height: 10px; }.signal-bars i:nth-child(4) { height: 13px; }
 .mobile-break { display: none; }
-.upload-button, .primary-button, .quiet-button, .outline-button, .icon-button, .ai-button { min-height: 40px; border-radius: 9px; transition: transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease; }
+.upload-button, .primary-button, .quiet-button, .outline-button, .icon-button, .report-button { min-height: 40px; border-radius: 9px; transition: transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease; }
 .upload-button, .primary-button { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0 17px; background: var(--mint); color: #052028; font-weight: 800; box-shadow: 0 10px 26px rgba(104,229,202,.13); }
 .upload-button:hover, .primary-button:hover { background: #a4f4df; transform: translateY(-1px); }.upload-button { position: relative; }.upload-button input, .profile-import input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); opacity: 0; }.upload-button > span { display: block; max-width: 100%; overflow-wrap: anywhere; text-align: center; }.upload-button:focus-within, .profile-import:focus-within { outline: 3px solid var(--mint); outline-offset: 3px; }
 .quiet-button { border: 0; padding: 0 4px; background: transparent; color: var(--muted-strong); font-size: 12px; }.quiet-button:hover { color: var(--mint); }.outline-button { width: 100%; border: 1px solid rgba(104,229,202,.42); background: rgba(104,229,202,.03); color: var(--mint); font-weight: 750; font-size: 12px; }.outline-button:hover { border-color: var(--mint); background: rgba(104,229,202,.1); }.icon-button { border: 0; padding: 0 11px; background: #123743; color: var(--muted-strong); font-size: 10px; }.icon-button:hover { background: #1a5360; color: var(--ink); }
@@ -287,7 +287,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 #drop-zone.drag-over { outline: 2px dashed var(--mint); outline-offset: -8px; background: rgba(104,229,202,.1); }
 #drop-zone.drag-over .upload-button { background: #a4f4df; transform: translateY(-1px); }
 #drop-zone.drag-over .quiet-button { color: var(--mint); }
-.upload-button, .primary-button, .quiet-button, .outline-button, .icon-button, .ai-button { min-height: 44px; }
+.upload-button, .primary-button, .quiet-button, .outline-button, .icon-button, .report-button { min-height: 44px; }
 
 /* Batch progress indicator */
 .batch-progress { position: relative; height: 6px; margin-top: 10px; border-radius: 99px; background: #123743; overflow: hidden; }
@@ -438,7 +438,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 21px
 /* Button active feedback */
 .primary-button:active { transform: translateY(0); background: #5bD4b8; }
 .outline-button:active { background: rgba(104,229,202,.18); }
-.ai-button:active { background: #1F4A52; }
+.report-button:active { background: #1F4A52; }
 .icon-button:active { background: #0F2E36; }
 
 /* Focus ring consistency */
@@ -467,7 +467,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .batch-skeleton-row { display: grid; gap: 6px; }
 
 /* Touch and interaction */
-button, .icon-button, .quiet-button, .outline-button, .primary-button, .upload-button, .ai-button { touch-action: manipulation; }
+button, .icon-button, .quiet-button, .outline-button, .primary-button, .upload-button, .report-button { touch-action: manipulation; }
 :focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
 .overlay:focus-within { outline: none; }
 .overlay-content:focus { outline: none; }
@@ -555,12 +555,12 @@ html { scroll-padding-top: 90px; }
 /* Button press consistency */
 .quiet-button:active { transform: translateY(0); opacity: .85; }
 .outline-button:active { transform: translateY(0); }
-.ai-button:active { transform: translateY(0); }
+.report-button:active { transform: translateY(0); }
 .icon-button:active { transform: translateY(0); }
 
 /* Touch target min-height consistency */
 @media (max-width: 680px) {
-  .quiet-button, .outline-button, .icon-button, .ai-button { min-height: 44px; }
+  .quiet-button, .outline-button, .icon-button, .report-button { min-height: 44px; }
 }
 
 /* Keyboard shortcuts overlay */

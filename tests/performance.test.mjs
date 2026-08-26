@@ -212,3 +212,61 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
     assert.ok(elapsedMs < 60_000, `parsing real hypu xlsx took ${elapsedMs.toFixed(2)} ms`);
     recordBenchmark('test_parse_real_hypu_xlsx_workbook', 'ok', elapsedMs, result.rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
   });
+
+  test('test_parse_all_real_hypu_durability_docx_files', { skip: CI }, async () => {
+    const files = [
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久5-10-20260606024937.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久10-15-20260606081413.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久15-20-20260606133914.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久25-30-20260607051025.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久30-35-20260607103407.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久35-40-20260607160018.docx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久40-45-20260608020949.docx',
+    ];
+    const start = process.hrtime.bigint();
+    for (const file of files) {
+      const buf = await readRaw(file);
+      const result = await parseDurabilityDocx(buf);
+      assert.ok(result, `${file} should parse`);
+      assert.ok(result.points.length >= 50, `${file} should have many points`);
+      assert.ok(result.headers.length >= 10, `${file} should have many headers`);
+    }
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(elapsedMs < 60_000, `parsing all 8 hypu durability docx files took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_parse_all_real_hypu_durability_docx_files', 'ok', elapsedMs, files.length * 50, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  test('test_parse_sampled_real_qingzhihuli_vehicle_csv_files', { skip: CI }, async () => {
+    const samples = [
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (50).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (1).csv',
+      '企业资料包02_氢质氢离/02_整车数据处理/345/201487_202607070600_202607071159_CH0_20260807_225858 (50).csv',
+    ];
+    const start = process.hrtime.bigint();
+    for (const file of samples) {
+      const buf = await readRaw(file);
+      const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+      const rows = parseCSV(csv);
+      assert.ok(rows.length >= 100, `${file} should have many rows`);
+      assert.ok('Timestamp' in rows[0], `${file} should have Timestamp header`);
+      assert.ok('FC_CurrOut' in rows[0], `${file} should have FC_CurrOut header`);
+    }
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(elapsedMs < 30_000, `parsing sampled vehicle csv files took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_parse_sampled_real_qingzhihuli_vehicle_csv_files', 'ok', elapsedMs, samples.length * 100, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  test('test_analyze_real_qingchuan_38k_csv_with_full_profile', { skip: CI }, async () => {
+    const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const start = process.hrtime.bigint();
+    const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
+    assert.equal(result.datasetType, 'stack');
+    assert.ok(elapsedMs < 60_000, `real 38k qingchuan analysis with profile took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_full_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+  });

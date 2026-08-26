@@ -1,4 +1,4 @@
-import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown, DEFAULT_CONFIG } from './analyzer.mjs';
+import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown, DEFAULT_CONFIG, safeMax, safeMin } from './analyzer.mjs';
 import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
@@ -1036,7 +1036,7 @@ function drawEnterpriseChart(result) {
   if (result.datasetType === 'vehicle') {
     const points = result.dataset.insulation.points || [];
     if (!points.length) { label('暂无有效绝缘阻值窗口', pad.left, pad.top + 20); return; }
-    const values = points.map((point) => point.minimumKohm); const max = Math.max(400, ...values); const min = Math.min(0, ...values);
+    const values = points.map((point) => point.minimumKohm); const max = safeMax(values, 400); const min = safeMin(values, 0);
     const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW; const y = (value) => pad.top + (max - value) / (max - min || 1) * plotH;
     drawAxis(ctx, pad, width, height, 'left', min, max, '绝缘阻值（kΩ）', { color: '#5bd4c0' });
     drawAxis(ctx, pad, width, height, 'bottom', 0, points.length - 1, '时间窗口序号', { color: '#71838a' });

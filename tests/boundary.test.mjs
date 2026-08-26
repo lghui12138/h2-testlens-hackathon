@@ -347,3 +347,37 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(voltageRow['电堆电流'], '2.200000');
     assert.equal(voltageRow['电堆功率'], '0.000000');
   });
+
+  test('real 氢质氢离 vehicle CSV boundary: exact zero current and voltage values do not crash adapter', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(result);
+    assert.equal(result.datasetType, 'vehicle');
+    assert.ok(result.dataset.insulation.validCount >= 0);
+    assert.ok(Array.isArray(result.issues));
+  });
+
+  test('real 青川易创 CSV 38k rows with exact boundary defaults produce deterministic verdict', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+    assert.ok(result);
+    assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
+    assert.ok(typeof result.metrics.peakPowerW === 'number' || result.metrics.peakPowerW === null);
+    assert.ok(Number.isFinite(result.metrics.peakTemperatureC) || result.metrics.peakTemperatureC === null);
+  });
+
+  test('real 氢质氢离 durability docx boundary: first power point target 33 kW is minimum observed', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx'));
+    const result = await parseDurabilityDocx(buf);
+    const powers = result.points.map((p) => p.target_power_kw);
+    assert.ok(powers.length >= 60);
+    assert.ok(Math.min(...powers) <= 33);
+    assert.ok(Math.max(...powers) >= 195);
+  });

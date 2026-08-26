@@ -36,7 +36,7 @@
         { "id": "ISO 22734-1:2025", "title": "Hydrogen generators using water electrolysis — Part 1: Safety", "uri": "https://www.iso.org/standard/82766.html?browse=ics", "status": "published", "evidenceSourceId": "iso_22734_1_2025", "evidenceIds": ["ev_iso22734_1_scope"] }
       ],
       "methodSource": { "sourceId": "gbt_45541_interpretation_2025", "locator": "课程简介", "evidenceType": "official_interpretation_paraphrase", "evidenceIds": ["ev_gbt45541_interpretation"] },
-      "methodExecutionStatus": "PUBLIC_SCOPE_MAPPING",
+      "methodExecutionStatus": "ENTERPRISE_PROFILE_REQUIRED",
       "status": "current",
       "publicationDate": "2025-03-28",
       "effectiveDate": "2025-07-01",
