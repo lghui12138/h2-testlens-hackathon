@@ -58,10 +58,10 @@
         <div id="batch-queue" class="batch-queue" hidden></div>
         <div id="batch-progress" class="batch-progress" hidden><div id="batch-progress-fill" class="batch-progress-fill"></div><div id="batch-progress-text" class="batch-progress-text"></div></div>
         <div class="upload-hint">Ctrl+O 打开文件</div>
-        <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话处理</div>
+        <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话计算</div>
         <div class="hero-shortcuts"><small>快捷键：Ctrl+O 打开文件 · Ctrl+Enter 重新分析 · Ctrl+L 加载演示 · Esc 关闭弹窗 · Ctrl+Z/Y 撤销/重做</small></div>
         <div id="recent-files" class="recent-files"><div class="recent-header"><span>最近文件</span><button id="clear-recent" class="quiet-button" type="button" aria-label="清除最近文件列表">清除</button></div><div id="recent-files-list" class="recent-files-list"><div class="recent-empty">暂无最近文件</div></div></div>
-        <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：读取中 · DEMO_ONLY</div>
+        <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：— · DEMO_ONLY</div>
         <div id="result-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="hero-note"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span id="file-name">等待数据文件</span><span class="muted">·</span><span id="source-count">—</span><span class="muted">·</span><span id="schema-notice" class="schema-notice">等待字段映射</span></div>
       </section>
@@ -184,7 +184,7 @@
             <div class="card-kicker">T02 SOURCE COVERAGE <span id="coverage-audit-version">v3.5.72</span></div>
             <h2>T02 资料接入范围</h2>
             <p class="side-intro">版本化审计把下载目录逐文件分类；“已处理”表示进入对应解析器，不等于已满足标准。</p>
-            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span><span><b id="coverage-tests">504</b>/<b id="coverage-tests-total">504</b> 测试通过</span></div>
+            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span><span><b id="coverage-tests">543</b>/<b id="coverage-tests-total">543</b> 测试通过</span></div>
             <div class="coverage-meter" aria-label="190 个文件进入处理，共 198 个文件"><span id="coverage-meter-fill"></span></div>
             <small id="coverage-note" class="coverage-note">处理数据进入适配器：2,262,283 行/功率点 · 正式符合性声明：0<br>阻断二进制：保留哈希，不生成测试结论；声明未上传：没有原始数据，不进入解析器。</small>
             <small id="coverage-risk-fields" class="coverage-note">高风险字段复核明细读取中…</small>
@@ -234,7 +234,7 @@
     </main>
     <footer><span>H₂ TestLens · T02 browser web prototype</span><span>非原生 iOS/Android 客户端 · 原始数据留在本地浏览器 · 结果可追溯 · 人工签核保留</span></footer>
   </div>
-  <div id="loading-overlay" class="overlay" hidden aria-hidden="true"><div class="overlay-backdrop"></div><div class="overlay-content loading-content"><div class="spinner" aria-hidden="true"></div><p id="loading-message" class="loading-message">计算中…</p></div></div>
+  <div id="loading-overlay" class="overlay" hidden aria-hidden="true"><div class="overlay-backdrop"></div><div class="overlay-content loading-content"><div class="spinner" aria-hidden="true"></div><p id="loading-message" class="loading-message">计算…</p></div></div>
   <div id="quick-start-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-label="快速开始指南"><div class="overlay-backdrop"></div><div class="overlay-content"><h2>快速开始</h2><ol><li><b>导入数据</b>：点击“导入测试 CSV / TXT / Excel / DOCX”按钮，或直接将文件拖放到顶部区域；支持多选。</li><li><b>查看分析</b>：完成字段映射、KPI 计算和异常检测。在“测试总览”和“工况趋势”中查看结果。</li><li><b>配置规则</b>：选择设备模板，或导入企业配置 JSON 和参数工作簿来调整阈值与目标工况。</li><li><b>导出成果</b>：生成报告，下载 Markdown、Excel 或 JSON 证据；保存批次后可对比基线。</li></ol><button id="close-quick-start" class="primary-button" aria-label="关闭快速入门">关闭</button></div></div>
   <div id="keyboard-shortcuts-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-label="键盘快捷键"><div class="overlay-backdrop"></div><div class="overlay-content"><h2>键盘快捷键</h2><ul><li><kbd>Ctrl</kbd>+<kbd>O</kbd> 打开文件</li><li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> 重新分析</li><li><kbd>Ctrl</kbd>+<kbd>L</kbd> 载入演示</li><li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> 载入基线并对比</li><li><kbd>F2</kbd> 保存当前批次</li><li><kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> 撤销/重做</li><li><kbd>Esc</kbd> 关闭弹窗</li><li><kbd>1</kbd>-<kbd>4</kbd> 快速跳转到对应面板</li></ul><button id="close-shortcuts" class="primary-button" aria-label="关闭快捷键">关闭</button></div></div>
   <script src="./vendor/xlsx.full.min.js"></script>
