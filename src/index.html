@@ -59,7 +59,7 @@
         <div id="batch-progress" class="batch-progress" hidden><div id="batch-progress-fill" class="batch-progress-fill"></div><div id="batch-progress-text" class="batch-progress-text"></div></div>
         <div class="upload-hint">Ctrl+O 打开文件</div>
         <div id="analysis-status" class="analysis-status" role="status" aria-live="polite">就绪 · 原始数据仅在当前浏览器会话计算</div>
-        <div class="hero-shortcuts"><small>快捷键：Ctrl+O 打开文件 · Ctrl+Enter 重新分析 · Ctrl+L 加载演示 · Esc 关闭弹窗 · Ctrl+Z/Y 撤销/重做</small></div>
+        <div class="hero-shortcuts"><small>快捷键：Ctrl+O 打开文件 · Ctrl+Enter 重新计算 · Ctrl+L 加载演示 · Esc 关闭弹窗 · Ctrl+Z/Y 撤销/重做</small></div>
         <div id="recent-files" class="recent-files"><div class="recent-header"><span>最近文件</span><button id="clear-recent" class="quiet-button" type="button" aria-label="清除最近文件列表">清除</button></div><div id="recent-files-list" class="recent-files-list"><div class="recent-empty">暂无最近文件</div></div></div>
         <div id="release-summary" class="release-summary" role="status" aria-live="polite">公开版本状态：— · DEMO_ONLY</div>
         <div id="result-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -96,7 +96,7 @@
             <div id="enterprise-table" class="enterprise-table"></div>
           </section>
           <section class="section-block">
-            <div class="section-label"><span>04</span><div><b>风险清单</b><small>每一项都带证据与下一步动作</small></div><span id="issue-count" class="legend-note">—</span></div>
+            <div class="section-label"><span>04</span><div><b>风险清单</b><small>每一项都带证据与后续步骤</small></div><span id="issue-count" class="legend-note">—</span></div>
             <div id="issue-list" class="issue-list"></div>
           </section>
         </div>
@@ -113,7 +113,7 @@
           <section class="side-card compliance-history-card">
             <div class="card-kicker">COMPLIANCE HISTORY <span id="compliance-history-status">0 条审计快照</span></div>
             <h2>标准符合性审计轨迹</h2>
-            <p class="side-intro">每次分析都会记录标准符合性快照；不导出原始数据，仅保留证据状态与缺失项摘要。</p>
+            <p class="side-intro">每次计算都会记录标准符合性快照；不导出原始数据，仅保留证据状态与缺失项摘要。</p>
             <div id="compliance-history-list" class="compliance-history-list"></div>
           </section>
           <section class="side-card">
@@ -171,7 +171,7 @@
               <label>电压标准差 <input id="max-voltage-std" type="number" value="0.12" step="0.01"><span>V</span></label>
               <label>压力漂移 <input id="max-pressure-drift" type="number" value="1.2" step="0.1"><span>bar/min</span></label>
             </div>
-            <button id="reanalyze" class="outline-button" aria-label="应用阈值并重新分析">应用阈值并重新分析</button>
+            <button id="reanalyze" class="outline-button" aria-label="应用阈值并重新计算">应用阈值并重新计算</button>
           </section>
           <section class="side-card standards-card">
             <div class="card-kicker">REFERENCE STANDARDS</div>
@@ -184,7 +184,7 @@
             <div class="card-kicker">T02 SOURCE COVERAGE <span id="coverage-audit-version">v3.5.72</span></div>
             <h2>T02 资料接入范围</h2>
             <p class="side-intro">版本化审计把下载目录逐文件分类；“已处理”表示进入对应解析器，不等于已满足标准。</p>
-            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span><span><b id="coverage-tests">543</b>/<b id="coverage-tests-total">543</b> 测试通过</span></div>
+            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span><span><b id="coverage-tests">287</b>/<b id="coverage-tests-total">287</b> 测试通过</span></div>
             <div class="coverage-meter" aria-label="190 个文件进入处理，共 198 个文件"><span id="coverage-meter-fill"></span></div>
             <small id="coverage-note" class="coverage-note">处理数据进入适配器：2,262,283 行/功率点 · 正式符合性声明：0<br>阻断二进制：保留哈希，不生成测试结论；声明未上传：没有原始数据，不进入解析器。</small>
             <small id="coverage-risk-fields" class="coverage-note">高风险字段复核明细读取…</small>

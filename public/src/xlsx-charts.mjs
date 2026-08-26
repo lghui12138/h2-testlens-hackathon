@@ -6,7 +6,7 @@ export function setZipEngine(engine) {
 
 const xmlEscape = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 const attr = (tag, name) => (new RegExp(`${name}="([^"]*)"`).exec(tag)?.[1] || '');
-const maxIndex = (names, pattern) => Math.max(0, ...names.map((name) => Number(pattern.exec(name)?.[1] || 0)));
+const maxIndex = (names, pattern) => names.map((name) => Number(pattern.exec(name)?.[1] || 0)).reduce((max, value) => value > max ? value : max, 0);
 
 function chartXml({ sheetName, title, catRef, valRef, categories, values, categoryNumeric = true }) {
   const cache = (items, numeric) => `<c:${numeric ? 'numCache' : 'strCache'}><c:ptCount val="${items.length}"/>${items.map((value, index) => `<c:pt idx="${index}"><c:v>${xmlEscape(value)}</c:v></c:pt>`).join('')}</c:${numeric ? 'numCache' : 'strCache'}>`;
@@ -39,7 +39,7 @@ export async function addNativeChartToWorkbook(arrayBuffer, dataset = {}) {
   const relsPath = `${sheetPath.slice(0, sheetPath.lastIndexOf('/'))}/_rels/${sheetPath.slice(sheetPath.lastIndexOf('/') + 1)}.rels`;
   let sheetRels = zip.file(relsPath) ? await zip.file(relsPath).async('string') : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
   const relIds = [...sheetRels.matchAll(/Id="rId(\d+)"/g)].map((match) => Number(match[1]));
-  const drawingRelId = `rId${Math.max(0, ...relIds) + 1}`;
+  const drawingRelId = `rId${relIds.reduce((max, value) => value > max ? value : max, 0) + 1}`;
   const drawingIndex = maxIndex(names, /xl\/drawings\/drawing(\d+)\.xml$/) + 1;
   const chartIndex = maxIndex(names, /xl\/charts\/chart(\d+)\.xml$/) + 1;
   const kind = dataset.kind || 'stack';

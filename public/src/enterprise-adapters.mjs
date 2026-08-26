@@ -45,7 +45,7 @@ const mean = (values) => {
     sum += value;
     count += 1;
   }
-  return count ? sum / count : null;
+  return count && Number.isFinite(sum) ? sum / count : null;
 };
 
 const std = (values) => {
@@ -59,6 +59,7 @@ const std = (values) => {
   }
   if (count < 2) return count ? 0 : null;
   const average = sum / count;
+  if (!Number.isFinite(average)) return null;
   let sqSum = 0;
   let sqCount = 0;
   for (let i = 0; i < values.length; i += 1) {
@@ -67,7 +68,7 @@ const std = (values) => {
     sqSum += (value - average) ** 2;
     sqCount += 1;
   }
-  return Math.sqrt(sqSum / sqCount);
+  return Number.isFinite(sqSum) && sqCount ? Math.sqrt(sqSum / sqCount) : null;
 };
 
 const safeMax = (values, fallback = null) => {
@@ -2407,7 +2408,11 @@ function buildStack(rows, config) {
     : rows;
   const sessionTime = sessionizedTimes(sessionRows, mapping.timestamp_s);
   const normalized = rows.map((row, index) => {
-    const cells = Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, convertEnterpriseValue(row[header], cellUnitSpecs[`cell_${cellIndex + 1}_v`])]));
+    const currentA = convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a);
+    const voltageV = convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v);
+    const powerKw = convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw);
+    const rawPowerW = powerKw === null ? null : powerKw * 1000;
+    const derived_power_w = Number.isFinite(currentA) && Number.isFinite(voltageV) ? currentA * voltageV : null;
     return {
       timestamp_s: sessionTime.globalTimes[index],
       session_timestamp_s: sessionTime.localTimes[index],
@@ -2415,16 +2420,12 @@ function buildStack(rows, config) {
       source_file: row.source_file || null,
       source_row_index: Number.isInteger(row.source_row_index) ? row.source_row_index : index,
       phase: mapping.phase ? String(row[mapping.phase] ?? '').trim() || '未标注' : '未标注',
-      current_a: convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a),
-      voltage_v: convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v),
-      power_kw: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw),
-      raw_power_w: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) === null ? null : convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) * 1000,
-      derived_power_w: Number.isFinite(convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a)) && Number.isFinite(convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v)) ? convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a) * convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v) : null,
-      power_w: convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) !== null
-        ? convertEnterpriseValue(row[mapping.power_kw], unitSpecs.power_kw) * 1000
-        : Number.isFinite(convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a)) && Number.isFinite(convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v))
-          ? convertEnterpriseValue(row[mapping.current_a], unitSpecs.current_a) * convertEnterpriseValue(row[mapping.voltage_v], unitSpecs.voltage_v)
-          : null,
+      current_a: currentA,
+      voltage_v: voltageV,
+      power_kw: powerKw,
+      raw_power_w: rawPowerW,
+      derived_power_w,
+      power_w: rawPowerW ?? derived_power_w,
       avg_cell_voltage_v: convertEnterpriseValue(row[mapping.avg_cell_voltage_v], unitSpecs.avg_cell_voltage_v),
       min_cell_voltage_v: convertEnterpriseValue(row[mapping.min_cell_voltage_v], unitSpecs.min_cell_voltage_v),
       max_cell_voltage_v: convertEnterpriseValue(row[mapping.max_cell_voltage_v], unitSpecs.max_cell_voltage_v),
@@ -2463,7 +2464,7 @@ function buildStack(rows, config) {
       cathode_flow_resistance_kpa: num(row[mapping.cathode_in_pressure_kpa]) !== null && num(row[mapping.cathode_out_pressure_kpa]) !== null ? num(row[mapping.cathode_in_pressure_kpa]) - num(row[mapping.cathode_out_pressure_kpa]) : null,
       coolant_flow_resistance_kpa: num(row[mapping.coolant_in_pressure_kpa]) !== null && num(row[mapping.coolant_out_pressure_kpa]) !== null ? num(row[mapping.coolant_in_pressure_kpa]) - num(row[mapping.coolant_out_pressure_kpa]) : null,
       coolant_temperature_difference_c: num(row[mapping.coolant_out_temp_c]) !== null && num(row[mapping.coolant_in_temp_c]) !== null ? num(row[mapping.coolant_out_temp_c]) - num(row[mapping.coolant_in_temp_c]) : null,
-      cells
+      cells: Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, convertEnterpriseValue(row[header], cellUnitSpecs[`cell_${cellIndex + 1}_v`])]))
     };
   });
   const configuredCellCountHint = Number(config.stoichConfig?.cellCount ?? config.cellCount ?? config.testMetadata?.cellCount);

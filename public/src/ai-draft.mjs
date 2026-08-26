@@ -144,9 +144,9 @@ export function localEvidenceDraft(result) {
   if (result.datasetType === 'vehicle') {
     const dataset = evidence.dataset;
     return [
-      '# 自动报告初稿（结构化证据）', '',
+      '# 报告初稿（结构化证据）', '',
       '## 结论',
-      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      `当前判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
       '', '## 关键证据',
       `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
       `- 性能统计：${dataset.performancePoints.length} 个正式目标电流段；目标电流 ${dataset.targetCurrents.length ? dataset.targetCurrents.join('、') + ' A' : '未配置'}；描述性候选区间 ${dataset.inferredSegments?.length || 0} 个（未进入目标符合性判定）。`,
@@ -161,9 +161,9 @@ export function localEvidenceDraft(result) {
   if (result.datasetType === 'stack') {
     const dataset = evidence.dataset;
     return [
-      '# 自动报告初稿（结构化证据）', '',
+      '# 报告初稿（结构化证据）', '',
       '## 结论',
-      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      `当前判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
       '', '## 关键证据',
       `- 数据集：${dataset.label}；${evidence.quality.rowCount} 条记录，关键字段完整率 ${evidence.quality.completenessPct.toFixed(1)}%。`,
       `- 单片通道：导出 ${dataset.cellChannelCount} 个，片数参数最大值 ${dataset.configuredCellCount || '未提供'}。`,
@@ -178,9 +178,9 @@ export function localEvidenceDraft(result) {
   if (result.datasetType === 'durability') {
     const dataset = evidence.dataset;
     return [
-      '# 自动报告初稿（结构化证据）', '',
+      '# 报告初稿（结构化证据）', '',
       '## 结论',
-      `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
+      `当前判定：**${status}（${evidence.verdict}）**。${evidence.narrative}`,
       '', '## 关键证据',
       `- 数据集：${dataset.label}；${dataset.points.length} 个功率点，覆盖 ${dataset.targetPowers.join('、')} kW。`,
       `- 原始报告：${dataset.reports.length} 份；${dataset.reports.filter((report) => String(report.metadata?.测试结果 || '').includes('未通过')).length} 份标记未通过。`,
@@ -194,10 +194,10 @@ export function localEvidenceDraft(result) {
   }
   const mappingNote = evidence.schema ? `${evidence.schema.mappedCount}/${evidence.schema.fieldCount} 个字段已映射；${Object.values(evidence.schema.conversions).filter((item) => item.mode !== 'identity').length} 项单位换算` : '字段映射信息不可用';
   return [
-    '# 自动报告初稿（结构化证据）',
+    '# 报告初稿（结构化证据）',
     '',
     `## 结论`,
-    `当前自动判定：**${status}（${evidence.verdict}）**。${evidence.narrative || '证据不足，需人工复核。'}`,
+    `当前判定：**${status}（${evidence.verdict}）**。${evidence.narrative || '证据不足，需人工复核。'}`,
     '',
     '## 关键证据',
     `- 数据质量：${evidence.quality.completenessPct.toFixed(1)}% 完整，${evidence.quality.rowCount} 条记录。`,

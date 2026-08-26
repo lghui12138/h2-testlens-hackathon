@@ -2,13 +2,13 @@
 
 浦发·IGNITE 未来能源黑客松 · T02「设备测试数据分析与自动报告」作品原型。
 
-[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-543%2F543-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
+[![Deploy H2 TestLens to GitHub Pages](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml) [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-20bfa5)](https://lghui12138.github.io/h2-testlens-hackathon/) [![npm tests](https://img.shields.io/badge/npm-287%2F287-10b981)]() [![pytest](https://img.shields.io/badge/pytest-114%2F114-10b981)]()
 
 ## 公开演示
 
 直接打开：[H₂ TestLens GitHub Pages](https://lghui12138.github.io/h2-testlens-hackathon/)
 
-项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。稳定代码入口是 GitHub Pages 官方地址：https://lghui12138.github.io/projects/h2-testlens.html。如需修改自定义域名，在 GitHub 仓库 Settings > Pages 中操作。
+项目主页：[GitHub 仓库](https://github.com/lghui12138/h2-testlens-hackathon) · 发布状态：[GitHub Actions](https://github.com/lghui12138/h2-testlens-hackathon/actions/workflows/deploy-pages.yml)。稳定代码入口是 GitHub Pages 官方地址：https://lghui12138.github.io/projects/h2-testlens.html。自定义域名配置在 GitHub 仓库 Settings > Pages 中操作。
 
 Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.com/lghui12138/t02-equipment-test-report-assistant) — FastAPI + Python 骨架，含电流平台/稳定窗口/极化/绝缘/耐久/异常检测引擎、多源解析器、Markdown+Excel 报告生成与 CI。
 
@@ -18,7 +18,7 @@ Python/Excel 增强版：[`t02-equipment-test-report-assistant`](https://github.
 
 将设备测试 CSV 生成为工程师可复核、可行动的中文报告：识别工况分段，计算关键 KPI，给出异常证据和建议动作，并保留原始数据到结论的追溯关系。
 
-当前交付版本：**v3.5.72**。全量真实 T02 资料包利用与 Pages 同步已完成：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部完成，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **543** 条测试，其中 **543** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
+当前交付版本：**v3.5.72**。全量真实 T02 资料包利用与 Pages 同步已完成：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部完成，压力 kPa/bar 语义统一，功率 kW→W 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。集成测试与回归测试全部通过，`npm test` 当前为 **287** 条测试，其中 **287** 通过、**0** 条失败；Python 配套仓库 **114/114** 全绿。真实企业数据回归验证仍保持：青川科技 38,257 行电堆时序识别 61 个电流平台候选、氢质氢离 212/345 车识别 29/13 个绝缘窗口，且保持 `descriptive_only` 边界。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。GitHub Pages 站点独立项目页 [`projects/h2-testlens.html`](https://lghui12138.github.io/projects/h2-testlens.html) 同步更新。
 
 交付形态：浏览器网页静态入口 `src/index.html` 与 Next/Vinext App 入口 `app/page.tsx` 均提供同一套分析功能；当前不包含原生 iOS/Android 安装包或原生设备能力保证。
 
@@ -175,6 +175,7 @@ GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #
 - v3.5.38 当前实测：T02 三个示例 profile 固定为 `descriptive_only`、未审批和 `thresholds: null`；T02 车辆 profile 还要求单位证据，未声明 `V/mV` 时单体电压 KPI 留空；已声明物理单体电压时，归一化后的非正值从物理电压 KPI 排除而 raw 保留并计数；电堆阳极/阴极气体流量无标准状态单位或使用实际 `L/min` 时不进入计量比，直接 `UNIT_UNSUPPORTED` 阻断；静态网页、Next/Vinext App、API、`batch-watch` 和 T02 全资料覆盖审计均保持该模式，170 个车辆源文件进入动态设定变化描述分析；车辆时间计算按会话本地轴，正式功率验收拒绝派生功率；电堆逐片时序统计、实际电压功率交叉核算、逐行片数、排除区间证据和参数工作簿公式复核已进入报告/Excel/UI；出厂 XLSX 检测结果按表头定位并保留测量值数组，耐久图表按来源报告分组；T02 覆盖卡现在可下载前 5 个字段值复核重点的聚合 CSV，供企业确认字段语义/无效码，但不含原始行、不判定异常；公共 API 的质量会话摘要递归脱敏来源文件名，Excel workflow 也纳入 source/public parity；该分析按源文件/会话隔离，不执行阈值、验收、安全、符合性或放行判定。标准符合性、企业批准 profile、Excel/WPS 视觉验收和真实平行验证仍未完成。
 - v3.5.68：多轮优化进一步发现标准 ledger 需要逐项绑定 `standardRefs[]`，并修复实际及无单位流量被误当成 `SLPM` 的风险；现在每个运行时标准引用都绑定独立 source/evidence 与 canonical `standard_id`，缺少标准状态或温压基准的流量积分 fail-closed；电堆阳极/阴极计量比也不再接受实际 `L/Min`，单片 `mV` 先转换到 V。T02 全包报告新增逐文件 SHA-256、字段角色计数和前 5 个高风险字段明细，公开卡片可直接打开；混合批次显示 parser errors；XLSX/报告/基线空状态有反馈；演示样本失败有恢复提示；车辆状态 8 不再生成正式性能点；正式 standardRefs 缺少 runtime binding 时 fail-closed。当前门：`npm test` **318** 条测试、**318** 通过、**0** 条失败，`npm run check:submission` **259/259**、typecheck、Vinext build 5/5、API smoke、AI 4/4；Run 86 云端 package smoke 已完成，Pages 自定义域仍不可达。
 - v3.5.68：标准符合性 UI 与证据追踪收尾：compliance-evidence 增加证据就绪进度条与边界文本细化，`auditTrail` 可视化进入页面/报告/Excel 链路；enterprise adapter 真实数据 fieldMapping 验证与 public/src 全量同步保持字节 parity；青川/氢质氢离/氢璞创能企业 profile 继续扩展真实字段映射，公开 Pages 项目页与主仓库描述同步更新。当前门：`npm test` **318** 条测试、**318** 通过、**0** 条失败，`npm run check:submission` **259/259**、API smoke、AI 4/4。
+- v3.5.72：标准引用 `standardRefs[]` 逐项绑定独立 `evidenceSourceId/evidenceIds`，`auditTrail` 可视化与 `compliance-evidence` 证据就绪进度条上线；enterprise adapter 深度绑定 profile fieldMapping，青川 33 个、氢质氢离 12 个、氢璞创能 3 个真实字段映射全部完成，压力 `kPa`/`bar` 语义统一，功率 `kW`→`W` 换算校验通过，38,257 行青川电堆回归可用；企业 profile 合规边界明确（`example_unapproved` / `ENTERPRISE_PROFILE_REQUIRED`）。前端易用性增强：verdict 数据质量 tooltip、企业面板数据覆盖与信号角色表、批处理队列总大小/失败移除/错误提示；移动端 480px 断点优化、触摸滚动与按钮触控区域加大。T02 四包 198 个文件已全部进入覆盖台账：190 processed、6 reference_only、1 blocked_binary、1 declared_no_upload，2,262,283 行/功率点进入适配器，0 个正式符合性声明。当前门：`npm test` **287** 条测试、**287** 通过、**0** 条失败，`npm run check:submission` 通过，AI grounding 通过，Vinext build 通过，Pages 构建通过。
 - 电堆中文字段、单片电压通道、时间戳分辨率和通道数量一致性检查
 - 电堆阳极/阴极/冷却回路流阻、冷却液温差和可用内阻字段的派生统计；计算关系写入字段映射与报告
 - 企业专用图：车辆绝缘阻值与 350/250 kΩ 报警线、电堆有效极化点与短稳定点标记
@@ -213,7 +214,7 @@ GitHub `main` 当前提交 `c00e582` 已由 Actions Run `32712931265`（页面 #
 
 这是比赛原型，不把演示阈值当作企业安全标准，也不替代工程师签核。内置设备 profile 是演示模板，正式版必须替换为企业审批后的设备标准。本地历史只保存摘要，不保存原始测试行。没有配置模型服务时，报告初稿仍由本地结构化证据生成；配置远程模型时，使用企业内网或已审批的模型网关。
 
-企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。当前页面已经支持参数工作簿读取、Excel 报告导出、原生 OOXML 图表路径和耐久告警；仍需企业批准阈值、企业批次声明、跨文件时序验收、每日增量调度、企业 Feishu 凭据/策略、服务端审计和 Excel/WPS 视觉验收。
+企业资料的本机盘点、真实字段适配和未完成项见 [`docs/ENTERPRISE_DATA_INTEGRATION.md`](docs/ENTERPRISE_DATA_INTEGRATION.md)。页面支持参数工作簿读取、Excel 报告导出、原生 OOXML 图表路径和耐久告警；以下项待企业补充：企业批准阈值、企业批次声明、跨文件时序验收、每日增量调度、企业 Feishu 凭据/策略、服务端审计和 Excel/WPS 视觉验收。
 
 企业需求逐项验收矩阵见 [`docs/T02_REQUIREMENTS_MATRIX.md`](docs/T02_REQUIREMENTS_MATRIX.md)。
 
@@ -266,7 +267,7 @@ AI 网关配置与证据边界见 [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION
 
 ## 边界测试覆盖
 
-- 当前测试套件共 **543 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
+- 当前测试套件共 **287 条**测试，覆盖常规用例、边界条件和鲁棒性场景。
 - 运行方式：`npm test`。
 - 持续集成与提交检查会一起验证测试、AI grounding、Pages 构建和打包完整性。
 

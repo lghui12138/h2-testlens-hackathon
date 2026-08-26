@@ -142,7 +142,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
   const blockedRows = blocked.map((record) => `| ${cell(record.path)} | ${cell(statusLabel(record.status))} | ${cell(record.parser)} | ${cell(record.usageLedger?.boundary || record.note)} |`).join('\n') || '| — | — | — | — |';
   const claims = referenceClaimRows(referenceRecords).join('\n') || '| — | — | — | — | — |';
   const lines = [
-    '# T02 设备测试数据分析与自动报告系统 · 全资料包接入报告',
+    '# T02 设备测试数据分析与报告 · 全资料包接入报告',
     '',
     `- 证据版本：${version}`,
     `- 覆盖审计：\`${coveragePath}\``,
@@ -179,7 +179,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     '',
     '## 全包字段值分布诊断（复核提示，不是标准判定）',
     '',
-    '该汇总来自所有进入车辆/电堆适配器的真实时序文件。负值、零值集中、常量值和非数值混合只提示需要确认字段语义、设备状态和企业无效码；系统不自动删除原始值，也不把提示写成合格/不合格。',
+    '该汇总来自所有进入车辆/电堆适配器的真实时序文件。负值、零值集中、常量值和非数值混合只提示需要确认字段语义、设备状态和企业无效码；不自动删除原始值，也不把提示写成合格/不合格。',
     '',
     '| 资料包 | 有诊断文件 | 有待复核文件 | 待复核字段出现次数 | 含负值文件 | 零值集中文件 | 常量字段文件 | 解析混合文件 |',
     '|---|---:|---:|---:|---:|---:|---:|---:|',
@@ -255,7 +255,7 @@ export function buildT02IntegrationReport({ coverage, reference, coveragePath = 
     '',
     '- 本报告仅证明资料被盘点、分类、解析或明确阻断；不证明 GB/T 45541-2025、GB/T 46104-2025、ISO 22734-1:2025 或 ISO/IEC 17025:2017 的完整符合。',
     '- 缺少企业批准 profile、方法实施证据、仪器精度/校准、不确定度预算、验收限值、批次声明和人工平行验证时，结果只能作为 `ANALYSIS_DRAFT` 或描述性工程证据。',
-    '- 参考资料、二进制阻断文件和未上传声明不被伪装为测试数据；跨文件时序也不会自动拼接。',
+    '- 参考资料、二进制阻断文件和未上传声明不被伪装为测试数据；跨文件时序不会拼接。',
     '',
     '## 可复核入口',
     '',

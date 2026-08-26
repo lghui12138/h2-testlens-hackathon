@@ -128,13 +128,13 @@ export function dataQualityReadiness(config = {}, quality = {}, phaseCoverage = 
   const evidence = status === 'ready'
     ? `时间轴 ${quality.observedIntervalCount ?? 0} 个正间隔；中位采样间隔 ${quality.medianIntervalS ?? '—'} s；阶段覆盖规则已核对`
     : status === 'not_configured'
-      ? 'profile 未声明额外数据质量门控；系统仍保留观测指标供工程复核'
+      ? 'profile 未声明额外数据质量门控；仍保留观测指标供工程复核'
       : `数据质量门控未通过：${[...missing, ...failed].join('、')}`;
   return { required: configured, status, ready: status === 'ready' || status === 'not_configured', missing, failed, requirements, evidence };
 }
 
 export function testSystemReadiness(config = {}) {
-  return evidenceRecordReadiness(config, 'testSystemRequirements', 'testSystemEvidence', '测试系统组成');
+  return evidenceRecordReadiness(config, 'testSystemRequirements', 'testSystemEvidence', '测试装置组成');
 }
 
 export function testStageReadiness(config = {}) {
@@ -291,7 +291,7 @@ export function efficiencyReadiness(config = {}, rows = [], schema = {}) {
   if (measured === null && !hasRecordValue && !measuredProblems.length) missing.push('efficiency_pct 或 efficiencyRecord.valuePct');
   if (formulaMissing) missing.push('efficiencyRecord.formulaRef 或 formulaRefs');
   if (sourceMissing) missing.push('efficiencyRecord.sourceRef');
-  return { required: true, ready: false, status: 'missing', missing, source: null, valuePct: null, formulaRef: formulaRef || null, evidence: `效率结果未就绪：${missing.join('、')}；系统不会猜测效率公式` };
+  return { required: true, ready: false, status: 'missing', missing, source: null, valuePct: null, formulaRef: formulaRef || null, evidence: `效率结果未就绪：${missing.join('、')}；不会猜测效率公式` };
 }
 
 export function phaseResultReadiness(config = {}, phaseMetrics = { phases: {} }) {

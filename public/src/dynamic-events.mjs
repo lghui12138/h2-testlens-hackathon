@@ -1,6 +1,7 @@
 
 const safeMax = (values, fallback = null) => {
-  let maximum = fallback;
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
+  let maximum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
     maximum = maximum === null || maximum === undefined ? value : Math.max(maximum, value);
@@ -9,6 +10,7 @@ const safeMax = (values, fallback = null) => {
 };
 
 const safeMin = (values, fallback = null) => {
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
   let minimum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
@@ -16,7 +18,12 @@ const safeMin = (values, fallback = null) => {
   }
   return minimum;
 };
-const finite = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
+const finite = (value) => {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const numeric = Number(text);
+  return Number.isFinite(numeric) ? numeric : null;
+};
 const timeOf = (row) => finite(row?.session_timestamp_s ?? row?.timestamp_s);
 
 const groupBySession = (rows, sessionField) => {
@@ -156,7 +163,7 @@ export function analyzeSetpointEvents(inputRows, options = {}) {
   for (const group of groupBySession(rows, sessionField)) {
     const points = group.items;
     const gaps = gapSummary(points, maxGapS);
-    maximumIntervalS = maximumIntervalS === null ? gaps.maximumIntervalS : Math.max(maximumIntervalS, gaps.maximumIntervalS ?? 0);
+    if (gaps.maximumIntervalS !== null) maximumIntervalS = maximumIntervalS === null ? gaps.maximumIntervalS : Math.max(maximumIntervalS, gaps.maximumIntervalS);
     dataGapCount += gaps.gapCount;
     for (let index = 1; index < points.length; index += 1) {
       const previous = finite(points[index - 1].row[commandField]);

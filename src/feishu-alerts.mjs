@@ -12,10 +12,10 @@ export function durabilityAlertPayload(result, fileName = 'durability.docx') {
   const lines = [
     '【H₂ TestLens｜台架耐久预警】',
     `文件：${fileName}`,
-    `自动判定：${result?.verdict || '未评估'}`,
+    `判定：${result?.verdict || '未评估'}`,
     `功率点：${dataset.points?.length || 0} 个；目标功率：${(dataset.targetPowers || []).join('、') || '未识别'} kW`,
     ...issues.slice(0, 8).map((item, index) => `${index + 1}. ${item.title}：${item.evidence}`),
-    '请按企业方法和原始报告完成工程师复核；此消息不是放行结论。'
+    '需按企业方法和原始报告完成工程师复核；此消息不是放行结论。'
   ];
   return { msg_type: 'text', content: { text: lines.join('\n') } };
 }

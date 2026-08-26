@@ -320,9 +320,9 @@ function valueOrText(value) {
 }
 
 function numericSummary(values, expectedCount = values.length) {
-  const valid = values.filter((value) => value !== null);
-  const minimum = valid.length ? Math.min(...valid) : null;
-  const maximum = valid.length ? Math.max(...valid) : null;
+  const valid = values.filter(Number.isFinite);
+  const minimum = valid.length ? valid.reduce((m, v) => v < m ? v : m, Infinity) : null;
+  const maximum = valid.length ? valid.reduce((m, v) => v > m ? v : m, -Infinity) : null;
   return {
     validCount: valid.length,
     missingCount: Math.max(0, expectedCount - valid.length),
@@ -458,7 +458,7 @@ function parseReportEvidence(rows, sheetName) {
     signoff,
     notes,
     fieldCount: fields.length,
-    boundary: '出厂报告中的元数据、检测项目、极化/稳定性摘要、单片汇总和签核字段作为原始报告证据保存；“是否合格”只复述原报告，不升级为本系统标准符合性结论。'
+    boundary: '出厂报告中的元数据、检测项目、极化/稳定性摘要、单片汇总和签核字段作为原始报告证据保存；“是否合格”只复述原报告，不升级为本工具标准符合性结论。'
   };
 }
 
@@ -749,7 +749,7 @@ export function parseDataWorkbook(arrayBuffer) {
     const formulaAudit = inspectWorkbookFormulaAudit(workbook, inputSafety);
     const names = workbook.SheetNames || [];
     if (names.some((name) => normalized(name).includes('数据处理设定参数')) && names.some((name) => normalized(name).includes('目标工况'))) {
-      return { ok: false, errors: ['当前文件是参数工作簿，请使用“参数/目标工况 Excel”入口'], sheetNames: names, rows: [] };
+      return { ok: false, errors: ['当前文件是参数工作簿，需使用“参数/目标工况 Excel”入口'], sheetNames: names, rows: [] };
     }
     const rowsBySheet = new Map(names.map((name) => [name, sheetRows(workbook, name)]));
     const candidates = names.map((name) => {
@@ -824,7 +824,7 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
     ['自动判定', result.verdict, '不是安全认证或企业放行结论'],
     ['交付级别', result.releaseGate?.status || 'ANALYSIS_DRAFT', result.releaseGate?.label || '分析草稿，不得作为放行报告'],
     ['放行门控', result.releaseGate?.blockedReasons?.join('、') || '无', '只有全部门控通过才可形成 HUMAN_REVIEW_PACKAGE'],
-    ['生成时间', result.generatedAt, '系统时间'],
+    ['生成时间', result.generatedAt, '当前时间'],
     ['边界', result.narrative, '需要企业批准规则和人工签核']
   ]);
   const traceRows = Object.values(result.metricTrace?.metrics || {}).map((item) => [
@@ -962,7 +962,7 @@ export function buildEnterpriseWorkbook(result, fileName = 'test-run.csv', optio
   addSheet(book, '单片电压统计', cellStats);
   if (dataset.cellTimeSeriesStats?.length) addSheet(book, '单片时序统计', [['源字段', '规范字段', '单片序号', '有效记录', '缺失记录', '完整率(%)', '均值(V)', '最小(V)', '最大(V)', '极差(V)', '标准差(V)', '边界'], ...dataset.cellTimeSeriesStats.map((item) => [item.source, item.field, item.cellIndex, item.count, item.missingCount, item.completenessPct, item.mean, item.min, item.max, item.range, item.std, item.boundary])]);
   if (dataset.excludedIntervals?.length) addSheet(book, '排除区间', [['平台', '工况', '会话', '来源文件', '起始(s)', '结束(s)', '持续(s)', '样本数', '原因代码', '原因'], ...dataset.excludedIntervals.map((item) => [item.platformId || '', item.conditionId || '', item.sessionId || '', item.sourceFile || '', item.startS ?? '', item.endS ?? '', item.durationS ?? '', item.sampleCount ?? '', item.reasonCode || '', item.reason || ''])]);
-  addSheet(book, '异常清单', [['级别', '代码', '标题', '证据', '建议动作'], ...result.issues.map((item) => [item.severity, item.code, item.title, item.evidence, item.recommendation])]);
+  addSheet(book, '异常清单', [['级别', '代码', '标题', '证据', '后续步骤'], ...result.issues.map((item) => [item.severity, item.code, item.title, item.evidence, item.recommendation])]);
   if (dataset.kind === 'durability') addSheet(book, '耐久功率点', [['报告/来源', '点序', '目标功率(kW)', '净输出功率(kW)', '平均单体电压(mV)', '离均差(mV)', '电压方差'], ...(dataset.points || []).map((item) => [item.sourceFile || 'DOCX报告', item.pointIndex ?? '', item.targetPowerKw ?? '', item.netPowerKw ?? '', item.averageCellVoltageMv ?? '', item.averageDeviationMv ?? '', item.voltageVariance ?? ''])]);
   if (dataset.kind === 'vehicle') addSheet(book, '车辆信号目录', [
     ['原始信号', '类型', '使用层级', '数值记录', '总记录', '完整率(%)', '最小值', '最大值', '平均值', '标准差', '左轴展示', '右轴展示', '常见离散值'],
