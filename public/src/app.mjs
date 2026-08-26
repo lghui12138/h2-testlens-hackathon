@@ -333,7 +333,7 @@ async function analyzeRowsAsync(rows, config, onStage) {
 async function analyzeCurrent(reason = '重新分析') {
   if (!state.rows.length) return;
   const token = ++state.analysisToken;
-  setAnalysisStatus(`${reason}：启动中`, 'busy');
+  setAnalysisStatus(`${reason}：启动`, 'busy');
   document.body.setAttribute('aria-busy', 'true');
   await yieldToBrowser();
   try {
@@ -600,7 +600,7 @@ function showMetricSkeletons() {
   if (chartWrap && !chartWrap.querySelector('.chart-skeleton-message')) {
     chartWrap.classList.add('chart-loading');
     const rowCount = state.result?.metrics?.sampleCount?.toLocaleString('zh-CN') || '—';
-    chartWrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表载入中</strong><span>分析完成后将在此渲染趋势图</span><div class="skeleton-data-context"><strong>数据上下文</strong> 记录数 ${rowCount} · 文件 ${escapeHtml(state.fileName || '—')}</div></div>`);
+    chartWrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载…</strong><span>分析完成后将在此渲染趋势图</span><div class="skeleton-data-context"><strong>数据上下文</strong> 记录数 ${rowCount} · 文件 ${escapeHtml(state.fileName || '—')}</div></div>`);
   }
   ['enterprise-chart', 'enterprise-performance-chart'].forEach((id) => {
     const canvas = $(`#${id}`);
@@ -608,7 +608,7 @@ function showMetricSkeletons() {
     if (wrap && !wrap.querySelector('.chart-skeleton-message')) {
       wrap.classList.add('chart-loading');
       const label = state.result?.dataset?.label || '企业数据';
-      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表载入中</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
+      wrap.insertAdjacentHTML('beforeend', `<div class="chart-skeleton-message empty-state" style="position:absolute;inset:0;z-index:3;pointer-events:none;"><strong>图表加载…</strong><span>识别到企业数据后将显示专用图表</span><div class="skeleton-data-context"><strong>${escapeHtml(label)}</strong> 等待 ${id === 'enterprise-performance-chart' ? '性能' : '专用'} 图表渲染</div></div>`);
     }
   });
   const enterprisePanel = $('#enterprise-panel');
