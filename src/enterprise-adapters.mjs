@@ -932,7 +932,7 @@ function enterprisePhaseMetricReadiness(config, rows) {
 
 function profileGateIssues(complianceResult) {
   const issues = [];
-  if (complianceResult.approvalStatus === 'example_unapproved') issues.push({ severity: 'critical', code: 'STANDARD_COMPLIANCE_BOUNDARY', title: '企业未审批 profile 不构成标准符合性判定', evidence: '当前使用企业未审批 profile，不构成标准符合性判定或放行依据', recommendation: '请先完成企业审批、修订控制和完整方法实施证据，再进入标准符合性复核。' });
+  if (complianceResult.approvalStatus === 'example_unapproved') issues.push({ severity: 'critical', code: 'STANDARD_COMPLIANCE_BOUNDARY', title: '企业未审批 profile 不构成标准符合性判定', evidence: '当前使用未经企业审批的 profile，不构成标准符合性判定或放行依据', recommendation: '请先完成企业审批、修订控制及完整方法实施证据，再进入标准符合性复核。' });
   if (complianceResult.approvalEvidence?.required && !complianceResult.approvalEvidence.ready) issues.push({ severity: 'critical', code: 'APPROVAL_EVIDENCE_MISSING', title: 'approved profile 缺少有效审批与修订证据', evidence: complianceResult.approvalEvidence.evidence, recommendation: '补充审批人标识、审批日期、批准依据/工单号、当前 profile 修订号和修订证据引用后再进入人工符合性复核。' });
   if (complianceResult.methodExecutionStatus === 'FULL_METHOD_IMPLEMENTED' && !complianceResult.methodImplementationEvidence?.ready) issues.push({ severity: 'critical', code: 'METHOD_IMPLEMENTATION_EVIDENCE_MISSING', title: '完整方法执行声明缺少结构化实施证据', evidence: complianceResult.methodImplementationEvidence?.evidence || '未提供 methodImplementationEvidence', recommendation: '补充标准来源、条款/步骤覆盖、每项实施证据、验证人、验证日期、验证引用，并清空未关闭缺口后再声明 FULL_METHOD_IMPLEMENTED。' });
   if (complianceResult.measurements?.missing?.length) issues.push({ severity: 'critical', code: 'PROFILE_MEASUREMENT_MISSING', title: 'profile 要求的测量字段未形成有效数据', evidence: complianceResult.measurements.evidence, recommendation: '补充对应原始通道或选择适用的数据集 profile；不要用其他字段替代。' });
@@ -1040,7 +1040,7 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
     return `${id} ${clauseRefs.join('、')}`;
   }).filter(Boolean);
   const baseBoundary = config.approvalStatus !== 'approved'
-    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非 approved 路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
+    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非企业批准路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
     : formalBlockers
       ? `已使用 approved profile，但仍有 ${missingSummary.length} 项标准化资料未完成（${missingSummary.slice(0, 6).join('、')}${missingSummary.length > 6 ? ' 等' : ''}）；当前仅作人工复核前处理，不自动声明符合性。`
       : '已使用企业 approved profile，标准化资料已齐备；仍需工程师人工复核与签核后方可进入正式放行。';
@@ -1063,8 +1063,8 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
         ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
         : '当前 profile 未批准，不进入标准符合性判定',
       boundary: clauseRefs.length
-        ? `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款（${clauseRefs.join('、')}）需企业 approved profile 与完整方法实施证据支撑。`
-        : `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款需企业 approved profile 与完整方法实施证据支撑。`
+        ? `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款（${clauseRefs.join('、')}）需企业批准的 profile 与完整方法实施证据支撑。`
+        : `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款需企业批准的 profile 与完整方法实施证据支撑。`
     };
   });
   const evidenceDetails = [
