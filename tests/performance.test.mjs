@@ -152,28 +152,28 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
 });
 
  test('test_parse_real_qingchuan_38k_csv_with_adapter', { skip: CI }, async () => {
-   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
-   const start = process.hrtime.bigint();
-   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
-   const rows = parseCSV(csv);
-   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
-   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
-   assert.ok(elapsedMs < 40_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
-   recordBenchmark('test_parse_real_qingchuan_38k_csv_with_adapter', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
- });
+  const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+  const start = process.hrtime.bigint();
+  const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+  const rows = parseCSV(csv);
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+  assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
+  assert.ok(elapsedMs < 40_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
+  recordBenchmark('test_parse_real_qingchuan_38k_csv_with_adapter', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+});
 
  test('test_analyze_real_qingchuan_38k_csv_with_profile', { skip: CI }, async () => {
-   const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
-   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
-   const rows = parseCSV(csv);
-   const start = process.hrtime.bigint();
-   const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
-   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
-   assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
-   assert.equal(result.datasetType, 'stack');
-   assert.ok(elapsedMs < 40_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
-   recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
- });
+  const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+  const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+  const rows = parseCSV(csv);
+  const start = process.hrtime.bigint();
+  const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+  assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
+  assert.equal(result.datasetType, 'stack');
+  assert.ok(elapsedMs < 40_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
+  recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+});
 
   test('test_parse_all_real_hypu_txt_files', { skip: CI }, async () => {
     const files = [
@@ -290,4 +290,60 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
     const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
     assert.ok(elapsedMs < 30_000, `bulk parsing sampled vehicle csv files took ${elapsedMs.toFixed(2)} ms`);
     recordBenchmark('test_parse_real_package02_vehicle_csv_bulk_sample', 'ok', elapsedMs, samples.length * 100, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  // ===========================================================================
+  // Performance stability tests
+  // ===========================================================================
+
+  test('performance stability: repeated parseCSV on fixed synthetic CSV has bounded jitter', { skip: CI }, () => {
+    const csv = buildCsv(10_000);
+    // Warm-up run to reduce JIT / GC noise.
+    parseCSV(csv);
+    const durations = Array.from({ length: 5 }, () => {
+      const start = process.hrtime.bigint();
+      parseCSV(csv);
+      return Number(process.hrtime.bigint() - start) / 1e6;
+    });
+    const sorted = durations.slice().sort((a, b) => a - b);
+    const median = sorted.length % 2 === 0 ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2 : sorted[Math.floor(sorted.length / 2)];
+    const max = sorted.at(-1);
+    assert.ok(median > 0, 'median parse time should be positive');
+    assert.ok(max / median < 3, `max/median jitter ratio ${(max / median).toFixed(2)} exceeded stability bound`);
+    recordBenchmark('perf_stability_parseCSV_10k', 'ok', median, 10_000, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  test('performance stability: repeated analyzeRows on fixed dataset has bounded jitter', { skip: CI }, () => {
+    const rows = parseCSV(buildCsv(5_000));
+    // Warm-up run.
+    analyzeRows(rows, { sourceHash: 'perf-stability' });
+    const durations = Array.from({ length: 5 }, () => {
+      const start = process.hrtime.bigint();
+      analyzeRows(rows, { sourceHash: 'perf-stability' });
+      return Number(process.hrtime.bigint() - start) / 1e6;
+    });
+    const sorted = durations.slice().sort((a, b) => a - b);
+    const median = sorted.length % 2 === 0 ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2 : sorted[Math.floor(sorted.length / 2)];
+    const max = sorted.at(-1);
+    assert.ok(median > 0, 'median analysis time should be positive');
+    assert.ok(max / median < 4, `max/median jitter ratio ${(max / median).toFixed(2)} exceeded stability bound`);
+    recordBenchmark('perf_stability_analyzeRows_5k', 'ok', median, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  test('performance stability: real qingchuan 38k parse has bounded jitter across repeated reads', { skip: CI }, async () => {
+    const buf = await readRaw('企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    // Warm-up run.
+    parseCSV(csv);
+    const durations = Array.from({ length: 3 }, () => {
+      const start = process.hrtime.bigint();
+      const rows = parseCSV(csv);
+      return { elapsedMs: Number(process.hrtime.bigint() - start) / 1e6, rows: rows.length };
+    });
+    const sorted = durations.slice().sort((a, b) => a.elapsedMs - b.elapsedMs);
+    const median = sorted.length % 2 === 0 ? (sorted[sorted.length / 2 - 1].elapsedMs + sorted[sorted.length / 2].elapsedMs) / 2 : sorted[Math.floor(sorted.length / 2)].elapsedMs;
+    const max = sorted.at(-1).elapsedMs;
+    assert.ok(durations.every((d) => d.rows >= 38000), 'row count should stay stable across runs');
+    assert.ok(max / median < 2.5, `real data max/median jitter ratio ${(max / median).toFixed(2)} exceeded stability bound`);
+    recordBenchmark('perf_stability_real_qingchuan_38k', 'ok', median, durations[0].rows, process.memoryUsage().heapUsed / 1024 / 1024);
   });

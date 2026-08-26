@@ -94,7 +94,7 @@ test('compliance boundary is specific for example_unapproved profiles', () => {
   }, 'demo', {}, { rowCount: 0, completenessPct: 0, usable: false }, [], {});
   assert.ok(result.boundary.includes('企业未审批演示 profile'));
   assert.ok(result.boundary.includes('不构成标准符合性判定或放行依据'));
-  assert.ok(result.boundary.includes('不得用于标准符合性声明'));
+  assert.ok(result.boundary.includes('不得作为标准符合性声明的依据'));
 });
 
 test('compliance auditTrail includes detailed evidence and method metadata', () => {
