@@ -1373,7 +1373,7 @@ function updateAccessibleSummaries(result) {
     performanceSummary.textContent = `企业性能图表摘要：${points} 个性能点；当前仅在具备企业性能证据时显示，不替代标准判定。`;
   }
   const announcement = $('#result-announcement');
-  if (announcement) announcement.textContent = `分析完成 · ${verdictLabel(result.verdict)}；${result.metrics.sampleCount || 0} 条记录；${result.issues?.length || 0} 项风险或提示；正式符合性声明未执行。`;
+  if (announcement) announcement.textContent = `分析完成：${verdictLabel(result.verdict)}；${result.metrics.sampleCount || 0} 条记录；${result.issues?.length || 0} 项风险或提示；正式符合性声明未执行。`;
 }
 
 function render(result, pushHistory = true) {
