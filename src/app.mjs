@@ -2031,9 +2031,9 @@ $('#compare-demo').addEventListener('click', async () => {
     button.textContent = '加载演示基线并对比';
   }
 });
-$('#generate-ai').addEventListener('click', async () => {
+$('#generate-report').addEventListener('click', async () => {
   if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
-  const button = $('#generate-ai');
+  const button = $('#generate-report');
   button.disabled = true;
   button.textContent = '运算中';
   const localFallback = (reason) => ({ mode: 'local-evidence', provider: 'local', fallbackReason: reason, draft: localEvidenceDraft(state.result), evidence: evidenceBundle(state.result, state.comparison) });
