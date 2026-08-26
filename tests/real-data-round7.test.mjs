@@ -961,15 +961,70 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
       }
     };
     await walk(T02_ROOT);
-    assert.ok(allFiles.length >= 190, `expected at least 190 files in T02, got ${allFiles.length}`);
+    assert.equal(allFiles.length, 198, `expected exactly 198 files in T02, got ${allFiles.length}`);
     const counts = {};
     for (const file of allFiles) {
       const ext = file.split('.').pop()?.toLowerCase() || '';
       counts[ext] = (counts[ext] || 0) + 1;
     }
-    assert.ok(counts['csv'] >= 150, `expected at least 150 CSV files, got ${counts['csv'] || 0}`);
-    assert.ok(counts['txt'] >= 10, `expected at least 10 TXT files, got ${counts['txt'] || 0}`);
-    assert.ok(counts['docx'] >= 9, `expected at least 9 DOCX files, got ${counts['docx'] || 0}`);
-    assert.ok(counts['pdf'] >= 4, `expected at least 4 PDF files, got ${counts['pdf'] || 0}`);
-    assert.ok(counts['xlsx'] >= 1, `expected at least 1 XLSX file, got ${counts['xlsx'] || 0}`);
+    assert.equal(counts['csv'] || 0, 171, `expected 171 CSV files, got ${counts['csv'] || 0}`);
+    assert.equal(counts['txt'] || 0, 11, `expected 11 TXT files, got ${counts['txt'] || 0}`);
+    assert.equal(counts['docx'] || 0, 10, `expected 10 DOCX files, got ${counts['docx'] || 0}`);
+    assert.equal(counts['pdf'] || 0, 5, `expected 5 PDF files, got ${counts['pdf'] || 0}`);
+    assert.equal(counts['xlsx'] || 0, 1, `expected 1 XLSX file, got ${counts['xlsx'] || 0}`);
+  });
+
+  // ---------------------------------------------------------------------------
+  // 30. Comprehensive vehicle CSV coverage across ALL 氢质氢离 real data
+  // ---------------------------------------------------------------------------
+
+  test('all 170 氢质氢离 real vehicle CSV files across 212 and 345 channels exist and parse headers', { skip: !HAS_T02 }, async () => {
+    const pkgDir = join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理');
+    const channels = readdirSync(pkgDir);
+    assert.ok(channels.includes('212'), 'expected 212 channel directory');
+    assert.ok(channels.includes('345'), 'expected 345 channel directory');
+    const files212 = readdirSync(join(pkgDir, '212')).filter((f) => f.endsWith('.csv'));
+    const files345 = readdirSync(join(pkgDir, '345')).filter((f) => f.endsWith('.csv'));
+    assert.equal(files212.length, 89, `expected 89 CSV files in 212, got ${files212.length}`);
+    assert.equal(files345.length, 81, `expected 81 CSV files in 345, got ${files345.length}`);
+    assert.equal(files212.length + files345.length, 170, `expected 170 total vehicle CSV files, got ${files212.length + files345.length}`);
+    const allFiles = [
+      ...files212.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/212/${f}`),
+      ...files345.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/345/${f}`),
+    ];
+    for (const file of allFiles) {
+      const buf = await readRaw(file);
+      assert.ok(buf, `${file} should exist`);
+      assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${file} should be non-empty`);
+      const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+      const firstLine = csv.split('\n')[0];
+      assert.ok(firstLine.includes('Timestamp'), `${file} should have Timestamp header`);
+      assert.ok(firstLine.includes('FC_CurrOut'), `${file} should have FC_CurrOut header`);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 31. All 4 packages explicit file-type regression
+  // ---------------------------------------------------------------------------
+
+  test('each enterprise package exposes its expected real-file type mix', { skip: !HAS_T02 }, async () => {
+    const pkg01Files = await readdir(join(T02_ROOT, '企业资料包01_氢璞创能'));
+    const pkg02Files = await readdir(join(T02_ROOT, '企业资料包02_氢质氢离'));
+    const pkg03Files = await readdir(join(T02_ROOT, '企业资料包03_青川易创与云汉达'));
+    const pkg04Files = await readdir(join(T02_ROOT, '企业资料包04_海珀特'));
+
+    assert.ok(pkg01Files.some((f) => f.endsWith('.txt')), 'package 01 should have txt files');
+    assert.ok(pkg01Files.some((f) => f.endsWith('.xlsx')), 'package 01 should have xlsx files');
+    assert.ok(pkg01Files.some((f) => f.endsWith('.pdf')), 'package 01 should have pdf files');
+
+    const pkg02SubDirs = await readdir(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理'));
+    assert.ok(pkg02Files.some((f) => f.endsWith('.docx')), 'package 02 should have docx files');
+    assert.ok(pkg02SubDirs.some((d) => ['212', '345'].includes(d)), 'package 02 should have vehicle data subdirectories');
+    assert.ok(pkg02Files.some((f) => f.endsWith('.pdf')), 'package 02 should have pdf files');
+
+    assert.ok(pkg03Files.some((f) => f.endsWith('.csv')), 'package 03 should have csv files');
+    assert.ok(pkg03Files.some((f) => f.endsWith('.docx')), 'package 03 should have docx files');
+    assert.ok(pkg03Files.some((f) => f.endsWith('.pdf')), 'package 03 should have pdf files');
+
+    assert.ok(pkg04Files.some((f) => f.endsWith('.pdf')), 'package 04 should have pdf files');
   });

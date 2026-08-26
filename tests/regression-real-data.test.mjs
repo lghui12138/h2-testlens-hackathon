@@ -963,3 +963,35 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
     assert.equal(hpaAmbientResult.schema.conversions.ambient_pressure_kpa.label, 'hPa→kPa');
   });
 
+  // ---------------------------------------------------------------------------
+  // 12. Comprehensive T02 real-data inventory regression
+  // ---------------------------------------------------------------------------
+
+  test('all 198 T02 real files exist across the 4 enterprise packages', async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const allFiles = [];
+    const walk = async (dir) => {
+      const entries = await readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(full);
+        } else {
+          allFiles.push(full);
+        }
+      }
+    };
+    await walk(T02_ROOT);
+    assert.equal(allFiles.length, 198, `expected exactly 198 files in T02, got ${allFiles.length}`);
+    const counts = {};
+    for (const file of allFiles) {
+      const ext = file.split('.').pop()?.toLowerCase() || '';
+      counts[ext] = (counts[ext] || 0) + 1;
+    }
+    assert.equal(counts['csv'] || 0, 171, `expected 171 CSV files, got ${counts['csv'] || 0}`);
+    assert.equal(counts['txt'] || 0, 11, `expected 11 TXT files, got ${counts['txt'] || 0}`);
+    assert.equal(counts['docx'] || 0, 10, `expected 10 DOCX files, got ${counts['docx'] || 0}`);
+    assert.equal(counts['pdf'] || 0, 5, `expected 5 PDF files, got ${counts['pdf'] || 0}`);
+    assert.equal(counts['xlsx'] || 0, 1, `expected 1 XLSX file, got ${counts['xlsx'] || 0}`);
+  });
+

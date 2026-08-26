@@ -310,3 +310,40 @@ test('decodeTextBuffer on valid GB18030 Chinese text preserves characters withou
     assert.equal(result.datasetType, 'vehicle');
     assert.ok(result.dataset.insulation.validCount >= 0);
   });
+
+  // ---------------------------------------------------------------------------
+  // 16. Real-data enterprise boundary tests
+  // ---------------------------------------------------------------------------
+
+  test('real 青川易创 CSV with all-zero boundary values does not crash adapter', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingchuan-stack'));
+    assert.ok(result);
+    assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
+  });
+
+  test('real 氢质氢离 vehicle CSV with max isolation values preserves adapter output', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv'));
+    const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+    const rows = parseCSV(csv);
+    const result = analyzeEnterpriseRows(rows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(result);
+    assert.equal(result.datasetType, 'vehicle');
+    assert.ok(result.dataset.insulation.validCount >= 0);
+  });
+
+  test('real 氢璞创能 TXT with high-precision values preserves exact decimals', { skip: !HAS_T02 }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const buf = await readFile(join(T02_ROOT, '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt'));
+    const decoded = decodeTextBuffer(buf, 'gb18030');
+    assert.equal(decoded.binary, false);
+    const rows = parseCSV(decoded.text);
+    const voltageRow = rows.find((row) => row['电堆电压'] === '0.000000');
+    assert.ok(voltageRow, 'should find zero voltage row');
+    assert.equal(voltageRow['电堆电流'], '2.200000');
+    assert.equal(voltageRow['电堆功率'], '0.000000');
+  });

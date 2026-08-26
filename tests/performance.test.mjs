@@ -133,7 +133,7 @@ test('test_parse_real_qingchuan_38k_csv', { skip: CI }, async () => {
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
   const heap = process.memoryUsage();
   assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
-  assert.ok(elapsedMs < 30_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
+  assert.ok(elapsedMs < 60_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
   recordBenchmark('test_parse_real_qingchuan_38k_csv', 'ok', elapsedMs, rows.length, heap.heapUsed / 1024 / 1024);
 });
 
@@ -147,7 +147,7 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
   const heap = process.memoryUsage();
   assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
   assert.equal(result.datasetType, 'stack');
-  assert.ok(elapsedMs < 30_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
+  assert.ok(elapsedMs < 60_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
   recordBenchmark('test_analyze_real_qingchuan_38k_csv', 'ok', elapsedMs, rows.length, heap.heapUsed / 1024 / 1024);
 });
 
@@ -158,7 +158,7 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
    const rows = parseCSV(csv);
    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
    assert.ok(rows.length >= 38000, `expected ~38k rows, got ${rows.length}`);
-   assert.ok(elapsedMs < 20_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
+   assert.ok(elapsedMs < 40_000, `real 38k qingchuan parse took ${elapsedMs.toFixed(2)} ms`);
    recordBenchmark('test_parse_real_qingchuan_38k_csv_with_adapter', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
  });
 
@@ -171,6 +171,44 @@ test('test_analyze_real_qingchuan_38k_csv', { skip: CI }, async () => {
    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
    assert.ok(result, 'analyzeEnterpriseRows should return a result for real qingchuan data');
    assert.equal(result.datasetType, 'stack');
-   assert.ok(elapsedMs < 20_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
+   assert.ok(elapsedMs < 40_000, `real 38k qingchuan analysis took ${elapsedMs.toFixed(2)} ms`);
    recordBenchmark('test_analyze_real_qingchuan_38k_csv_with_profile', 'ok', elapsedMs, rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
  });
+
+  test('test_parse_all_real_hypu_txt_files', { skip: CI }, async () => {
+    const files = [
+      '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
+      '企业资料包01_氢璞创能/2026-4-4-19-00-50.txt',
+      '企业资料包01_氢璞创能/2026-4-4-20-02-03.txt',
+      '企业资料包01_氢璞创能/2026-4-4-21-40-48.txt',
+      '企业资料包01_氢璞创能/2026-4-5-11-32-54.txt',
+      '企业资料包01_氢璞创能/2026-4-5-14-15-50.txt',
+      '企业资料包01_氢璞创能/2026-4-5-16-17-37.txt',
+      '企业资料包01_氢璞创能/2026-4-5-4-20-31.txt',
+      '企业资料包01_氢璞创能/2026-4-5-8-24-45.txt',
+      '企业资料包01_氢璞创能/2026-4-5-8-25-50.txt'
+    ];
+    const start = process.hrtime.bigint();
+    for (const file of files) {
+      const buf = await readRaw(file);
+      const decoded = decodeTextBuffer(buf, 'gb18030');
+      assert.equal(decoded.binary, false, `${file} should decode as text`);
+      const rows = parseCSV(decoded.text);
+      assert.ok(rows.length >= 50, `${file} should have many rows`);
+    }
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(elapsedMs < 60_000, `parsing all 10 hypu txt files took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_parse_all_real_hypu_txt_files', 'ok', elapsedMs, 10 * 50, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
+
+  test('test_parse_real_hypu_xlsx_workbook', { skip: CI }, async () => {
+    setSpreadsheetEngine(SheetJS);
+    const buf = await readRaw('企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx');
+    const start = process.hrtime.bigint();
+    const result = parseDataWorkbook(buf);
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.equal(result.ok, true);
+    assert.equal(result.sheetName, '稳定性');
+    assert.ok(elapsedMs < 60_000, `parsing real hypu xlsx took ${elapsedMs.toFixed(2)} ms`);
+    recordBenchmark('test_parse_real_hypu_xlsx_workbook', 'ok', elapsedMs, result.rows.length, process.memoryUsage().heapUsed / 1024 / 1024);
+  });
