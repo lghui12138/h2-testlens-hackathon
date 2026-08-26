@@ -8,8 +8,14 @@ import { parseCSV, analyzeRows } from '../src/analyzer.mjs';
 import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
 import { getProfile } from '../src/profiles.mjs';
 import { parseDataWorkbook } from '../src/excel-workflow.mjs';
-import { parseDurabilityDocx } from '../src/docx-workflow.mjs';
+import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
 import { decodeTextBuffer } from '../src/input-safety.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
+const { runInThisContext } = await import('node:vm');
+runInThisContext(mammothSource);
+setDocxEngine(globalThis.mammoth);
 
 test('parseCSV("") returns an empty array without throwing', () => {
   assert.deepEqual(parseCSV(''), []);
