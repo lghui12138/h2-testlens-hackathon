@@ -105,7 +105,7 @@
           <section class="side-card report-card">
             <div class="card-kicker">REPORT PREVIEW <span id="report-status">—</span></div>
             <h2>报告预览</h2>
-            <button id="generate-ai" class="report-button" aria-label="生成报告">生成报告</button>
+            <button id="generate-report" class="report-button" aria-label="生成报告">生成报告</button>
             <div id="report-preview" class="report-preview"></div>
             <div class="button-row"><button id="download-report" class="primary-button">下载 Markdown 报告</button><button id="download-xlsx" class="icon-button" title="下载 Excel 报告" aria-label="下载 Excel 报告">XLSX</button><button id="download-json" class="icon-button" title="下载分析证据 JSON" aria-label="下载分析证据 JSON">JSON</button><button id="download-enhanced" class="quiet-button" aria-label="生成增强报告">生成增强报告</button><button id="download-compliance-report" class="quiet-button" title="导出标准符合性报告" aria-label="导出标准符合性报告">导出符合性报告</button></div>
             <small id="enhanced-report-note" class="enhanced-report-note muted">完整 Python/Excel 报告引擎已开源，见 t02-equipment-test-report-assistant 仓库。</small>
@@ -184,7 +184,7 @@
             <div class="card-kicker">T02 SOURCE COVERAGE <span id="coverage-audit-version">v3.5.72</span></div>
             <h2>T02 资料接入范围</h2>
             <p class="side-intro">版本化审计把下载目录逐文件分类；“已处理”表示进入对应解析器，不等于已满足标准。</p>
-            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span></div>
+            <div class="coverage-grid"><span><b id="coverage-total-files">198</b>文件总数</span><span><b id="coverage-processed">190</b>进入处理</span><span><b id="coverage-reference">6</b>参考边界</span><span><b id="coverage-blocked">1</b>阻断二进制</span><span><b id="coverage-unuploaded">1</b>声明未上传</span><span><b id="coverage-tests">504</b>/<b id="coverage-tests-total">504</b> 测试通过</span></div>
             <div class="coverage-meter" aria-label="190 个文件进入处理，共 198 个文件"><span id="coverage-meter-fill"></span></div>
             <small id="coverage-note" class="coverage-note">处理数据进入适配器：2,262,283 行/功率点 · 正式符合性声明：0<br>阻断二进制：保留哈希，不生成测试结论；声明未上传：没有原始数据，不进入解析器。</small>
             <small id="coverage-risk-fields" class="coverage-note">高风险字段复核明细读取中…</small>

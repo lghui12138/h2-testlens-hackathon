@@ -158,7 +158,7 @@ export function analyzeSetpointEvents(inputRows, options = {}) {
   for (const group of groupBySession(rows, sessionField)) {
     const points = group.items;
     const gaps = gapSummary(points, maxGapS);
-    maximumIntervalS = maximumIntervalS === null ? gaps.maximumIntervalS : Math.max(maximumIntervalS, gaps.maximumIntervalS ?? 0);
+    if (gaps.maximumIntervalS !== null) maximumIntervalS = maximumIntervalS === null ? gaps.maximumIntervalS : Math.max(maximumIntervalS, gaps.maximumIntervalS);
     dataGapCount += gaps.gapCount;
     for (let index = 1; index < points.length; index += 1) {
       const previous = finite(points[index - 1].row[commandField]);
