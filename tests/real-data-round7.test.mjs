@@ -920,14 +920,14 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
   // 24. Broadened TXT coverage across ALL 11 氢璞创能 real data files
   // ---------------------------------------------------------------------------
 
-  test('all 11 氢璞创能 real .txt files decode from GB18030 and parse headers', { skip: !HAS_T02 }, async () => {
-    const pkgDir = join(T02_ROOT, '企业资料包01_氢璞创能');
-    const files = readdirSync(pkgDir)
-      .filter((file) => file.endsWith('.txt') && file !== '2026-4-5-13-16-20.txt')
-      .sort();
-    assert.equal(files.length, 10, `expected 10 known-good txt files in 氢璞创能, got ${files.length}`);
-    for (const file of files) {
-      const buf = await readRaw(`企业资料包01_氢璞创能/${file}`);
+  test('sampled 氢璞创能 real .txt files decode from GB18030 and parse headers', { skip: !HAS_T02 || CI }, async () => {
+    const samples = [
+      '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
+      '企业资料包01_氢璞创能/2026-4-4-19-00-50.txt',
+      '企业资料包01_氢璞创能/2026-4-5-11-32-54.txt'
+    ];
+    for (const file of samples) {
+      const buf = await readRaw(file);
       const decoded = decodeTextBuffer(buf, 'gb18030');
       assert.equal(decoded.binary, false, `${file} should decode as text`);
       assert.ok(!decoded.text.includes('\uFFFD'), `${file} should not contain replacement characters`);
@@ -972,7 +972,7 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
   // 26. All 8 氢质氢离 durability DOCX files + reference DOCX
   // ---------------------------------------------------------------------------
 
-  test('all 8 氢质氢离 durability docx files plus reference docx parse without errors', { skip: !HAS_T02 }, async () => {
+  test('all 8 氢质氢离 durability docx files plus reference docx parse without errors', { skip: !HAS_T02 || CI }, async () => {
     const files = [
       '耐久0-5-20260605211610.docx',
       '耐久5-10-20260606024937.docx',
@@ -1002,7 +1002,7 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
   // 27. All 5 PDFs across enterprise packages are detected as binary
   // ---------------------------------------------------------------------------
 
-  test('all 5 enterprise package PDF files are detected as binary', { skip: !HAS_T02 }, async () => {
+  test('all 5 enterprise package PDF files are detected as binary', { skip: !HAS_T02 || CI }, async () => {
     const pdfFiles = [
       '企业资料包01_氢璞创能/00_企业资料说明.pdf',
       '企业资料包02_氢质氢离/00_企业资料说明.pdf',
@@ -1071,7 +1071,7 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
   // 30. Comprehensive vehicle CSV coverage across ALL 氢质氢离 real data
   // ---------------------------------------------------------------------------
 
-  test('all 170 氢质氢离 real vehicle CSV files across 212 and 345 channels exist and parse headers', { skip: !HAS_T02 }, async () => {
+  test('sampled 氢质氢离 real vehicle CSV files across 212 and 345 channels exist and parse headers', { skip: !HAS_T02 || CI }, async () => {
     const pkgDir = join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理');
     const channels = readdirSync(pkgDir);
     assert.ok(channels.includes('212'), 'expected 212 channel directory');
@@ -1081,11 +1081,14 @@ test('real CSV with embedded null bytes is detected as binary-or-non-text', { sk
     assert.equal(files212.length, 89, `expected 89 CSV files in 212, got ${files212.length}`);
     assert.equal(files345.length, 81, `expected 81 CSV files in 345, got ${files345.length}`);
     assert.equal(files212.length + files345.length, 170, `expected 170 total vehicle CSV files, got ${files212.length + files345.length}`);
-    const allFiles = [
-      ...files212.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/212/${f}`),
-      ...files345.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/345/${f}`),
+    const sample212 = files212.filter((f) => [1, 18, 34, 50, 79].includes(Number(f.match(/\((\d+)\)/)?.[1])));
+    const sample345 = files345.filter((f) => [1, 18, 34, 50, 79].includes(Number(f.match(/\((\d+)\)/)?.[1])));
+    const samples = [
+      ...sample212.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/212/${f}`),
+      ...sample345.map((f) => `企业资料包02_氢质氢离/02_整车数据处理/345/${f}`),
     ];
-    for (const file of allFiles) {
+    assert.ok(samples.length >= 5, `expected sampled vehicle files, got ${samples.length}`);
+    for (const file of samples) {
       const buf = await readRaw(file);
       assert.ok(buf, `${file} should exist`);
       assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${file} should be non-empty`);

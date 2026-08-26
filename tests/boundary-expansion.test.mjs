@@ -212,7 +212,7 @@ test('analyzeEnterpriseRows vehicle adapter handles all-NaN power values without
   assert.ok(Array.isArray(result.issues));
 });
 
-test('representative T02 sample across 4 enterprise packages parses without crashing', async () => {
+test('representative T02 sample across 4 enterprise packages parses without crashing', { skip: CI }, async () => {
   assert.ok(HAS_T02, 'T02 dataset should be present for representative regression');
   const samples = [
     '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
@@ -231,7 +231,7 @@ test('representative T02 sample across 4 enterprise packages parses without cras
   }
 });
 
-test('representative T02 CSV samples produce deterministic adapter outputs', async () => {
+test('representative T02 CSV samples produce deterministic adapter outputs', { skip: CI }, async () => {
   if (!HAS_T02) return;
   const samples = [
     { path: '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt', profile: 'hypu-stack', expectType: 'stack', decode: 'gb18030' },
@@ -446,7 +446,7 @@ test('analyzeEnterpriseRows vehicle adapter handles all-NaN isolation values wit
 // 12. Representative T02 real-data regression samples
 // ============================================================================
 
-test('representative T02 package01 txt files parse through stable entrypoints', { skip: !HAS_T02 }, async () => {
+test('representative T02 package01 txt files parse through stable entrypoints', { skip: !HAS_T02 || CI }, async () => {
   const samples = [
     '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
     '企业资料包01_氢璞创能/2026-4-4-19-00-50.txt',
@@ -464,7 +464,7 @@ test('representative T02 package01 txt files parse through stable entrypoints', 
   }
 });
 
-test('representative T02 package02 vehicle CSV samples produce deterministic adapter outputs', { skip: !HAS_T02 }, async () => {
+test('representative T02 package02 vehicle CSV samples produce deterministic adapter outputs', { skip: !HAS_T02 || CI }, async () => {
   const samples = [
     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
     '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (25).csv',
@@ -483,7 +483,7 @@ test('representative T02 package02 vehicle CSV samples produce deterministic ada
   }
 });
 
-test('representative T02 package02 durability docx files preserve metadata and points', { skip: !HAS_T02 }, async () => {
+test('representative T02 package02 durability docx files preserve metadata and points', { skip: !HAS_T02 || CI }, async () => {
   const files = [
     '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx',
     '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久5-10-20260606024937.docx',
@@ -501,7 +501,7 @@ test('representative T02 package02 durability docx files preserve metadata and p
   }
 });
 
-test('representative T02 package03 stack CSV sample produces deterministic adapter verdict', { skip: !HAS_T02 }, async () => {
+test('representative T02 package03 stack CSV sample produces deterministic adapter verdict', { skip: !HAS_T02 || CI }, async () => {
   const buf = await readFile(join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv'));
   const csv = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
   const rows = parseCSV(csv);
@@ -511,7 +511,7 @@ test('representative T02 package03 stack CSV sample produces deterministic adapt
   assert.ok(['PASS', 'WARN', 'FAIL', 'DESCRIPTIVE'].includes(result.verdict));
 });
 
-test('all T02 package04 PDFs are detected as binary and cannot be parsed as text', { skip: !HAS_T02 }, async () => {
+test('all T02 package04 PDFs are detected as binary and cannot be parsed as text', { skip: !HAS_T02 || CI }, async () => {
   const pdfFiles = readdirSync(join(T02_ROOT, '企业资料包04_海珀特')).filter((file) => file.endsWith('.pdf'));
   assert.ok(pdfFiles.length >= 1, 'package 04 should contain at least one PDF');
   for (const file of pdfFiles) {

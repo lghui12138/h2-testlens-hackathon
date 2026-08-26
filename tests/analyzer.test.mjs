@@ -460,6 +460,61 @@ test('maps gas and environmental measurements with common engineering units', ()
   assert.ok(result.schema.conversions.flow_slpm.label.includes('Nm³/h'));
 });
 
+test('converts mL/min to SLPM with the correct 0.001 factor', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,流量(mL/min),leak_ppm',
+    '0,10,2,30,10,1000,1',
+    '60,10,2,30,10,1000,1'
+  ].join('\n')));
+  assert.equal(result.rows[0].flow_slpm, 1);
+  assert.equal(result.schema.conversions.flow_slpm.mode, 'scale');
+  assert.equal(result.schema.conversions.flow_slpm.factor, 0.001);
+});
+
+test('converts L/s to SLPM with the correct 60 factor', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,流量(L/s),leak_ppm',
+    '0,10,2,30,10,1,1',
+    '60,10,2,30,10,1,1'
+  ].join('\n')));
+  assert.equal(result.rows[0].flow_slpm, 60);
+  assert.equal(result.schema.conversions.flow_slpm.mode, 'scale');
+  assert.equal(result.schema.conversions.flow_slpm.factor, 60);
+});
+
+test('converts NLPM to SLPM as a 1:1 standard-volume alias', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,流量(NLPM),leak_ppm',
+    '0,10,2,30,10,3,1',
+    '60,10,2,30,10,3,1'
+  ].join('\n')));
+  assert.equal(result.rows[0].flow_slpm, 3);
+  assert.equal(result.schema.conversions.flow_slpm.mode, 'scale');
+  assert.equal(result.schema.conversions.flow_slpm.factor, 1);
+});
+
+test('converts Unicode Fahrenheit sign ℉ to Celsius', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,温度(℉),pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,86,10,6,1',
+    '60,10,2,86,10,6,1'
+  ].join('\n')));
+  assert.ok(Math.abs(result.rows[0].temperature_c - 30) < 1e-9);
+  assert.equal(result.schema.conversions.temperature_c.mode, 'fahrenheit_to_c');
+});
+
+test('power cross-check treats missing power_w as missing instead of raw', () => {
+  const result = analyzeRows(parseCSV([
+    'timestamp_s,current_a,voltage_v,temperature_c,pressure_bar,flow_slpm,leak_ppm',
+    '0,10,2,30,10,6,1',
+    '60,10,2,30,10,6,1'
+  ].join('\n')));
+  assert.equal(result.metrics.powerCrossCheck.rawPowerCount, 0);
+  assert.equal(result.metrics.powerCrossCheck.missingPowerCount, 2);
+  assert.equal(result.metrics.powerCrossCheck.derivedPowerCount, 2);
+  assert.equal(result.metrics.powerSource, 'derived_only');
+});
+
 test('blocks actual volumetric flow units instead of treating them as standard flow', () => {
   const result = analyzeRows(parseCSV([
     'timestamp_s,phase,current_a,voltage_v,temperature_c,pressure_bar,流量(L/min),leak_ppm',

@@ -286,11 +286,14 @@ function unitTransform(field, header) {
   }
   if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && ['flow', 'flowrate', '流量'].includes(normalized)) return { mode: 'unsupported', factor: null, label: '流量单位未声明，不能默认按 SLPM' };
   if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nlmin')) return { mode: 'scale', factor: 1, label: 'NL/min→SLPM' };
-  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && !normalized.includes('slpm') && !normalized.includes('nlpm') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nlpm')) return { mode: 'scale', factor: 1, label: 'NLPM→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('mlmin')) return { mode: 'scale', factor: 0.001, label: 'mL/min→SLPM' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && !normalized.includes('slpm') && !normalized.includes('nlpm') && !normalized.includes('mlmin') && (normalized.includes('lmin') || normalized.includes('lpm') || normalized.includes('litermin'))) return { mode: 'unsupported', factor: null, label: 'L/min→SLPM 需要温度/压力基准' };
+  if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('ls')) return { mode: 'scale', factor: 60, label: 'L/s→SLPM' };
   if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && normalized.includes('nm3h')) return { mode: 'scale', factor: 1000 / 60, label: 'Nm³/h→SLPM' };
   if (['flow_slpm', 'anode_flow_slpm', 'cathode_flow_slpm'].includes(field) && (normalized.includes('m3h') || normalized.includes('立方米每小时'))) return { mode: 'unsupported', factor: null, label: 'm³/h→SLPM 需要标准状态声明' };
   if (field === 'leak_ppm' && (normalized.includes('ppb') || normalized.includes('十亿'))) return { mode: 'scale', factor: 0.001, label: 'ppb→ppm' };
-  if (['temperature_c', 'gas_temperature_c', 'ambient_temperature_c'].includes(field) && (normalized.includes('fahrenheit') || normalized.includes('华氏') || normalized.endsWith('f'))) return { mode: 'fahrenheit_to_c', factor: 1, label: '°F→°C' };
+  if (['temperature_c', 'gas_temperature_c', 'ambient_temperature_c'].includes(field) && (normalized.includes('fahrenheit') || normalized.includes('华氏') || normalized.endsWith('f') || normalized.includes('℉'))) return { mode: 'fahrenheit_to_c', factor: 1, label: '°F→°C' };
   return { mode: 'identity', factor: 1, label: '原单位' };
 }
 
@@ -504,15 +507,15 @@ function electricalPower(row) {
 }
 
 function powerCrossCheck(rows) {
-  const rawRows = rows.filter((row) => row.power_w !== null);
-  const comparable = rawRows.filter((row) => row.current_a !== null && row.voltage_v !== null);
+  const rawRows = rows.filter((row) => Number.isFinite(row.power_w));
+  const comparable = rawRows.filter((row) => Number.isFinite(row.current_a) && Number.isFinite(row.voltage_v));
   const missingPowerCount = rows.length - rawRows.length;
   const differences = comparable.map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v));
   const relativeDifferences = comparable
     .map((row) => Math.abs(row.power_w - row.current_a * row.voltage_v) / Math.max(Math.abs(row.power_w), Math.abs(row.current_a * row.voltage_v), 1e-12) * 100);
   return {
     rawPowerCount: rawRows.length,
-    derivedPowerCount: rows.filter((row) => row.power_w === null && row.current_a !== null && row.voltage_v !== null).length,
+    derivedPowerCount: rows.filter((row) => !Number.isFinite(row.power_w) && Number.isFinite(row.current_a) && Number.isFinite(row.voltage_v)).length,
     missingPowerCount,
     powerCoveragePct: rows.length ? (rawRows.length / rows.length) * 100 : null,
     comparableCount: comparable.length,
@@ -1035,10 +1038,10 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
   };
   const powerU = (row) => {
     const directPowerU = u('power_w');
-    if (row.power_w !== null) return directPowerU;
+    if (Number.isFinite(row.power_w)) return directPowerU;
     const currentU = u('current_a');
     const voltageU = u('voltage_v');
-    return row.current_a !== null && row.voltage_v !== null && currentU !== null && voltageU !== null
+    return Number.isFinite(row.current_a) && Number.isFinite(row.voltage_v) && currentU !== null && voltageU !== null
       ? rss([row.voltage_v * currentU, row.current_a * voltageU])
       : null;
   };
@@ -1087,7 +1090,7 @@ function calculateUncertainty(rows, metrics, model, maxIntervalS = null) {
   addMissing(metrics.peakLeakPpm !== null && u('leak_ppm') === null, ['leak_ppm']);
   addMissing(metrics.minimumHydrogenPurityPct !== null && u('hydrogen_purity_pct') === null, ['hydrogen_purity_pct']);
   addMissing(metrics.hydrogenVolumeNl !== null && volumeU === null, ['flow_slpm']);
-  const hasDirectPower = rows.some((row) => row.power_w !== null);
+  const hasDirectPower = rows.some((row) => Number.isFinite(row.power_w));
   const powerFields = hasDirectPower ? ['power_w'] : ['current_a', 'voltage_v'];
   addMissing(metrics.energyConsumedWh !== null && energyU === null, powerFields);
   addMissing(metrics.specificEnergyKWhPerNm3 !== null && specificEnergyU === null, [...new Set([...powerFields, 'flow_slpm'])]);
@@ -1336,7 +1339,7 @@ export function analyzeRows(inputRows, suppliedConfig = {}) {
   const dynamicPowerConfig = config.dynamicPowerAnalysis && typeof config.dynamicPowerAnalysis === 'object'
     ? config.dynamicPowerAnalysis
     : {};
-  const dynamicRows = rows.map((row) => row.power_w === null && electricalPower(row) !== null
+  const dynamicRows = rows.map((row) => !Number.isFinite(row.power_w) && electricalPower(row) !== null
     ? { ...row, power_w: electricalPower(row) }
     : row);
   const dynamicPower = analyzeSetpointEvents(dynamicRows, {

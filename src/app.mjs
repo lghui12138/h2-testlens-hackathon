@@ -2387,7 +2387,7 @@ function updateBatchQueueItem(entries, index, updates) {
   if (!entry) return;
   Object.assign(entry, updates);
   const statusClass = entry.status === 'processed' ? 'status-done' : entry.status === 'parser_error' ? 'status-error' : entry.status === 'blocked_binary' ? 'status-error' : entry.status === 'reference_only' ? 'status-pending' : 'status-processing';
-  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '运算中';
+  const statusLabel = entry.status === 'processed' ? '已处理' : entry.status === 'parser_error' ? '解析失败' : entry.status === 'blocked_binary' ? '已阻断' : entry.status === 'reference_only' ? '参考资料' : '计算中';
   const chip = item.querySelector('.status-chip');
   if (chip) { chip.className = `status-chip ${statusClass}`; chip.textContent = statusLabel; }
 }

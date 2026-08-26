@@ -43,7 +43,7 @@ export function compareResults(baseline, current, names = {}) {
       : newIssues.length
         ? '当前批次新增需要关注的趋势或数据质量问题。'
         : resolvedIssues.length
-          ? '当前批次已消除基线中的部分风险，建议继续观察后续批次。'
+          ? '当前批次已消除基线中的部分风险，继续观察后续批次。'
           : '当前批次与基线的风险集合没有变化，需结合 KPI 差值判断趋势。';
   return {
     baseline: { name: baselineName, verdict: baseline.verdict, status: statusLabel(baseline.verdict), source: baseline.source, profileName: baseline.config.profileName ?? '未指定' },
