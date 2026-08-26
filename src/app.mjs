@@ -624,7 +624,7 @@ function renderMetrics(result) {
     const low350 = dataset.insulation.points.filter((point) => point.minimumKohm < 350).length;
     const low250 = dataset.insulation.points.filter((point) => point.minimumKohm < 250).length;
     const cards = [
-      ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '企业规则待签核'],
+      ['判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '企业规则待签核'],
       ['数据完整率', `${fmt(metrics.completenessPct)}%`, metrics.completenessPct >= 98 ? 'good' : 'warn', `${metrics.sampleCount} 条车辆记录`],
       ['运行时长', `${fmt(metrics.durationS / 3600, 1)} h`, 'neutral', 'Timestamp 相对首条记录'],
       ['峰值净功率', `${fmt(metrics.peakPowerW / 1000, 1)} kW`, 'neutral', 'FC_NetPwrOut'],
@@ -639,7 +639,7 @@ function renderMetrics(result) {
   if (result.datasetType === 'stack') {
     const dataset = result.dataset;
     const cards = [
-      ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '企业规则待签核'],
+      ['判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '企业规则待签核'],
       ['数据完整率', `${fmt(metrics.completenessPct)}%`, metrics.completenessPct >= 98 ? 'good' : 'warn', `${metrics.sampleCount} 条时序记录`],
       ['时间跨度', `${fmt(metrics.durationS / 3600, 1)} h`, 'neutral', '测试时间相对首条记录'],
       ['峰值功率', `${fmt(dataset.metrics.peakPowerKw, 2)} kW`, 'neutral', '功率列'],
@@ -660,7 +660,7 @@ function renderMetrics(result) {
     const lowVoltage = dataset.points.filter((point) => point.averageCellVoltageMv !== null && dataset.rules.minAverageCellVoltageMv !== null && point.averageCellVoltageMv < dataset.rules.minAverageCellVoltageMv).length;
     const highDeviation = dataset.points.filter((point) => point.averageDeviationMv !== null && dataset.rules.maxDeviationMv !== null && point.averageDeviationMv > dataset.rules.maxDeviationMv).length;
     const cards = [
-      ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '原始耐久结果 + 当前规则'],
+      ['判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '原始耐久结果 + 当前规则'],
       ['功率点记录', `${dataset.points.length}`, 'neutral', `${dataset.targetPowers.length} 个目标功率`],
       ['峰值净功率', `${fmt(metrics.peakPowerW / 1000, 1)} kW`, 'neutral', '净输出功率'],
       ['最低平均单体', `${fmt(Math.min(...dataset.points.map((point) => point.averageCellVoltageMv).filter((value) => value !== null), 0), 0)} mV`, lowVoltage ? 'warn' : 'good', dataset.rules.minAverageCellVoltageMv === null ? '阈值未配置' : `阈值 ${dataset.rules.minAverageCellVoltageMv} mV`],
@@ -671,7 +671,7 @@ function renderMetrics(result) {
     return;
   }
   const cards = [
-    ['自动判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '当前规则下的首轮分流'],
+    ['判定', verdictLabel(result.verdict), result.verdict.toLowerCase(), '当前规则下的首轮分流'],
     ['数据完整率', `${fmt(metrics.completenessPct)}%`, metrics.completenessPct >= 98 ? 'good' : 'warn', `${metrics.sampleCount} 条记录`],
     ['峰值功率', `${fmt(metrics.peakPowerW)} W`, 'neutral', '电流 × 电压'],
     ['产氢量', `${fmt(metrics.hydrogenVolumeNl, 3)} NL`, 'neutral', '流量梯形积分'],
@@ -742,11 +742,11 @@ function qualityBadge(completenessPct) {
   return `<span class="quality-badge ${tone}" aria-label="数据完整率 ${pct}%">${label} ${pct}%</span>`;
 }
 function renderIssues(result) {
-  const severityLabel = { critical: '高优先级', warn: '建议复核', info: '信息' };
+  const severityLabel = { critical: '高优先级', warn: '待复核', info: '信息' };
   const list = $('#issue-list');
   if (!list) return;
   if (!result.issues.length) {
-    list.innerHTML = `<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或建议复核项；正式结论仍需工程师签核。</p><small>建议：继续执行企业复核流程，或调整阈值后重新分析。</small>${qualityBadge(result.quality?.completenessPct)}</div></div>`;
+    list.innerHTML = `<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或待复核项；正式结论仍需工程师签核。</p><small>后续动作：继续执行企业复核流程，或调整阈值后重新分析。</small>${qualityBadge(result.quality?.completenessPct)}</div></div>`;
     $('#issue-count').textContent = '0 项需要关注';
     return;
   }
