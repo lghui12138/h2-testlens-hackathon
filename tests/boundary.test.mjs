@@ -9,7 +9,7 @@ import { analyzeEnterpriseRows } from '../src/enterprise-adapters.mjs';
 import { getProfile } from '../src/profiles.mjs';
 import { parseDataWorkbook } from '../src/excel-workflow.mjs';
 import { parseDurabilityDocx, setDocxEngine } from '../src/docx-workflow.mjs';
-import { decodeTextBuffer } from '../src/input-safety.mjs';
+import { decodeTextBuffer, isLikelyBinary } from '../src/input-safety.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const mammothSource = await readFile(join(here, '../src/vendor/mammoth.browser.min.js'), 'utf8');
