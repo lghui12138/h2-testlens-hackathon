@@ -1572,7 +1572,7 @@ async function loadSampleSafely() {
   try {
     await loadSample();
   } catch (error) {
-    setAnalysisStatus(`演示样本加载失败：${error.message}`, 'error');
+    setAnalysisStatus(`演示样本读取失败：${error.message}`, 'error');
     $('#schema-notice').textContent = '刷新页面、检查 Pages 资源，或改为手动导入文件。';
   }
 }
@@ -1863,7 +1863,7 @@ async function loadLegacySample() {
   try {
     await loadCsv(assetUrl('sample-data/test_run_legacy_cn.csv'), '中文单位样本 · legacy_run_cn.csv');
   } catch (error) {
-    setAnalysisStatus(`中文/单位样本加载失败：${error.message}`, 'error');
+    setAnalysisStatus(`中文/单位样本读取失败：${error.message}`, 'error');
     const notice = $('#schema-notice');
     if (notice) notice.textContent = '刷新页面、检查 Pages 资源，或改为手动导入 CSV/TXT。';
   }
@@ -2013,7 +2013,7 @@ $('#save-history').addEventListener('click', () => {
 });
 $('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
-  if (!state.result) { $('#compare-status').textContent = '先载入数据并完成分析'; return; }
+  if (!state.result) { $('#compare-status').textContent = '先载入并分析数据'; return; }
   const button = $('#compare-demo');
   button.disabled = true;
   button.textContent = '对比中';
@@ -2032,7 +2032,7 @@ $('#compare-demo').addEventListener('click', async () => {
   }
 });
 $('#generate-ai').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
   button.textContent = '处理中';
@@ -2051,13 +2051,13 @@ $('#generate-ai').addEventListener('click', async () => {
   }
 });
 $('#copy-report').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
   try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制。'; }
 });
 $('#print-report').addEventListener('click', () => {
   const preview = $('#report-preview');
-  if (!preview || !state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
+  if (!preview || !state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   const win = window.open('', '_blank');
   if (!win) { $('#report-status').textContent = '打印窗口被拦截。请允许弹出窗口后重试。'; return; }
   win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
@@ -2065,9 +2065,9 @@ $('#print-report').addEventListener('click', () => {
   win.focus();
   win.print();
 });
-$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析报告.md`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-xlsx').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
   try {
     await ensureBrowserEngines({ spreadsheet: true });
     setSpreadsheetEngine(globalThis.XLSX);
@@ -2080,9 +2080,9 @@ $('#download-xlsx').addEventListener('click', async () => {
     $('#report-status').textContent = `Excel 导出失败：${error.message}`;
   }
 });
-$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } void exportEnhancedReport(state.result, state.fileName); });
-$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } void downloadComplianceReport(state.result, state.fileName); });
+$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
+$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 
