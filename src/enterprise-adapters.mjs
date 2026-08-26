@@ -1042,7 +1042,7 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
     return `${id} ${clauseRefs.join('、')}`;
   }).filter(Boolean);
   const baseBoundary = config.approvalStatus !== 'approved'
-    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '企业未审批演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非企业批准路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得用于标准符合性声明。`
+    ? `当前 profile 审批状态为 ${config.approvalStatus || '未指定'}（方法执行状态：${methodExecutionStatus || '未声明'}）；当前为 ${config.approvalStatus === 'example_unapproved' ? '未经企业审批的演示 profile，仅作测试数据分析和流程演示，不构成标准符合性判定或放行依据' : '非企业批准路径'}；在完成企业审批、修订控制、方法实施证据和全项结构化证据前，不得作为标准符合性声明的依据。`
     : formalBlockers
       ? `已使用 approved profile，但仍有 ${missingSummary.length} 项标准化资料未完成（${missingSummary.slice(0, 6).join('、')}${missingSummary.length > 6 ? ' 等' : ''}）；当前仅作人工复核前处理，不自动声明符合性。`
       : '已使用企业 approved profile，标准化资料已齐备；仍需工程师人工复核与签核后方可进入正式放行。';
@@ -1065,7 +1065,7 @@ function compliance(config, datasetLabel, metrics, quality, rows = [], schema = 
         ? (evidenceReady ? '标准引用与方法实施证据已形成' : '标准引用或绑定证据缺失')
         : '当前 profile 未批准，不进入标准符合性判定',
       boundary: clauseRefs.length
-        ? `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款（${clauseRefs.join('、')}）需企业批准的 profile 与完整方法实施证据支撑。`
+        ? `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；所列条款（${clauseRefs.join('、')}）需企业批准的 profile 与完整方法实施证据支撑。`
         : `该标准引用当前仅映射公开范围与公开流程，不作完整符合性判定；具体条款需企业批准的 profile 与完整方法实施证据支撑。`
     };
   });

@@ -88,7 +88,7 @@ export const DEVICE_PROFILES = Object.freeze([
     id: 'electrolyzer-power-fluctuation-demo',
     name: '电解水制氢系统 · 功率波动流程模板',
     source: '官方公开技术内容映射（非企业审批）',
-    description: '将 GB/T 46104-2025 公开技术内容映射为测试流程覆盖清单；不含企业限值，不作符合性判定。',
+    description: '将 GB/T 46104-2025 与 GB/T 45541-2025 公开技术内容映射为测试流程覆盖清单；不含企业限值，不作符合性判定。',
     approvalStatus: 'example_unapproved',
     applicationScope: '碱性或 PEM 电解水制氢系统功率波动适应性评价与测试',
     intendedUse: '演示测试计划、数据采集、试验前检查、仪器证据、工况覆盖和报告字段门控',
@@ -96,6 +96,7 @@ export const DEVICE_PROFILES = Object.freeze([
     revision: '2025',
     standardRefs: [
       { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
+      { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] },
       { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
@@ -105,7 +106,7 @@ export const DEVICE_PROFILES = Object.freeze([
     publicationDate: '2025-08-29',
     effectiveDate: '2025-12-01',
     scopeEvidence: '官方国家标准项目页面公开范围与主要技术内容；不是标准全文。',
-    workflowEvidence: '公开项目技术内容列出测试计划、采集计划、前检查、仪器/测量、冷/热启动、稳态、动态、停机和报告字段。',
+    workflowEvidence: '公开项目技术内容列出测试计划、采集计划、前检查、仪器/测量、冷/热启动、稳态、动态、停机和报告字段；GB/T 45541-2025 公开描述基本检查、基础测试、性能测试和测试报告四类流程。',
     methodSource: { sourceId: 'gbt_46104_scope_project', locator: '范围和主要技术内容', evidenceType: 'official_project_scope', evidenceIds: ['ev_gbt46104_scope'] },
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: [
@@ -246,7 +247,8 @@ export const DEVICE_PROFILES = Object.freeze([
     uncertaintyModel: null,
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
     standardClauseRefs: {
-      'GB/T 46104-2025': ['范围', '规范性引用文件', '术语和定义', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
+      'GB/T 46104-2025': ['范围', '规范性引用文件', '术语和定义', '要求', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
+      'GB/T 45541-2025': ['范围', '规范性引用文件', '术语和定义', '安全要求', '试验条件', '仪器设备', '基本检查', '基础测试', '性能测试', '测试报告'],
       'GB/T 29729-2022': ['范围', '规范性引用文件', '术语和定义', '氢系统安全基本要求', '风险评价', '安全装置', '操作与维护'],
       'ISO 22734-1:2025': ['范围', '规范性引用文件', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应', '标记和标签', '文件要求'],
       'ISO/IEC 17025:2017': ['范围', '规范性引用文件', '术语和定义', '组织要求', '管理体系要求', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性']
@@ -256,7 +258,7 @@ export const DEVICE_PROFILES = Object.freeze([
     id: 'electrolyzer-pem-performance-demo',
     name: 'PEM 电解槽 · GB/T 45541-2025 性能测试模板',
     source: '官方公开解读映射（非企业审批）',
-    description: '将 GB/T 45541-2025 公开解读中的基本检查、基础测试、性能测试和测试报告四段流程映射为证据清单；不含标准全文限值。',
+    description: '将 GB/T 45541-2025 公开解读中的基本检查、基础测试、性能测试和测试报告四段流程，以及 GB/T 46104-2025 公开技术内容映射为证据清单；不含标准全文限值。',
     approvalStatus: 'example_unapproved',
     applicationScope: 'PEM 电解槽性能测试；公开范围外设备需参照适用方法',
     intendedUse: '演示 PEM 性能测试流程证据和报告字段门控，不作符合性判定',
@@ -264,6 +266,7 @@ export const DEVICE_PROFILES = Object.freeze([
     revision: '2025',
     standardRefs: [
       { id: 'GB/T 45541-2025', title: 'PEM电解槽性能测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=31DA5F377BB68F08E06397BE0A0A4CFB', status: 'current', evidenceSourceId: 'gbt_45541_2025', evidenceIds: ['ev_gbt45541_test_method'] },
+      { id: 'GB/T 46104-2025', title: '电解水制氢系统功率波动适应性测试方法', uri: 'https://std.samr.gov.cn/gb/search/gbDetailed?id=3DBA213287120D16E06397BE0A0A8119', status: 'current', evidenceSourceId: 'gbt_46104_2025', evidenceIds: ['ev_gbt46104_report'] },
       { id: 'GB/T 29729-2022', title: '氢系统安全的基本要求', uri: 'https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=CD2CACD6BCF1403D48EF0508798A01A9', status: 'current', evidenceSourceId: 'gbt_29729_2022', evidenceIds: ['ev_gbt29729_current'] },
       { id: 'ISO 22734-1:2025', title: 'Hydrogen generators using water electrolysis — Part 1: Safety', uri: 'https://www.iso.org/standard/82766.html?browse=ics', status: 'published', evidenceSourceId: 'iso_22734_1_2025', evidenceIds: ['ev_iso22734_1_scope'] },
       { id: 'ISO/IEC 17025:2017', title: 'Testing and calibration laboratories', uri: 'https://www.iso.org/standard/66912.html', status: 'published', evidenceSourceId: 'iso_17025_2017', evidenceIds: ['ev_iso17025_scope'] }
@@ -273,7 +276,7 @@ export const DEVICE_PROFILES = Object.freeze([
     publicationDate: '2025-03-28',
     effectiveDate: '2025-07-01',
     scopeEvidence: '官方标准页面与官方解读公开适用范围；具体标准条文、仪器精度和验收计算仍需企业批准资料。',
-    workflowEvidence: '官方解读公开描述基本检查、基础测试、性能测试和测试报告四类流程。',
+    workflowEvidence: '官方解读公开描述基本检查、基础测试、性能测试和测试报告四类流程；GB/T 46104-2025 公开项目技术内容列出测试计划、采集计划、前检查、冷/热启动、稳态、动态、停机和报告字段。',
     methodSource: { sourceId: 'gbt_45541_interpretation_2025', locator: '课程简介', evidenceType: 'official_interpretation_paraphrase', evidenceIds: ['ev_gbt45541_interpretation'] },
     requiredMetadata: ['testPurpose', 'testPlanRef', 'acquisitionPlan', 'preCheckRecord', 'instrumentIds', 'instrumentAccuracy', 'calibrationRefs', 'environment', 'operator', 'operatorQualification', 'formulaRefs', 'uncertaintyPolicy', 'rawDataRef', 'signoff'],
     requiredMeasurements: ['flow_slpm', 'hydrogen_purity_pct'],
@@ -334,6 +337,7 @@ export const DEVICE_PROFILES = Object.freeze([
     thresholds: { maxTemperatureC: 80, maxPressureBar: 30, maxLeakPpm: 10, maxVoltageStdV: 0.12, maxPressureDriftBarPerMin: 1.2 },
     standardClauseRefs: {
       'GB/T 45541-2025': ['范围', '规范性引用文件', '术语和定义', '安全要求', '试验条件', '仪器设备', '基本检查', '基础测试', '性能测试', '测试报告'],
+      'GB/T 46104-2025': ['范围', '规范性引用文件', '术语和定义', '要求', '安全要求', '仪器设备', '环境条件', '测试计划', '数据采集计划', '试验前检查', '冷启动', '热启动', '稳态', '变功率动态', '停机', '测试报告'],
       'GB/T 29729-2022': ['范围', '规范性引用文件', '术语和定义', '氢系统安全基本要求', '风险评价', '安全装置', '操作与维护'],
       'ISO 22734-1:2025': ['范围', '规范性引用文件', '术语和定义', '危险识别', '防护措施', '安全装置', '操作要求', '维护要求', '应急响应', '标记和标签', '文件要求'],
       'ISO/IEC 17025:2017': ['范围', '规范性引用文件', '术语和定义', '组织要求', '管理体系要求', '资源要求', '过程要求', '技术记录', '测量不确定度', '实验室能力要求', '公正性', '保密性']

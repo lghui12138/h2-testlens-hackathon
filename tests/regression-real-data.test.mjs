@@ -1028,7 +1028,9 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
   // 12. Comprehensive T02 real-data inventory regression
   // ---------------------------------------------------------------------------
 
-  test('all 198 T02 real files exist across the 4 enterprise packages', async () => {
+  const HAS_REAL_T02_INVENTORY = existsSync('/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手');
+
+  test('all 198 T02 real files exist across the 4 enterprise packages', { skip: !HAS_REAL_T02_INVENTORY }, async () => {
     const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
     const allFiles = [];
     const walk = async (dir) => {
@@ -1065,5 +1067,58 @@ test('package 04 海珀特 real PDF is detected as binary through shared input b
     assert.ok(result.dataset.sessionCount >= 1, 'should detect at least one session');
     assert.ok(result.dataset.insulation.validCount >= 1, 'should have valid insulation points');
     assert.ok(result.metrics.peakPowerW >= 0 || result.metrics.peakPowerW === null, 'peakPowerW should be non-negative or null');
+  });
+
+  // ---------------------------------------------------------------------------
+  // 13. Representative T02 198-file sample regression
+  // ---------------------------------------------------------------------------
+
+  test('representative sample from each T02 package parses through stable entrypoints', { skip: !HAS_REAL_T02_INVENTORY }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const samples = [
+      '企业资料包01_氢璞创能/2026-4-4-18-56-04.txt',
+      '企业资料包01_氢璞创能/299-001-D_出厂检测报告.xlsx',
+      '企业资料包02_氢质氢离/01_耐久原始数据处理/耐久0-5-20260605211610.docx',
+      '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv',
+      '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv',
+      '企业资料包03_青川易创与云汉达/03 青川科技-燃料电池电堆时序测试数据处理任务说明书.docx',
+      '企业资料包04_海珀特/00_企业资料说明.pdf'
+    ];
+    for (const file of samples) {
+      const path = join(T02_ROOT, file);
+      assert.ok(existsSync(path), `representative T02 sample should exist: ${file}`);
+      const buf = await readFile(path);
+      assert.ok(Buffer.isBuffer(buf) && buf.length > 0, `${file} should be non-empty`);
+      if (file.endsWith('.csv') || file.endsWith('.txt')) {
+        const text = Buffer.isBuffer(buf) ? buf.toString('utf8') : buf;
+        const rows = parseCSV(text);
+        assert.ok(rows.length >= 1, `${file} should parse to at least one row`);
+        assert.ok(Object.keys(rows[0]).length >= 1, `${file} should have at least one header`);
+      } else if (file.endsWith('.pdf')) {
+        assert.equal(isLikelyBinary(buf), true, `${file} should be binary`);
+        const decoded = decodeTextBuffer(buf);
+        assert.equal(decoded.binary, true, `${file} should decode as binary`);
+      }
+    }
+  });
+
+  test('representative T02 stack and vehicle CSV samples produce deterministic adapter verdicts', { skip: !HAS_REAL_T02_INVENTORY }, async () => {
+    const T02_ROOT = '/Users/kili/Downloads/T02_设备测试数据分析与自动报告助手';
+    const stackPath = join(T02_ROOT, '企业资料包03_青川易创与云汉达/02 样例数据-青川科技.csv');
+    const vehiclePath = join(T02_ROOT, '企业资料包02_氢质氢离/02_整车数据处理/212/201480_202607071800_202607072359_CH0_20260807_225246 (1).csv');
+
+    const stackCsv = (await readFile(stackPath)).toString('utf8');
+    const stackRows = parseCSV(stackCsv);
+    const stackResult = analyzeEnterpriseRows(stackRows, getProfile('qingchuan-stack'));
+    assert.ok(stackResult, 'qingchuan stack representative sample should analyze');
+    assert.equal(stackResult.datasetType, 'stack');
+    assert.ok(stackResult.quality.rowCount > 0, 'qingchuan stack sample should have positive row count');
+
+    const vehicleCsv = (await readFile(vehiclePath)).toString('utf8');
+    const vehicleRows = parseCSV(vehicleCsv);
+    const vehicleResult = analyzeEnterpriseRows(vehicleRows, getProfile('qingzhihuli-vehicle'));
+    assert.ok(vehicleResult, 'qingzhihuli vehicle representative sample should analyze');
+    assert.equal(vehicleResult.datasetType, 'vehicle');
+    assert.ok(vehicleResult.quality.rowCount > 0, 'qingzhihuli vehicle sample should have positive row count');
   });
 
