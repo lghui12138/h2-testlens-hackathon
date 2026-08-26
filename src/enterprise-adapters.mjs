@@ -45,7 +45,7 @@ const mean = (values) => {
     sum += value;
     count += 1;
   }
-  return count ? sum / count : null;
+  return count && Number.isFinite(sum) ? sum / count : null;
 };
 
 const std = (values) => {
@@ -59,6 +59,7 @@ const std = (values) => {
   }
   if (count < 2) return count ? 0 : null;
   const average = sum / count;
+  if (!Number.isFinite(average)) return null;
   let sqSum = 0;
   let sqCount = 0;
   for (let i = 0; i < values.length; i += 1) {
@@ -67,7 +68,7 @@ const std = (values) => {
     sqSum += (value - average) ** 2;
     sqCount += 1;
   }
-  return Math.sqrt(sqSum / sqCount);
+  return Number.isFinite(sqSum) && sqCount ? Math.sqrt(sqSum / sqCount) : null;
 };
 
 const safeMax = (values, fallback = null) => {

@@ -18,7 +18,12 @@ const safeMin = (values, fallback = null) => {
   }
   return minimum;
 };
-const finite = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
+const finite = (value) => {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const numeric = Number(text);
+  return Number.isFinite(numeric) ? numeric : null;
+};
 const timeOf = (row) => finite(row?.session_timestamp_s ?? row?.timestamp_s);
 
 const groupBySession = (rows, sessionField) => {

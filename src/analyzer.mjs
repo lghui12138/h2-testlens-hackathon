@@ -131,7 +131,7 @@ const mean = (values) => {
     sum += value;
     count += 1;
   }
-  return count ? sum / count : null;
+  return count && Number.isFinite(sum) ? sum / count : null;
 };
 
 const std = (values) => {
@@ -145,6 +145,7 @@ const std = (values) => {
   }
   if (count < 2) return count ? 0 : null;
   const average = sum / count;
+  if (!Number.isFinite(average)) return null;
   let sqSum = 0;
   let sqCount = 0;
   for (let i = 0; i < values.length; i += 1) {
@@ -153,7 +154,7 @@ const std = (values) => {
     sqSum += (value - average) ** 2;
     sqCount += 1;
   }
-  return Math.sqrt(sqSum / sqCount);
+  return Number.isFinite(sqSum) && sqCount ? Math.sqrt(sqSum / sqCount) : null;
 };
 
 export const safeMax = (values, fallback = null) => {
@@ -248,6 +249,7 @@ function unitTransform(field, header) {
   if (field === 'timestamp_s') {
     if (normalized.includes('ms') || normalized.includes('毫秒')) return { mode: 'scale', factor: 0.001, label: 'ms→s' };
     if (normalized.includes('min') || normalized.includes('分钟')) return { mode: 'scale', factor: 60, label: 'min→s' };
+    if (normalized.includes('h') || normalized.includes('小时') || normalized.includes('时')) return { mode: 'scale', factor: 3600, label: 'h→s' };
   }
   if (field === 'power_w' || field === 'power_setpoint_w') {
     if (/\bM[Ww]\b/.test(String(header ?? '')) || normalized.includes('兆瓦')) return { mode: 'scale', factor: 1000000, label: 'MW→W' };
@@ -362,7 +364,10 @@ const slopePerMinute = (rows, field) => {
     const denominator = points.reduce((sum, [x]) => sum + (x - xMean) ** 2, 0);
     if (!denominator) return null;
     const xValues = points.map(([x]) => x);
-    return { slopePerMinute: (numerator / denominator) * 60, spanS: safeMax(xValues) - safeMin(xValues) };
+    const xMax = safeMax(xValues);
+    const xMin = safeMin(xValues);
+    const spanS = Number.isFinite(xMax) && Number.isFinite(xMin) ? xMax - xMin : 0;
+    return { slopePerMinute: (numerator / denominator) * 60, spanS };
   }).filter(Boolean);
   if (!fits.length) return 0;
   const weight = fits.reduce((sum, fit) => sum + Math.max(fit.spanS, 1), 0);
