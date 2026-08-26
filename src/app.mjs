@@ -1,4 +1,4 @@
-import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown, DEFAULT_CONFIG } from './analyzer.mjs';
+import { analyzeRows, parseCSV, publicAnalysis, reportMarkdown, DEFAULT_CONFIG, safeMax, safeMin } from './analyzer.mjs';
 import { evidenceBundle, localEvidenceDraft } from './ai-draft.mjs';
 import { compareResults } from './compare.mjs';
 import { CUSTOM_PROFILE_ID, DEVICE_PROFILES, getProfile, profilesFromPackage } from './profiles.mjs';
@@ -333,16 +333,16 @@ async function analyzeRowsAsync(rows, config, onStage) {
 async function analyzeCurrent(reason = '重新分析') {
   if (!state.rows.length) return;
   const token = ++state.analysisToken;
-  setAnalysisStatus(`${reason}：准备中`, 'busy');
+  setAnalysisStatus(`${reason}`, 'busy');
   document.body.setAttribute('aria-busy', 'true');
   await yieldToBrowser();
   try {
     showMetricSkeletons();
     const result = await analyzeRowsAsync(state.rows, configFromUI(), (stage, rowCount, detail) => {
       if (token !== state.analysisToken) return;
-      if (stage === 'worker') setAnalysisStatus(`正在后台分析：${rowCount.toLocaleString('zh-CN')} 条记录，页面仍可响应`, 'busy');
-      else if (stage === 'fallback') setAnalysisStatus(detail === 'worker_unavailable' ? '当前环境不支持 Worker，已切换至主线程分析' : 'Worker 分析失败，已切换至主线程分析', 'busy');
-      else setAnalysisStatus('正在计算指标和流程门控', 'busy');
+      if (stage === 'worker') setAnalysisStatus(`后台分析：${rowCount.toLocaleString('zh-CN')} 条记录`, 'busy');
+      else if (stage === 'fallback') setAnalysisStatus(detail === 'worker_unavailable' ? '当前环境不支持 Worker，切换至主线程分析' : 'Worker 分析失败，切换至主线程分析', 'busy');
+      else setAnalysisStatus('计算指标和流程门控', 'busy');
     });
     if (token !== state.analysisToken) return;
     result.source = { ...result.source, inputSummary: state.inputSummary };
@@ -351,7 +351,7 @@ async function analyzeCurrent(reason = '重新分析') {
     render(result);
     const sampled = result.source?.chartSampling ? ` · 图表显示 ${result.source.displayRowCount.toLocaleString('zh-CN')} 点` : '';
     const engine = result.source?.analysisEngine === 'worker' ? ' · Worker' : result.source?.analysisEngine === 'main-thread-fallback' ? ' · 主线程回退' : '';
-    setAnalysisStatus(`分析完成：${result.metrics.sampleCount.toLocaleString('zh-CN')} 条记录${sampled}${engine}`, 'ready');
+    setAnalysisStatus(`分析完成 · ${result.metrics.sampleCount.toLocaleString('zh-CN')} 条记录${sampled}${engine}`, 'ready');
     resetBatchProgress();
     document.body.removeAttribute('aria-busy');
     if (state.batchDeclarationInput) void evaluateDeclaredBatch();
@@ -359,7 +359,7 @@ async function analyzeCurrent(reason = '重新分析') {
     if (token !== state.analysisToken) return;
     const message = error.message || '未知错误';
     resetBatchProgress();
-    setAnalysisStatus(`分析失败：${message}`, 'error');
+    setAnalysisStatus(`分析未通过：${message}`, 'error');
     const notice = $('#schema-notice');
     if (notice) {
       const example = state.fileName?.includes('electrolyzer') ? '示例列：timestamp, current_a, avg_cell_voltage_v, power_kw, temperature_c, pressure_bar' : state.fileName?.includes('legacy') ? '中文单位样本需包含：时间, 电流_A, 平均单片电压_V, 功率_kW, 温度_C, 压力_bar' : '确认首行包含表头且列名与示例一致';
@@ -746,11 +746,11 @@ function renderIssues(result) {
   const list = $('#issue-list');
   if (!list) return;
   if (!result.issues.length) {
-    list.innerHTML = `<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或待复核项；正式结论仍需工程师签核。</p><small>后续动作：继续执行企业复核流程，或调整阈值后重新分析。</small>${qualityBadge(result.quality?.completenessPct)}</div></div>`;
+    list.innerHTML = `<div class="issue"><div class="issue-mark">✓</div><div><div class="issue-heading"><b>未发现需要关注的问题</b><span>信息</span></div><p>当前分析未触发高优先级或待复核项；正式结论仍需工程师签核。</p><small>建议：继续执行企业复核流程，或调整阈值后重新分析。</small>${qualityBadge(result.quality?.completenessPct)}</div></div>`;
     $('#issue-count').textContent = '0 项需要关注';
     return;
   }
-  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>后续动作：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
+  list.innerHTML = result.issues.map((item) => `<article class="issue ${item.severity}"><div class="issue-mark">${item.severity === 'critical' ? '高' : item.severity === 'warn' ? '中' : '低'}</div><div><div class="issue-heading"><b>${escapeHtml(item.title)}</b><span>${severityLabel[item.severity]}</span>${item.severity !== 'info' ? qualityBadge(result.quality?.completenessPct) : ''}</div><p>${escapeHtml(item.evidence)}</p><small>建议：${escapeHtml(item.recommendation)}</small></div></article>`).join('');
   $('#issue-count').textContent = `${result.issues.filter((item) => item.severity !== 'info').length} 项需要关注`;
 }
 
@@ -1036,7 +1036,7 @@ function drawEnterpriseChart(result) {
   if (result.datasetType === 'vehicle') {
     const points = result.dataset.insulation.points || [];
     if (!points.length) { label('暂无有效绝缘阻值窗口', pad.left, pad.top + 20); return; }
-    const values = points.map((point) => point.minimumKohm); const max = Math.max(400, ...values); const min = Math.min(0, ...values);
+    const values = points.map((point) => point.minimumKohm); const max = safeMax(values, 400); const min = safeMin(values, 0);
     const x = (index) => pad.left + index / Math.max(points.length - 1, 1) * plotW; const y = (value) => pad.top + (max - value) / (max - min || 1) * plotH;
     drawAxis(ctx, pad, width, height, 'left', min, max, '绝缘阻值（kΩ）', { color: '#5bd4c0' });
     drawAxis(ctx, pad, width, height, 'bottom', 0, points.length - 1, '时间窗口序号', { color: '#71838a' });
@@ -1245,8 +1245,8 @@ function renderReport(result, draft = state.aiDraft) {
     $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>REPORT PREVIEW / STRUCTURED EVIDENCE</span><strong>${status}</strong></div><pre class="draft-text">${escapeHtml(draft.draft)}</pre><div class="report-foot">预览仅引用结构化测试证据；正式发布前仍需工程师签核。</div>`;
     return;
   }
-  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和后续动作可追溯；';
-  $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>分析报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与后续动作</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
+  const boundary = result.evaluation?.mode === 'descriptive_only' ? '本 profile 仅输出描述性统计和证据，未执行阈值/验收判定；' : '阈值、原始样本、计算指标和建议可追溯；';
+  $('#report-preview').innerHTML = `${reportFacts}${complianceSection}<div class="report-head"><span>分析报告 / ${escapeHtml(state.fileName)}</span><strong>${status}</strong></div><h3>测试结论</h3><p>${escapeHtml(result.narrative)}</p><h3>异常与建议</h3><ul>${result.issues.map((item) => `<li><b>${escapeHtml(item.title)}</b>：${escapeHtml(item.evidence)}。${escapeHtml(item.recommendation)}</li>`).join('')}</ul><div class="report-foot">${boundary}正式报告需经工程师签核。</div>`;
 }
 
 function renderSignalDiagnostics(dataset) {
@@ -1562,9 +1562,9 @@ async function loadLibrarySample(fileName) {
     }
     await loadCsv(assetUrl(`sample-data/${fileName}`), sample.name);
   } catch (error) {
-    setAnalysisStatus(`演示工况读取失败：${error.message}`, 'error');
+    setAnalysisStatus(`演示工况加载失败：${error.message}`, 'error');
     const notice = $('#schema-notice');
-    if (notice) notice.textContent = '样本资源读取失败。刷新页面或改为手动导入文件。';
+    if (notice) notice.textContent = '样本资源加载失败。刷新页面或手动导入文件。';
   }
 }
 
@@ -1572,8 +1572,8 @@ async function loadSampleSafely() {
   try {
     await loadSample();
   } catch (error) {
-    setAnalysisStatus(`演示样本读取失败：${error.message}`, 'error');
-    $('#schema-notice').textContent = '刷新页面、检查 Pages 资源，或改为手动导入文件。';
+    setAnalysisStatus(`演示样本加载失败：${error.message}`, 'error');
+    $('#schema-notice').textContent = '刷新页面或手动导入文件。';
   }
 }
 
@@ -1780,7 +1780,7 @@ function buildEnhancedMarkdown(result, fileName, schema) {
     }
   }
   parts.push('');
-  parts.push('## 异常与后续动作', '');
+  parts.push('## 异常与建议', '');
   if (!(result.issues || []).length) {
     parts.push('- 无异常');
   }
@@ -1863,9 +1863,9 @@ async function loadLegacySample() {
   try {
     await loadCsv(assetUrl('sample-data/test_run_legacy_cn.csv'), '中文单位样本 · legacy_run_cn.csv');
   } catch (error) {
-    setAnalysisStatus(`中文/单位样本读取失败：${error.message}`, 'error');
+    setAnalysisStatus(`中文/单位样本加载失败：${error.message}`, 'error');
     const notice = $('#schema-notice');
-    if (notice) notice.textContent = '刷新页面、检查 Pages 资源，或改为手动导入 CSV/TXT。';
+    if (notice) notice.textContent = '刷新页面或手动导入 CSV/TXT。';
   }
 }
 
@@ -1970,12 +1970,12 @@ $('#metadata-raw-ref').addEventListener('input', (event) => { event.target.datas
 $('#load-profile-demo').addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/enterprise-profile.example.json'));
-    if (!response.ok) throw new Error('示例配置读取失败');
+    if (!response.ok) throw new Error('示例配置加载失败');
         const packagePayload = await response.json();
         const packageResult = profilesFromPackage(packagePayload, await runtimeProfilePackageOptions(packagePayload));
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
     const sampleResponse = await fetch(assetUrl('sample-data/test_run_legacy_cn.csv'));
-    if (!sampleResponse.ok) throw new Error('配置匹配样本读取失败');
+    if (!sampleResponse.ok) throw new Error('配置匹配样本加载失败');
     const sampleText = await sampleResponse.text();
     await bindRawDataHash(sampleText);
     state.rows = parseCSV(sampleText);
@@ -1990,7 +1990,7 @@ $('#load-profile-demo').addEventListener('click', async () => {
 $('#load-t02-profiles')?.addEventListener('click', async () => {
   try {
     const response = await fetch(assetUrl('config/t02-profile.example.json'));
-    if (!response.ok) throw new Error('T02 profile 包读取失败');
+    if (!response.ok) throw new Error('T02 profile 包加载失败');
         const packagePayload = await response.json();
         const packageResult = profilesFromPackage(packagePayload, await runtimeProfilePackageOptions(packagePayload));
     if (!packageResult.ok) throw new Error(packageResult.errors.join('；'));
@@ -2009,17 +2009,17 @@ $('#save-history').addEventListener('click', () => {
   if (previous) state.comparison = compareResults(previous, state.result, { baselineName: previous.fileName, currentName: state.fileName });
   renderHistory();
   renderComparison();
-  $('#history-status').textContent = previous ? '已保存并完成上一批对比' : '已保存当前批次';
+  $('#history-status').textContent = previous ? '已保存并完成对比' : '已保存';
 });
 $('#clear-history').addEventListener('click', () => { state.history = clearHistory(window.localStorage); writeBatchManifest(window.localStorage, []); state.currentManifest = []; state.incrementalDiff = null; state.comparison = null; renderHistory(); renderComparison(); });
 $('#compare-demo').addEventListener('click', async () => {
-  if (!state.result) { $('#compare-status').textContent = '先载入并分析数据'; return; }
+  if (!state.result) { $('#compare-status').textContent = '先载入数据并完成分析'; return; }
   const button = $('#compare-demo');
   button.disabled = true;
   button.textContent = '对比中';
   try {
     const response = await fetch(assetUrl('sample-data/test_run_baseline.csv'));
-    if (!response.ok) throw new Error('基线文件读取失败');
+    if (!response.ok) throw new Error('基线文件加载失败');
     state.baselineResult = analyzeRows(parseCSV(await response.text()), configFromUI());
     state.comparison = compareResults(state.baselineResult, state.result, { baselineName: '演示基线 · baseline_run.csv', currentName: state.fileName });
     renderComparison(state.comparison);
@@ -2028,11 +2028,11 @@ $('#compare-demo').addEventListener('click', async () => {
     $('#compare-summary').textContent = error.message;
   } finally {
     button.disabled = false;
-    button.textContent = '加载演示基线并对比';
+    button.textContent = '载入演示基线并对比';
   }
 });
 $('#generate-ai').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
   const button = $('#generate-ai');
   button.disabled = true;
   button.textContent = '处理中';
@@ -2047,27 +2047,27 @@ $('#generate-ai').addEventListener('click', async () => {
     renderReport(state.result, state.aiDraft);
   } finally {
     button.disabled = false;
-    button.textContent = '生成报告初稿';
+    button.textContent = '生成报告';
   }
 });
 $('#copy-report').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
   const text = reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft });
-  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败。手动复制'; }
+  try { await navigator.clipboard?.writeText(text); $('#report-status').textContent = '报告已复制到剪贴板'; } catch { $('#report-status').textContent = '复制失败，请手动复制。'; }
 });
 $('#print-report').addEventListener('click', () => {
   const preview = $('#report-preview');
-  if (!preview || !state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
+  if (!preview || !state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
   const win = window.open('', '_blank');
-  if (!win) { $('#report-status').textContent = '打印窗口被拦截。允许弹出窗口'; return; }
+  if (!win) { $('#report-status').textContent = '打印窗口被拦截。请允许弹出窗口后重试。'; return; }
   win.document.write(`<html><head><title>报告打印</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;line-height:1.6;color:#0b1a24;white-space:pre-wrap;}</style></head><body>${escapeHtml(preview.innerText)}</body></html>`);
   win.document.close();
   win.focus();
   win.print();
 });
-$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析报告.md`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-report').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } const blob = new Blob([reportMarkdown(state.result, state.fileName, { comparison: state.comparison, aiDraft: state.aiDraft })], { type: 'text/markdown;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析报告.md`; link.click(); URL.revokeObjectURL(link.href); });
 $('#download-xlsx').addEventListener('click', async () => {
-  if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; }
+  if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; }
   try {
     await ensureBrowserEngines({ spreadsheet: true });
     setSpreadsheetEngine(globalThis.XLSX);
@@ -2080,9 +2080,9 @@ $('#download-xlsx').addEventListener('click', async () => {
     $('#report-status').textContent = `Excel 导出失败：${error.message}`;
   }
 });
-$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
-$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void exportEnhancedReport(state.result, state.fileName); });
-$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入并分析数据'; return; } void downloadComplianceReport(state.result, state.fileName); });
+$('#download-json').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } const blob = new Blob([JSON.stringify({ ...publicAnalysis(state.result), comparison: state.comparison, aiDraft: state.aiDraft }, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${state.fileName.replace(/\.csv$/i, '')}-分析证据.json`; link.click(); URL.revokeObjectURL(link.href); });
+$('#download-enhanced').addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } void exportEnhancedReport(state.result, state.fileName); });
+$('#download-compliance-report')?.addEventListener('click', () => { if (!state.result) { $('#report-status').textContent = '先载入数据并完成分析'; return; } void downloadComplianceReport(state.result, state.fileName); });
 $('#download-coverage-review')?.addEventListener('click', downloadCoverageReview);
 window.addEventListener('resize', () => { if (state.result) { drawChart(state.result); drawEnterpriseChart(state.result); drawEnterprisePerformanceChart(state.result); } });
 
@@ -2126,7 +2126,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 let lastFocusedElement = null;
-function showLoading(message = '正在分析') {
+function showLoading(message = '分析中') {
   lastFocusedElement = document.activeElement;
   const overlay = $('#loading-overlay');
   const msg = $('#loading-message');
@@ -2400,7 +2400,7 @@ $('#batch-queue')?.addEventListener('click', async (event) => {
     const index = Number(retryButton.dataset.retry);
     const entry = state.inputEntries?.[index];
     const name = entry?.name || '该文件';
-    setAnalysisStatus(`重新选择 ${name} 进行导入；失败条目已保留在列表中。`, 'neutral');
+    setAnalysisStatus(`选择 ${name} 重新导入；失败条目已保留。`, 'neutral');
     $('#file-input').click();
   } else if (removeButton) {
     const index = Number(removeButton.dataset.remove);
@@ -2423,7 +2423,7 @@ $('#clear-completed')?.addEventListener('click', () => {
   if (!remaining.length) { const container = $('#batch-queue'); if (container) container.hidden = true; }
 });
 $('#retry-all-failed')?.addEventListener('click', () => {
-  setAnalysisStatus('重新选择所有失败的文件进行导入；也可单独点击各条目右侧的“重试”。', 'neutral');
+  setAnalysisStatus('选择所有失败文件重新导入；或单独点击各条目右侧的“重试”。', 'neutral');
   $('#file-input').click();
 });
 $('#remove-all-failed')?.addEventListener('click', () => {

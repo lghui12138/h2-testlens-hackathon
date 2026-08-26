@@ -71,6 +71,7 @@ const std = (values) => {
 };
 
 const safeMax = (values, fallback = null) => {
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
   let maximum = fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
@@ -80,6 +81,7 @@ const safeMax = (values, fallback = null) => {
 };
 
 const safeMin = (values, fallback = null) => {
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
   let minimum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;

@@ -156,7 +156,8 @@ const std = (values) => {
   return Math.sqrt(sqSum / sqCount);
 };
 
-const safeMax = (values, fallback = null) => {
+export const safeMax = (values, fallback = null) => {
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
   let maximum = fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
@@ -165,7 +166,8 @@ const safeMax = (values, fallback = null) => {
   return maximum;
 };
 
-const safeMin = (values, fallback = null) => {
+export const safeMin = (values, fallback = null) => {
+  if (!Array.isArray(values)) return fallback === undefined ? null : fallback;
   let minimum = fallback === undefined ? null : fallback;
   for (const value of values) {
     if (!Number.isFinite(value)) continue;
