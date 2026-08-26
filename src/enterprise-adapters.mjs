@@ -2464,7 +2464,7 @@ function buildStack(rows, config) {
       cathode_flow_resistance_kpa: num(row[mapping.cathode_in_pressure_kpa]) !== null && num(row[mapping.cathode_out_pressure_kpa]) !== null ? num(row[mapping.cathode_in_pressure_kpa]) - num(row[mapping.cathode_out_pressure_kpa]) : null,
       coolant_flow_resistance_kpa: num(row[mapping.coolant_in_pressure_kpa]) !== null && num(row[mapping.coolant_out_pressure_kpa]) !== null ? num(row[mapping.coolant_in_pressure_kpa]) - num(row[mapping.coolant_out_pressure_kpa]) : null,
       coolant_temperature_difference_c: num(row[mapping.coolant_out_temp_c]) !== null && num(row[mapping.coolant_in_temp_c]) !== null ? num(row[mapping.coolant_out_temp_c]) - num(row[mapping.coolant_in_temp_c]) : null,
-      cells
+      cells: Object.fromEntries(cellHeaders.map((header, cellIndex) => [`cell_${cellIndex + 1}_v`, convertEnterpriseValue(row[header], cellUnitSpecs[`cell_${cellIndex + 1}_v`])]))
     };
   });
   const configuredCellCountHint = Number(config.stoichConfig?.cellCount ?? config.cellCount ?? config.testMetadata?.cellCount);
